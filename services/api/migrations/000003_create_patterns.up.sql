@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS patterns (
     id BIGSERIAL PRIMARY KEY,
-    code TEXT UNIQUE NOT NULL,
-    name TEXT NOT NULL,
+    code VARCHAR(50) UNIQUE NOT NULL,
+    name VARCHAR(100) NOT NULL,
     description TEXT,
     parent_id BIGINT REFERENCES patterns(id) ON DELETE SET NULL
 );
