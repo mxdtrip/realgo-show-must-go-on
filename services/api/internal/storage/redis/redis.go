@@ -21,7 +21,7 @@ func New(ctx context.Context, cfg *config.Redis) (*Storage, error) {
 	})
 
 	if err := client.Ping(ctx).Err(); err != nil {
-		client.Close()
+		_ = client.Close()
 		return nil, fmt.Errorf("failed to ping redis: %w", err)
 	}
 
