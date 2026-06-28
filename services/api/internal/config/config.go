@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"net"
 	"os"
 	"time"
 
@@ -62,4 +63,8 @@ func Load() (*Config, error) {
 func (d *Database) ConnString() string {
 	return fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
 		d.Host, d.Port, d.User, d.Password, d.DBName, d.SSLMode)
+}
+
+func (r *Redis) Addr() string {
+	return net.JoinHostPort(r.Host, r.Port)
 }
