@@ -15,3 +15,8 @@ CREATE TABLE IF NOT EXISTS review_schedules (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT problem_or_pattern_check CHECK (problem_id IS NOT NULL OR pattern_id IS NOT NULL)
 );
+
+COMMENT ON COLUMN review_schedules.interval_days IS 'Current review interval length in days.';
+COMMENT ON COLUMN review_schedules.ease IS 'Ease factor used by the spaced repetition algorithm.';
+COMMENT ON COLUMN review_schedules.stability IS 'Memory stability coefficient used by the spaced repetition algorithm.';
+COMMENT ON COLUMN review_schedules.difficulty IS 'Memory difficulty coefficient used by the spaced repetition algorithm.';
