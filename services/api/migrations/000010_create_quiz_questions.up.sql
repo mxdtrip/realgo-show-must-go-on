@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS quiz_questions (
     options JSONB NOT NULL,
     correct_option INTEGER NOT NULL,
     explanation TEXT,
-    difficulty TEXT,
+    difficulty VARCHAR(20) CHECK (difficulty IN ('easy', 'medium', 'hard')),
     created_by_ai BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
