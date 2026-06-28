@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS cards (
     user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
     problem_id BIGINT REFERENCES problems(id) ON DELETE CASCADE,
     pattern_id BIGINT REFERENCES patterns(id) ON DELETE CASCADE,
-    type TEXT,
+    type VARCHAR(50) CHECK (type IN ('problem', 'pattern', 'concept')),
     question TEXT NOT NULL,
     answer TEXT NOT NULL,
     explanation TEXT,
