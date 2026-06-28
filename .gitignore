@@ -1,0 +1,70 @@
+# Environment and local secrets
+.env
+.env.*
+!.env.example
+!**/.env.example
+*.local
+*.pem
+*.key
+*.p12
+
+# Dependencies and package-manager caches
+node_modules/
+.pnpm-store/
+.yarn/
+.npm/
+
+# JavaScript / TypeScript build artifacts
+.next/
+out/
+dist/
+build/
+.turbo/
+.cache/
+.parcel-cache/
+.plasmo/
+*.tsbuildinfo
+next-env.d.ts
+coverage/
+
+# Go build and test artifacts
+bin/
+vendor/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+coverage.out
+coverage.html
+
+# Logs and runtime files
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.pid
+
+# Editors and IDEs
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+*.swp
+*.swo
+*~
+
+# Operating systems
+.DS_Store
+Thumbs.db
+
+# Temporary files
+tmp/
+temp/
+.tmp/
