@@ -1,0 +1,22 @@
+name: Deploy
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+jobs:
+  deploy:
+    runs-on: [self-hosted, linux, appbox]
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build & start
+        run: |
+          docker compose pull --ignore-buildable || true
+          docker compose up -d --build --remove-orphans
+      - name: Prune old images
+        run: docker image prune -f
