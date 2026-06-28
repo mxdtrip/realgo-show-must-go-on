@@ -49,6 +49,19 @@ services:
       - "up"
     restart: "no"
 
+  seed-roadmap:
+    image: python:3.12-slim
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    working_dir: /seeds
+    volumes:
+      - ./services/api/seeds:/seeds:ro
+    environment:
+      DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-freeburger}?sslmode=disable
+    command: sh -c "pip install --no-cache-dir -r requirements.txt && python seed_roadmap.py neetcode_150.yaml"
+    restart: "no"
+
   api:
     build:
       context: ./services/api
