@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS platforms (
     id BIGSERIAL PRIMARY KEY,
-    code TEXT UNIQUE NOT NULL,
-    name TEXT NOT NULL,
+    code VARCHAR(50) UNIQUE NOT NULL,
+    name VARCHAR(100) NOT NULL,
     base_url TEXT NOT NULL
 );
 
