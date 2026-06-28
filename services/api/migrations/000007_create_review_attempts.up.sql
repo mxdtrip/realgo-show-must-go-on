@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS review_attempts (
     problem_id BIGINT REFERENCES problems(id) ON DELETE CASCADE,
     pattern_id BIGINT REFERENCES patterns(id) ON DELETE CASCADE,
     rating INTEGER NOT NULL,
-    review_type TEXT,
+    review_type VARCHAR(50) CHECK (review_type IN ('problem', 'pattern')),
     duration_sec INTEGER,
     was_correct BOOLEAN,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
