@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"time"
 
@@ -10,10 +9,10 @@ import (
 )
 
 type Config struct {
-	Env         string `yaml:"env" env-default:"local"`
-	HTTPServer  `yaml:"http_server"`
-	Database    `yaml:"database"`
-	Redis       `yaml:"redis"`
+	Env        string `yaml:"env" env-default:"local"`
+	HTTPServer `yaml:"http_server"`
+	Database   `yaml:"database"`
+	Redis      `yaml:"redis"`
 }
 
 type HTTPServer struct {
