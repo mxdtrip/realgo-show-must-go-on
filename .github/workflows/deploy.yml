@@ -14,9 +14,13 @@ jobs:
       packages: read
     steps:
       - uses: actions/checkout@v4
-      - name: Build & start
+      - name: Deploy (auto-skips until compose exists)
         run: |
-          docker compose pull --ignore-buildable || true
-          docker compose up -d --build --remove-orphans
-      - name: Prune old images
-        run: docker image prune -f
+          if ls docker-compose.yml compose.yaml compose.yml docker-compose.yaml >/dev/null 2>&1; then
+            echo "Compose file found — deploying."
+            docker compose pull --ignore-buildable || true
+            docker compose up -d --build --remove-orphans
+            docker image prune -f
+          else
+            echo "Compose-файла пока нет — деплой пропущен, конвейер OK."
+          fi
