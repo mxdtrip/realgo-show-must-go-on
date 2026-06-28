@@ -31,6 +31,7 @@ func main() {
 	}
 	defer redisStorage.Close()
 
+	// Миша, переделывай потом
 	router := chi.NewRouter()
 	router.Get("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		if err := pgStorage.Pool.Ping(r.Context()); err != nil {
