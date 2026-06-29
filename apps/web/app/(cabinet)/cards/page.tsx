@@ -1,11 +1,10 @@
-import { CabinetPanel } from "../_components";
+import Link from "next/link";
+
+import { CabinetPanel, StatusPill } from "../_components";
 import { getDictionary } from "../../_content/i18n";
-import { cards } from "../_mock";
-import { CardReviewSession } from "./_components/CardReviewSession";
 
 export default function CardsPage() {
-  const cabinetCopy = getDictionary().cabinet;
-  const page = cabinetCopy.pages.cards;
+  const page = getDictionary().cabinet.pages.cards;
 
   return (
     <main className="cabinet-page">
@@ -16,15 +15,32 @@ export default function CardsPage() {
       </section>
 
       <CabinetPanel eyebrow={page.panelEyebrow} title={page.panelTitle}>
-        <CardReviewSession
-          cards={cards}
-          copy={page.session}
-          ratingLabels={{
-            easy: cabinetCopy.common.easy,
-            hard: cabinetCopy.common.hard,
-            normal: cabinetCopy.common.normal,
-          }}
-        />
+        <div className="cards-overview">
+          <div>
+            <span className="cabinet-eyebrow">{page.overview.readyEyebrow}</span>
+            <h2>{page.overview.readyTitle}</h2>
+            <p>{page.overview.readyDescription}</p>
+            <div className="cards-overview__meta">
+              <StatusPill tone="accent">{page.overview.cardsCount}</StatusPill>
+              <StatusPill>{page.overview.estimatedTime}</StatusPill>
+            </div>
+          </div>
+          <Link className="cards-overview__start" href="/cards/session">
+            {page.overview.start}
+          </Link>
+        </div>
+      </CabinetPanel>
+
+      <CabinetPanel eyebrow={page.overview.methodEyebrow} title={page.overview.methodTitle}>
+        <div className="cards-method">
+          {page.overview.methodSteps.map(([number, title, description]) => (
+            <article key={number}>
+              <span>{number}</span>
+              <strong>{title}</strong>
+              <p>{description}</p>
+            </article>
+          ))}
+        </div>
       </CabinetPanel>
     </main>
   );

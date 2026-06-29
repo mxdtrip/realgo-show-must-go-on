@@ -1,5 +1,5 @@
 const CACHE_NAME = "engram-shell-v1";
-const APP_SHELL = ["/", "/dashboard", "/cards", "/manifest.webmanifest", "/icons/icon.svg"];
+const APP_SHELL = ["/", "/dashboard", "/cards", "/cards/session", "/manifest.webmanifest", "/icons/icon.svg"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
