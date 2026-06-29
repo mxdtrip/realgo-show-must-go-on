@@ -2,10 +2,13 @@
 
 import { useEffect, useRef } from "react";
 
-// Background clip is ~4s @ 120fps. When the page is at the very top the video
-// sits at START_TIME; scrolling maps the whole page onto [START_TIME, duration]
-// and scrubs the frame forward (down) / backward (up).
-const START_TIME = 2;
+// Background clip @ 120fps. At the top of the page the video sits at START_TIME;
+// scrolling scrubs it forward (down) / backward (up). The scrub range is mapped
+// onto [page top → bottom of the #memory section], so the clip reaches its last
+// frame exactly when that section has been fully scrolled through, then holds.
+const START_TIME = 0;
+// Section whose bottom edge marks the end of the clip.
+const SCRUB_END_SECTION_ID = "memory";
 // Per-frame easing toward the scroll target: higher = snappier, lower = smoother.
 const SMOOTHING = 0.12;
 
@@ -26,8 +29,18 @@ export function ScrollVideoBackground() {
     let rafId = 0;
 
     const computeTarget = () => {
-      const max = document.documentElement.scrollHeight - window.innerHeight;
-      const progress = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;
+      // Scroll distance over which the clip should play: from the top of the page
+      // until the bottom of the anchor section reaches the bottom of the viewport.
+      const section = document.getElementById(SCRUB_END_SECTION_ID);
+      let endScroll: number;
+      if (section) {
+        const sectionBottom = section.getBoundingClientRect().bottom + window.scrollY;
+        endScroll = sectionBottom - window.innerHeight;
+      } else {
+        endScroll = document.documentElement.scrollHeight - window.innerHeight;
+      }
+      endScroll = Math.max(1, endScroll);
+      const progress = Math.min(1, Math.max(0, window.scrollY / endScroll));
       const end = Math.max(START_TIME, duration);
       target = START_TIME + progress * (end - START_TIME);
     };
