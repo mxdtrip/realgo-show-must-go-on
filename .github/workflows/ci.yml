@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main, dev]
+
+jobs:
+  api:
+    name: Go API
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: freeburger
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d freeburger"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    defaults:
+      run:
+        working-directory: services/api
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: services/api/go.mod
+          cache-dependency-path: services/api/go.sum
+
+      - name: Generate sqlc
+        run: go tool sqlc generate
+
+      - name: Check generated files
+        run: git diff --exit-code
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Test
+        run: go test ./...
+
+      - name: Build
+        run: go build -o /tmp/freeburger-api ./cmd/api
+
+      - name: Check migrations
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/freeburger?sslmode=disable
+        run: ./scripts/check-migrations.sh
+
+      - name: Check Docker Compose config
+        working-directory: .
+        env:
+          AUTH_JWT_SECRET: ci-secret-with-more-than-32-random-looking-characters
+        run: docker compose config --quiet

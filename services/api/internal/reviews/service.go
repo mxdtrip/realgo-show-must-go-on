@@ -7,7 +7,7 @@ import (
 	"math"
 	"time"
 
-	"github.com/open-spaced-repetition/go-fsrs/v4"
+	"github.com/open-spaced-repetition/go-fsrs/v3"
 )
 
 const todayReviewsLimit = 100
