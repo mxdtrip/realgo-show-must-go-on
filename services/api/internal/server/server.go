@@ -9,6 +9,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 
 	"github.com/mxdtrip/freeburger/services/api/internal/auth"
+	"github.com/mxdtrip/freeburger/services/api/internal/patterns"
 	"github.com/mxdtrip/freeburger/services/api/internal/reviews"
 	"github.com/mxdtrip/freeburger/services/api/internal/roadmaps"
 	"github.com/mxdtrip/freeburger/services/api/internal/storage/postgres"
@@ -45,6 +46,7 @@ func New(deps Deps) http.Handler {
 
 	reviewsSvc := reviews.NewService(reviews.NewRepository(deps.Postgres.Pool), deps.Logger)
 	reviewsHandler := reviews.NewHandler(reviewsSvc, deps.Logger)
+	patternsHandler := patterns.NewHandler(patterns.NewRepository(deps.Postgres.Pool))
 	roadmapsHandler := roadmaps.NewHandler(roadmaps.NewRepository(deps.Postgres.Pool))
 
 	r.Route("/api/v1", func(r chi.Router) {
@@ -62,6 +64,9 @@ func New(deps Deps) http.Handler {
 
 		r.Route("/reviews", func(r chi.Router) {
 			reviews.RegisterRoutes(r, reviewsHandler)
+		})
+		r.Route("/patterns", func(r chi.Router) {
+			patterns.RegisterRoutes(r, patternsHandler)
 		})
 		r.Route("/roadmaps", func(r chi.Router) {
 			roadmaps.RegisterRoutes(r, roadmapsHandler)
