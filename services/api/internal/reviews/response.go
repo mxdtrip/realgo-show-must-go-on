@@ -2,10 +2,6 @@ package reviews
 
 import "time"
 
-type TodayReviewsResponse struct {
-	Data []ReviewItem `json:"data"`
-}
-
 type ReviewItem struct {
 	ID           int64     `json:"id"`
 	ProblemID    *int64    `json:"problem_id"`
@@ -26,10 +22,6 @@ type AttemptResponse struct {
 	State        int8      `json:"state"`
 	Reps         int       `json:"reps"`
 	Lapses       int       `json:"lapses"`
-}
-
-type StatsResponse struct {
-	Data StatsData `json:"data"`
 }
 
 type StatsData struct {

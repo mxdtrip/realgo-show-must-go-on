@@ -83,12 +83,12 @@ func (s *service) ProcessAttempt(ctx context.Context, scheduleID, userID int64, 
 	}, nil
 }
 
-func (s *service) GetStats(ctx context.Context, userID int64) (StatsResponse, error) {
+func (s *service) GetStats(ctx context.Context, userID int64) (StatsData, error) {
 	stats, err := s.repo.Stats(ctx, userID)
 	if err != nil {
-		return StatsResponse{}, fmt.Errorf("reviews: GetStats: %w", err)
+		return StatsData{}, fmt.Errorf("reviews: GetStats: %w", err)
 	}
-	return StatsResponse{Data: stats}, nil
+	return stats, nil
 }
 
 func fsrsRating(rating string) (fsrs.Rating, error) {
