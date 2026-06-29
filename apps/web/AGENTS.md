@@ -1,9 +1,9 @@
-# AGENTS.md — `apps/web` (Engram landing)
+# AGENTS.md — `apps/web` (Engram web)
 
-Маркетинговый лендинг Engram («memory layer for interview prep») на Next.js. Тёмная
-«программистская» эстетика с цветовой базой GitHub Primer. Центральный элемент —
-интерактивная анимация сортировки слова `engram`, где код алгоритма можно править прямо
-на странице.
+Веб-приложение Engram: маркетинговый лендинг и стартовый моковый каркас личного кабинета.
+Тёмная «программистская» эстетика с цветовой базой GitHub Primer. Центральный элемент
+лендинга — интерактивная анимация сортировки слова `engram`, где код алгоритма можно
+править прямо на странице.
 
 ## Стек
 
@@ -33,8 +33,21 @@ npm run lint           # это tsc --noEmit (типы), НЕ ESLint
 ```
 app/
   layout.tsx                      # <html>, метаданные, подключение шрифтов
-  globals.css                     # ВЕСЬ дизайн-язык (токены, секции, анимация)
-  page.tsx                        # секции лендинга + футер (данные — массивы вверху файла)
+  globals.css                     # ВЕСЬ дизайн-язык (токены, секции, кабинет, анимация)
+  (marketing)/
+    page.tsx                      # маршрут /: секции лендинга + футер
+  (cabinet)/
+    layout.tsx                    # shell личного кабинета: sidebar/topbar
+    _components.tsx               # общие моковые UI-блоки кабинета
+    _mock.ts                      # мок-данные, без backend/fetch
+    dashboard/page.tsx            # /dashboard
+    reviews/page.tsx              # /reviews
+    problems/page.tsx             # /problems
+    roadmap/page.tsx              # /roadmap
+    patterns/page.tsx             # /patterns
+    cards/page.tsx                # /cards
+    extension/page.tsx            # /extension
+    settings/page.tsx             # /settings
   components/
     SortingMemoryHero.tsx         # герой: анимация сортировки + редактор кода + модалка авторизации
 ```
@@ -84,8 +97,12 @@ app/
 
 ## Конвенции
 
-- Контент секций живёт массивами в начале `page.tsx` (`memoryTasks`, `roadmapWeeks`,
+- Контент секций лендинга живёт массивами в начале `(marketing)/page.tsx` (`memoryTasks`, `roadmapWeeks`,
   `reviewCards`, `pricing`) — правь данные там, разметку не дублируй.
+- Личный кабинет на текущем этапе работает только на моках из `(cabinet)/_mock.ts`; backend API
+  не подключать без отдельной задачи.
+- Для новых страниц кабинета используй существующий CSS-язык `cabinet-*` в `globals.css`, чтобы
+  сохранить Primer dark эстетику лендинга.
 - Язык интерфейса — русский; технические лейблы — латиница в нижнем регистре.
 - Брейкпоинты: 920px (сетки в колонку, код-панель прячется) и 640px (нав прячется).
 - Новые файлы создавать свободно; перед правкой существующих файлов репозитория —

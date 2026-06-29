@@ -1,4 +1,4 @@
-import { SortingMemoryHero } from "./components/SortingMemoryHero";
+import { SortingMemoryHero } from "../components/SortingMemoryHero";
 
 const memoryTasks = [
   ["Two Sum II", "Two Pointers", "повторить", "завтра"],
