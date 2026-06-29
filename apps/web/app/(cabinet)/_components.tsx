@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 
+import { CabinetIcon } from "./_icons";
+
 export function CabinetPanel({
   eyebrow,
   title,
@@ -25,15 +27,24 @@ export function MetricCard({
   value,
   hint,
   tone = "default",
+  icon,
 }: Readonly<{
   label: string;
   value: string;
   hint: string;
   tone?: "default" | "accent" | "success" | "warning";
+  icon?: string;
 }>) {
   return (
     <article className={`metric-card metric-card--${tone}`}>
-      <span>{label}</span>
+      <div className="metric-card__top">
+        {icon ? (
+          <span className="metric-card__icon">
+            <CabinetIcon name={icon} />
+          </span>
+        ) : null}
+        <span>{label}</span>
+      </div>
       <strong>{value}</strong>
       <p>{hint}</p>
     </article>

@@ -1,4 +1,7 @@
+import Link from "next/link";
+
 import { CabinetPanel, MetricCard, ProgressBar, StatusPill } from "../_components";
+import { CabinetIcon } from "../_icons";
 import { getDictionary } from "../../_content/i18n";
 import { overviewStats, reviewQueue, roadmapWeeks, weakPatterns } from "../_mock";
 
@@ -14,12 +17,21 @@ export default function DashboardPage() {
           <h1>{page.title}</h1>
           <p>{page.description}</p>
         </div>
-        <div className="cabinet-hero__card">
-          <span>{page.nextAction}</span>
+        <aside className="cabinet-hero__card">
+          <StatusPill tone="accent">{page.nextUp}</StatusPill>
+          <span className="cabinet-hero__card-kicker">{page.nextAction}</span>
           <strong>{page.nextTitle}</strong>
           <p>{page.nextMeta}</p>
-          <button>{copy.common.startReview}</button>
-        </div>
+          <div className="cabinet-hero__card-actions">
+            <Link className="cabinet-hero__cta" href="/cards/session">
+              {copy.common.startReview}
+              <CabinetIcon name="arrow" />
+            </Link>
+            <Link className="cabinet-hero__ghost" href="/reviews">
+              {page.openQueue}
+            </Link>
+          </div>
+        </aside>
       </section>
 
       <section className="metric-grid">

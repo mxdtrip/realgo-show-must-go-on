@@ -1,6 +1,8 @@
 import Link from "next/link";
 
 import { getDictionary } from "../_content/i18n";
+import { CabinetNav } from "./CabinetNav";
+import { CabinetIcon } from "./_icons";
 
 export default function CabinetLayout({
   children,
@@ -16,28 +18,34 @@ export default function CabinetLayout({
         <Link className="site-brand" href="/">
           {dictionary.common.brand}
         </Link>
-        <nav className="cabinet-nav" aria-label={copy.navAria}>
-          {copy.nav.map((item) => (
-            <Link href={item.href} key={item.href}>
-              {item.label}
-            </Link>
-          ))}
-        </nav>
-        <div className="cabinet-sidebar__note">
-          <span>{copy.mockMode}</span>
-          <p>{copy.mockNote}</p>
-        </div>
+
+        <CabinetNav groups={copy.navGroups} ariaLabel={copy.navAria} />
+
+        <Link className="cabinet-user" href="/settings" aria-label={copy.profile.menuAria}>
+          <span className="cabinet-user__avatar" aria-hidden="true">
+            {copy.profile.monogram}
+          </span>
+          <span className="cabinet-user__body">
+            <span className="cabinet-user__name">{copy.profile.name}</span>
+            <span className="cabinet-user__meta">{copy.profile.meta}</span>
+            <span className="cabinet-user__plan">{copy.profile.plan}</span>
+          </span>
+          <CabinetIcon className="cabinet-user__chevron" name="selector" />
+        </Link>
       </aside>
 
       <div className="cabinet-main">
         <header className="cabinet-topbar">
-          <div>
-            <span>{copy.eyebrow}</span>
-            <strong>{copy.target}</strong>
+          <span className="cabinet-topbar__eyebrow">{copy.eyebrow}</span>
+          <div className="cabinet-topbar__actions">
+            <Link className="cabinet-topbar__link" href="/">
+              {copy.backToMarketing}
+            </Link>
+            <Link className="cabinet-topbar__cta" href="/cards/session">
+              {copy.startReview}
+              <CabinetIcon name="arrow" />
+            </Link>
           </div>
-          <Link className="cabinet-topbar__link" href="/">
-            {copy.backToMarketing}
-          </Link>
         </header>
         {children}
       </div>

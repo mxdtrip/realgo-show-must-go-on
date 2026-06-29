@@ -168,21 +168,41 @@ const ru = {
   cabinet: {
     layout: {
       navAria: "Personal cabinet",
-      nav: [
-        { href: "/dashboard", label: "dashboard" },
-        { href: "/reviews", label: "reviews" },
-        { href: "/problems", label: "problems" },
-        { href: "/roadmap", label: "roadmap" },
-        { href: "/patterns", label: "patterns" },
-        { href: "/cards", label: "cards" },
-        { href: "/extension", label: "extension" },
-        { href: "/settings", label: "settings" },
+      navGroups: [
+        {
+          title: "подготовка",
+          items: [
+            { href: "/dashboard", label: "dashboard", icon: "dashboard", count: "" },
+            { href: "/reviews", label: "reviews", icon: "reviews", count: "12" },
+            { href: "/problems", label: "problems", icon: "problems", count: "" },
+            { href: "/cards", label: "cards", icon: "cards", count: "6" },
+          ],
+        },
+        {
+          title: "аналитика",
+          items: [
+            { href: "/roadmap", label: "roadmap", icon: "roadmap", count: "" },
+            { href: "/patterns", label: "patterns", icon: "patterns", count: "4" },
+          ],
+        },
+        {
+          title: "система",
+          items: [
+            { href: "/extension", label: "extension", icon: "extension", count: "" },
+            { href: "/settings", label: "settings", icon: "settings", count: "" },
+          ],
+        },
       ],
-      mockMode: "mock mode",
-      mockNote: "Кабинет работает на моках: backend API пока не подключаем.",
       eyebrow: "// personal memory layer",
-      target: "Backend SWE · interview in 21 days",
       backToMarketing: "back to marketing",
+      startReview: "start review",
+      profile: {
+        monogram: "BS",
+        name: "Backend SWE",
+        meta: "interview · через 21 день",
+        plan: "free mock",
+        menuAria: "Открыть аккаунт",
+      },
     },
     common: {
       startReview: "Start review",
@@ -198,8 +218,10 @@ const ru = {
         description:
           "Стартовый моковый кабинет показывает главный рабочий контур Engram: очередь повторений, слабые паттерны, прогресс roadmap и состояние подготовки.",
         nextAction: "next action",
+        nextUp: "next up",
         nextTitle: "Longest Substring",
         nextMeta: "Sliding Window · hard · сегодня",
+        openQueue: "Перейти к очереди",
         queueEyebrow: "queue",
         queueTitle: "Ближайшие повторения",
         patternsEyebrow: "patterns",
@@ -377,10 +399,10 @@ const ru = {
     },
     mock: {
       overviewStats: [
-        { label: "today queue", value: "12", hint: "8 задач, 3 карточки, 1 паттерн", tone: "accent" },
-        { label: "readiness", value: "68%", hint: "по моковым данным подготовки", tone: "success" },
-        { label: "weak spots", value: "4", hint: "паттерна требуют повторения", tone: "warning" },
-        { label: "streak", value: "6d", hint: "без пропуска повторений", tone: "default" },
+        { label: "today queue", value: "12", hint: "8 задач, 3 карточки, 1 паттерн", tone: "accent", icon: "queue" },
+        { label: "readiness", value: "68%", hint: "по моковым данным подготовки", tone: "success", icon: "readiness" },
+        { label: "weak spots", value: "4", hint: "паттерна требуют повторения", tone: "warning", icon: "weak" },
+        { label: "streak", value: "6d", hint: "без пропуска повторений", tone: "default", icon: "streak" },
       ],
       reviewQueue: [
         {
