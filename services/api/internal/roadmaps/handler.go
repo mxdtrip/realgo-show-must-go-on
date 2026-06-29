@@ -1,6 +1,7 @@
 package roadmaps
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -11,10 +12,14 @@ import (
 const neetcode150Code = "neetcode_150"
 
 type Handler struct {
-	repo Repository
+	repo repository
 }
 
-func NewHandler(repo Repository) *Handler {
+type repository interface {
+	List(ctx context.Context, code string) ([]Item, error)
+}
+
+func NewHandler(repo repository) *Handler {
 	return &Handler{repo: repo}
 }
 

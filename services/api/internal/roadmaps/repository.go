@@ -9,15 +9,11 @@ import (
 	"github.com/mxdtrip/freeburger/services/api/internal/storage/postgres/db"
 )
 
-type Repository interface {
-	List(ctx context.Context, code string) ([]Item, error)
-}
-
 type pgRepository struct {
 	q *db.Queries
 }
 
-func NewRepository(pool *pgxpool.Pool) Repository {
+func NewRepository(pool *pgxpool.Pool) *pgRepository {
 	return &pgRepository{q: db.New(pool)}
 }
 

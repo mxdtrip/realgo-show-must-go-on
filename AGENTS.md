@@ -31,7 +31,7 @@ Set a real `AUTH_JWT_SECRET` in `.env` before starting the stack.
 
 ## Coding Style & Naming Conventions
 
-Use `gofmt`; keep package names short and lowercase. Keep API internals under `services/api/internal`. HTTP handlers should stay thin: parse input, call a service, map known errors, and write through `internal/server/response` so successes use `data` and failures use `error`. Prefer sentinel errors plus `errors.Is` for expected failures. Wrap lower-level errors with context using `fmt.Errorf("area: action: %w", err)`. Repositories should hide `pgtype` conversion behind small helpers. Declare narrow interfaces at the consumer side when they are used for tests. Migrations use numbered names like `000016_use_review_rating_labels.up.sql`.
+Use `gofmt`; keep package names short and lowercase. Keep API internals under `services/api/internal`. HTTP handlers should stay thin: parse input, call a service, map known errors, and write through `internal/server/response` so successes use `data` and failures use `error`. Prefer sentinel errors plus `errors.Is` for expected failures. Wrap lower-level errors with context using `fmt.Errorf("area: action: %w", err)`. Repositories should hide `pgtype` conversion behind small helpers. In Go style, define narrow interfaces at the consumer side, not the implementation side; for example, a handler or service declares the repository methods it consumes. Migrations use numbered names like `000016_use_review_rating_labels.up.sql`.
 
 ## Testing Guidelines
 
