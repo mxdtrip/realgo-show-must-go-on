@@ -1898,6 +1898,10 @@ h3 {
 }
 
 /* cards overview */
+.cards-page > .cabinet-panel + .cabinet-panel {
+  margin-top: 18px;
+}
+
 .cards-overview {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;

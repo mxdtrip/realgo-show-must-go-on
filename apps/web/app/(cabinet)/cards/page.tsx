@@ -7,7 +7,7 @@ export default function CardsPage() {
   const page = getDictionary().cabinet.pages.cards;
 
   return (
-    <main className="cabinet-page">
+    <main className="cabinet-page cards-page">
       <section className="cabinet-page-head">
         <span className="cabinet-eyebrow">{page.eyebrow}</span>
         <h1>{page.title}</h1>
