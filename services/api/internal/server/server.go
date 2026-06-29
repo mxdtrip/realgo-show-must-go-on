@@ -10,6 +10,7 @@ import (
 
 	"github.com/mxdtrip/freeburger/services/api/internal/auth"
 	"github.com/mxdtrip/freeburger/services/api/internal/reviews"
+	"github.com/mxdtrip/freeburger/services/api/internal/roadmaps"
 	"github.com/mxdtrip/freeburger/services/api/internal/storage/postgres"
 	"github.com/mxdtrip/freeburger/services/api/internal/storage/redis"
 )
@@ -44,6 +45,7 @@ func New(deps Deps) http.Handler {
 
 	reviewsSvc := reviews.NewService(reviews.NewRepository(deps.Postgres.Pool), deps.Logger)
 	reviewsHandler := reviews.NewHandler(reviewsSvc, deps.Logger)
+	roadmapsHandler := roadmaps.NewHandler(roadmaps.NewRepository(deps.Postgres.Pool))
 
 	r.Route("/api/v1", func(r chi.Router) {
 		ah := &authHandler{svc: deps.Auth}
@@ -60,6 +62,9 @@ func New(deps Deps) http.Handler {
 
 		r.Route("/reviews", func(r chi.Router) {
 			reviews.RegisterRoutes(r, reviewsHandler)
+		})
+		r.Route("/roadmaps", func(r chi.Router) {
+			roadmaps.RegisterRoutes(r, roadmapsHandler)
 		})
 	})
 
