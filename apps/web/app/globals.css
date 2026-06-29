@@ -267,27 +267,18 @@ h3 {
   text-shadow:
     0 0 1px rgba(255, 255, 255, 0.35),
     0 0 26px rgba(56, 139, 253, 0.26);
-  /* base transform transition is always present so letters never teleport
-     when the motion class and position change in the same commit */
-  transition:
-    transform 0.82s cubic-bezier(0.22, 1, 0.36, 1),
-    opacity 0.45s ease,
-    filter 0.6s ease,
-    color 0.2s ease,
-    text-shadow 0.2s ease;
-  will-change: transform, opacity, filter;
-}
-
-.word-letter.motion-gathering {
-  /* Every letter travels its whole path over the same time and decelerates to a
-     soft stop. ease-out-cubic stays steady early (no front-loaded teleport for
-     the far letters) and still lands smoothly. */
+  /* The scatter/gather transition lives on the BASE rule (idle and gathering
+     share it), so starting the motion never changes `transition` in the same
+     commit as `transform` — that Chromium quirk is what made some letters skip
+     the animation and teleport. Every letter travels its whole path over the
+     same time and decelerates to a soft stop (ease-out-cubic). */
   transition:
     transform 0.95s cubic-bezier(0.33, 1, 0.68, 1),
     opacity 0.8s cubic-bezier(0.33, 1, 0.68, 1),
     filter 0.8s cubic-bezier(0.33, 1, 0.68, 1),
     color 0.2s ease,
     text-shadow 0.2s ease;
+  will-change: transform, opacity, filter;
 }
 
 .word-letter.motion-swapping {

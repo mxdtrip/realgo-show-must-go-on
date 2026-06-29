@@ -123,8 +123,8 @@ function chaosPoses(size: SceneSize, order: number[]) {
   const g = geometry(size);
   const centerX = size.width / 2;
   const centerY = size.height * 0.4;
-  const radiusX = size.width * 0.34;
-  const radiusY = size.height * 0.22;
+  const radiusX = size.width * 0.42;
+  const radiusY = size.height * 0.32;
 
   return order.map((key, index) => {
     const angle = Math.random() * Math.PI * 2;
@@ -381,10 +381,10 @@ export function SortingMemoryHero() {
   }, [isSorting, order, poses.length, size]);
 
   useEffect(() => {
-    if (isSorting || poses.length === 0) return;
-    // While intro is scattered, keep it scattered (re-cast at the real size);
-    // afterwards keep the word centered on viewport resize.
-    setPoses(introRef.current ? chaosPoses(size, order) : rowPoses(size, order));
+    // Re-scatter onto the oval for the new viewport while the word is apart;
+    // the gathered word is recentred by the effect below.
+    if (isSorting || poses.length === 0 || (!introRef.current && !scattered)) return;
+    setPoses(chaosPoses(size, order));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [size.width, size.height]);
 
@@ -405,11 +405,13 @@ export function SortingMemoryHero() {
   }, []);
 
   useEffect(() => {
-    // Re-flow only the gathered word; don't re-randomise a scattered layout.
+    // Keep the gathered word centred for the current viewport and metrics. Also
+    // re-runs when sorting ends, fixing a left shift when the word was first
+    // placed before the real (wider) viewport size had been measured.
     if (isSorting || poses.length === 0 || introRef.current || scattered) return;
     setPoses(rowPoses(size, order));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [metricsVersion]);
+  }, [metricsVersion, isSorting, size.width, size.height]);
 
   // Intro auto-gather: hold the scattered word for a beat, then sort it in.
   useEffect(() => {
