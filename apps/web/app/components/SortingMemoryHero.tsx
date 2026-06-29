@@ -477,7 +477,9 @@ export function SortingMemoryHero() {
           const width = g.widths[pose.key];
           const dx = pose.x + width / 2 - size.width / 2;
           const dy = pose.y + g.font * 0.54 - size.height * 0.4;
-          const distance = Math.hypot(dx, dy);
+          // Vertical offset counts double, so letters drifting up/down fade and
+          // blur twice as hard as those spreading sideways.
+          const distance = Math.hypot(dx, dy * 2);
           const t = clamp((distance - size.width * 0.22) / (size.width * 0.32), 0, 1);
           const blur = t * 7;
           const fade = 1 - t * 0.8;
@@ -495,7 +497,6 @@ export function SortingMemoryHero() {
                 opacity: pose.visible ? fade : 0,
                 filter: blur > 0.05 ? `blur(${blur.toFixed(2)}px)` : undefined,
                 transform: `translate3d(${pose.x}px, ${pose.y}px, 0) rotate(${pose.rotate}deg)`,
-                transitionDelay: motionMode === "gathering" ? `${pose.key * 30}ms` : "0ms",
                 width,
               }}
             >
