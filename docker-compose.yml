@@ -62,6 +62,15 @@ services:
     command: sh -c "pip install --no-cache-dir -r requirements.txt && python seed_roadmap.py neetcode_150.yaml"
     restart: "no"
 
+  caddy:
+    image: caddy:2-alpine
+    depends_on:
+      - api
+    ports:
+      - "${API_PORT:-8080}:80"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+
   api:
     build:
       context: ./services/api
@@ -87,8 +96,8 @@ services:
       AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:?AUTH_JWT_SECRET must be set}
       AUTH_ACCESS_TTL: ${AUTH_ACCESS_TTL:-15m}
       AUTH_REFRESH_TTL: ${AUTH_REFRESH_TTL:-720h}
-    ports:
-      - "${API_PORT:-8080}:8080"
+    expose:
+      - "8080"
 
 volumes:
   pgdata:
