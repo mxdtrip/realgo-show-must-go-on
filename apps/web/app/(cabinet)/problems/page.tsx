@@ -1,23 +1,24 @@
 import { CabinetPanel, StatusPill } from "../_components";
+import { getDictionary } from "../../_content/i18n";
 import { problems } from "../_mock";
 
 export default function ProblemsPage() {
+  const page = getDictionary().cabinet.pages.problems;
+
   return (
     <main className="cabinet-page">
       <section className="cabinet-page-head">
-        <span className="cabinet-eyebrow">/problems</span>
-        <h1>Личная база задач</h1>
-        <p>Здесь будут задачи, сохранённые расширением или вручную. Сейчас — статичный мок без backend.</p>
+        <span className="cabinet-eyebrow">{page.eyebrow}</span>
+        <h1>{page.title}</h1>
+        <p>{page.description}</p>
       </section>
 
-      <CabinetPanel eyebrow="library" title="Saved problems">
+      <CabinetPanel eyebrow={page.panelEyebrow} title={page.panelTitle}>
         <div className="cabinet-table">
           <div className="cabinet-table__row cabinet-table__row--head">
-            <span>task</span>
-            <span>platform</span>
-            <span>pattern</span>
-            <span>status</span>
-            <span>next review</span>
+            {page.tableHead.map((heading) => (
+              <span key={heading}>{heading}</span>
+            ))}
           </div>
           {problems.map((problem) => (
             <div className="cabinet-table__row" key={problem.title}>

@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { getDictionary } from "../_content/i18n";
+
 const WORD = "engram";
 const LETTER_COUNT = WORD.length;
 const GATHER_MS = 980;
@@ -150,6 +152,8 @@ function recordSort(code: string, order: number[]) {
 }
 
 export function SortingMemoryHero() {
+  const dictionary = getDictionary();
+  const copy = dictionary.marketing.hero;
   const router = useRouter();
   const sceneRef = useRef<HTMLElement | null>(null);
   const runIdRef = useRef(0);
@@ -336,14 +340,15 @@ export function SortingMemoryHero() {
   return (
     <main className="minimal-scene" ref={sceneRef}>
       <header className="site-strip">
-        <a className="site-brand" href="/" aria-label="Engram home">
-          Engram
+        <a className="site-brand" href="/" aria-label={copy.homeAria}>
+          {dictionary.common.brand}
         </a>
-        <nav className="site-nav" aria-label="Site sections">
-          <a href="#memory">Memory</a>
-          <a href="#roadmap">Roadmap</a>
-          <a href="#reviews">Reviews</a>
-          <a href="#pricing">Pricing</a>
+        <nav className="site-nav" aria-label={copy.navAria}>
+          {copy.nav.map((item) => (
+            <a href={`#${item.toLowerCase()}`} key={item}>
+              {item}
+            </a>
+          ))}
         </nav>
         <div className="site-auth">
           <button
@@ -353,7 +358,7 @@ export function SortingMemoryHero() {
               setAuthOpen(true);
             }}
           >
-            Log in
+            {copy.auth.login}
           </button>
           <button
             type="button"
@@ -362,13 +367,13 @@ export function SortingMemoryHero() {
               setAuthOpen(true);
             }}
           >
-            Sign up
+            {copy.auth.signup}
           </button>
         </div>
       </header>
 
       <textarea
-        aria-label="Sorting code"
+        aria-label={copy.sortingCodeAria}
         className="code-sheet"
         spellCheck={false}
         value={code}
@@ -376,17 +381,14 @@ export function SortingMemoryHero() {
       />
 
       <div className="hero-tagline">
-        <p className="eyebrow">// spaced-repetition for interview prep</p>
-        <p>
-          Реши задачу один раз — Engram пересоберёт её в памяти к нужному дню. Перепиши код
-          сортировки слева и запусти: алгоритм наводит порядок прямо в названии.
-        </p>
+        <p className="eyebrow">{copy.eyebrow}</p>
+        <p>{copy.tagline}</p>
       </div>
 
       <div
         className="scene-toggle"
         role="group"
-        aria-label="Sorting controls"
+        aria-label={copy.sortingControlsAria}
         data-active={activeAction}
       >
         <span className="scene-toggle__thumb" aria-hidden="true" />
@@ -396,7 +398,7 @@ export function SortingMemoryHero() {
           type="button"
           onClick={handleChaos}
         >
-          Chaos
+          {copy.chaos}
         </button>
         <button
           className={activeAction === "sort" ? "active" : ""}
@@ -404,11 +406,11 @@ export function SortingMemoryHero() {
           type="button"
           onClick={handleSort}
         >
-          Sort
+          {copy.sort}
         </button>
       </div>
 
-      <div className="word-stage" aria-label="engram">
+      <div className="word-stage" aria-label={copy.wordAria}>
         {poses.map((pose) => (
           <span
             className={["word-letter", activeKeys.includes(pose.key) ? "active" : ""]
@@ -432,7 +434,7 @@ export function SortingMemoryHero() {
       {authOpen ? (
         <div className="auth-layer" role="presentation" onMouseDown={() => setAuthOpen(false)}>
           <section
-            aria-label={authMode === "login" ? "Log in" : "Create account"}
+            aria-label={authMode === "login" ? copy.auth.loginAria : copy.auth.signupAria}
             className="auth-panel"
             onMouseDown={(event) => event.stopPropagation()}
           >
@@ -442,36 +444,38 @@ export function SortingMemoryHero() {
                 type="button"
                 onClick={() => setAuthMode("login")}
               >
-                Log in
+                {copy.auth.login}
               </button>
               <button
                 className={authMode === "signup" ? "active" : ""}
                 type="button"
                 onClick={() => setAuthMode("signup")}
               >
-                Sign up
+                {copy.auth.signup}
               </button>
             </div>
             <form className="auth-form" onSubmit={handleAuthSubmit}>
               <label>
-                Email
-                <input autoComplete="email" placeholder="you@company.com" type="email" />
+                {copy.auth.email}
+                <input autoComplete="email" placeholder={copy.auth.emailPlaceholder} type="email" />
               </label>
               <label>
-                Password
+                {copy.auth.password}
                 <input
                   autoComplete={authMode === "login" ? "current-password" : "new-password"}
-                  placeholder="••••••••"
+                  placeholder={copy.auth.passwordPlaceholder}
                   type="password"
                 />
               </label>
               {authMode === "signup" ? (
                 <label>
-                  Interview date
+                  {copy.auth.interviewDate}
                   <input type="date" />
                 </label>
               ) : null}
-              <button type="submit">{authMode === "login" ? "Continue" : "Create account"}</button>
+              <button type="submit">
+                {authMode === "login" ? copy.auth.continue : copy.auth.createAccount}
+              </button>
             </form>
           </section>
         </div>

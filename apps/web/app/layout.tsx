@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono, Space_Grotesk, Space_Mono } from "next/font/google";
+import { getDictionary } from "./_content/i18n";
 import "./globals.css";
 
 const inter = Inter({
@@ -29,10 +30,11 @@ const spaceMono = Space_Mono({
   display: "swap",
 });
 
+const metadataCopy = getDictionary().common.metadata;
+
 export const metadata: Metadata = {
-  title: "Engram — Memory layer for interview prep",
-  description:
-    "Engram helps you remember solved interview tasks, review them at the right time, and prepare with a clearer plan.",
+  title: metadataCopy.title,
+  description: metadataCopy.description,
 };
 
 export default function RootLayout({

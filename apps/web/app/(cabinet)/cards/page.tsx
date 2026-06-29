@@ -1,16 +1,19 @@
 import { CabinetPanel } from "../_components";
+import { getDictionary } from "../../_content/i18n";
 import { cards } from "../_mock";
 
 export default function CardsPage() {
+  const page = getDictionary().cabinet.pages.cards;
+
   return (
     <main className="cabinet-page">
       <section className="cabinet-page-head">
-        <span className="cabinet-eyebrow">/cards</span>
-        <h1>Карточки повторения</h1>
-        <p>Стартовая структура карточек Type A/B/C: без готового кода, только паттерн, механика и edge cases.</p>
+        <span className="cabinet-eyebrow">{page.eyebrow}</span>
+        <h1>{page.title}</h1>
+        <p>{page.description}</p>
       </section>
 
-      <CabinetPanel eyebrow="anki-like" title="Today cards">
+      <CabinetPanel eyebrow={page.panelEyebrow} title={page.panelTitle}>
         <div className="cabinet-card-grid">
           {cards.map((card) => (
             <article className="memory-card" key={card.type}>

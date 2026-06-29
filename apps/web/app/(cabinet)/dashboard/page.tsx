@@ -1,23 +1,24 @@
 import { CabinetPanel, MetricCard, ProgressBar, StatusPill } from "../_components";
+import { getDictionary } from "../../_content/i18n";
 import { overviewStats, reviewQueue, roadmapWeeks, weakPatterns } from "../_mock";
 
 export default function DashboardPage() {
+  const copy = getDictionary().cabinet;
+  const page = copy.pages.dashboard;
+
   return (
     <main className="cabinet-page">
       <section className="cabinet-hero">
         <div>
-          <span className="cabinet-eyebrow">/dashboard</span>
-          <h1>Сегодня повторяем то, что реально может забыться.</h1>
-          <p>
-            Стартовый моковый кабинет показывает главный рабочий контур Engram: очередь повторений,
-            слабые паттерны, прогресс roadmap и состояние подготовки.
-          </p>
+          <span className="cabinet-eyebrow">{page.eyebrow}</span>
+          <h1>{page.title}</h1>
+          <p>{page.description}</p>
         </div>
         <div className="cabinet-hero__card">
-          <span>next action</span>
-          <strong>Longest Substring</strong>
-          <p>Sliding Window · hard · сегодня</p>
-          <button>Start review</button>
+          <span>{page.nextAction}</span>
+          <strong>{page.nextTitle}</strong>
+          <p>{page.nextMeta}</p>
+          <button>{copy.common.startReview}</button>
         </div>
       </section>
 
@@ -28,7 +29,7 @@ export default function DashboardPage() {
       </section>
 
       <div className="cabinet-grid">
-        <CabinetPanel eyebrow="queue" title="Ближайшие повторения">
+        <CabinetPanel eyebrow={page.queueEyebrow} title={page.queueTitle}>
           <div className="review-list">
             {reviewQueue.slice(0, 3).map((item) => (
               <article className="review-list__item" key={item.id}>
@@ -43,7 +44,7 @@ export default function DashboardPage() {
           </div>
         </CabinetPanel>
 
-        <CabinetPanel eyebrow="patterns" title="Слабые зоны">
+        <CabinetPanel eyebrow={page.patternsEyebrow} title={page.patternsTitle}>
           <div className="pattern-stack">
             {weakPatterns.map((pattern) => (
               <article key={pattern.name}>
@@ -59,7 +60,7 @@ export default function DashboardPage() {
         </CabinetPanel>
       </div>
 
-      <CabinetPanel eyebrow="roadmap" title="Engram Core Roadmap">
+      <CabinetPanel eyebrow={page.roadmapEyebrow} title={page.roadmapTitle}>
         <div className="roadmap-stack">
           {roadmapWeeks.map((week) => (
             <article className="cabinet-roadmap-row" key={week.week}>

@@ -1,45 +1,39 @@
 import { CabinetPanel, StatusPill } from "../_components";
+import { getDictionary } from "../../_content/i18n";
 
 export default function SettingsPage() {
+  const page = getDictionary().cabinet.pages.settings;
+
   return (
     <main className="cabinet-page">
       <section className="cabinet-page-head">
-        <span className="cabinet-eyebrow">/settings</span>
-        <h1>Настройки аккаунта</h1>
-        <p>Моковый экран для timezone, даты интервью, privacy controls и будущих billing-настроек.</p>
+        <span className="cabinet-eyebrow">{page.eyebrow}</span>
+        <h1>{page.title}</h1>
+        <p>{page.description}</p>
       </section>
 
       <div className="cabinet-grid">
-        <CabinetPanel eyebrow="profile" title="Preparation settings">
+        <CabinetPanel eyebrow={page.profileEyebrow} title={page.profileTitle}>
           <div className="settings-list">
+            {page.settings.map(([label, value]) => (
+              <div key={label}>
+                <span>{label}</span>
+                <strong>{value}</strong>
+              </div>
+            ))}
             <div>
-              <span>email</span>
-              <strong>demo@engram.dev</strong>
-            </div>
-            <div>
-              <span>timezone</span>
-              <strong>Europe/Moscow</strong>
-            </div>
-            <div>
-              <span>interview date</span>
-              <strong>2026-07-20</strong>
-            </div>
-            <div>
-              <span>plan</span>
-              <StatusPill tone="accent">Free mock</StatusPill>
+              <span>{page.planLabel}</span>
+              <StatusPill tone="accent">{page.plan}</StatusPill>
             </div>
           </div>
         </CabinetPanel>
 
-        <CabinetPanel eyebrow="privacy" title="Data controls">
+        <CabinetPanel eyebrow={page.privacyEyebrow} title={page.privacyTitle}>
           <div className="privacy-box">
-            <p>
-              Не вставляй NDA-материалы, premium/editorial-контент, скриншоты интервью или чужие
-              закрытые материалы в заметки и AI-поля.
-            </p>
+            <p>{page.privacyDescription}</p>
             <div className="privacy-actions">
-              <button>Export progress</button>
-              <button>Delete account</button>
+              <button>{page.exportProgress}</button>
+              <button>{page.deleteAccount}</button>
             </div>
           </div>
         </CabinetPanel>
