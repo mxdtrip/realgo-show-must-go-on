@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
+	"github.com/mxdtrip/freeburger/services/api/internal/reviews"
 	"github.com/mxdtrip/freeburger/services/api/internal/storage/postgres"
 	"github.com/mxdtrip/freeburger/services/api/internal/storage/redis"
 )
@@ -36,9 +37,10 @@ func New(deps Deps) http.Handler {
 	r.Get("/healthz", health.live)
 	r.Get("/readyz", health.ready)
 
-	r.Route("/api/v1", func(r chi.Router) {
-		// Domain routes (auth, extension events, reviews, dashboard, ...) are
-		// mounted here in their own pull requests.
+	reviewsSvc := reviews.NewService(deps.Logger)
+	reviewsHandler := reviews.NewHandler(reviewsSvc, deps.Logger)
+	r.Route("/api/v1/reviews", func(r chi.Router) {
+		reviews.RegisterRoutes(r, reviewsHandler)
 	})
 
 	return r
