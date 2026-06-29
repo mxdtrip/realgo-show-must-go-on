@@ -221,13 +221,13 @@ h3 {
 }
 
 .site-auth button:last-child {
-  background: var(--success);
+  background: var(--accent);
   color: #ffffff;
   font-weight: 600;
 }
 
 .site-auth button:last-child:hover {
-  background: var(--success-bright);
+  background: var(--accent-bright);
 }
 
 /* ============================================================
