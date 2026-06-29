@@ -7,7 +7,6 @@
 *.pem
 *.key
 *.p12
-AGENTS.md
 
 # Dependencies and package-manager caches
 node_modules/
