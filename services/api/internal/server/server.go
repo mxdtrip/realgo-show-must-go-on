@@ -39,8 +39,22 @@ func New(deps Deps) http.Handler {
 
 	reviewsSvc := reviews.NewService(deps.Logger)
 	reviewsHandler := reviews.NewHandler(reviewsSvc, deps.Logger)
-	r.Route("/api/v1/reviews", func(r chi.Router) {
-		reviews.RegisterRoutes(r, reviewsHandler)
+
+	r.Route("/api/v1", func(r chi.Router) {
+		ah := &authHandler{svc: deps.Auth}
+		r.Route("/auth", func(r chi.Router) {
+			r.Post("/register", ah.register)
+			r.Post("/login", ah.login)
+			r.Post("/refresh", ah.refresh)
+			r.Post("/logout", ah.logout)
+		})
+		r.Route("/users", func(r chi.Router) {
+			r.With(requireAuth(deps.Auth)).Get("/me", ah.me)
+		})
+
+		r.Route("/reviews", func(r chi.Router) {
+			reviews.RegisterRoutes(r, reviewsHandler)
+		})
 	})
 
 	return r
