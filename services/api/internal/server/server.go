@@ -9,6 +9,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 
 	"github.com/mxdtrip/freeburger/services/api/internal/reviews"
+	"github.com/mxdtrip/freeburger/services/api/internal/auth"
 	"github.com/mxdtrip/freeburger/services/api/internal/storage/postgres"
 	"github.com/mxdtrip/freeburger/services/api/internal/storage/redis"
 )
@@ -20,6 +21,7 @@ type Deps struct {
 	Logger   *slog.Logger
 	Postgres *postgres.Storage
 	Redis    *redis.Storage
+	Auth     *auth.Service
 }
 
 // New builds the application's HTTP handler with the base middleware stack,
