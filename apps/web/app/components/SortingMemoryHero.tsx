@@ -70,9 +70,9 @@ function shuffle(order: number[]) {
 function geometry(size: SceneSize) {
   const font = clamp(Math.floor(size.width / 8.2), 54, 132);
   // Slot wide enough that even the widest glyph ('m') clears its neighbours,
-  // plus an explicit, even gap so the letters breathe instead of touching.
+  // plus a small, even gap so the letters sit close without touching.
   const letterWidth = font * 0.6;
-  const gap = clamp(font * 0.18, 12, 22);
+  const gap = clamp(font * 0.08, 5, 11);
   const total = LETTER_COUNT * letterWidth + (LETTER_COUNT - 1) * gap;
 
   return {
@@ -167,9 +167,12 @@ export function SortingMemoryHero() {
   const [order, setOrder] = useState(() => shuffle([0, 1, 2, 3, 4, 5]));
   const [poses, setPoses] = useState<Pose[]>([]);
   const [activeKeys, setActiveKeys] = useState<number[]>([]);
+  const [activeLines, setActiveLines] = useState<number[]>([]);
   const [isSorting, setIsSorting] = useState(false);
   const [motionMode, setMotionMode] = useState<MotionMode>("idle");
-  const [activeAction, setActiveAction] = useState<"chaos" | "sort">("chaos");
+  // Whether the letters are currently scattered; a click on empty space toggles
+  // between scattering and gathering. Starts scattered to match the intro.
+  const [scattered, setScattered] = useState(true);
 
   // Intro: letters start scattered, then auto-gather after a short beat.
   const introRef = useRef(true);
@@ -184,8 +187,10 @@ export function SortingMemoryHero() {
     runIdRef.current += 1;
     setOrder(next);
     setActiveKeys([]);
+    setActiveLines([]);
     setMotionMode("gathering");
     setPoses(chaosPoses(size, next));
+    setScattered(true);
   }, [isSorting, order, size]);
 
   const sort = useCallback(async () => {
@@ -203,9 +208,17 @@ export function SortingMemoryHero() {
       return;
     }
 
+    // Which source line each kind of step maps to, so we can light it up while
+    // the step plays. Found by keyword, so it survives the user editing the code.
+    const codeLines = code.split("\n");
+    const lineWith = (needle: string) => codeLines.findIndex((line) => line.includes(needle));
+    const compareLine = lineWith("compare(");
+    const swapLine = lineWith("swap(");
+
     setIsSorting(true);
     let slotOrder = [...order];
     setMotionMode("gathering");
+    setActiveLines([]);
     setPoses(rowPoses(size, slotOrder));
 
     await sleep(GATHER_MS);
@@ -218,6 +231,8 @@ export function SortingMemoryHero() {
       const keyA = slotOrder[step.a];
       const keyB = slotOrder[step.b];
       setActiveKeys([keyA, keyB]);
+      const stepLine = step.type === "compare" ? compareLine : swapLine;
+      setActiveLines(stepLine >= 0 ? [stepLine] : []);
 
       if (step.type === "compare") {
         await sleep(COMPARE_MS);
@@ -254,9 +269,11 @@ export function SortingMemoryHero() {
     if (runIdRef.current !== runId) return;
 
     setActiveKeys([]);
+    setActiveLines([]);
     setOrder(recording.result);
     setIsSorting(false);
     setMotionMode("idle");
+    setScattered(false);
   }, [code, isSorting, order, size]);
 
   useEffect(() => {
@@ -273,19 +290,27 @@ export function SortingMemoryHero() {
     }
   }, []);
 
-  const handleChaos = useCallback(() => {
-    if (isSorting) return;
-    cancelIntro();
-    setActiveAction("chaos");
-    setChaos();
-  }, [cancelIntro, isSorting, setChaos]);
-
-  const handleSort = useCallback(() => {
-    if (isSorting) return;
-    cancelIntro();
-    setActiveAction("sort");
-    void sort();
-  }, [cancelIntro, isSorting, sort]);
+  // A click on empty space toggles the scene: scatter the letters, then gather
+  // (and sort) them on the next click. Clicks on real controls are ignored.
+  const handleSceneClick = useCallback(
+    (event: React.MouseEvent<HTMLElement>) => {
+      if (isSorting) return;
+      if (
+        (event.target as HTMLElement).closest(
+          "a, button, input, textarea, .code-editor, .site-strip, .auth-layer",
+        )
+      ) {
+        return;
+      }
+      cancelIntro();
+      if (scattered) {
+        void sort();
+      } else {
+        setChaos();
+      }
+    },
+    [cancelIntro, isSorting, scattered, setChaos, sort],
+  );
 
   const handleAuthSubmit = useCallback(
     (event: React.FormEvent<HTMLFormElement>) => {
@@ -329,7 +354,6 @@ export function SortingMemoryHero() {
     introTimerRef.current = window.setTimeout(() => {
       introRef.current = false;
       introTimerRef.current = null;
-      setActiveAction("sort");
       sortRef.current();
     }, 1600);
     return () => {
@@ -341,7 +365,7 @@ export function SortingMemoryHero() {
   }, []);
 
   return (
-    <main className="minimal-scene" ref={sceneRef}>
+    <main className="minimal-scene" ref={sceneRef} onClick={handleSceneClick}>
       <header className="site-strip">
         <a className="site-brand" href="/" aria-label={copy.homeAria}>
           {dictionary.common.brand}
@@ -375,42 +399,30 @@ export function SortingMemoryHero() {
         </div>
       </header>
 
-      <textarea
-        aria-label={copy.sortingCodeAria}
-        className="code-sheet"
-        spellCheck={false}
-        value={code}
-        onChange={(event) => setCode(event.target.value)}
-      />
+      <div className="code-editor">
+        <pre className="code-lines" aria-hidden="true">
+          {code.split("\n").map((line, index) => (
+            <span
+              className={activeLines.includes(index) ? "code-line active" : "code-line"}
+              key={index}
+            >
+              {line.length > 0 ? line : " "}
+            </span>
+          ))}
+        </pre>
+        <textarea
+          aria-label={copy.sortingCodeAria}
+          className="code-sheet"
+          spellCheck={false}
+          wrap="off"
+          value={code}
+          onChange={(event) => setCode(event.target.value)}
+        />
+      </div>
 
       <div className="hero-tagline">
         <p className="eyebrow">{copy.eyebrow}</p>
         <p>{copy.tagline}</p>
-      </div>
-
-      <div
-        className="scene-toggle"
-        role="group"
-        aria-label={copy.sortingControlsAria}
-        data-active={activeAction}
-      >
-        <span className="scene-toggle__thumb" aria-hidden="true" />
-        <button
-          className={activeAction === "chaos" ? "active" : ""}
-          disabled={isSorting}
-          type="button"
-          onClick={handleChaos}
-        >
-          {copy.chaos}
-        </button>
-        <button
-          className={activeAction === "sort" ? "active" : ""}
-          disabled={isSorting}
-          type="button"
-          onClick={handleSort}
-        >
-          {copy.sort}
-        </button>
       </div>
 
       <div className="word-stage" aria-label={copy.wordAria}>
@@ -426,6 +438,7 @@ export function SortingMemoryHero() {
               height: g.font * 1.08,
               opacity: pose.visible ? 1 : 0,
               transform: `translate3d(${pose.x}px, ${pose.y}px, 0) rotate(${pose.rotate}deg)`,
+              transitionDelay: motionMode === "gathering" ? `${pose.key * 45}ms` : "0ms",
               width: g.letterWidth,
             }}
           >
