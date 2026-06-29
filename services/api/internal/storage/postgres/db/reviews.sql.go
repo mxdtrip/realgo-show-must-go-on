@@ -21,7 +21,7 @@ type CreateReviewAttemptParams struct {
 	UserID      int64
 	ProblemID   pgtype.Int8
 	PatternID   pgtype.Int8
-	Rating      int32
+	Rating      string
 	ReviewType  string
 	DurationSec pgtype.Int4
 	WasCorrect  pgtype.Bool
@@ -75,7 +75,7 @@ type GetReviewScheduleByIDRow struct {
 	Stability      float64
 	Difficulty     float64
 	ReviewCount    pgtype.Int4
-	LastRating     pgtype.Int4
+	LastRating     pgtype.Text
 	State          int16
 	Lapses         int32
 	LastReviewAt   pgtype.Timestamptz
@@ -104,13 +104,44 @@ func (q *Queries) GetReviewScheduleByID(ctx context.Context, arg GetReviewSchedu
 	return i, err
 }
 
+const getReviewStats = `-- name: GetReviewStats :one
+SELECT
+    COUNT(*)::integer AS total_reviews,
+    COUNT(*) FILTER (WHERE state = 0)::integer AS new_cards,
+    COUNT(*) FILTER (WHERE state IN (1, 3))::integer AS learning_cards,
+    COUNT(*) FILTER (WHERE state = 2)::integer AS review_cards
+FROM review_schedules
+WHERE user_id = $1
+`
+
+type GetReviewStatsRow struct {
+	TotalReviews  int32
+	NewCards      int32
+	LearningCards int32
+	ReviewCards   int32
+}
+
+func (q *Queries) GetReviewStats(ctx context.Context, userID int64) (GetReviewStatsRow, error) {
+	row := q.db.QueryRow(ctx, getReviewStats, userID)
+	var i GetReviewStatsRow
+	err := row.Scan(
+		&i.TotalReviews,
+		&i.NewCards,
+		&i.LearningCards,
+		&i.ReviewCards,
+	)
+	return i, err
+}
+
 const getTodayReviews = `-- name: GetTodayReviews :many
 SELECT rs.id, rs.user_id, rs.problem_id, rs.pattern_id, rs.next_review_at,
        rs.interval_days, rs.stability, rs.difficulty, rs.review_count,
        rs.last_rating, rs.state, rs.lapses, rs.last_review_at, rs.remaining_steps,
-       p.title AS problem_title, p.url AS problem_url
+       p.title AS problem_title, p.url AS problem_url,
+       pt.name AS pattern_title
 FROM review_schedules rs
 LEFT JOIN problems p ON p.id = rs.problem_id
+LEFT JOIN patterns pt ON pt.id = rs.pattern_id
 WHERE rs.user_id = $1 AND rs.next_review_at <= NOW()
 ORDER BY rs.next_review_at ASC
 LIMIT $2
@@ -131,13 +162,14 @@ type GetTodayReviewsRow struct {
 	Stability      float64
 	Difficulty     float64
 	ReviewCount    pgtype.Int4
-	LastRating     pgtype.Int4
+	LastRating     pgtype.Text
 	State          int16
 	Lapses         int32
 	LastReviewAt   pgtype.Timestamptz
 	RemainingSteps int32
 	ProblemTitle   pgtype.Text
 	ProblemUrl     pgtype.Text
+	PatternTitle   pgtype.Text
 }
 
 func (q *Queries) GetTodayReviews(ctx context.Context, arg GetTodayReviewsParams) ([]GetTodayReviewsRow, error) {
@@ -166,6 +198,7 @@ func (q *Queries) GetTodayReviews(ctx context.Context, arg GetTodayReviewsParams
 			&i.RemainingSteps,
 			&i.ProblemTitle,
 			&i.ProblemUrl,
+			&i.PatternTitle,
 		); err != nil {
 			return nil, err
 		}
@@ -195,7 +228,7 @@ type UpdateReviewScheduleParams struct {
 	Stability      float64
 	Difficulty     float64
 	ReviewCount    pgtype.Int4
-	LastRating     pgtype.Int4
+	LastRating     pgtype.Text
 	State          int16
 	Lapses         int32
 	LastReviewAt   pgtype.Timestamptz
@@ -212,7 +245,7 @@ type UpdateReviewScheduleRow struct {
 	Stability      float64
 	Difficulty     float64
 	ReviewCount    pgtype.Int4
-	LastRating     pgtype.Int4
+	LastRating     pgtype.Text
 	State          int16
 	Lapses         int32
 	LastReviewAt   pgtype.Timestamptz

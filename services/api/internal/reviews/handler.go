@@ -1,6 +1,7 @@
 package reviews
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -13,6 +14,14 @@ import (
 type Handler struct {
 	svc Service
 	log interface{ Error(string, ...any) }
+}
+
+var errInvalidRequest = errors.New("invalid request")
+
+type Service interface {
+	GetTodayReviews(ctx context.Context, userID int64) ([]ReviewItem, error)
+	ProcessAttempt(ctx context.Context, scheduleID, userID int64, req AttemptRequest) (AttemptResponse, error)
+	GetStats(ctx context.Context, userID int64) (StatsData, error)
 }
 
 func NewHandler(svc Service, log interface{ Error(string, ...any) }) *Handler {
@@ -39,7 +48,7 @@ func (h *Handler) GetTodayReviews(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response.JSON(w, http.StatusOK, TodayReviewsResponse{Data: items})
+	response.JSON(w, http.StatusOK, items)
 }
 
 func (h *Handler) ProcessAttempt(w http.ResponseWriter, r *http.Request) {
@@ -51,11 +60,11 @@ func (h *Handler) ProcessAttempt(w http.ResponseWriter, r *http.Request) {
 
 	var req AttemptRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		response.Fail(w, http.StatusBadRequest, "invalid_request", ErrInvalidRequest.Error())
+		response.Fail(w, http.StatusBadRequest, "invalid_request", errInvalidRequest.Error())
 		return
 	}
 
-	if req.Rating < 1 || req.Rating > 4 {
+	if !validRating(req.Rating) {
 		response.Fail(w, http.StatusBadRequest, "invalid_rating", ErrInvalidRating.Error())
 		return
 	}
@@ -91,4 +100,13 @@ func (h *Handler) GetStats(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response.JSON(w, http.StatusOK, stats)
+}
+
+func validRating(rating string) bool {
+	switch rating {
+	case "hard", "normal", "easy":
+		return true
+	default:
+		return false
+	}
 }

@@ -42,7 +42,7 @@ func New(deps Deps) http.Handler {
 	r.Get("/healthz", health.live)
 	r.Get("/readyz", health.ready)
 
-	reviewsSvc := reviews.NewService(deps.Logger)
+	reviewsSvc := reviews.NewService(reviews.NewRepository(deps.Postgres.Pool), deps.Logger)
 	reviewsHandler := reviews.NewHandler(reviewsSvc, deps.Logger)
 
 	r.Route("/api/v1", func(r chi.Router) {
