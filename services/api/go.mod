@@ -1,6 +1,6 @@
 module github.com/mxdtrip/freeburger/services/api
 
-go 1.25.7
+go 1.26
 
 require (
 	github.com/go-chi/chi/v5 v5.3.0
@@ -8,7 +8,7 @@ require (
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	github.com/jackc/pgx/v5 v5.10.0
 	github.com/joho/godotenv v1.5.1
-	github.com/open-spaced-repetition/go-fsrs/v3 v3.3.1
+	github.com/open-spaced-repetition/go-fsrs/v4 v4.0.0-rc1
 	github.com/redis/go-redis/v9 v9.21.0
 	golang.org/x/crypto v0.53.0
 )

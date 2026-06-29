@@ -5,7 +5,7 @@ import (
 	"errors"
 	"log/slog"
 
-	"github.com/open-spaced-repetition/go-fsrs/v3"
+	"github.com/open-spaced-repetition/go-fsrs/v4"
 )
 
 var (
