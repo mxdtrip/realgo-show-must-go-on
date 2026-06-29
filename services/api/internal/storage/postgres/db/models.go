@@ -77,6 +77,7 @@ type Problem struct {
 	CreatedByUserID pgtype.Int8
 	CreatedAt       pgtype.Timestamptz
 	UpdatedAt       pgtype.Timestamptz
+	ExternalID      pgtype.Text
 }
 
 type QuizQuestion struct {
@@ -124,6 +125,21 @@ type ReviewSchedule struct {
 	Algorithm   pgtype.Text
 	CreatedAt   pgtype.Timestamptz
 	UpdatedAt   pgtype.Timestamptz
+	// FSRS card state: 0=New, 1=Learning, 2=Review, 3=Relearning
+	State int16
+	// Number of times the card has been forgotten (FSRS Card.Lapses).
+	Lapses int32
+	// Timestamp of the last review (FSRS Card.LastReview).
+	LastReviewAt pgtype.Timestamptz
+	// Remaining learning/relearning steps (FSRS Card.RemainingSteps).
+	RemainingSteps int32
+}
+
+type RoadmapItem struct {
+	RoadmapCode string
+	PatternID   int64
+	ProblemID   int64
+	Position    int32
 }
 
 type User struct {
