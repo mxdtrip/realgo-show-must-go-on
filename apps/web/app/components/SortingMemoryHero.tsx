@@ -490,7 +490,14 @@ export function SortingMemoryHero() {
       </div>
 
       <div className="word-stage" aria-label={copy.wordAria}>
-        {poses.map((pose) => {
+        {/* Render in a FIXED key order (0..5), never in `order`/array sequence.
+            Visual position is driven entirely by `transform`, so keeping the DOM
+            order stable stops React from reordering nodes when `order` shuffles.
+            A moved node loses its transition "before" snapshot and snaps to the
+            target instantly — that was the intermittent teleport. */}
+        {[...poses]
+          .sort((a, b) => a.key - b.key)
+          .map((pose) => {
           // The further a letter sits from the scene centre, the more it blurs
           // and fades — so scattered letters dissolve and sharpen as they gather.
           const width = g.widths[pose.key];
