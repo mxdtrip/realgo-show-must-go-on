@@ -62,6 +62,40 @@ body {
   background-attachment: fixed;
 }
 
+/* Scroll-scrubbed background video: pinned to the viewport, scrubbed by scroll,
+   sitting above the body gradient but behind all page content (.site-shell). */
+.scroll-video-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.scroll-video-bg video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.scroll-video-bg__overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(13, 17, 23, 0.55) 0%,
+    rgba(13, 17, 23, 0.72) 55%,
+    rgba(1, 4, 9, 0.86) 100%
+  );
+}
+
+.site-shell {
+  position: relative;
+  z-index: 1;
+}
+
 ::selection {
   background: var(--accent-soft);
   color: var(--accent-bright);
