@@ -1,9 +1,11 @@
 import { CabinetPanel } from "../_components";
 import { getDictionary } from "../../_content/i18n";
 import { cards } from "../_mock";
+import { CardReviewSession } from "./_components/CardReviewSession";
 
 export default function CardsPage() {
-  const page = getDictionary().cabinet.pages.cards;
+  const cabinetCopy = getDictionary().cabinet;
+  const page = cabinetCopy.pages.cards;
 
   return (
     <main className="cabinet-page">
@@ -14,15 +16,15 @@ export default function CardsPage() {
       </section>
 
       <CabinetPanel eyebrow={page.panelEyebrow} title={page.panelTitle}>
-        <div className="cabinet-card-grid">
-          {cards.map((card) => (
-            <article className="memory-card" key={card.type}>
-              <span>{card.type}</span>
-              <h2>{card.front}</h2>
-              <p>{card.back}</p>
-            </article>
-          ))}
-        </div>
+        <CardReviewSession
+          cards={cards}
+          copy={page.session}
+          ratingLabels={{
+            easy: cabinetCopy.common.easy,
+            hard: cabinetCopy.common.hard,
+            normal: cabinetCopy.common.normal,
+          }}
+        />
       </CabinetPanel>
     </main>
   );
