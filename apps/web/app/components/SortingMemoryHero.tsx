@@ -495,7 +495,7 @@ export function SortingMemoryHero() {
                 opacity: pose.visible ? fade : 0,
                 filter: blur > 0.05 ? `blur(${blur.toFixed(2)}px)` : undefined,
                 transform: `translate3d(${pose.x}px, ${pose.y}px, 0) rotate(${pose.rotate}deg)`,
-                transitionDelay: motionMode === "gathering" ? `${pose.key * 55}ms` : "0ms",
+                transitionDelay: motionMode === "gathering" ? `${pose.key * 30}ms` : "0ms",
                 width,
               }}
             >

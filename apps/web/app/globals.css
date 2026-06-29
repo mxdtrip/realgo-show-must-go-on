@@ -279,10 +279,12 @@ h3 {
 }
 
 .word-letter.motion-gathering {
+  /* fast start, smooth asymptotic (hyperbolic) finish — for both scatter and
+     gather; not slower, just a soft landing */
   transition:
-    transform 1.9s cubic-bezier(0.25, 0.6, 0.3, 1),
-    opacity 1.1s ease,
-    filter 1.1s ease,
+    transform 0.95s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+    filter 0.8s cubic-bezier(0.16, 1, 0.3, 1),
     color 0.2s ease,
     text-shadow 0.2s ease;
 }
