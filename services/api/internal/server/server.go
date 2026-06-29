@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
+	"github.com/mxdtrip/freeburger/services/api/internal/auth"
 	"github.com/mxdtrip/freeburger/services/api/internal/storage/postgres"
 	"github.com/mxdtrip/freeburger/services/api/internal/storage/redis"
 )
@@ -19,6 +20,7 @@ type Deps struct {
 	Logger   *slog.Logger
 	Postgres *postgres.Storage
 	Redis    *redis.Storage
+	Auth     *auth.Service
 }
 
 // New builds the application's HTTP handler with the base middleware stack,
@@ -37,8 +39,16 @@ func New(deps Deps) http.Handler {
 	r.Get("/readyz", health.ready)
 
 	r.Route("/api/v1", func(r chi.Router) {
-		// Domain routes (auth, extension events, reviews, dashboard, ...) are
-		// mounted here in their own pull requests.
+		ah := &authHandler{svc: deps.Auth}
+		r.Route("/auth", func(r chi.Router) {
+			r.Post("/register", ah.register)
+			r.Post("/login", ah.login)
+			r.Post("/refresh", ah.refresh)
+			r.Post("/logout", ah.logout)
+		})
+		r.Route("/users", func(r chi.Router) {
+			r.With(requireAuth(deps.Auth)).Get("/me", ah.me)
+		})
 	})
 
 	return r
