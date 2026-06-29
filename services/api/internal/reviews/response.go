@@ -8,9 +8,11 @@ type TodayReviewsResponse struct {
 
 type ReviewItem struct {
 	ID           int64     `json:"id"`
-	ProblemID    int64     `json:"problem_id"`
+	ProblemID    *int64    `json:"problem_id"`
+	PatternID    *int64    `json:"pattern_id"`
 	ProblemTitle string    `json:"problem_title"`
 	ProblemURL   string    `json:"problem_url"`
+	PatternTitle string    `json:"pattern_title"`
 	NextReviewAt time.Time `json:"next_review_at"`
 	State        int8      `json:"state"`
 }

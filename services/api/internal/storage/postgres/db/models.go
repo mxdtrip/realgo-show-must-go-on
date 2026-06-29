@@ -43,7 +43,7 @@ type ExtensionEvent struct {
 	ExternalSlug     pgtype.Text
 	Title            pgtype.Text
 	EventType        string
-	Rating           pgtype.Int4
+	Rating           pgtype.Text
 	ExtensionVersion pgtype.Text
 	EventTime        pgtype.Timestamptz
 	IdempotencyKey   pgtype.Text
@@ -77,6 +77,7 @@ type Problem struct {
 	CreatedByUserID pgtype.Int8
 	CreatedAt       pgtype.Timestamptz
 	UpdatedAt       pgtype.Timestamptz
+	ExternalID      pgtype.Text
 }
 
 type QuizQuestion struct {
@@ -98,7 +99,7 @@ type ReviewAttempt struct {
 	UserID      int64
 	ProblemID   pgtype.Int8
 	PatternID   pgtype.Int8
-	Rating      int32
+	Rating      string
 	ReviewType  string
 	DurationSec pgtype.Int4
 	WasCorrect  pgtype.Bool
@@ -120,10 +121,25 @@ type ReviewSchedule struct {
 	// Memory difficulty coefficient used by the spaced repetition algorithm.
 	Difficulty  float64
 	ReviewCount pgtype.Int4
-	LastRating  pgtype.Int4
+	LastRating  pgtype.Text
 	Algorithm   pgtype.Text
 	CreatedAt   pgtype.Timestamptz
 	UpdatedAt   pgtype.Timestamptz
+	// FSRS card state: 0=New, 1=Learning, 2=Review, 3=Relearning
+	State int16
+	// Number of times the card has been forgotten (FSRS Card.Lapses).
+	Lapses int32
+	// Timestamp of the last review (FSRS Card.LastReview).
+	LastReviewAt pgtype.Timestamptz
+	// Remaining learning/relearning steps (FSRS Card.RemainingSteps).
+	RemainingSteps int32
+}
+
+type RoadmapItem struct {
+	RoadmapCode string
+	PatternID   int64
+	ProblemID   int64
+	Position    int32
 }
 
 type User struct {
@@ -142,7 +158,7 @@ type UserProblemProgress struct {
 	UserID         int64
 	ProblemID      int64
 	Status         pgtype.Text
-	Rating         pgtype.Int4
+	Rating         pgtype.Text
 	FirstSeenAt    pgtype.Timestamptz
 	SolvedAt       pgtype.Timestamptz
 	LastReviewedAt pgtype.Timestamptz
