@@ -8,8 +8,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
-	"github.com/mxdtrip/freeburger/services/api/internal/reviews"
 	"github.com/mxdtrip/freeburger/services/api/internal/auth"
+	"github.com/mxdtrip/freeburger/services/api/internal/reviews"
 	"github.com/mxdtrip/freeburger/services/api/internal/storage/postgres"
 	"github.com/mxdtrip/freeburger/services/api/internal/storage/redis"
 )
@@ -30,6 +30,10 @@ func New(deps Deps) http.Handler {
 	r := chi.NewRouter()
 
 	r.Use(middleware.RequestID)
+	// RealIP is intentionally NOT used: the auth rate limiter derives the client
+	// IP via clientIP(), which only trusts X-Forwarded-For from known proxies.
+	// chi's RealIP would overwrite RemoteAddr from client-supplied headers and
+	// let an attacker rotate the rate-limit key by spoofing X-Forwarded-For.
 	r.Use(requestLogger(deps.Logger))
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Timeout(requestTimeout))
@@ -43,10 +47,11 @@ func New(deps Deps) http.Handler {
 
 	r.Route("/api/v1", func(r chi.Router) {
 		ah := &authHandler{svc: deps.Auth}
+		authRateLimit := rateLimit(deps.Redis, "auth", 20, time.Minute)
 		r.Route("/auth", func(r chi.Router) {
-			r.Post("/register", ah.register)
-			r.Post("/login", ah.login)
-			r.Post("/refresh", ah.refresh)
+			r.With(authRateLimit).Post("/register", ah.register)
+			r.With(authRateLimit).Post("/login", ah.login)
+			r.With(authRateLimit).Post("/refresh", ah.refresh)
 			r.Post("/logout", ah.logout)
 		})
 		r.Route("/users", func(r chi.Router) {
