@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono, Space_Grotesk, Space_Mono } from "next/font/google";
 import { getDictionary } from "./_content/i18n";
+import { ScrollVideoBackground } from "./components/ScrollVideoBackground";
 import "./globals.css";
 
 const inter = Inter({
@@ -47,7 +48,10 @@ export default function RootLayout({
       className={`${inter.variable} ${spaceGrotesk.variable} ${jetBrainsMono.variable} ${spaceMono.variable}`}
       lang="ru"
     >
-      <body>{children}</body>
+      <body>
+        <ScrollVideoBackground />
+        <div className="site-shell">{children}</div>
+      </body>
     </html>
   );
 }
