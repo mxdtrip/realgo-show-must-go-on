@@ -1,0 +1,22 @@
+:80 {
+	@api path /api/*
+	@allowed_origin header_regexp Origin ^(https?://(localhost|127[.]0[.]0[.]1):(5173|3000)|chrome-extension://[a-p]{32})$
+
+	handle @api {
+		route {
+			header @allowed_origin Access-Control-Allow-Origin "{http.request.header.Origin}"
+			header @allowed_origin Access-Control-Allow-Credentials "true"
+			header @allowed_origin Access-Control-Allow-Methods "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+			header @allowed_origin Access-Control-Allow-Headers "Authorization, Content-Type"
+			header @allowed_origin Access-Control-Max-Age "86400"
+			header @allowed_origin Vary "Origin"
+
+			@preflight method OPTIONS
+			respond @preflight 204
+
+			reverse_proxy api:8080
+		}
+	}
+
+	reverse_proxy api:8080
+}

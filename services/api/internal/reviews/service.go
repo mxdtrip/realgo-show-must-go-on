@@ -56,10 +56,7 @@ func (s *service) ProcessAttempt(ctx context.Context, scheduleID, userID int64, 
 	}
 
 	now := time.Now()
-	info, err := s.fsrs.Next(schedule.card(), now, rating)
-	if err != nil {
-		return AttemptResponse{}, fmt.Errorf("reviews: ProcessAttempt: %w", err)
-	}
+	info := s.fsrs.Next(schedule.card(), now, rating)
 
 	next := schedule.apply(info.Card, req.Rating, now)
 	next, err = s.repo.SaveReview(ctx, next, ReviewAttempt{
@@ -111,15 +108,14 @@ func (s ReviewSchedule) card() fsrs.Card {
 	}
 
 	return fsrs.Card{
-		Due:            s.NextReviewAt,
-		Stability:      s.Stability,
-		Difficulty:     s.Difficulty,
-		ScheduledDays:  uint64(math.Max(0, math.Round(s.IntervalDays))),
-		Reps:           uint64(max(0, s.ReviewCount)),
-		Lapses:         uint64(max(0, s.Lapses)),
-		State:          fsrs.State(s.State),
-		LastReview:     lastReview,
-		RemainingSteps: s.RemainingSteps,
+		Due:           s.NextReviewAt,
+		Stability:     s.Stability,
+		Difficulty:    s.Difficulty,
+		ScheduledDays: uint64(math.Max(0, math.Round(s.IntervalDays))),
+		Reps:          uint64(max(0, s.ReviewCount)),
+		Lapses:        uint64(max(0, s.Lapses)),
+		State:         fsrs.State(s.State),
+		LastReview:    lastReview,
 	}
 }
 
@@ -133,6 +129,5 @@ func (s ReviewSchedule) apply(card fsrs.Card, rating string, reviewedAt time.Tim
 	s.State = int8(card.State)
 	s.Lapses = int(card.Lapses)
 	s.LastReviewAt = &reviewedAt
-	s.RemainingSteps = card.RemainingSteps
 	return s
 }
