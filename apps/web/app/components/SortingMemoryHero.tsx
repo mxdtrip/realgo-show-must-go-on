@@ -114,19 +114,36 @@ function rowPoses(size: SceneSize, order: number[]) {
   });
 }
 
+// Scatter the letters onto random points of an invisible, width-stretched oval
+// centred on the word, with a small ±jitter along the radius so the ring of
+// letters looks organic rather than perfectly geometric.
+const CHAOS_JITTER = 50;
+
 function chaosPoses(size: SceneSize, order: number[]) {
   const g = geometry(size);
-  const maxWidth = Math.max(...g.widths);
-  const safeTop = Math.max(130, size.height * 0.22);
-  const safeBottom = Math.max(safeTop + 1, size.height - g.font * 1.1 - 90);
+  const centerX = size.width / 2;
+  const centerY = size.height * 0.4;
+  const radiusX = size.width * 0.34;
+  const radiusY = size.height * 0.22;
 
-  return order.map((key, index) => ({
-    key,
-    x: clamp(Math.random() * (size.width - maxWidth), 18, size.width - maxWidth - 18),
-    y: clamp(safeTop + Math.random() * (safeBottom - safeTop), safeTop, safeBottom),
-    rotate: -16 + Math.random() * 32 + index * 0.2,
-    visible: true,
-  }));
+  return order.map((key, index) => {
+    const angle = Math.random() * Math.PI * 2;
+    const ex = radiusX * Math.cos(angle);
+    const ey = radiusY * Math.sin(angle);
+    const radius = Math.hypot(ex, ey) || 1;
+    const jitter = (Math.random() * 2 - 1) * CHAOS_JITTER;
+    const px = centerX + ex + (ex / radius) * jitter;
+    const py = centerY + ey + (ey / radius) * jitter;
+    const width = g.widths[key];
+
+    return {
+      key,
+      x: clamp(px - width / 2, 12, size.width - width - 12),
+      y: clamp(py - g.font * 0.54, 8, size.height - g.font * 1.08 - 8),
+      rotate: -16 + Math.random() * 32 + index * 0.2,
+      visible: true,
+    };
+  });
 }
 
 function recordSort(code: string, order: number[]) {
