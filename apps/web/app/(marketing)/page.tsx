@@ -88,11 +88,15 @@ export default function Home() {
             <p>{copy.sections.pricing.description}</p>
           </div>
           <div className="pricing-grid">
-            {copy.pricing.map(([name, price, text]) => (
+            {copy.pricing.map(([name, price, features]) => (
               <article className="price-card" key={name}>
                 <span>{name}</span>
                 <strong>{price}</strong>
-                <p>{text}</p>
+                <ul className="price-features">
+                  {features.map((feature) => (
+                    <li key={feature}>{feature}</li>
+                  ))}
+                </ul>
               </article>
             ))}
           </div>

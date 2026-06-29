@@ -303,7 +303,10 @@ h3 {
   left: var(--pad);
   z-index: 3;
   width: min(380px, 36vw);
-  min-height: 210px;
+  /* Tall, bounded editing area: plenty of room for more lines, and the textarea
+     scrolls (in sync with the highlight layer) instead of clipping the top when
+     it overflows. */
+  height: clamp(240px, 50vh, 480px);
 }
 
 /* shared text metrics so the highlight layer lines up with the textarea */
@@ -352,9 +355,48 @@ h3 {
   padding: 0;
   background: transparent;
   color: rgba(196, 206, 224, 0.78);
-  overflow: hidden;
+  /* Scrolls when the code is taller/wider than the box; the highlight layer is
+     kept aligned via onScroll. Scrollbar hidden so it can't offset the text and
+     break that alignment. */
+  overflow: auto;
+  scrollbar-width: none;
   caret-color: var(--accent);
   transition: color 0.2s ease;
+}
+
+.code-sheet::-webkit-scrollbar {
+  display: none;
+}
+
+.code-editor.has-error .code-sheet {
+  color: rgba(255, 170, 165, 0.92);
+}
+
+/* compile-error notice, pinned to the bottom of the editor */
+.code-error {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  margin: 0;
+  display: flex;
+  gap: 8px;
+  max-width: 100%;
+  padding: 9px 12px;
+  border: 1px solid rgba(248, 81, 73, 0.5);
+  border-radius: 9px;
+  background: rgba(248, 81, 73, 0.14);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: #ffb4ab;
+  font-family: var(--font-stack-mono);
+  font-size: 12px;
+  line-height: 1.4;
+  z-index: 2;
+}
+
+.code-error::before {
+  content: "⚠";
+  flex-shrink: 0;
 }
 
 .code-sheet::selection {
@@ -784,6 +826,31 @@ h3 {
   margin: 0;
   font-size: 14px;
   color: var(--text-dim);
+}
+
+.price-features {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 11px;
+}
+
+.price-features li {
+  position: relative;
+  padding-left: 26px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--text);
+}
+
+.price-features li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: var(--success-fg);
+  font-weight: 700;
 }
 
 .price-card:last-child {

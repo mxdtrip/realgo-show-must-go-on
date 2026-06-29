@@ -210,6 +210,13 @@ export function SortingMemoryHero() {
   const [scattered, setScattered] = useState(true);
   // Bumped once the real font metrics are measured, to re-lay-out the word.
   const [metricsVersion, setMetricsVersion] = useState(0);
+  // Letters are only placed once we know the real scene size, so on first load
+  // they appear already scattered at the edges instead of flying out from the
+  // default-size centre on screen.
+  const [measured, setMeasured] = useState(false);
+  // Set when the editor code fails to compile, to show a notice to the user.
+  const [codeError, setCodeError] = useState(false);
+  const codeLinesRef = useRef<HTMLPreElement | null>(null);
 
   // Intro: letters start scattered, then auto-gather after a short beat.
   const introRef = useRef(true);
@@ -244,8 +251,10 @@ export function SortingMemoryHero() {
       recording = recordSort(code, order);
     } catch (error) {
       console.error(error);
+      setCodeError(true);
       return;
     }
+    setCodeError(false);
 
     // Which source line each kind of step maps to, so we can light it up while
     // the step plays. Found by keyword, so it survives the user editing the code.
@@ -369,6 +378,7 @@ export function SortingMemoryHero() {
         width: entry.contentRect.width,
         height: entry.contentRect.height,
       });
+      setMeasured(true);
     });
 
     observer.observe(element);
@@ -376,9 +386,11 @@ export function SortingMemoryHero() {
   }, []);
 
   useEffect(() => {
-    if (poses.length > 0 || isSorting) return;
+    // Wait for the real measured size before placing the letters, so they never
+    // first paint at the default-size centre and then visibly fly outward.
+    if (!measured || poses.length > 0 || isSorting) return;
     setPoses(introRef.current ? chaosPoses(size, order) : rowPoses(size, order));
-  }, [isSorting, order, poses.length, size]);
+  }, [measured, isSorting, order, poses.length, size]);
 
   useEffect(() => {
     // Re-scatter onto the oval for the new viewport while the word is apart;
@@ -463,8 +475,8 @@ export function SortingMemoryHero() {
         </div>
       </header>
 
-      <div className="code-editor">
-        <pre className="code-lines" aria-hidden="true">
+      <div className={codeError ? "code-editor has-error" : "code-editor"}>
+        <pre className="code-lines" aria-hidden="true" ref={codeLinesRef}>
           {code.split("\n").map((line, index) => (
             <span
               className={activeLines.includes(index) ? "code-line active" : "code-line"}
@@ -480,8 +492,24 @@ export function SortingMemoryHero() {
           spellCheck={false}
           wrap="off"
           value={code}
-          onChange={(event) => setCode(event.target.value)}
+          onChange={(event) => {
+            setCode(event.target.value);
+            if (codeError) setCodeError(false);
+          }}
+          onScroll={(event) => {
+            // Keep the highlight layer aligned with the textarea when it scrolls.
+            const lines = codeLinesRef.current;
+            if (lines) {
+              lines.scrollTop = event.currentTarget.scrollTop;
+              lines.scrollLeft = event.currentTarget.scrollLeft;
+            }
+          }}
         />
+        {codeError ? (
+          <p className="code-error" role="alert">
+            {copy.codeError}
+          </p>
+        ) : null}
       </div>
 
       <div className="hero-tagline">
@@ -508,7 +536,7 @@ export function SortingMemoryHero() {
           const distance = Math.hypot(dx, dy * 2);
           const t = clamp((distance - size.width * 0.22) / (size.width * 0.32), 0, 1);
           const blur = t * 7;
-          const fade = 1 - t * 0.8;
+          const fade = 1 - t * 0.92;
 
           return (
             <span
