@@ -272,7 +272,7 @@ const ru = {
             showAnswer: "Show answer",
             answerPrompt: "Сравни ответ со своей формулировкой",
             ratePrompt: "Насколько легко удалось воспроизвести ответ?",
-            keyboardHint: "Space — показать ответ · 1 / 2 / 3 — оценить",
+            keyboardHint: "Space — показать ответ · 1 — Easy · 2 — Normal · 3 — Hard",
             hard: "Hard",
             normal: "Normal",
             easy: "Easy",

@@ -50,9 +50,9 @@ type FocusCardReviewSessionProps = {
 };
 
 const ratings = [
-  { key: "hard", shortcut: "1" },
+  { key: "easy", shortcut: "1" },
   { key: "normal", shortcut: "2" },
-  { key: "easy", shortcut: "3" },
+  { key: "hard", shortcut: "3" },
 ] as const;
 
 export function FocusCardReviewSession({ brand, cards, copy }: Readonly<FocusCardReviewSessionProps>) {
@@ -85,9 +85,9 @@ export function FocusCardReviewSession({ brand, cards, copy }: Readonly<FocusCar
       }
 
       if (!session.isFlipped) return;
-      if (event.key === "1") session.rate("hard");
+      if (event.key === "1") session.rate("easy");
       if (event.key === "2") session.rate("normal");
-      if (event.key === "3") session.rate("easy");
+      if (event.key === "3") session.rate("hard");
     };
 
     window.addEventListener("keydown", handleKeyDown);

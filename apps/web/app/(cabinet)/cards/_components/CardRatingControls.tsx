@@ -16,7 +16,7 @@ type CardRatingControlsProps = {
   onRate: (rating: ReviewRating) => void;
 };
 
-const ratings = ["hard", "normal", "easy"] as const;
+const ratings = ["easy", "normal", "hard"] as const;
 
 export function CardRatingControls({ disabled, labels, onRate }: Readonly<CardRatingControlsProps>) {
   const hintByRating = {
