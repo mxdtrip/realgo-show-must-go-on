@@ -33,11 +33,16 @@ npm run lint           # это tsc --noEmit (типы), НЕ ESLint
 ```
 app/
   layout.tsx                      # <html>, метаданные, подключение шрифтов
+  manifest.ts                     # PWA manifest
   globals.css                     # ВЕСЬ дизайн-язык (токены, секции, кабинет, анимация)
   (marketing)/
     page.tsx                      # маршрут /: секции лендинга + футер
   _content/
     i18n.ts                       # словарь текстов и моков; locale: ru/en/es
+  _notifications/
+    notifications.ts              # localStorage-настройки уведомлений + Notification API helpers
+  _pwa/
+    PWAProvider.tsx               # регистрация service worker
   (cabinet)/
     layout.tsx                    # shell личного кабинета: sidebar/topbar
     _components.tsx               # общие моковые UI-блоки кабинета
@@ -50,6 +55,7 @@ app/
     cards/page.tsx                # /cards
     extension/page.tsx            # /extension
     settings/page.tsx             # /settings
+    settings/_components/         # PWA install + notification settings panels
   components/
     SortingMemoryHero.tsx         # герой: анимация сортировки + редактор кода + модалка авторизации
 ```
@@ -105,6 +111,9 @@ app/
   фактические переводы для `en/es` пока не добавлены и используют source-строки.
 - Личный кабинет на текущем этапе работает только на моках из `(cabinet)/_mock.ts`; backend API
   не подключать без отдельной задачи.
+- PWA-слой состоит из `manifest.ts`, `public/sw.js`, `public/icons/*` и `_pwa/PWAProvider.tsx`.
+  Уведомления пока локальные: browser Notification API + service worker notification display,
+  без push backend.
 - Для новых страниц кабинета используй существующий CSS-язык `cabinet-*` в `globals.css`, чтобы
   сохранить Primer dark эстетику лендинга.
 - Язык интерфейса — русский; технические лейблы — латиница в нижнем регистре.

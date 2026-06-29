@@ -1,5 +1,7 @@
 import { CabinetPanel, StatusPill } from "../_components";
 import { getDictionary } from "../../_content/i18n";
+import { InstallAppPanel } from "./_components/InstallAppPanel";
+import { NotificationSettingsPanel } from "./_components/NotificationSettingsPanel";
 
 export default function SettingsPage() {
   const page = getDictionary().cabinet.pages.settings;
@@ -26,6 +28,14 @@ export default function SettingsPage() {
               <StatusPill tone="accent">{page.plan}</StatusPill>
             </div>
           </div>
+        </CabinetPanel>
+
+        <CabinetPanel eyebrow={page.installEyebrow} title={page.installTitle}>
+          <InstallAppPanel copy={page.install} />
+        </CabinetPanel>
+
+        <CabinetPanel eyebrow={page.notificationsEyebrow} title={page.notificationsTitle}>
+          <NotificationSettingsPanel copy={page.notifications} />
         </CabinetPanel>
 
         <CabinetPanel eyebrow={page.privacyEyebrow} title={page.privacyTitle}>

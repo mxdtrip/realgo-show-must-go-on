@@ -13,6 +13,12 @@ const ru = {
         "Engram helps you remember solved interview tasks, review them at the right time, and prepare with a clearer plan.",
     },
   },
+  pwa: {
+    name: "Engram — Memory layer for interview prep",
+    shortName: "Engram",
+    description:
+      "Engram helps you remember solved interview tasks, review them at the right time, and prepare with a clearer plan.",
+  },
   marketing: {
     hero: {
       homeAria: "Engram home",
@@ -241,6 +247,8 @@ const ru = {
             easy: "через 7 дней",
           },
           emptyHistory: "Оценок пока нет — открой ответ и выбери сложность.",
+          sessionCompleteTitle: "Engram cards complete",
+          sessionCompleteBody: "Карточки на сегодня разобраны. Завтра вернём нужные паттерны.",
         },
       },
       extension: {
@@ -260,9 +268,14 @@ const ru = {
       settings: {
         eyebrow: "/settings",
         title: "Настройки аккаунта",
-        description: "Моковый экран для timezone, даты интервью, privacy controls и будущих billing-настроек.",
+        description:
+          "Моковый экран для timezone, даты интервью, PWA-установки, уведомлений, privacy controls и будущих billing-настроек.",
         profileEyebrow: "profile",
         profileTitle: "Preparation settings",
+        installEyebrow: "pwa",
+        installTitle: "Install Engram",
+        notificationsEyebrow: "notifications",
+        notificationsTitle: "Review reminders",
         privacyEyebrow: "privacy",
         privacyTitle: "Data controls",
         privacyDescription:
@@ -276,6 +289,33 @@ const ru = {
         ],
         planLabel: "plan",
         plan: "Free mock",
+        install: {
+          description:
+            "Сохрани Engram как приложение, чтобы открывать кабинет и карточки с домашнего экрана.",
+          install: "Install app",
+          installed: "installed",
+          iosHint: "Если кнопка недоступна, используй меню браузера: Share → Add to Home Screen.",
+          ready: "ready to install",
+          unavailable: "browser install prompt unavailable",
+        },
+        notifications: {
+          description:
+            "Уведомления работают локально через браузер/PWA. Push-сервер и backend-синхронизация будут подключаться отдельно.",
+          enable: "Enable notifications",
+          enabled: "notifications enabled",
+          disabled: "permission required",
+          permissionDenied: "permission denied in browser",
+          permissionGranted: "permission granted",
+          permissionUnsupported: "notifications unsupported",
+          dailyReminder: "Daily preparation reminder",
+          cardReviewReminder: "Cards due reminder",
+          streakReminder: "Streak protection reminder",
+          reminderTime: "Reminder time",
+          sendTest: "Send test notification",
+          testTitle: "Engram review reminder",
+          testBody: "Карточки ждут короткого повторения.",
+          testSent: "test notification sent",
+        },
       },
     },
     mock: {

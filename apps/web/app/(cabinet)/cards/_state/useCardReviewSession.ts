@@ -65,6 +65,7 @@ function readStoredSession(cards: readonly ReviewCard[]): StoredSession {
 export function useCardReviewSession(
   cards: readonly ReviewCard[],
   nextReviewByRating: Record<ReviewRating, string>,
+  onSessionComplete?: () => void,
 ) {
   const [isReady, setIsReady] = useState(false);
   const [queue, setQueue] = useState<string[]>([]);
@@ -104,11 +105,15 @@ export function useCardReviewSession(
       setHistory((currentHistory) => [logItem, ...currentHistory].slice(0, 12));
       setQueue((currentQueue) => {
         const [, ...rest] = currentQueue;
-        return rating === "hard" ? [...rest, currentId] : rest;
+        const nextQueue = rating === "hard" ? [...rest, currentId] : rest;
+        if (nextQueue.length === 0) {
+          window.setTimeout(() => onSessionComplete?.(), 0);
+        }
+        return nextQueue;
       });
       setIsFlipped(false);
     },
-    [nextReviewByRating, queue],
+    [nextReviewByRating, onSessionComplete, queue],
   );
 
   const reset = useCallback(() => {

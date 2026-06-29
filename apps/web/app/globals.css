@@ -878,6 +878,7 @@ h3 {
 .cabinet-shell {
   display: grid;
   grid-template-columns: 280px minmax(0, 1fr);
+  overflow-x: hidden;
   min-height: 100vh;
   background:
     radial-gradient(900px 520px at 75% -10%, rgba(56, 139, 253, 0.1), transparent 65%),
@@ -889,6 +890,7 @@ h3 {
   position: sticky;
   top: 0;
   height: 100vh;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 28px;
@@ -1468,6 +1470,95 @@ h3 {
   color: #ff7b72;
 }
 
+.install-app-panel,
+.notification-settings-panel {
+  display: grid;
+  gap: 14px;
+  padding: 18px 20px;
+}
+
+.install-app-panel p,
+.notification-settings-panel p {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 13.5px;
+}
+
+.install-app-panel__status,
+.notification-status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.install-app-panel__status span,
+.notification-status-row span,
+.settings-toggle span,
+.settings-time span {
+  font-family: var(--font-stack-mono);
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.install-app-panel button,
+.notification-settings-panel button {
+  width: max-content;
+  min-height: 42px;
+  border: 1px solid rgba(63, 185, 80, 0.42);
+  border-radius: 10px;
+  padding: 10px 14px;
+  background: var(--success);
+  color: #ffffff;
+  font-family: var(--font-stack-mono);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.install-app-panel button:disabled,
+.notification-settings-panel button:disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
+}
+
+.install-app-panel small,
+.notification-settings-panel small {
+  color: var(--text-faint);
+  font-size: 12px;
+}
+
+.settings-toggle,
+.settings-time {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.015);
+}
+
+.settings-toggle input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--success);
+}
+
+.settings-time input {
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.025);
+  color: var(--text);
+  color-scheme: dark;
+  font-family: var(--font-stack-mono);
+}
+
 /* card review mechanics */
 .card-session {
   padding: 20px;
@@ -1656,6 +1747,7 @@ h3 {
   display: grid;
   gap: 4px;
   width: 100%;
+  min-height: 58px;
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 14px;
@@ -1814,19 +1906,52 @@ h3 {
   }
 
   .cabinet-sidebar {
-    position: static;
+    position: sticky;
+    top: 0;
+    z-index: 40;
     height: auto;
     gap: 18px;
+    padding: 14px 18px;
+    width: 100%;
+    max-width: 100vw;
+    overflow: hidden;
     border-right: 0;
     border-bottom: 1px solid var(--border);
   }
 
   .cabinet-nav {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    display: flex;
+    gap: 8px;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+  }
+
+  .cabinet-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .cabinet-nav a {
+    flex: 0 0 auto;
+  }
+
+  .cabinet-sidebar .site-brand {
+    align-self: flex-start;
+    width: auto;
+  }
+
+  .cabinet-main,
+  .cabinet-topbar,
+  .cabinet-page {
+    width: 100%;
+    max-width: 100vw;
+    min-width: 0;
   }
 
   .cabinet-sidebar__note {
-    margin-top: 0;
+    display: none;
   }
 
   .cabinet-hero,
@@ -1880,17 +2005,18 @@ h3 {
     flex-direction: column;
   }
 
-  .cabinet-nav {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
   .cabinet-page {
-    padding: 22px 16px;
+    padding: 22px 14px calc(28px + env(safe-area-inset-bottom));
   }
 
   .cabinet-hero h1,
   .cabinet-page-head h1 {
     font-size: 34px;
+  }
+
+  .cabinet-page-head h1,
+  .cabinet-page-head p {
+    max-width: 100%;
   }
 
   .review-list__item,
@@ -1903,7 +2029,7 @@ h3 {
   }
 
   .card-session {
-    padding: 14px;
+    padding: 12px;
   }
 
   .card-session__side {
@@ -1915,13 +2041,44 @@ h3 {
   }
 
   .flashcard {
-    min-height: 380px;
+    min-height: min(68svh, 520px);
+    border-radius: 18px;
   }
 
   .flashcard__body h2,
   .flashcard--flipped .flashcard__body h2 {
     max-width: none;
     font-size: 30px;
+  }
+
+  .flashcard__toggle,
+  .card-session__status button,
+  .card-session-summary button,
+  .install-app-panel button,
+  .notification-settings-panel button {
+    width: 100%;
+    min-height: 48px;
+  }
+
+  .card-rating-panel {
+    position: sticky;
+    bottom: calc(12px + env(safe-area-inset-bottom));
+    z-index: 12;
+    background: rgba(13, 17, 23, 0.86);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+
+  .card-rating-button {
+    min-height: 62px;
+  }
+
+  .install-app-panel__status,
+  .notification-status-row,
+  .settings-toggle,
+  .settings-time {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .cabinet-roadmap-row {
