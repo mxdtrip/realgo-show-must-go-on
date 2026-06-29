@@ -65,16 +65,16 @@ func Run(ctx context.Context) error {
 	})
 
 	srv := &http.Server{
-		Addr:         cfg.HTTPServer.Address,
+		Addr:         cfg.Address,
 		Handler:      handler,
-		ReadTimeout:  cfg.HTTPServer.Timeout,
-		WriteTimeout: cfg.HTTPServer.Timeout,
-		IdleTimeout:  cfg.HTTPServer.IdleTimeout,
+		ReadTimeout:  cfg.Timeout,
+		WriteTimeout: cfg.Timeout,
+		IdleTimeout:  cfg.IdleTimeout,
 	}
 
 	serverErr := make(chan error, 1)
 	go func() {
-		logger.Info("http server listening", slog.String("address", cfg.HTTPServer.Address))
+		logger.Info("http server listening", slog.String("address", cfg.Address))
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			serverErr <- err
 			return
