@@ -1,6 +1,6 @@
 package reviews
 
 type AttemptRequest struct {
-	Rating      int `json:"rating"`
-	DurationSec int `json:"duration_sec"`
+	Rating      string `json:"rating"`
+	DurationSec int    `json:"duration_sec"`
 }
