@@ -9,9 +9,13 @@ import (
 	"os"
 	"time"
 
+	"github.com/joho/godotenv"
+
+	"github.com/mxdtrip/freeburger/services/api/internal/auth"
 	"github.com/mxdtrip/freeburger/services/api/internal/config"
 	"github.com/mxdtrip/freeburger/services/api/internal/server"
 	"github.com/mxdtrip/freeburger/services/api/internal/storage/postgres"
+	"github.com/mxdtrip/freeburger/services/api/internal/storage/postgres/db"
 	"github.com/mxdtrip/freeburger/services/api/internal/storage/redis"
 )
 
@@ -20,6 +24,10 @@ const shutdownTimeout = 10 * time.Second
 // Run loads configuration, wires dependencies and serves HTTP until ctx is
 // cancelled (SIGINT/SIGTERM), then shuts everything down gracefully.
 func Run(ctx context.Context) error {
+	if err := godotenv.Load(); err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("load .env: %w", err)
+	}
+
 	cfg, err := config.Load()
 	if err != nil {
 		return fmt.Errorf("load config: %w", err)
@@ -27,6 +35,11 @@ func Run(ctx context.Context) error {
 
 	logger := newLogger(cfg.Env)
 	logger.Info("starting api", slog.String("env", cfg.Env))
+
+	authCfg, err := auth.LoadConfig()
+	if err != nil {
+		return fmt.Errorf("load auth config: %w", err)
+	}
 
 	pg, err := postgres.New(ctx, &cfg.Database)
 	if err != nil {
@@ -42,10 +55,13 @@ func Run(ctx context.Context) error {
 	defer func() { _ = rdb.Close() }()
 	logger.Info("connected to redis")
 
+	authSvc := auth.NewService(db.New(pg.Pool), rdb.Client, authCfg)
+
 	handler := server.New(server.Deps{
 		Logger:   logger,
 		Postgres: pg,
 		Redis:    rdb,
+		Auth:     authSvc,
 	})
 
 	srv := &http.Server{
