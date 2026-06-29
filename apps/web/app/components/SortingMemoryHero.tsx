@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 const WORD = "engram";
@@ -149,6 +150,7 @@ function recordSort(code: string, order: number[]) {
 }
 
 export function SortingMemoryHero() {
+  const router = useRouter();
   const sceneRef = useRef<HTMLElement | null>(null);
   const runIdRef = useRef(0);
   const [size, setSize] = useState<SceneSize>({ width: 1200, height: 760 });
@@ -277,6 +279,14 @@ export function SortingMemoryHero() {
     setActiveAction("sort");
     void sort();
   }, [cancelIntro, isSorting, sort]);
+
+  const handleAuthSubmit = useCallback(
+    (event: React.FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      router.push("/dashboard");
+    },
+    [router],
+  );
 
   useEffect(() => {
     const element = sceneRef.current;
@@ -442,7 +452,7 @@ export function SortingMemoryHero() {
                 Sign up
               </button>
             </div>
-            <form className="auth-form">
+            <form className="auth-form" onSubmit={handleAuthSubmit}>
               <label>
                 Email
                 <input autoComplete="email" placeholder="you@company.com" type="email" />
