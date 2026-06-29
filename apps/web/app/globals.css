@@ -933,9 +933,14 @@ h3 {
 }
 
 .cabinet-nav a:hover {
-  color: var(--text);
-  border-color: var(--border);
-  background: rgba(255, 255, 255, 0.025);
+  color: var(--accent-bright);
+  font-weight: 600;
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+}
+
+.cabinet-nav a:hover::before {
+  color: var(--accent);
 }
 
 .cabinet-sidebar__note {
