@@ -249,7 +249,7 @@ h3 {
   content: "";
   position: absolute;
   left: 50%;
-  top: 46%;
+  top: 40%;
   width: min(78vw, 920px);
   height: min(52vh, 460px);
   transform: translate(-50%, -50%);

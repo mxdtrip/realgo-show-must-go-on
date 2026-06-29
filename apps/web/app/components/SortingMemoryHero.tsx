@@ -66,8 +66,10 @@ function shuffle(order: number[]) {
 
 function geometry(size: SceneSize) {
   const font = clamp(Math.floor(size.width / 8.2), 54, 132);
-  const letterWidth = font * 0.52;
-  const gap = clamp(font * 0.015, 0, 3);
+  // Slot wide enough that even the widest glyph ('m') clears its neighbours,
+  // plus an explicit, even gap so the letters breathe instead of touching.
+  const letterWidth = font * 0.6;
+  const gap = clamp(font * 0.18, 12, 22);
   const total = LETTER_COUNT * letterWidth + (LETTER_COUNT - 1) * gap;
 
   return {
@@ -75,7 +77,8 @@ function geometry(size: SceneSize) {
     letterWidth,
     gap,
     startX: (size.width - total) / 2,
-    y: size.height / 2 - font * 0.56,
+    // Sit the word above the vertical centre (0.5 = middle, lower = higher).
+    y: size.height * 0.4 - font * 0.56,
   };
 }
 
