@@ -7,6 +7,22 @@ import { getDictionary } from "../_content/i18n";
 
 const WORD = "engram";
 const LETTER_COUNT = WORD.length;
+
+// Per-glyph advance widths (relative to the font size) so the letters lay out
+// with even gaps instead of equal-width slots. Bootstrapped from Inter 700
+// metrics for a deterministic first paint, then refined from the real loaded
+// font via canvas (see the measure effect below).
+const FALLBACK_RATIOS = [0.57, 0.62, 0.62, 0.4, 0.57, 0.91]; // e n g r a m
+let glyphRatios: number[] | null = null;
+
+function measureGlyphRatios(): number[] | null {
+  if (typeof document === "undefined") return null;
+  const ctx = document.createElement("canvas").getContext("2d");
+  if (!ctx) return null;
+  const family = getComputedStyle(document.body).fontFamily || "Inter, system-ui, sans-serif";
+  ctx.font = `700 1000px ${family}`;
+  return [...WORD].map((char) => ctx.measureText(char).width / 1000);
+}
 const GATHER_MS = 980;
 const COMPARE_MS = 90;
 const SWAP_MS = 430;
@@ -69,16 +85,16 @@ function shuffle(order: number[]) {
 
 function geometry(size: SceneSize) {
   const font = clamp(Math.floor(size.width / 8.2), 54, 132);
-  // Slot wide enough that even the widest glyph ('m') clears its neighbours,
-  // plus a small, even gap so the letters sit close without touching.
-  const letterWidth = font * 0.6;
-  const gap = clamp(font * 0.08, 5, 11);
-  const total = LETTER_COUNT * letterWidth + (LETTER_COUNT - 1) * gap;
+  // Even gap between glyphs; widths come from real per-letter metrics.
+  const gap = clamp(font * 0.1, 7, 14);
+  const ratios = glyphRatios ?? FALLBACK_RATIOS;
+  const widths = ratios.map((ratio) => ratio * font);
+  const total = widths.reduce((sum, w) => sum + w, 0) + (LETTER_COUNT - 1) * gap;
 
   return {
     font,
-    letterWidth,
     gap,
+    widths,
     startX: (size.width - total) / 2,
     // Sit the word above the vertical centre (0.5 = middle, lower = higher).
     y: size.height * 0.4 - font * 0.56,
@@ -87,24 +103,26 @@ function geometry(size: SceneSize) {
 
 function rowPoses(size: SceneSize, order: number[]) {
   const g = geometry(size);
+  let x = g.startX;
 
-  return order.map((key, index) => ({
-    key,
-    x: g.startX + index * (g.letterWidth + g.gap),
-    y: g.y,
-    rotate: 0,
-    visible: true,
-  }));
+  // Advance by each letter's own width, so the visible gap between every pair
+  // of glyphs is exactly `gap` — no more wide voids around narrow letters.
+  return order.map((key) => {
+    const pose = { key, x, y: g.y, rotate: 0, visible: true };
+    x += g.widths[key] + g.gap;
+    return pose;
+  });
 }
 
 function chaosPoses(size: SceneSize, order: number[]) {
   const g = geometry(size);
+  const maxWidth = Math.max(...g.widths);
   const safeTop = Math.max(130, size.height * 0.22);
   const safeBottom = Math.max(safeTop + 1, size.height - g.font * 1.1 - 90);
 
   return order.map((key, index) => ({
     key,
-    x: clamp(Math.random() * (size.width - g.letterWidth), 18, size.width - g.letterWidth - 18),
+    x: clamp(Math.random() * (size.width - maxWidth), 18, size.width - maxWidth - 18),
     y: clamp(safeTop + Math.random() * (safeBottom - safeTop), safeTop, safeBottom),
     rotate: -16 + Math.random() * 32 + index * 0.2,
     visible: true,
@@ -173,13 +191,17 @@ export function SortingMemoryHero() {
   // Whether the letters are currently scattered; a click on empty space toggles
   // between scattering and gathering. Starts scattered to match the intro.
   const [scattered, setScattered] = useState(true);
+  // Bumped once the real font metrics are measured, to re-lay-out the word.
+  const [metricsVersion, setMetricsVersion] = useState(0);
 
   // Intro: letters start scattered, then auto-gather after a short beat.
   const introRef = useRef(true);
   const introTimerRef = useRef<number | null>(null);
   const sortRef = useRef<() => void>(() => {});
 
-  const g = useMemo(() => geometry(size), [size]);
+  // metricsVersion is a dependency so the layout recomputes when glyph widths
+  // are refined from the loaded font, even though geometry reads them globally.
+  const g = useMemo(() => geometry(size), [size, metricsVersion]);
 
   const setChaos = useCallback(() => {
     if (isSorting) return;
@@ -349,6 +371,29 @@ export function SortingMemoryHero() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [size.width, size.height]);
 
+  // Measure real glyph widths once the font is loaded, then bump the version so
+  // the gathered word re-lays out with accurate, even spacing.
+  useEffect(() => {
+    const apply = () => {
+      const ratios = measureGlyphRatios();
+      if (ratios && ratios.every((value) => value > 0)) {
+        glyphRatios = ratios;
+        setMetricsVersion((value) => value + 1);
+      }
+    };
+    apply();
+    if (document.fonts?.ready) {
+      void document.fonts.ready.then(apply);
+    }
+  }, []);
+
+  useEffect(() => {
+    // Re-flow only the gathered word; don't re-randomise a scattered layout.
+    if (isSorting || poses.length === 0 || introRef.current || scattered) return;
+    setPoses(rowPoses(size, order));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [metricsVersion]);
+
   // Intro auto-gather: hold the scattered word for a beat, then sort it in.
   useEffect(() => {
     introTimerRef.current = window.setTimeout(() => {
@@ -426,25 +471,38 @@ export function SortingMemoryHero() {
       </div>
 
       <div className="word-stage" aria-label={copy.wordAria}>
-        {poses.map((pose) => (
-          <span
-            className={["word-letter", activeKeys.includes(pose.key) ? "active" : ""]
-              .concat(`motion-${motionMode}`)
-              .filter(Boolean)
-              .join(" ")}
-            key={pose.key}
-            style={{
-              fontSize: g.font,
-              height: g.font * 1.08,
-              opacity: pose.visible ? 1 : 0,
-              transform: `translate3d(${pose.x}px, ${pose.y}px, 0) rotate(${pose.rotate}deg)`,
-              transitionDelay: motionMode === "gathering" ? `${pose.key * 45}ms` : "0ms",
-              width: g.letterWidth,
-            }}
-          >
-            {WORD[pose.key]}
-          </span>
-        ))}
+        {poses.map((pose) => {
+          // The further a letter sits from the scene centre, the more it blurs
+          // and fades — so scattered letters dissolve and sharpen as they gather.
+          const width = g.widths[pose.key];
+          const dx = pose.x + width / 2 - size.width / 2;
+          const dy = pose.y + g.font * 0.54 - size.height * 0.4;
+          const distance = Math.hypot(dx, dy);
+          const t = clamp((distance - size.width * 0.22) / (size.width * 0.32), 0, 1);
+          const blur = t * 7;
+          const fade = 1 - t * 0.8;
+
+          return (
+            <span
+              className={["word-letter", activeKeys.includes(pose.key) ? "active" : ""]
+                .concat(`motion-${motionMode}`)
+                .filter(Boolean)
+                .join(" ")}
+              key={pose.key}
+              style={{
+                fontSize: g.font,
+                height: g.font * 1.08,
+                opacity: pose.visible ? fade : 0,
+                filter: blur > 0.05 ? `blur(${blur.toFixed(2)}px)` : undefined,
+                transform: `translate3d(${pose.x}px, ${pose.y}px, 0) rotate(${pose.rotate}deg)`,
+                transitionDelay: motionMode === "gathering" ? `${pose.key * 55}ms` : "0ms",
+                width,
+              }}
+            >
+              {WORD[pose.key]}
+            </span>
+          );
+        })}
       </div>
 
       {authOpen ? (
