@@ -8,8 +8,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
-	"github.com/mxdtrip/freeburger/services/api/internal/reviews"
 	"github.com/mxdtrip/freeburger/services/api/internal/auth"
+	"github.com/mxdtrip/freeburger/services/api/internal/reviews"
 	"github.com/mxdtrip/freeburger/services/api/internal/storage/postgres"
 	"github.com/mxdtrip/freeburger/services/api/internal/storage/redis"
 )
@@ -38,7 +38,7 @@ func New(deps Deps) http.Handler {
 	r.Get("/healthz", health.live)
 	r.Get("/readyz", health.ready)
 
-	reviewsSvc := reviews.NewService(deps.Logger)
+	reviewsSvc := reviews.NewService(reviews.NewRepository(deps.Postgres.Pool), deps.Logger)
 	reviewsHandler := reviews.NewHandler(reviewsSvc, deps.Logger)
 
 	r.Route("/api/v1", func(r chi.Router) {

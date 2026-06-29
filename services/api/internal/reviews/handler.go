@@ -1,6 +1,7 @@
 package reviews
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -16,6 +17,12 @@ type Handler struct {
 }
 
 var errInvalidRequest = errors.New("invalid request")
+
+type Service interface {
+	GetTodayReviews(ctx context.Context, userID int64) ([]ReviewItem, error)
+	ProcessAttempt(ctx context.Context, scheduleID, userID int64, req AttemptRequest) (AttemptResponse, error)
+	GetStats(ctx context.Context, userID int64) (StatsResponse, error)
+}
 
 func NewHandler(svc Service, log interface{ Error(string, ...any) }) *Handler {
 	return &Handler{svc: svc, log: log}
