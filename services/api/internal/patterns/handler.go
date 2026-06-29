@@ -11,8 +11,11 @@ import (
 )
 
 const (
+	// Five items are enough for the dashboard preview without turning the MVP
+	// endpoint into a full analytics report.
 	defaultWeakPatternsLimit = 5
-	maxWeakPatternsLimit     = 20
+	// Keep the ad-hoc limit bounded until this endpoint has pagination.
+	maxWeakPatternsLimit = 20
 )
 
 type Handler struct {
