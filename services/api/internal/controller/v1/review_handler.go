@@ -55,10 +55,7 @@ func (h *ReviewHandler) GetQueue(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response.JSON(w, http.StatusOK, v1response.QueueResponse{
-		Data: resp.Data,
-		Meta: v1response.QueueMeta{NextCursor: resp.Meta.NextCursor},
-	})
+	response.JSON(w, http.StatusOK, resp)
 }
 
 // RateReview: POST /me/reviews/{reviewId}/rate
@@ -103,9 +100,7 @@ func (h *ReviewHandler) RateReview(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response.JSON(w, http.StatusOK, v1response.RateReviewResponse{
-		Data: data,
-	})
+	response.JSON(w, http.StatusOK, data)
 }
 
 // GetStats: GET /me/reviews/stats
