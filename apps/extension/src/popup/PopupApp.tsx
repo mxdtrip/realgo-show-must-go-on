@@ -1,7 +1,6 @@
 import { useState } from "react";
 
 import type {
-  CanSolveAgain,
   DetectedSubmission,
   SubmissionPayload,
   UserDifficulty,
@@ -17,8 +16,13 @@ export interface PopupAppProps {
   submission: DetectedSubmission | null | undefined;
   /** Persists the rated submission. Rejects with an Error on failure. */
   onSave: (payload: SubmissionPayload) => Promise<void>;
-  /** Optional close handler (extension popup can't always close itself). */
+  /**
+   * "Скрыть" on the success screen — hides the extension UI until the next
+   * solved task (overlay: removes itself; toolbar popup: closes the window).
+   */
   onClose?: () => void;
+  /** "К повторению" on the success screen — opens the web app's review cards. */
+  onReview?: () => void;
   /** Optional bug-report handler; falls back to opening a GitHub issue. */
   onReport?: () => void;
 }
@@ -31,12 +35,6 @@ const DIFFICULTY_OPTIONS: { value: UserDifficulty; label: string }[] = [
   { value: "hard", label: "Тяжело" },
 ];
 
-const AGAIN_OPTIONS: { value: CanSolveAgain; label: string }[] = [
-  { value: "no", label: "Нет" },
-  { value: "probably", label: "Скорее да" },
-  { value: "yes", label: "Да" },
-];
-
 /** Where "Сообщить об ошибке" points when the host doesn't override it. */
 const REPORT_ISSUE_URL =
   "https://github.com/mxdtrip/freeburger/issues/new?labels=extension&title=" +
@@ -46,9 +44,8 @@ const REPORT_ISSUE_URL =
 
 type Status = "form" | "saving" | "success" | "error";
 
-export function PopupApp({ submission, onSave, onClose, onReport }: PopupAppProps) {
+export function PopupApp({ submission, onSave, onClose, onReview, onReport }: PopupAppProps) {
   const [difficulty, setDifficulty] = useState<UserDifficulty | null>(null);
-  const [again, setAgain] = useState<CanSolveAgain | null>(null);
   const [status, setStatus] = useState<Status>("form");
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -99,16 +96,33 @@ export function PopupApp({ submission, onSave, onClose, onReport }: PopupAppProp
           </div>
           <div>
             <p className="engram-state__title engram-state__title--success">
-              Запланировано ✓
+              Успешно!
             </p>
             <p className="engram-muted" style={{ marginTop: 4 }}>
-              Задача добавлена в очередь повторений.
+              Продолжите решать или займемся повторением?
             </p>
           </div>
-          {onClose && (
-            <button className="engram-link" onClick={onClose}>
-              Закрыть
-            </button>
+          {(onClose || onReview) && (
+            <div className="engram-row" style={{ width: "100%" }}>
+              {onClose && (
+                <button
+                  className="engram-btn engram-btn--ghost"
+                  style={{ flex: 1 }}
+                  onClick={onClose}
+                >
+                  Скрыть
+                </button>
+              )}
+              {onReview && (
+                <button
+                  className="engram-btn engram-btn--primary"
+                  style={{ flex: 1 }}
+                  onClick={onReview}
+                >
+                  К повторению
+                </button>
+              )}
+            </div>
           )}
         </div>
       </Shell>
@@ -116,16 +130,15 @@ export function PopupApp({ submission, onSave, onClose, onReport }: PopupAppProp
   }
 
   const saving = status === "saving";
-  const canSave = difficulty !== null && again !== null && !saving;
+  const canSave = difficulty !== null && !saving;
 
   async function handleSave() {
-    if (difficulty === null || again === null || submission == null) return;
+    if (difficulty === null || submission == null) return;
     setStatus("saving");
     setErrorMsg("");
     const payload: SubmissionPayload = {
       ...submission,
       userDifficulty: difficulty,
-      canSolveAgain: again,
     };
     try {
       await onSave(payload);
@@ -144,14 +157,6 @@ export function PopupApp({ submission, onSave, onClose, onReport }: PopupAppProp
           options={DIFFICULTY_OPTIONS}
           value={difficulty}
           onChange={setDifficulty}
-          disabled={saving}
-        />
-
-        <ChoiceGroup
-          label="Сможешь решить заново без подсказок?"
-          options={AGAIN_OPTIONS}
-          value={again}
-          onChange={setAgain}
           disabled={saving}
         />
 
@@ -195,6 +200,11 @@ function Shell({
           <BrandMark />
           Engram
         </span>
+        {task && (
+          <span className="engram-chip engram-chip--accent">
+            Вы справились с заданием!
+          </span>
+        )}
       </div>
       {task && (
         <div className="engram-task">
