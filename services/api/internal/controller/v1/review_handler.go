@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 
@@ -85,7 +86,14 @@ func (h *ReviewHandler) RateReview(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := h.svc.RateReview(r.Context(), reviewID, userID, req.Rating)
+	// Парсим reviewedAt из запроса (ISO 8601)
+	reviewedAt, err := time.Parse(time.RFC3339, req.ReviewedAt)
+	if err != nil {
+		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "invalid reviewedAt format, expected ISO 8601")
+		return
+	}
+
+	data, err := h.svc.RateReview(r.Context(), reviewID, userID, req.Rating, reviewedAt)
 	if err != nil {
 		if errors.Is(err, service.ErrReviewNotFound) {
 			response.Fail(w, http.StatusNotFound, "NOT_FOUND", err.Error())
@@ -96,10 +104,7 @@ func (h *ReviewHandler) RateReview(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response.JSON(w, http.StatusOK, v1response.RateReviewResponse{
-		ReviewID:     resp.ReviewID,
-		Rating:       resp.Rating,
-		NextReviewAt: resp.NextReviewAt,
-		Status:       resp.Status,
+		Data: data,
 	})
 }
 

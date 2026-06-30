@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/mxdtrip/freeburger/services/api/internal/controller/v1/request"
 	v1response "github.com/mxdtrip/freeburger/services/api/internal/controller/v1/response"
@@ -17,8 +18,8 @@ func (s *stubReviewService) GetQueue(ctx context.Context, userID int64, status s
 	return v1response.QueueResponse{}, nil
 }
 
-func (s *stubReviewService) RateReview(ctx context.Context, reviewID, userID int64, rating string) (v1response.RateReviewResponse, error) {
-	return v1response.RateReviewResponse{}, nil
+func (s *stubReviewService) RateReview(ctx context.Context, reviewID, userID int64, rating string, reviewedAt time.Time) (v1response.RateReviewData, error) {
+	return v1response.RateReviewData{}, nil
 }
 
 func (s *stubReviewService) GetStats(ctx context.Context, userID int64) (v1response.StatsResponse, error) {
