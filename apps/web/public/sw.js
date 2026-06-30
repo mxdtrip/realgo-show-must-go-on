@@ -1,6 +1,7 @@
 const CACHE_NAME = "engram-shell-v2";
 const OFFLINE_URL = "/offline.html";
 const APP_SHELL = ["/", "/dashboard", "/cards", "/cards/session", "/manifest.webmanifest", "/icons/icon.svg", OFFLINE_URL];
+const CACHEABLE_DESTINATIONS = new Set(["document", "script", "style", "image", "font"]);
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -22,25 +23,38 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
+  if (!shouldHandle(event.request)) return;
 
   event.respondWith(
     fetch(event.request)
       .then((response) => {
-        const copy = response.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+        if (shouldCache(event.request, response)) {
+          const copy = response.clone();
+          event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy)));
+        }
         return response;
       })
-      .catch(() =>
-        caches.match(event.request).then((cached) => {
-          if (cached) return cached;
-          // For page navigations with nothing cached, show the offline page
-          // instead of a blank screen. Sub-resources just fail.
-          if (event.request.mode === "navigate") return caches.match(OFFLINE_URL);
-          return Response.error();
-        }),
-      ),
+      .catch(() => caches.match(event.request).then((cached) => cached || navigationFallback(event.request))),
   );
 });
+
+function shouldHandle(request) {
+  const url = new URL(request.url);
+  if (url.origin !== self.location.origin) return false;
+  if (url.pathname.startsWith("/api/")) return false;
+  return request.mode === "navigate" || CACHEABLE_DESTINATIONS.has(request.destination);
+}
+
+function shouldCache(request, response) {
+  if (!response || response.status !== 200 || response.type !== "basic") return false;
+  const url = new URL(request.url);
+  if (url.pathname.startsWith("/api/")) return false;
+  return request.mode === "navigate" || CACHEABLE_DESTINATIONS.has(request.destination);
+}
+
+function navigationFallback(request) {
+  return request.mode === "navigate" ? caches.match(OFFLINE_URL) : Response.error();
+}
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();

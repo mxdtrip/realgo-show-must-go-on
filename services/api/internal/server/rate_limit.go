@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -116,7 +117,23 @@ func hostOnly(addr string) string {
 
 func isTrustedProxy(host string) bool {
 	ip := net.ParseIP(host)
-	return ip != nil && (ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast())
+	if ip == nil {
+		return false
+	}
+	if ip.IsLoopback() {
+		return true
+	}
+	for _, rawCIDR := range strings.Split(os.Getenv("TRUSTED_PROXY_CIDRS"), ",") {
+		rawCIDR = strings.TrimSpace(rawCIDR)
+		if rawCIDR == "" {
+			continue
+		}
+		_, cidr, err := net.ParseCIDR(rawCIDR)
+		if err == nil && cidr.Contains(ip) {
+			return true
+		}
+	}
+	return false
 }
 
 func firstXForwardedFor(header string) string {

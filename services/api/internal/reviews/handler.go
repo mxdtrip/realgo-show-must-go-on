@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/mxdtrip/freeburger/services/api/internal/auth"
 	"github.com/mxdtrip/freeburger/services/api/internal/server/response"
 )
 
@@ -35,16 +36,16 @@ func RegisterRoutes(r chi.Router, h *Handler) {
 }
 
 func (h *Handler) GetTodayReviews(w http.ResponseWriter, r *http.Request) {
-	userID, err := strconv.ParseInt(r.URL.Query().Get("user_id"), 10, 64)
-	if err != nil {
-		response.Fail(w, http.StatusBadRequest, "invalid_user_id", "user_id must be a valid integer")
+	userID, ok := auth.UserIDFromContext(r.Context())
+	if !ok {
+		response.Fail(w, http.StatusUnauthorized, "unauthorized", "authentication required")
 		return
 	}
 
 	items, err := h.svc.GetTodayReviews(r.Context(), userID)
 	if err != nil {
 		h.log.Error("GetTodayReviews", "err", err)
-		response.Fail(w, http.StatusInternalServerError, "internal_error", err.Error())
+		response.Fail(w, http.StatusInternalServerError, "internal_error", "could not list reviews")
 		return
 	}
 
@@ -69,7 +70,11 @@ func (h *Handler) ProcessAttempt(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID, _ := strconv.ParseInt(r.URL.Query().Get("user_id"), 10, 64)
+	userID, ok := auth.UserIDFromContext(r.Context())
+	if !ok {
+		response.Fail(w, http.StatusUnauthorized, "unauthorized", "authentication required")
+		return
+	}
 
 	resp, err := h.svc.ProcessAttempt(r.Context(), scheduleID, userID, req)
 	if err != nil {
@@ -78,7 +83,7 @@ func (h *Handler) ProcessAttempt(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		h.log.Error("ProcessAttempt", "err", err)
-		response.Fail(w, http.StatusInternalServerError, "internal_error", err.Error())
+		response.Fail(w, http.StatusInternalServerError, "internal_error", "could not process review attempt")
 		return
 	}
 
@@ -86,16 +91,16 @@ func (h *Handler) ProcessAttempt(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetStats(w http.ResponseWriter, r *http.Request) {
-	userID, err := strconv.ParseInt(r.URL.Query().Get("user_id"), 10, 64)
-	if err != nil {
-		response.Fail(w, http.StatusBadRequest, "invalid_user_id", "user_id must be a valid integer")
+	userID, ok := auth.UserIDFromContext(r.Context())
+	if !ok {
+		response.Fail(w, http.StatusUnauthorized, "unauthorized", "authentication required")
 		return
 	}
 
 	stats, err := h.svc.GetStats(r.Context(), userID)
 	if err != nil {
 		h.log.Error("GetStats", "err", err)
-		response.Fail(w, http.StatusInternalServerError, "internal_error", err.Error())
+		response.Fail(w, http.StatusInternalServerError, "internal_error", "could not load review stats")
 		return
 	}
 

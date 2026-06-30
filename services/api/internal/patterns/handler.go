@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
+	"github.com/mxdtrip/freeburger/services/api/internal/auth"
 	"github.com/mxdtrip/freeburger/services/api/internal/server/response"
 )
 
@@ -35,15 +36,15 @@ func RegisterRoutes(r chi.Router, h *Handler) {
 }
 
 func (h *Handler) ListWeak(w http.ResponseWriter, r *http.Request) {
-	userID, err := strconv.ParseInt(r.URL.Query().Get("user_id"), 10, 64)
-	if err != nil {
-		response.Fail(w, http.StatusBadRequest, "invalid_user_id", "user_id must be a valid integer")
+	userID, ok := auth.UserIDFromContext(r.Context())
+	if !ok {
+		response.Fail(w, http.StatusUnauthorized, "unauthorized", "authentication required")
 		return
 	}
 
 	items, err := h.repo.ListWeak(r.Context(), userID, weakPatternsLimit(r))
 	if err != nil {
-		response.Fail(w, http.StatusInternalServerError, "internal_error", err.Error())
+		response.Fail(w, http.StatusInternalServerError, "internal_error", "could not list weak patterns")
 		return
 	}
 

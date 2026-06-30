@@ -8,6 +8,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-chi/chi/v5"
+
+	"github.com/mxdtrip/freeburger/services/api/internal/auth"
 	"github.com/mxdtrip/freeburger/services/api/internal/controller/v1/request"
 	v1response "github.com/mxdtrip/freeburger/services/api/internal/controller/v1/response"
 )
@@ -32,17 +35,13 @@ func TestRateReview_InvalidRating(t *testing.T) {
 	body := strings.NewReader(`{"rating": "invalid", "reviewedAt": "2026-06-30T10:00:00Z"}`)
 	req := httptest.NewRequest(http.MethodPost, "/me/reviews/1/rate", body)
 	req.Header.Set("Content-Type", "application/json")
-
-	// Добавляем userID в контекст через auth.ContextWithUserID
-	ctx := context.WithValue(req.Context(), struct{ key int }{0}, int64(1))
-	req = req.WithContext(ctx)
+	req = withUser(req, 1)
 
 	w := httptest.NewRecorder()
-	h.RateReview(w, req)
+	routeReviewHandler(h).ServeHTTP(w, req)
 
-	// Ожидаем 401, т.к. auth.UserIDFromContext использует другой ключ
-	if w.Code != http.StatusUnauthorized {
-		t.Errorf("expected 401, got %d", w.Code)
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("expected 400, got %d", w.Code)
 	}
 }
 
@@ -53,17 +52,29 @@ func TestRateReview_ValidRating(t *testing.T) {
 		body := strings.NewReader(`{"rating": "` + rating + `", "reviewedAt": "2026-06-30T10:00:00Z"}`)
 		req := httptest.NewRequest(http.MethodPost, "/me/reviews/1/rate", body)
 		req.Header.Set("Content-Type", "application/json")
-
-		ctx := context.WithValue(req.Context(), struct{ key int }{0}, int64(1))
-		req = req.WithContext(ctx)
+		req = withUser(req, 1)
 
 		w := httptest.NewRecorder()
-		h.RateReview(w, req)
+		routeReviewHandler(h).ServeHTTP(w, req)
 
-		// 401 ожидаем, т.к. auth.UserIDFromContext не найдет ключ
-		if w.Code != http.StatusUnauthorized {
-			t.Logf("rating=%s, code=%d, body=%s", rating, w.Code, w.Body.String())
+		if w.Code != http.StatusOK {
+			t.Errorf("rating=%s: expected 200, got %d, body=%s", rating, w.Code, w.Body.String())
 		}
+	}
+}
+
+func TestRateReview_Unauthorized(t *testing.T) {
+	h := NewReviewHandler(&stubReviewService{})
+
+	body := strings.NewReader(`{"rating": "normal", "reviewedAt": "2026-06-30T10:00:00Z"}`)
+	req := httptest.NewRequest(http.MethodPost, "/me/reviews/1/rate", body)
+	req.Header.Set("Content-Type", "application/json")
+
+	w := httptest.NewRecorder()
+	routeReviewHandler(h).ServeHTTP(w, req)
+
+	if w.Code != http.StatusUnauthorized {
+		t.Errorf("expected 401, got %d", w.Code)
 	}
 }
 
@@ -85,4 +96,16 @@ func TestRequest_Valid(t *testing.T) {
 			t.Errorf("rating=%s: expected %v, got %v", tt.rating, tt.expected, got)
 		}
 	}
+}
+
+func routeReviewHandler(h *ReviewHandler) http.Handler {
+	r := chi.NewRouter()
+	r.Route("/me/reviews", func(r chi.Router) {
+		RegisterReviewRoutes(r, h)
+	})
+	return r
+}
+
+func withUser(r *http.Request, userID int64) *http.Request {
+	return r.WithContext(auth.ContextWithUserID(r.Context(), userID))
 }

@@ -13,7 +13,6 @@ import (
 	"github.com/mxdtrip/freeburger/services/api/internal/extension"
 	"github.com/mxdtrip/freeburger/services/api/internal/patterns"
 	"github.com/mxdtrip/freeburger/services/api/internal/repo"
-	"github.com/mxdtrip/freeburger/services/api/internal/reviews"
 	"github.com/mxdtrip/freeburger/services/api/internal/roadmaps"
 	"github.com/mxdtrip/freeburger/services/api/internal/scheduler"
 	"github.com/mxdtrip/freeburger/services/api/internal/service"
@@ -49,10 +48,6 @@ func New(deps Deps) http.Handler {
 	r.Get("/healthz", health.live)
 	r.Get("/readyz", health.ready)
 
-	// Старый модуль reviews (для обратной совместимости)
-	reviewsSvc := reviews.NewService(reviews.NewRepository(deps.Postgres.Pool), deps.Logger)
-	reviewsHandler := reviews.NewHandler(reviewsSvc, deps.Logger)
-
 	// Новый слоистый reviews
 	reviewRepo := repo.NewReviewRepository(deps.Postgres.Pool)
 	reviewService := service.NewReviewService(reviewRepo, deps.Logger)
@@ -75,30 +70,32 @@ func New(deps Deps) http.Handler {
 			r.With(authRateLimit).Post("/refresh", ah.refresh)
 			r.Post("/logout", ah.logout)
 		})
+		r.With(requireAuth(deps.Auth)).Get("/me", ah.me)
 		r.Route("/users", func(r chi.Router) {
+			// Backward-compatible alias. New clients should call GET /api/v1/me.
 			r.With(requireAuth(deps.Auth)).Get("/me", ah.me)
 		})
 
-		r.Route("/reviews", func(r chi.Router) {
-			// Старый модуль (для обратной совместимости)
-			reviews.RegisterRoutes(r, reviewsHandler)
-		})
-
-		// Новые endpoints согласно контракту
 		r.Route("/me/reviews", func(r chi.Router) {
 			r.With(requireAuth(deps.Auth)).Group(func(r chi.Router) {
 				v1.RegisterReviewRoutes(r, reviewHandler)
 			})
 		})
-
+		r.Route("/me/patterns", func(r chi.Router) {
+			r.With(requireAuth(deps.Auth)).Group(func(r chi.Router) {
+				patterns.RegisterRoutes(r, patternsHandler)
+			})
+		})
+		r.Route("/patterns", func(r chi.Router) {
+			// Backward-compatible alias. New clients should call /me/patterns.
+			r.With(requireAuth(deps.Auth)).Group(func(r chi.Router) {
+				patterns.RegisterRoutes(r, patternsHandler)
+			})
+		})
 		r.Route("/extension", func(r chi.Router) {
 			r.With(requireAuth(deps.Auth)).Group(func(r chi.Router) {
 				extension.RegisterRoutes(r, extensionHandler)
 			})
-		})
-
-		r.Route("/patterns", func(r chi.Router) {
-			patterns.RegisterRoutes(r, patternsHandler)
 		})
 		r.Route("/roadmaps", func(r chi.Router) {
 			roadmaps.RegisterRoutes(r, roadmapsHandler)

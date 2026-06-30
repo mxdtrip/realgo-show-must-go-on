@@ -20,6 +20,8 @@ func TestClientIPIgnoresForwardedHeadersFromUntrustedRemote(t *testing.T) {
 }
 
 func TestClientIPUsesXForwardedForFromTrustedProxy(t *testing.T) {
+	t.Setenv("TRUSTED_PROXY_CIDRS", "10.0.0.0/8")
+
 	req := &http.Request{
 		RemoteAddr: "10.0.0.5:12345",
 		Header: http.Header{
@@ -29,6 +31,19 @@ func TestClientIPUsesXForwardedForFromTrustedProxy(t *testing.T) {
 
 	if got := clientIP(req); got != "198.51.100.77" {
 		t.Fatalf("clientIP = %q, want first forwarded client IP", got)
+	}
+}
+
+func TestClientIPIgnoresForwardedHeadersFromPrivateUntrustedRemote(t *testing.T) {
+	req := &http.Request{
+		RemoteAddr: "10.0.0.5:12345",
+		Header: http.Header{
+			"X-Forwarded-For": []string{"198.51.100.77"},
+		},
+	}
+
+	if got := clientIP(req); got != "10.0.0.5" {
+		t.Fatalf("clientIP = %q, want socket remote IP", got)
 	}
 }
 

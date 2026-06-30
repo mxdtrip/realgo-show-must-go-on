@@ -156,10 +156,17 @@ SELECT rs.id, rs.user_id, rs.problem_id, rs.pattern_id, rs.card_id, rs.next_revi
        rs.interval_days, rs.stability, rs.difficulty, rs.review_count,
        rs.last_rating, rs.state, rs.lapses, rs.last_review_at, rs.remaining_steps,
        p.title AS problem_title, p.url AS problem_url,
-       pt.name AS pattern_title
+       COALESCE(pt.name, cpt.name, rpt.name, '') AS pattern_title,
+       p.difficulty AS problem_difficulty,
+       c.question AS card_question,
+       COALESCE(c.type, '') AS card_type
 FROM review_schedules rs
-LEFT JOIN problems p ON p.id = rs.problem_id
+LEFT JOIN cards c ON c.id = rs.card_id
+LEFT JOIN problems p ON p.id = COALESCE(rs.problem_id, c.problem_id)
 LEFT JOIN patterns pt ON pt.id = rs.pattern_id
+LEFT JOIN patterns cpt ON cpt.id = c.pattern_id
+LEFT JOIN roadmap_items ri ON ri.problem_id = p.id AND ri.roadmap_code = 'neetcode_150'
+LEFT JOIN patterns rpt ON rpt.id = ri.pattern_id
 WHERE rs.user_id = $1 AND rs.next_review_at <= NOW()
 ORDER BY rs.next_review_at ASC
 LIMIT $2
@@ -171,24 +178,27 @@ type GetTodayReviewsParams struct {
 }
 
 type GetTodayReviewsRow struct {
-	ID             int64
-	UserID         int64
-	ProblemID      pgtype.Int8
-	PatternID      pgtype.Int8
-	CardID         pgtype.Int8
-	NextReviewAt   pgtype.Timestamptz
-	IntervalDays   float64
-	Stability      float64
-	Difficulty     float64
-	ReviewCount    pgtype.Int4
-	LastRating     pgtype.Text
-	State          int16
-	Lapses         int32
-	LastReviewAt   pgtype.Timestamptz
-	RemainingSteps int32
-	ProblemTitle   pgtype.Text
-	ProblemUrl     pgtype.Text
-	PatternTitle   pgtype.Text
+	ID                int64
+	UserID            int64
+	ProblemID         pgtype.Int8
+	PatternID         pgtype.Int8
+	CardID            pgtype.Int8
+	NextReviewAt      pgtype.Timestamptz
+	IntervalDays      float64
+	Stability         float64
+	Difficulty        float64
+	ReviewCount       pgtype.Int4
+	LastRating        pgtype.Text
+	State             int16
+	Lapses            int32
+	LastReviewAt      pgtype.Timestamptz
+	RemainingSteps    int32
+	ProblemTitle      pgtype.Text
+	ProblemUrl        pgtype.Text
+	PatternTitle      string
+	ProblemDifficulty pgtype.Text
+	CardQuestion      pgtype.Text
+	CardType          string
 }
 
 func (q *Queries) GetTodayReviews(ctx context.Context, arg GetTodayReviewsParams) ([]GetTodayReviewsRow, error) {
@@ -219,6 +229,106 @@ func (q *Queries) GetTodayReviews(ctx context.Context, arg GetTodayReviewsParams
 			&i.ProblemTitle,
 			&i.ProblemUrl,
 			&i.PatternTitle,
+			&i.ProblemDifficulty,
+			&i.CardQuestion,
+			&i.CardType,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listReviewQueue = `-- name: ListReviewQueue :many
+SELECT rs.id, rs.user_id, rs.problem_id, rs.pattern_id, rs.card_id, rs.next_review_at,
+       rs.interval_days, rs.stability, rs.difficulty, rs.review_count,
+       rs.last_rating, rs.state, rs.lapses, rs.last_review_at, rs.remaining_steps,
+       p.title AS problem_title, p.url AS problem_url,
+       COALESCE(pt.name, cpt.name, rpt.name, '') AS pattern_title,
+       p.difficulty AS problem_difficulty,
+       c.question AS card_question,
+       COALESCE(c.type, '') AS card_type
+FROM review_schedules rs
+LEFT JOIN cards c ON c.id = rs.card_id
+LEFT JOIN problems p ON p.id = COALESCE(rs.problem_id, c.problem_id)
+LEFT JOIN patterns pt ON pt.id = rs.pattern_id
+LEFT JOIN patterns cpt ON cpt.id = c.pattern_id
+LEFT JOIN roadmap_items ri ON ri.problem_id = p.id AND ri.roadmap_code = 'neetcode_150'
+LEFT JOIN patterns rpt ON rpt.id = ri.pattern_id
+WHERE rs.user_id = $1
+  AND (
+    ($2::text = 'due' AND rs.next_review_at <= NOW())
+    OR ($2::text = 'upcoming' AND rs.next_review_at > NOW())
+  )
+ORDER BY rs.next_review_at ASC
+LIMIT $3
+`
+
+type ListReviewQueueParams struct {
+	UserID     int64
+	Status     string
+	QueueLimit int32
+}
+
+type ListReviewQueueRow struct {
+	ID                int64
+	UserID            int64
+	ProblemID         pgtype.Int8
+	PatternID         pgtype.Int8
+	CardID            pgtype.Int8
+	NextReviewAt      pgtype.Timestamptz
+	IntervalDays      float64
+	Stability         float64
+	Difficulty        float64
+	ReviewCount       pgtype.Int4
+	LastRating        pgtype.Text
+	State             int16
+	Lapses            int32
+	LastReviewAt      pgtype.Timestamptz
+	RemainingSteps    int32
+	ProblemTitle      pgtype.Text
+	ProblemUrl        pgtype.Text
+	PatternTitle      string
+	ProblemDifficulty pgtype.Text
+	CardQuestion      pgtype.Text
+	CardType          string
+}
+
+func (q *Queries) ListReviewQueue(ctx context.Context, arg ListReviewQueueParams) ([]ListReviewQueueRow, error) {
+	rows, err := q.db.Query(ctx, listReviewQueue, arg.UserID, arg.Status, arg.QueueLimit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListReviewQueueRow
+	for rows.Next() {
+		var i ListReviewQueueRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.ProblemID,
+			&i.PatternID,
+			&i.CardID,
+			&i.NextReviewAt,
+			&i.IntervalDays,
+			&i.Stability,
+			&i.Difficulty,
+			&i.ReviewCount,
+			&i.LastRating,
+			&i.State,
+			&i.Lapses,
+			&i.LastReviewAt,
+			&i.RemainingSteps,
+			&i.ProblemTitle,
+			&i.ProblemUrl,
+			&i.PatternTitle,
+			&i.ProblemDifficulty,
+			&i.CardQuestion,
+			&i.CardType,
 		); err != nil {
 			return nil, err
 		}

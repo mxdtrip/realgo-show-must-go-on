@@ -1,4 +1,5 @@
 import { getDictionary } from "../_content/i18n";
+import { ScrollVideoBackground } from "../components/ScrollVideoBackground";
 import { SortingMemoryHero } from "../components/SortingMemoryHero";
 
 export default function Home() {
@@ -7,6 +8,7 @@ export default function Home() {
 
   return (
     <>
+      <ScrollVideoBackground />
       <SortingMemoryHero />
 
       <section className="landing-section" id="memory">

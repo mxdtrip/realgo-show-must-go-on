@@ -17,6 +17,7 @@ import (
 )
 
 const defaultQueueLimit = 50
+const maxQueueLimit = 100
 
 // ReviewHandler обрабатывает запросы для review endpoints.
 type ReviewHandler struct {
@@ -46,16 +47,20 @@ func (h *ReviewHandler) GetQueue(w http.ResponseWriter, r *http.Request) {
 	if status == "" {
 		status = "due"
 	}
+	if !validQueueStatus(status) {
+		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "status must be due or upcoming")
+		return
+	}
 
 	limit := parseLimit(r, defaultQueueLimit)
 
 	resp, err := h.svc.GetQueue(r.Context(), userID, status, limit)
 	if err != nil {
-		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", err.Error())
+		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", "could not load review queue")
 		return
 	}
 
-	response.JSON(w, http.StatusOK, resp)
+	response.JSONWithMeta(w, http.StatusOK, resp.Data, resp.Meta)
 }
 
 // RateReview: POST /me/reviews/{reviewId}/rate
@@ -96,7 +101,7 @@ func (h *ReviewHandler) RateReview(w http.ResponseWriter, r *http.Request) {
 			response.Fail(w, http.StatusNotFound, "NOT_FOUND", err.Error())
 			return
 		}
-		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", err.Error())
+		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", "could not rate review")
 		return
 	}
 
@@ -113,7 +118,7 @@ func (h *ReviewHandler) GetStats(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := h.svc.GetStats(r.Context(), userID)
 	if err != nil {
-		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", err.Error())
+		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", "could not load review stats")
 		return
 	}
 
@@ -140,5 +145,12 @@ func parseLimit(r *http.Request, defaultVal int32) int32 {
 	if err != nil || limit <= 0 {
 		return defaultVal
 	}
+	if limit > maxQueueLimit {
+		return maxQueueLimit
+	}
 	return int32(limit)
+}
+
+func validQueueStatus(status string) bool {
+	return status == "due" || status == "upcoming"
 }

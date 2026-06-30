@@ -1,5 +1,5 @@
 import { saveSubmission } from "./lib/api";
-import { setLastSubmission } from "./lib/storage";
+import { clearLastSubmission, setLastSubmission } from "./lib/storage";
 import type { DetectedSubmission, RuntimeMessage } from "./lib/types";
 
 /**
@@ -24,7 +24,15 @@ chrome.runtime.onMessage.addListener(
       // runs on the extension origin with host_permissions, so the request is
       // not subject to the host page's CORS policy.
       saveSubmission(message.payload)
-        .then(() => sendResponse({ ok: true }))
+        .then(async () => {
+          await clearLastSubmission();
+          try {
+            await chrome.action.setBadgeText({ text: "" });
+          } catch {
+            /* badge is cosmetic */
+          }
+          sendResponse({ ok: true });
+        })
         .catch((e) =>
           sendResponse({
             ok: false,
