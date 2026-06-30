@@ -133,6 +133,10 @@ export default function OnboardingProfilePage() {
 
   const currentStepIndex = Math.max(0, steps.indexOf(step));
   const selectedCompanies = useMemo(() => splitCompanies(companyInput), [companyInput]);
+  const currentStepHasValue =
+    (step === "company" && selectedCompanies.length > 0) ||
+    (step === "date" && selectedDate.length > 0) ||
+    (step === "topics" && selectedTopics.length > 0);
 
   const months = useMemo(() => {
     const today = new Date();
@@ -239,19 +243,6 @@ export default function OnboardingProfilePage() {
       setStep("welcome");
     }
   }, [saveProfile, step]);
-
-  const skipAll = useCallback(() => {
-    window.localStorage.setItem(
-      onboardingStorageKey,
-      JSON.stringify({
-        companies: [],
-        interviewDate: "",
-        topics: [],
-        savedAt: new Date().toISOString(),
-      }),
-    );
-    setStep("welcome");
-  }, []);
 
   const selectDate = useCallback((date: string) => {
     setSelectedDate(date);
@@ -458,16 +449,14 @@ export default function OnboardingProfilePage() {
                 {copy.back}
               </button>
             ) : null}
-            <button type="button" onClick={skipAll}>
-              {copy.finish.skipAll}
-            </button>
           </div>
           <div>
-            <button type="button" onClick={skipCurrent}>
-              {copy.skip}
-            </button>
-            <button type="button" onClick={goNext}>
-              {step === "topics" ? copy.finish.complete : copy.next}
+            <button
+              className="onboarding-actions__primary"
+              type="button"
+              onClick={currentStepHasValue ? goNext : skipCurrent}
+            >
+              {currentStepHasValue ? copy.next : copy.skip}
             </button>
           </div>
         </footer>

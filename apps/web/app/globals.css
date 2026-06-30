@@ -3399,7 +3399,6 @@ h3 {
 
 .company-suggestions button,
 .selected-companies button,
-.onboarding-skip,
 .onboarding-actions button {
   border: 1px solid var(--border);
   border-radius: 999px;
@@ -3442,18 +3441,11 @@ h3 {
 
 .company-suggestions button:hover,
 .selected-companies button:hover,
-.onboarding-skip:hover,
 .onboarding-actions button:hover {
   border-color: rgba(201, 209, 217, 0.42);
   background: rgba(201, 209, 217, 0.08);
   color: var(--text);
   transform: translateY(-1px);
-}
-
-.onboarding-skip {
-  width: fit-content;
-  min-height: 38px;
-  padding: 8px 13px;
 }
 
 .onboarding-calendar {
@@ -3687,13 +3679,13 @@ h3 {
   padding: 12px 18px;
 }
 
-.onboarding-actions > div:last-child button:last-child {
+.onboarding-actions__primary {
   border-color: var(--accent-line);
   background: var(--accent);
   color: #ffffff;
 }
 
-.onboarding-actions > div:last-child button:last-child:hover {
+.onboarding-actions__primary:hover {
   background: var(--accent-bright);
 }
 

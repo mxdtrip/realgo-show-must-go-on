@@ -170,7 +170,7 @@ const ru = {
       stepLabel: "Шаг",
       back: "Назад",
       next: "Далее",
-      skip: "Пропустить вопрос",
+      skip: "Пропустить",
       company: {
         title: "Компания мечты",
         description:
@@ -195,10 +195,6 @@ const ru = {
         empty: "Выбранные темы появятся здесь",
         selected: "Фокус подготовки",
         fieldLabel: "Выбор алгоритмических тем для повторения",
-      },
-      finish: {
-        skipAll: "Пропустить настройку",
-        complete: "Завершить настройку",
       },
       welcome: {
         eyebrow: "setup complete",
