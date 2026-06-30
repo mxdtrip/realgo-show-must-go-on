@@ -1,0 +1,23 @@
+name: engram-extension
+
+# Popup preview only. The Chrome extension itself is built with Plasmo and
+# loaded into the browser via chrome://extensions (Load unpacked) — it is not
+# "run" in Docker. This service serves the same PopupApp component as a web page
+# so the popup UI can be reviewed at http://localhost:5174.
+#
+#   docker compose up            → http://localhost:5174
+services:
+  extension-preview:
+    image: node:22-bookworm-slim
+    working_dir: /app
+    command: sh -c "npm install --no-audit --no-fund && npm run preview -- --host 0.0.0.0 --port 5174"
+    ports:
+      - "${PREVIEW_PORT:-5174}:5174"
+    environment:
+      NODE_ENV: development
+    volumes:
+      - .:/app
+      - extension_node_modules:/app/node_modules
+
+volumes:
+  extension_node_modules:

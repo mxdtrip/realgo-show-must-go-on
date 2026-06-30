@@ -1,0 +1,8 @@
+node_modules/
+build/
+.plasmo/
+dist/
+*.zip
+.env
+.env.*
+!.env.example
