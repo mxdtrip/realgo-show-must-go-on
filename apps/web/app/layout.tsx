@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, JetBrains_Mono, Space_Mono, Tektur } from "next/font/google";
+import { Inter, JetBrains_Mono, Space_Grotesk, Space_Mono } from "next/font/google";
 import { getDictionary } from "./_content/i18n";
 import { PWAProvider } from "./_pwa/PWAProvider";
 import { ScrollVideoBackground } from "./components/ScrollVideoBackground";
@@ -11,10 +11,10 @@ const inter = Inter({
   display: "swap",
 });
 
-const tektur = Tektur({
-  subsets: ["latin", "cyrillic"],
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
   variable: "--font-display",
-  weight: ["400", "500", "600", "700"],
+  weight: ["500", "600", "700"],
   display: "swap",
 });
 
@@ -58,7 +58,7 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      className={`${inter.variable} ${tektur.variable} ${jetBrainsMono.variable} ${spaceMono.variable}`}
+      className={`${inter.variable} ${spaceGrotesk.variable} ${jetBrainsMono.variable} ${spaceMono.variable}`}
       lang="ru"
     >
       <body>
