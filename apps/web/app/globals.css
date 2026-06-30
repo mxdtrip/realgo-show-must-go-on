@@ -3095,6 +3095,7 @@ h3 {
   transform-style: preserve-3d;
   animation: focus-card-enter 0.42s cubic-bezier(0.2, 0.72, 0.22, 1) both;
   transition: transform 0.68s cubic-bezier(0.2, 0.72, 0.22, 1);
+  cursor: pointer;
 }
 
 .focus-card--answer {

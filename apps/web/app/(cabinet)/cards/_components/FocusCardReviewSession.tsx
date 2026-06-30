@@ -80,9 +80,10 @@ export function FocusCardReviewSession({ brand, cards, copy }: Readonly<FocusCar
         return;
       }
 
-      if ((event.code === "Space" || event.code === "Enter") && !session.isFlipped) {
+      if (event.code === "Space" || event.code === "Enter") {
+        // Space/Enter toggles the card both ways (reveal answer ↔ back to front).
         event.preventDefault();
-        session.setIsFlipped(true);
+        session.setIsFlipped((flipped) => !flipped);
         return;
       }
 
@@ -165,6 +166,14 @@ export function FocusCardReviewSession({ brand, cards, copy }: Readonly<FocusCar
           <article
             className={`focus-card ${session.isFlipped ? "focus-card--answer" : ""}`}
             key={session.currentCard.id}
+            onClick={(event) => {
+              // Clicking the card flips it both ways, but let inner controls
+              // (reveal / rating buttons) handle their own clicks.
+              if (event.target instanceof Element && event.target.closest("a, button, kbd")) {
+                return;
+              }
+              session.setIsFlipped((flipped) => !flipped);
+            }}
           >
             <div className="focus-card__inner">
               <div className="focus-card__face focus-card__face--front" aria-hidden={session.isFlipped}>
