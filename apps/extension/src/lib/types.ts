@@ -21,6 +21,12 @@ export type CanSolveAgain = "no" | "probably" | "yes";
 
 /** What the content script detects on the page and hands to the popup. */
 export interface DetectedSubmission {
+  /**
+   * Stable per-submit idempotency key (uuid). Generated once when the submit is
+   * detected, so retries — and the overlay vs. toolbar-popup save paths — reuse
+   * the same value and the backend dedupes by it (`eventId` in the contract).
+   */
+  eventId: string;
   platform: Platform;
   taskTitle: string;
   taskUrl: string;
@@ -41,10 +47,28 @@ export type RuntimeMessage =
   | { type: "ENGRAM_SUBMISSION_DETECTED"; submission: DetectedSubmission }
   | { type: "ENGRAM_SAVE_SUBMISSION"; payload: SubmissionPayload };
 
-/** Reply shape for ENGRAM_SAVE_SUBMISSION. */
+/**
+ * Parsed result of a successful `POST /api/v1/extension/events` (the backend
+ * returns it under the envelope's `data` field). `duplicate` is the idempotency
+ * signal — true when this `eventId` was already ingested.
+ */
+export interface ExtensionEventResult {
+  accepted: boolean;
+  duplicate: boolean;
+  problemId: number;
+  status: string;
+  nextReviewAt: string | null;
+}
+
+/** Reply shape for ENGRAM_SAVE_SUBMISSION (background → UI). */
 export interface SaveResponse {
   ok: boolean;
+  /** Present when `ok`: the backend's idempotent result. */
+  result?: ExtensionEventResult;
+  /** Present when `!ok`: human-readable reason for the UI. */
   error?: string;
+  /** Present when `!ok`: machine code, e.g. "unauthorized" | "network". */
+  code?: string;
 }
 
 /** Token pair returned by the backend auth endpoints (snake_case = wire format). */

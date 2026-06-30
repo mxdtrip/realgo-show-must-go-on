@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 
-import { saveSubmission } from "./lib/api";
 import { clearLastSubmission, getLastSubmission } from "./lib/storage";
-import type { DetectedSubmission, SubmissionPayload } from "./lib/types";
+import type {
+  DetectedSubmission,
+  SaveResponse,
+  SubmissionPayload,
+} from "./lib/types";
 import { PopupApp } from "./popup/PopupApp";
 
 /**
@@ -22,7 +25,15 @@ function IndexPopup() {
   }, []);
 
   async function handleSave(payload: SubmissionPayload) {
-    await saveSubmission(payload);
+    // Route the save through the background worker (same path as the in-page
+    // overlay) so transport/business logic lives in one place (#35, #38).
+    const res: SaveResponse | undefined = await chrome.runtime.sendMessage({
+      type: "ENGRAM_SAVE_SUBMISSION",
+      payload,
+    });
+    if (!res?.ok) {
+      throw new Error(res?.error ?? "Не удалось сохранить.");
+    }
     await clearLastSubmission();
     try {
       await chrome.action.setBadgeText({ text: "" });

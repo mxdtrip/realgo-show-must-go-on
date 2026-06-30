@@ -89,11 +89,25 @@ function watchForResult(adapter: PlatformAdapter) {
 
 let lastKey = "";
 
+/** Stable idempotency id for one submit. Falls back when randomUUID is absent. */
+function newEventId(): string {
+  try {
+    if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID();
+  } catch {
+    /* fall through to the manual id below */
+  }
+  return `ev-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
 function finalize(adapter: PlatformAdapter, submitResult: SubmitResult) {
   const info = adapter.extractTaskInfo();
   if (!info) return;
 
   const submission: DetectedSubmission = {
+    // One id per detected submit. The dedupe below stops the same task firing
+    // twice in a page session, so this id stays stable for retries (overlay or
+    // toolbar popup) and the backend treats re-sends as idempotent.
+    eventId: newEventId(),
     platform: adapter.platform,
     taskTitle: info.taskTitle,
     taskUrl: info.taskUrl,
