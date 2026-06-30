@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
 import {
@@ -10,24 +9,19 @@ import {
   readProfileSettings,
   type ProfileSettings,
 } from "../_profile/profileSettings";
-import { CabinetIcon } from "./_icons";
 
-type CabinetProfileLinkProps = {
-  copy: {
-    interview: {
-      dayFew: string;
-      dayMany: string;
-      dayOne: string;
-      missing: string;
-      past: string;
-      prefix: string;
-      today: string;
-    };
-    menuAria: string;
-    monogram: string;
-    name: string;
-    plan: string;
-  };
+type InterviewCopy = {
+  dayFew: string;
+  dayMany: string;
+  dayOne: string;
+  missing: string;
+  past: string;
+  prefix: string;
+  today: string;
+};
+
+type CabinetInterviewCountdownProps = {
+  copy: InterviewCopy;
   defaultInterviewDate: string;
   defaultTimezone: string;
 };
@@ -71,11 +65,7 @@ function daysUntil(dateValue: string, timezone: string) {
   return Math.round((target - current) / 86_400_000);
 }
 
-function interviewMeta(
-  dateValue: string,
-  timezone: string,
-  copy: CabinetProfileLinkProps["copy"]["interview"],
-) {
+function interviewMeta(dateValue: string, timezone: string, copy: InterviewCopy) {
   const days = daysUntil(dateValue, timezone);
   if (days === null) return `${copy.prefix} · ${copy.missing}`;
   if (days < 0) return `${copy.prefix} · ${copy.past}`;
@@ -86,11 +76,11 @@ function interviewMeta(
   return `${copy.prefix} · через ${days} ${unit}`;
 }
 
-export function CabinetProfileLink({
+export function CabinetInterviewCountdown({
   copy,
   defaultInterviewDate,
   defaultTimezone,
-}: Readonly<CabinetProfileLinkProps>) {
+}: Readonly<CabinetInterviewCountdownProps>) {
   const [profile, setProfile] = useState<ProfileSettings>({
     timezone: defaultTimezone,
     interviewDate: defaultInterviewDate,
@@ -122,18 +112,8 @@ export function CabinetProfileLink({
   }, [refreshProfile]);
 
   return (
-    <Link className="cabinet-user" href="/settings" aria-label={copy.menuAria}>
-      <span className="cabinet-user__avatar" aria-hidden="true">
-        {copy.monogram}
-      </span>
-      <span className="cabinet-user__body">
-        <span className="cabinet-user__name">{copy.name}</span>
-        <span className="cabinet-user__meta">
-          {interviewMeta(profile.interviewDate, profile.timezone, copy.interview)}
-        </span>
-        <span className="cabinet-user__plan">{copy.plan}</span>
-      </span>
-      <CabinetIcon className="cabinet-user__chevron" name="selector" />
-    </Link>
+    <span className="cabinet-interview-countdown">
+      {interviewMeta(profile.interviewDate, profile.timezone, copy)}
+    </span>
   );
 }

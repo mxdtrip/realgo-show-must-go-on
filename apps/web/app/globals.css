@@ -1059,82 +1059,18 @@ h3 {
   color: var(--text-dim);
 }
 
-.cabinet-user {
-  margin-top: auto;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 11px 12px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.03);
-  transition: background 0.16s ease;
-}
-
-.cabinet-user:hover {
-  background: rgba(255, 255, 255, 0.06);
-}
-
-.cabinet-user__avatar {
-  flex: none;
+.cabinet-brand-block {
   display: grid;
-  place-items: center;
-  width: 38px;
-  height: 38px;
-  border-radius: 11px;
-  background: linear-gradient(150deg, var(--accent-bright), #1f6feb);
-  color: #ffffff;
-  font-family: var(--font-stack-display);
-  font-size: 14px;
-  font-weight: 700;
+  justify-items: start;
+  gap: 5px;
 }
 
-.cabinet-user__body {
-  min-width: 0;
-  display: grid;
-  gap: 1px;
-}
-
-.cabinet-user__name {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.cabinet-user__meta {
+.cabinet-interview-countdown {
+  padding-left: 1px;
   font-family: var(--font-stack-mono);
   font-size: 11px;
   color: var(--text-faint);
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.cabinet-user__plan {
-  justify-self: start;
-  margin-top: 5px;
-  padding: 1px 8px;
-  border-radius: 999px;
-  background: var(--accent-soft);
-  color: var(--accent-bright);
-  font-family: var(--font-stack-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.04em;
-}
-
-.cabinet-user__chevron {
-  flex: none;
-  margin-left: auto;
-  width: 16px;
-  height: 16px;
-  color: var(--text-faint);
-  transition: color 0.16s ease;
-}
-
-.cabinet-user:hover .cabinet-user__chevron {
-  color: var(--text-dim);
 }
 
 .cabinet-eyebrow,
@@ -3959,6 +3895,7 @@ h3 {
     flex: 0 0 auto;
   }
 
+  .cabinet-brand-block,
   .cabinet-sidebar .site-brand {
     align-self: flex-start;
     width: auto;
@@ -3970,10 +3907,6 @@ h3 {
     width: 100%;
     max-width: 100vw;
     min-width: 0;
-  }
-
-  .cabinet-user {
-    display: none;
   }
 
   .cabinet-hero,

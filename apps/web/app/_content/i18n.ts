@@ -236,10 +236,6 @@ const ru = {
       eyebrow: "// personal memory layer",
       backToMarketing: "back to marketing",
       profile: {
-        monogram: "BS",
-        name: "Backend SWE",
-        plan: "free mock",
-        menuAria: "Открыть аккаунт",
         interview: {
           prefix: "interview",
           today: "сегодня",

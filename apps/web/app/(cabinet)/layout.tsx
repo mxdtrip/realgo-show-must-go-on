@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { getDictionary } from "../_content/i18n";
 import { CabinetNav } from "./CabinetNav";
-import { CabinetProfileLink } from "./CabinetProfileLink";
+import { CabinetInterviewCountdown } from "./CabinetInterviewCountdown";
 
 export default function CabinetLayout({
   children,
@@ -15,17 +15,18 @@ export default function CabinetLayout({
   return (
     <div className="cabinet-shell">
       <aside className="cabinet-sidebar">
-        <Link className="site-brand" href="/">
-          {dictionary.common.brand}
-        </Link>
+        <div className="cabinet-brand-block">
+          <Link className="site-brand" href="/">
+            {dictionary.common.brand}
+          </Link>
+          <CabinetInterviewCountdown
+            copy={copy.profile.interview}
+            defaultInterviewDate={dictionary.cabinet.pages.settings.profile.interviewDate}
+            defaultTimezone={dictionary.cabinet.pages.settings.profile.timezone}
+          />
+        </div>
 
         <CabinetNav groups={copy.navGroups} ariaLabel={copy.navAria} />
-
-        <CabinetProfileLink
-          copy={copy.profile}
-          defaultInterviewDate={dictionary.cabinet.pages.settings.profile.interviewDate}
-          defaultTimezone={dictionary.cabinet.pages.settings.profile.timezone}
-        />
       </aside>
 
       <div className="cabinet-main">
