@@ -984,14 +984,17 @@ h3 {
   font-size: 13px;
   color: var(--text-dim);
   transition:
-    color 0.16s ease,
-    background 0.16s ease;
+    color 0.18s ease,
+    background 0.18s ease,
+    transform 0.18s cubic-bezier(0.33, 1, 0.68, 1);
 }
 
 .cabinet-nav__item svg {
   flex: none;
   color: var(--text-faint);
-  transition: color 0.16s ease;
+  transition:
+    color 0.18s ease,
+    transform 0.18s cubic-bezier(0.33, 1, 0.68, 1);
 }
 
 .cabinet-nav__item > span {
@@ -1011,16 +1014,17 @@ h3 {
 .cabinet-nav__item:hover {
   color: var(--text);
   background: rgba(255, 255, 255, 0.04);
+  transform: translateX(3px);
 }
 
 .cabinet-nav__item:hover svg {
   color: var(--text-dim);
+  transform: translateX(1px);
 }
 
 .cabinet-nav__item.is-active {
   color: var(--text);
   background: rgba(255, 255, 255, 0.06);
-  box-shadow: inset 2px 0 0 var(--accent);
 }
 
 .cabinet-nav__item.is-active svg {
@@ -1238,6 +1242,12 @@ h3 {
 
 .cabinet-page-head h1 {
   font-size: clamp(32px, 4vw, 52px);
+}
+
+.cabinet-hero h1 {
+  max-width: 640px;
+  font-size: clamp(26px, 3vw, 40px);
+  line-height: 1.05;
 }
 
 .cabinet-hero p,
@@ -3399,11 +3409,20 @@ h3 {
     animation: none;
   }
 
+  .live-dot {
+    animation: none;
+  }
+
   .focus-progress i,
   .focus-card,
   .cards-overview__start,
   .focus-complete a,
   .focus-rating__button {
     transition: none;
+  }
+
+  .cabinet-nav__item:hover,
+  .cabinet-nav__item:hover svg {
+    transform: none;
   }
 }
