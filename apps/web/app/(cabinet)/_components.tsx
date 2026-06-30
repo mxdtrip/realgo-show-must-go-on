@@ -28,15 +28,17 @@ export function MetricCard({
   hint,
   tone = "default",
   icon,
+  tooltip,
 }: Readonly<{
   label: string;
   value: string;
   hint: string;
   tone?: "default" | "accent" | "success" | "warning";
   icon?: string;
+  tooltip?: string;
 }>) {
   return (
-    <article className={`metric-card metric-card--${tone}`}>
+    <article className={`metric-card metric-card--${tone}`} tabIndex={tooltip ? 0 : undefined}>
       <div className="metric-card__top">
         {icon ? (
           <span className="metric-card__icon">
@@ -44,9 +46,15 @@ export function MetricCard({
           </span>
         ) : null}
         <span>{label}</span>
+        {tooltip ? <CabinetIcon className="metric-card__info" name="info" /> : null}
       </div>
       <strong>{value}</strong>
       <p>{hint}</p>
+      {tooltip ? (
+        <span className="metric-card__tip" role="tooltip">
+          {tooltip}
+        </span>
+      ) : null}
     </article>
   );
 }

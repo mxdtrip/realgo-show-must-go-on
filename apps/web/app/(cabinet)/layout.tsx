@@ -41,10 +41,6 @@ export default function CabinetLayout({
             <Link className="cabinet-topbar__link" href="/">
               {copy.backToMarketing}
             </Link>
-            <Link className="cabinet-topbar__cta" href="/cards/session">
-              {copy.startReview}
-              <CabinetIcon name="arrow" />
-            </Link>
           </div>
         </header>
         {children}

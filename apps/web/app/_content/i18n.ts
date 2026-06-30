@@ -195,7 +195,6 @@ const ru = {
       ],
       eyebrow: "// personal memory layer",
       backToMarketing: "back to marketing",
-      startReview: "start review",
       profile: {
         monogram: "BS",
         name: "Backend SWE",
@@ -216,7 +215,7 @@ const ru = {
         eyebrow: "/dashboard",
         title: "Сегодня повторяем то, что реально может забыться.",
         description:
-          "Стартовый моковый кабинет показывает главный рабочий контур Engram: очередь повторений, слабые паттерны, прогресс roadmap и состояние подготовки.",
+          "Каждый день Engram собирает короткую очередь повторений, подсвечивает слабые темы и показывает, насколько ты готов к интервью — чтобы решённое не забывалось до собеседования.",
         nextAction: "next action",
         nextUp: "next up",
         nextTitle: "Longest Substring",
@@ -399,10 +398,38 @@ const ru = {
     },
     mock: {
       overviewStats: [
-        { label: "today queue", value: "12", hint: "8 задач, 3 карточки, 1 паттерн", tone: "accent", icon: "queue" },
-        { label: "readiness", value: "68%", hint: "по моковым данным подготовки", tone: "success", icon: "readiness" },
-        { label: "weak spots", value: "4", hint: "паттерна требуют повторения", tone: "warning", icon: "weak" },
-        { label: "streak", value: "6d", hint: "без пропуска повторений", tone: "default", icon: "streak" },
+        {
+          label: "today queue",
+          value: "12",
+          hint: "8 задач, 3 карточки, 1 паттерн",
+          tone: "accent",
+          icon: "queue",
+          tooltip: "Сколько повторений запланировано на сегодня: задачи, карточки и паттерны, у которых подошёл срок.",
+        },
+        {
+          label: "readiness",
+          value: "68%",
+          hint: "готовность к интервью",
+          tone: "success",
+          icon: "readiness",
+          tooltip: "Оценка готовности к собеседованию по твоему прогрессу: решённые задачи, закрытые повторения и слабые места.",
+        },
+        {
+          label: "weak spots",
+          value: "4",
+          hint: "паттерна требуют повторения",
+          tone: "warning",
+          icon: "weak",
+          tooltip: "Паттерны, где уверенность ниже порога — их стоит повторить в первую очередь.",
+        },
+        {
+          label: "streak",
+          value: "6d",
+          hint: "без пропуска повторений",
+          tone: "default",
+          icon: "streak",
+          tooltip: "Сколько дней подряд ты не пропускаешь повторения. Серия помогает не бросить подготовку.",
+        },
       ],
       reviewQueue: [
         {

@@ -93,6 +93,13 @@ const GLYPHS: Record<string, ReactElement> = {
       <path d="m16 15-4 4-4-4" />
     </>
   ),
+  info: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <line x1="12" y1="11" x2="12" y2="16" />
+      <line x1="12" y1="8" x2="12.01" y2="8" />
+    </>
+  ),
   arrow: (
     <>
       <line x1="4" y1="12" x2="19" y2="12" />
