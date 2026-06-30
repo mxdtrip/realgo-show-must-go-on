@@ -1432,20 +1432,7 @@ h3 {
   background: rgba(210, 153, 34, 0.12);
 }
 
-.metric-card__info {
-  width: 15px;
-  height: 15px;
-  margin-left: auto;
-  color: var(--text-faint);
-  transition: color 0.16s ease;
-}
-
-.metric-card:hover .metric-card__info,
-.metric-card:focus-visible .metric-card__info {
-  color: var(--text-dim);
-}
-
-.metric-card__tip {
+.metric-card .metric-card__tip {
   position: absolute;
   left: 14px;
   right: 14px;
@@ -1457,8 +1444,12 @@ h3 {
   background: var(--panel-strong);
   box-shadow: 0 20px 44px -22px rgba(1, 4, 9, 0.95);
   color: var(--text-dim);
+  font-family: var(--font-stack-sans);
   font-size: 12.5px;
+  font-weight: 400;
+  letter-spacing: normal;
   line-height: 1.45;
+  text-transform: none;
   opacity: 0;
   transform: translateY(-4px);
   pointer-events: none;

@@ -46,7 +46,6 @@ export function MetricCard({
           </span>
         ) : null}
         <span>{label}</span>
-        {tooltip ? <CabinetIcon className="metric-card__info" name="info" /> : null}
       </div>
       <strong>{value}</strong>
       <p>{hint}</p>
