@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { clearLastSubmission, getLastSubmission } from "./lib/storage";
+import { clearLastSubmission, getLastSubmission, getReviewUrl } from "./lib/storage";
 import type {
   DetectedSubmission,
   SaveResponse,
@@ -42,11 +42,23 @@ function IndexPopup() {
     }
   }
 
+  async function handleReview() {
+    // Open the web app's review cards in a new tab, then close the popup.
+    const url = await getReviewUrl();
+    try {
+      await chrome.tabs.create({ url });
+    } catch {
+      window.open(url, "_blank", "noopener,noreferrer");
+    }
+    window.close();
+  }
+
   return (
     <PopupApp
       submission={submission}
       onSave={handleSave}
       onClose={() => window.close()}
+      onReview={handleReview}
     />
   );
 }

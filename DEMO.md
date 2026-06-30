@@ -78,6 +78,7 @@ npm run build      # plasmo build → build/chrome-mv3-prod
 2. Открыть **Options** расширения:
    - **API base URL** = `http://localhost:8080` → **OK** → **Проверить**.
      **Expected:** «Бэкенд на связи».
+   - **Web URL** = `http://localhost:3000` → **OK** (куда ведёт кнопка «К повторению»).
    - Ввести `demo@engram.dev` / `demo-pass-123` → **Войти**.
      **Expected:** «Расширение подключено к Engram», показан email.
 
@@ -86,7 +87,8 @@ npm run build      # plasmo build → build/chrome-mv3-prod
 | Шаг | Действие | Expected result |
 |---|---|---|
 | 1. login | Шаг 4 выше | В options — подключённый аккаунт; `Authorization: Bearer` уходит на запросы. |
-| 2. extension event | Открыть засиженную задачу, напр. `https://neetcode.io/problems/two-sum`, нажать **Submit**, в оверлее выбрать сложность → **Сохранить** | Состояние успеха («Запланировано»); ответ API `{ data: { accepted:true, duplicate:false, problemId, status, nextReviewAt } }`. |
+| 2. extension event | Открыть засиженную задачу, напр. `https://neetcode.io/problems/two-sum`, нажать **Submit**, в оверлее выбрать сложность → **Сохранить** | Экран успеха («Успешно! Продолжите решать или займемся повторением?») с кнопками **Скрыть** / **К повторению**; ответ API `{ data: { accepted:true, duplicate:false, problemId, status, nextReviewAt } }`. |
+| 2a. К повторению | На экране успеха нажать **К повторению** | Открывается новая вкладка `http://localhost:3000/cards`. Кнопка **Скрыть** прячет оверлей до следующей решённой задачи. |
 | 2b. идемпотентность | Повторно отправить тот же сабмит (тот же `eventId`) | `duplicate: true`, дубль в БД **не создаётся** (см. шаг 6). |
 | 3. dashboard | `http://localhost:3000/dashboard` | Решённая задача попадает в очередь повторений/метрики (при подключённом web↔API; иначе сверяемся через БД, шаг 6). |
 | 4. review attempt | `/reviews` или `/cards/session` → выполнить повтор | Расписание FSRS продвигается (меняется `next_review_at`). |

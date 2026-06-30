@@ -8,6 +8,7 @@ import type {
   SubmissionPayload,
   SubmitResult,
 } from "../lib/types";
+import { getReviewUrl } from "../lib/storage";
 import { detectAdapter, type PlatformAdapter } from "../platforms";
 import { PopupApp } from "../popup/PopupApp";
 
@@ -166,9 +167,19 @@ function showOverlay(submission: DetectedSubmission) {
     createElement(PopupApp, {
       submission,
       onSave: saveViaBackground,
+      // "Скрыть": hide until the next solved task (overlay re-renders on submit).
       onClose: removeOverlay,
+      // "К повторению": open the web app's review cards in a new tab.
+      onReview: openReview,
     })
   );
+}
+
+/** Opens the Engram review cards section in a new browser tab. */
+async function openReview() {
+  const url = await getReviewUrl();
+  window.open(url, "_blank", "noopener,noreferrer");
+  removeOverlay();
 }
 
 /** Routes the save through the background worker to dodge host-page CORS. */

@@ -17,8 +17,13 @@ export interface PopupAppProps {
   submission: DetectedSubmission | null | undefined;
   /** Persists the rated submission. Rejects with an Error on failure. */
   onSave: (payload: SubmissionPayload) => Promise<void>;
-  /** Optional close handler (extension popup can't always close itself). */
+  /**
+   * "Скрыть" on the success screen — hides the extension UI until the next
+   * solved task (overlay: removes itself; toolbar popup: closes the window).
+   */
   onClose?: () => void;
+  /** "К повторению" on the success screen — opens the web app's review cards. */
+  onReview?: () => void;
   /** Optional bug-report handler; falls back to opening a GitHub issue. */
   onReport?: () => void;
 }
@@ -46,7 +51,7 @@ const REPORT_ISSUE_URL =
 
 type Status = "form" | "saving" | "success" | "error";
 
-export function PopupApp({ submission, onSave, onClose, onReport }: PopupAppProps) {
+export function PopupApp({ submission, onSave, onClose, onReview, onReport }: PopupAppProps) {
   const [difficulty, setDifficulty] = useState<UserDifficulty | null>(null);
   const [again, setAgain] = useState<CanSolveAgain | null>(null);
   const [status, setStatus] = useState<Status>("form");
@@ -99,16 +104,33 @@ export function PopupApp({ submission, onSave, onClose, onReport }: PopupAppProp
           </div>
           <div>
             <p className="engram-state__title engram-state__title--success">
-              Запланировано
+              Успешно!
             </p>
             <p className="engram-muted" style={{ marginTop: 4 }}>
-              Задача добавлена в очередь повторений.
+              Продолжите решать или займемся повторением?
             </p>
           </div>
-          {onClose && (
-            <button className="engram-link" onClick={onClose}>
-              Закрыть
-            </button>
+          {(onClose || onReview) && (
+            <div className="engram-row" style={{ width: "100%" }}>
+              {onClose && (
+                <button
+                  className="engram-btn engram-btn--ghost"
+                  style={{ flex: 1 }}
+                  onClick={onClose}
+                >
+                  Скрыть
+                </button>
+              )}
+              {onReview && (
+                <button
+                  className="engram-btn engram-btn--primary"
+                  style={{ flex: 1 }}
+                  onClick={onReview}
+                >
+                  К повторению
+                </button>
+              )}
+            </div>
           )}
         </div>
       </Shell>
@@ -201,7 +223,7 @@ function Shell({
           <p className="engram-task__title">{task.taskTitle}</p>
           <div className="engram-task__meta">
             <span className="engram-task__platform">{task.platform}</span>
-            <span className="engram-chip engram-chip--accent">submitted ✓</span>
+            <span className="engram-chip engram-chip--accent">Вы справились с заданием!</span>
           </div>
         </div>
       )}

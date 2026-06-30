@@ -88,9 +88,16 @@ export interface AuthUser {
 export const STORAGE_KEYS = {
   lastSubmission: "engram:lastSubmission",
   apiBaseUrl: "engram:apiBaseUrl",
+  webBaseUrl: "engram:webBaseUrl",
   accessToken: "engram:accessToken",
   refreshToken: "engram:refreshToken",
   userEmail: "engram:userEmail",
 } as const;
 
 export const DEFAULT_API_BASE_URL = "http://localhost:8080";
+
+/** Engram web app (the cabinet). "К повторению" opens its review cards here. */
+export const DEFAULT_WEB_BASE_URL = "http://localhost:3000";
+
+/** Path of the spaced-repetition cards section inside the web app. */
+export const REVIEW_PATH = "/cards";
