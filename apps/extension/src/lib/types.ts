@@ -47,10 +47,26 @@ export interface SaveResponse {
   error?: string;
 }
 
+/** Token pair returned by the backend auth endpoints (snake_case = wire format). */
+export interface TokenPair {
+  access_token: string;
+  refresh_token: string;
+  token_type: string;
+  expires_in: number;
+}
+
+/** Minimal authenticated user shape the extension keeps around. */
+export interface AuthUser {
+  id: number;
+  email: string;
+}
+
 export const STORAGE_KEYS = {
   lastSubmission: "engram:lastSubmission",
   apiBaseUrl: "engram:apiBaseUrl",
   accessToken: "engram:accessToken",
+  refreshToken: "engram:refreshToken",
+  userEmail: "engram:userEmail",
 } as const;
 
 export const DEFAULT_API_BASE_URL = "http://localhost:8080";

@@ -31,19 +31,20 @@ src/
 preview/                    # standalone Vite-страница предпросмотра popup
 ```
 
-## Авторизация (dev)
+## Авторизация
 
-Пока расширение не умеет логиниться само. Откройте страницу настроек расширения
-(`chrome://extensions` → Engram → Details → Extension options) и вставьте:
+Откройте настройки расширения (`chrome://extensions` → Engram → Details →
+Extension options):
 
 - **API base URL** — например `http://localhost:8080`;
-- **Access token** — короткоживущий Bearer-токен (получите через `POST /api/v1/auth/login`).
-
-> TODO: заменить ручной токен полноценным login/refresh-флоу.
+- **Вход в Engram** — email + пароль. Расширение логинится через
+  `POST /api/v1/auth/login`, хранит access + refresh токены в `chrome.storage` и
+  **обновляет access-токен автоматически** при истечении (`/api/v1/auth/refresh`).
+  Кнопка «Выйти» отзывает сессию (`/api/v1/auth/logout`).
 
 > Бэкенд-эндпоинт `POST /api/v1/extension/events` ещё не реализован (эта ветка —
-> только фронтенд). Клиент уже шлёт в него корректный payload; ошибки сети/сервера
-> показываются в popup.
+> только фронтенд). Клиент уже шлёт в него корректный payload с Bearer-токеном;
+> ошибки сети/сервера/авторизации показываются в popup.
 
 ## Команды
 

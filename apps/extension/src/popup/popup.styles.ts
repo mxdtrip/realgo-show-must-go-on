@@ -9,10 +9,13 @@
  * Design tokens are scoped to `.engram-popup` / `:host` (NOT `:root`) so the
  * custom properties cascade correctly inside a shadow root too.
  *
- * Tokens replicate apps/web/app/globals.css. TODO: move to packages/ui tokens.
+ * Visual system ported from the Figma Make design ("Engram Chrome Extension
+ * UI"): a bordered panel with a header bar, a detected-task block and blue
+ * (primary) selections — green is reserved for success only. Tokens mirror
+ * apps/web/app/globals.css. TODO: move to packages/ui tokens.
  */
 export const POPUP_CSS = `
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&family=JetBrains+Mono:wght@400;500;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap");
 
 :host, .engram-popup {
   --bg: #0d1117;
@@ -24,14 +27,19 @@ export const POPUP_CSS = `
   --text-dim: #7d8590;
   --text-faint: #6e7681;
   --accent: #2f81f7;
+  --accent-strong: #388bfd;
   --accent-bright: #58a6ff;
-  --accent-soft: rgba(56, 139, 253, 0.15);
+  --accent-active: #1f6feb;
+  --accent-soft: rgba(56, 139, 253, 0.12);
   --accent-line: rgba(56, 139, 253, 0.4);
+  --accent-glow: rgba(56, 139, 253, 0.35);
   --success: #238636;
-  --success-bright: #2ea043;
   --success-fg: #3fb950;
-  --warning: #d29922;
-  --danger: #ff7b72;
+  --success-soft: rgba(35, 134, 54, 0.15);
+  --danger: #da3633;
+  --danger-fg: #f85149;
+  --danger-soft: rgba(218, 54, 51, 0.08);
+  --danger-line: rgba(218, 54, 51, 0.35);
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Space Grotesk", "Inter", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
@@ -39,198 +47,368 @@ export const POPUP_CSS = `
 
 .engram-popup, .engram-popup * { box-sizing: border-box; }
 
+/* ── Panel ─────────────────────────────────────────────────────────────── */
 .engram-popup {
-  width: 340px;
+  width: 360px;
   margin: 0;
-  padding: 18px 18px 20px;
-  background: radial-gradient(120% 80% at 50% -20%, #161d2b 0%, #0f141c 50%, var(--bg) 80%);
+  background: var(--panel);
   color: var(--text);
   font-family: var(--font-sans);
   font-size: 14px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 18px 50px -30px rgba(1, 4, 9, 0.9);
 }
+.engram-popup--wide { width: 440px; }
 
-.engram-brand {
+/* ── Header bar ────────────────────────────────────────────────────────── */
+.engram-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel-strong);
+}
+.engram-brand {
+  display: inline-flex;
+  align-items: center;
   gap: 8px;
-  font-family: var(--font-mono);
-  font-weight: 700;
-  font-size: 14px;
-  letter-spacing: 0.02em;
-  color: var(--text);
-}
-.engram-brand::before {
-  content: "";
-  width: 10px;
-  height: 10px;
-  border-radius: 3px;
-  background: var(--accent);
-  box-shadow: 0 0 14px var(--accent-bright);
-}
-
-.engram-saved-label {
-  margin-top: 16px;
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--success-fg);
-}
-.engram-task-title {
-  margin: 6px 0 0;
   font-family: var(--font-display);
-  font-size: 18px;
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 13px;
   letter-spacing: -0.01em;
   color: var(--text);
 }
-.engram-task-meta {
-  margin-top: 4px;
-  font-family: var(--font-mono);
+.engram-brand--md { font-size: 15px; }
+.engram-brand__mark { display: block; flex-shrink: 0; }
+.engram-header__sub {
+  font-family: var(--font-sans);
   font-size: 11px;
-  color: var(--text-faint);
-  word-break: break-all;
+  font-weight: 500;
+  color: var(--accent-bright);
 }
 
-.engram-question { margin-top: 18px; }
-.engram-question__label {
+/* ── Detected task block ──────────────────────────────────────────────── */
+.engram-task {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(13, 17, 23, 0.4);
+}
+.engram-task__title {
+  margin: 0;
+  font-family: var(--font-display);
   font-size: 13px;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+.engram-task__meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+.engram-task__platform {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-faint);
+}
+
+.engram-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border-radius: 5px;
+  border: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-dim);
+}
+.engram-chip--accent {
+  color: var(--accent-bright);
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.engram-chip--success {
+  color: var(--success-fg);
+  border-color: var(--success);
+  background: var(--success-soft);
+}
+
+/* ── Body / question groups ───────────────────────────────────────────── */
+.engram-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+}
+.engram-question__label {
+  margin: 0 0 8px;
+  font-size: 11px;
   font-weight: 500;
   color: var(--text-dim);
 }
 .engram-choices {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  margin-top: 8px;
+  display: flex;
+  gap: 6px;
 }
 .engram-choice {
+  flex: 1;
   appearance: none;
   border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.03);
+  background: transparent;
   color: var(--text-dim);
-  border-radius: 9px;
-  padding: 9px 6px;
+  border-radius: 7px;
+  padding: 7px 8px;
   font-family: var(--font-sans);
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 500;
   cursor: pointer;
   transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
 }
-.engram-choice:hover {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: var(--border-strong);
+.engram-choice:hover:not(:disabled):not([aria-pressed="true"]) {
+  border-color: var(--accent-bright);
   color: var(--text);
+  background: rgba(56, 139, 253, 0.08);
 }
 .engram-choice:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px var(--accent-soft);
+  box-shadow: 0 0 0 2px var(--accent-glow);
 }
-.engram-choice[aria-pressed="true"] { color: var(--text); }
-.engram-choice--hard[aria-pressed="true"],
-.engram-choice--no[aria-pressed="true"] {
-  border-color: rgba(255, 123, 114, 0.6);
-  background: rgba(255, 123, 114, 0.14);
-  color: #ffb3ad;
-}
-.engram-choice--normal[aria-pressed="true"],
-.engram-choice--probably[aria-pressed="true"] {
-  border-color: var(--accent-line);
-  background: var(--accent-soft);
-  color: var(--accent-bright);
-}
-.engram-choice--easy[aria-pressed="true"],
-.engram-choice--yes[aria-pressed="true"] {
-  border-color: rgba(63, 185, 80, 0.6);
-  background: rgba(46, 160, 67, 0.16);
-  color: var(--success-fg);
-}
-
-.engram-save {
-  width: 100%;
-  margin-top: 20px;
-  border: 0;
-  border-radius: 10px;
-  padding: 12px 16px;
-  background: var(--success);
+.engram-choice[aria-pressed="true"] {
+  background: var(--accent);
+  border-color: var(--accent);
   color: #fff;
-  font-family: var(--font-mono);
+  box-shadow: 0 0 0 1px rgba(56, 139, 253, 0.3);
+}
+.engram-choice:disabled { color: var(--text-faint); cursor: not-allowed; }
+
+/* ── Buttons ──────────────────────────────────────────────────────────── */
+.engram-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  font-family: var(--font-sans);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.18s ease, opacity 0.18s ease;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
 }
-.engram-save:hover:not(:disabled) { background: var(--success-bright); }
-.engram-save:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--accent-soft); }
-.engram-save:disabled { opacity: 0.45; cursor: not-allowed; }
+.engram-btn--block { width: 100%; }
+.engram-btn:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--accent-glow); }
 
-.engram-error {
-  margin-top: 14px;
-  padding: 10px 12px;
-  border: 1px solid rgba(255, 123, 114, 0.4);
-  background: rgba(255, 123, 114, 0.1);
-  border-radius: 9px;
-  color: #ffb3ad;
-  font-size: 12.5px;
+.engram-btn--primary {
+  background: var(--accent);
+  border-color: var(--accent-strong);
+  color: #fff;
 }
-.engram-center {
+.engram-btn--primary:hover:not(:disabled) {
+  background: var(--accent-strong);
+  box-shadow: 0 0 8px var(--accent-glow);
+}
+.engram-btn--primary:active:not(:disabled) { background: var(--accent-active); }
+.engram-btn--primary:disabled {
+  background: var(--panel-strong);
+  border-color: var(--border);
+  color: var(--text-faint);
+  cursor: not-allowed;
+}
+
+.engram-btn--ghost {
+  padding: 7px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  background: transparent;
+  border-color: var(--border);
+  color: var(--text-dim);
+}
+.engram-btn--ghost:hover { border-color: var(--accent-bright); color: var(--text); }
+.engram-btn--danger {
+  padding: 7px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  background: transparent;
+  border-color: var(--danger);
+  color: var(--danger-fg);
+}
+.engram-btn--danger:hover { background: rgba(218, 54, 51, 0.1); }
+
+/* ── Inputs (options) ─────────────────────────────────────────────────── */
+.engram-field { display: flex; flex-direction: column; gap: 6px; }
+.engram-field__label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-dim);
+}
+.engram-row { display: flex; gap: 8px; }
+.engram-row > .engram-input { flex: 1; }
+.engram-input {
+  width: 100%;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  border-radius: 7px;
+  color: var(--text);
+  padding: 8px 12px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.engram-input::placeholder { color: var(--text-faint); }
+.engram-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+
+.engram-divider { height: 1px; background: var(--border); border: 0; margin: 0; }
+
+/* ── Account row (options, logged in) ─────────────────────────────────── */
+.engram-account {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.engram-account__email {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+}
+.engram-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--success-fg);
+  flex-shrink: 0;
+}
+.engram-account__note {
+  margin: 4px 0 0 16px;
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
+/* ── Centered states (loading / no-task / success) ────────────────────── */
+.engram-state {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  min-height: 120px;
+  gap: 12px;
+  padding: 28px 16px;
   text-align: center;
 }
-.engram-success-mark {
-  width: 44px;
-  height: 44px;
+.engram-state__icon {
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   display: grid;
   place-items: center;
-  background: rgba(46, 160, 67, 0.16);
-  border: 1px solid rgba(63, 185, 80, 0.5);
-  color: var(--success-fg);
-  font-size: 22px;
 }
-.engram-success-title { font-family: var(--font-display); font-size: 16px; font-weight: 600; }
-.engram-muted { color: var(--text-dim); font-size: 12.5px; }
+.engram-state__icon--muted {
+  background: var(--panel-strong);
+  border: 1px solid var(--border);
+  color: var(--text-faint);
+}
+.engram-state__icon--success {
+  background: var(--success-soft);
+  border: 1px solid var(--success);
+  color: var(--success-fg);
+}
+.engram-state__title {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+.engram-state__title--success { color: var(--success-fg); }
+.engram-state__text {
+  max-width: 230px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-faint);
+}
+.engram-muted { color: var(--text-dim); font-size: 11px; }
+
+.engram-link {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--text-faint);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.15s ease;
+}
+.engram-link:hover { color: var(--text-dim); }
+.engram-link--accent { color: var(--accent-bright); }
+.engram-link--accent:hover { color: var(--accent-bright); filter: brightness(1.1); }
+
 .engram-spinner {
   width: 26px;
   height: 26px;
   border-radius: 50%;
-  border: 3px solid var(--border);
+  border: 3px solid rgba(255, 255, 255, 0.12);
   border-top-color: var(--accent);
   animation: engram-spin 0.7s linear infinite;
 }
 @keyframes engram-spin { to { transform: rotate(360deg); } }
-.engram-link-btn {
-  margin-top: 6px;
+
+/* ── Error banner ─────────────────────────────────────────────────────── */
+.engram-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--danger-line);
+  background: var(--danger-soft);
+}
+.engram-error__icon { color: var(--danger-fg); flex-shrink: 0; margin-top: 1px; }
+.engram-error__text { flex: 1; color: var(--danger-fg); font-size: 11px; }
+.engram-error__retry {
+  flex-shrink: 0;
   background: none;
   border: 0;
+  padding: 0;
   color: var(--accent-bright);
-  font-size: 12.5px;
+  font-size: 11px;
   cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
-.engram-link-btn:hover { text-decoration: underline; }
 
-/* In-page fallback overlay wrapper (shadow DOM host content) */
+/* ── In-page fallback overlay (shadow DOM host content) ───────────────── */
 .engram-overlay {
   position: fixed;
   top: 16px;
   right: 16px;
   z-index: 2147483647;
-  border-radius: 14px;
-  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255,255,255,0.06);
+  border-radius: 12px;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.06);
   overflow: hidden;
 }
-.engram-overlay .engram-popup { border-radius: 14px; }
+.engram-overlay .engram-popup { border-radius: 12px; }
 .engram-overlay-close {
   position: absolute;
-  top: 10px;
-  right: 12px;
+  top: 13px;
+  right: 14px;
   background: none;
   border: 0;
   color: var(--text-dim);
@@ -240,4 +418,9 @@ export const POPUP_CSS = `
   z-index: 1;
 }
 .engram-overlay-close:hover { color: var(--text); }
+
+@media (prefers-reduced-motion: reduce) {
+  .engram-spinner { animation: none; }
+  .engram-choice, .engram-btn { transition: none; }
+}
 `;

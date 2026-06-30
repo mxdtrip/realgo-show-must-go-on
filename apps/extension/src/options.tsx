@@ -1,97 +1,155 @@
 import { useEffect, useState } from "react";
 
-import {
-  getAccessToken,
-  getApiBaseUrl,
-  setAccessToken,
-  setApiBaseUrl,
-} from "./lib/storage";
+import { AuthError, getCurrentUserEmail, login, logout } from "./lib/auth";
+import { getApiBaseUrl, setApiBaseUrl } from "./lib/storage";
+import { BrandMark } from "./popup/PopupApp";
 import { POPUP_CSS } from "./popup/popup.styles";
 
 /**
- * Options page — dev-mode authentication.
+ * Options page — account connection.
  *
- * TODO: replace this manual access-token field with a real login/refresh flow
- * against POST /api/v1/auth/login once the extension owns a proper auth UX.
- * For the MVP the developer pastes a short-lived Bearer access token here.
+ * Logs the extension into the existing Engram backend via email + password
+ * (POST /api/v1/auth/login) and keeps the issued tokens in chrome.storage. The
+ * access token is refreshed automatically on demand (see lib/api.ts).
+ *
+ * Visual system shared with the popup (see popup.styles.ts).
  */
 function Options() {
   const [baseUrl, setBaseUrl] = useState("");
-  const [token, setToken] = useState("");
-  const [saved, setSaved] = useState(false);
+  const [baseSaved, setBaseSaved] = useState(false);
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [account, setAccount] = useState<string | null | undefined>(undefined);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     getApiBaseUrl().then(setBaseUrl);
-    getAccessToken().then((t) => setToken(t ?? ""));
+    getCurrentUserEmail().then((e) => setAccount(e ?? null));
   }, []);
 
-  async function handleSave() {
+  async function handleSaveBaseUrl() {
     await setApiBaseUrl(baseUrl);
-    await setAccessToken(token);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    setBaseSaved(true);
+    setTimeout(() => setBaseSaved(false), 2000);
+  }
+
+  async function handleLogin(e: React.FormEvent) {
+    e.preventDefault();
+    if (!email || !password) return;
+    setBusy(true);
+    setError("");
+    try {
+      await setApiBaseUrl(baseUrl); // make sure login hits the configured API
+      const user = await login(email, password);
+      setAccount(user.email);
+      setPassword("");
+    } catch (err) {
+      setError(err instanceof AuthError ? err.message : "Не удалось войти.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleLogout() {
+    setBusy(true);
+    await logout();
+    setAccount(null);
+    setBusy(false);
   }
 
   return (
-    <div className="engram-popup" style={{ width: 420 }}>
+    <div className="engram-popup engram-popup--wide">
       <style>{POPUP_CSS}</style>
-      <div className="engram-brand">Engram</div>
-      <div className="engram-saved-label" style={{ color: "var(--accent-bright)" }}>
-        Настройки (dev)
+
+      <div className="engram-header">
+        <span className="engram-brand engram-brand--md">
+          <BrandMark size={18} />
+          Engram
+        </span>
+        <span className="engram-header__sub">Настройки расширения</span>
       </div>
 
-      <div className="engram-question">
-        <label className="engram-question__label" htmlFor="engram-base-url">
-          API base URL
-        </label>
-        <input
-          id="engram-base-url"
-          className="engram-input"
-          value={baseUrl}
-          placeholder="http://localhost:8080"
-          onChange={(e) => setBaseUrl(e.target.value)}
-        />
-      </div>
-
-      <div className="engram-question">
-        <label className="engram-question__label" htmlFor="engram-token">
-          Access token (Bearer)
-        </label>
-        <input
-          id="engram-token"
-          className="engram-input"
-          type="password"
-          value={token}
-          placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9…"
-          onChange={(e) => setToken(e.target.value)}
-        />
-        <div className="engram-task-meta" style={{ marginTop: 6 }}>
-          Временно: получите токен через POST /api/v1/auth/login и вставьте сюда.
+      <div className="engram-body">
+        <div className="engram-field">
+          <label className="engram-field__label" htmlFor="engram-base-url">
+            API base URL
+          </label>
+          <div className="engram-row">
+            <input
+              id="engram-base-url"
+              className="engram-input"
+              value={baseUrl}
+              placeholder="http://localhost:8080"
+              onChange={(e) => setBaseUrl(e.target.value)}
+            />
+            <button
+              type="button"
+              className="engram-btn engram-btn--ghost"
+              onClick={handleSaveBaseUrl}
+            >
+              {baseSaved ? "✓" : "OK"}
+            </button>
+          </div>
         </div>
+
+        <hr className="engram-divider" />
+
+        {account === undefined ? null : account ? (
+          <div className="engram-account">
+            <div>
+              <div className="engram-account__email">
+                <span className="engram-dot" aria-hidden="true" />
+                {account}
+              </div>
+              <p className="engram-account__note">Расширение подключено к Engram</p>
+            </div>
+            <button
+              type="button"
+              className="engram-btn engram-btn--danger"
+              disabled={busy}
+              onClick={handleLogout}
+            >
+              Выйти
+            </button>
+          </div>
+        ) : (
+          <form className="engram-field" onSubmit={handleLogin}>
+            <div className="engram-field__label" style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>
+              Вход в Engram
+            </div>
+            <input
+              className="engram-input"
+              type="email"
+              autoComplete="username"
+              value={email}
+              placeholder="email@example.com"
+              onChange={(e) => setEmail(e.target.value)}
+            />
+            <input
+              className="engram-input"
+              type="password"
+              autoComplete="current-password"
+              value={password}
+              placeholder="пароль"
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            {error && (
+              <div className="engram-error" role="alert">
+                <span className="engram-error__text">{error}</span>
+              </div>
+            )}
+            <button
+              className="engram-btn engram-btn--primary engram-btn--block"
+              type="submit"
+              disabled={busy || !email || !password}
+            >
+              {busy ? "Вход…" : "Войти"}
+            </button>
+          </form>
+        )}
       </div>
-
-      <button className="engram-save" onClick={handleSave}>
-        {saved ? "Сохранено ✓" : "Сохранить"}
-      </button>
-
-      <style>{`
-        .engram-input {
-          width: 100%;
-          margin-top: 8px;
-          border: 1px solid var(--border);
-          background: rgba(255,255,255,0.05);
-          border-radius: 9px;
-          color: var(--text);
-          padding: 11px 13px;
-          font-family: var(--font-mono);
-          font-size: 12.5px;
-        }
-        .engram-input:focus {
-          outline: none;
-          border-color: var(--accent-line);
-          box-shadow: 0 0 0 2px var(--accent-soft);
-        }
-      `}</style>
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import { AuthError, refreshAccessToken } from "./auth";
 import { getAccessToken, getApiBaseUrl } from "./storage";
 import type { SubmissionPayload } from "./types";
 
@@ -29,40 +30,64 @@ export class ApiError extends Error {
 }
 
 export async function saveSubmission(payload: SubmissionPayload): Promise<void> {
-  const [baseUrl, token] = await Promise.all([getApiBaseUrl(), getAccessToken()]);
+  const baseUrl = await getApiBaseUrl();
+  const url = `${baseUrl}${EXTENSION_EVENTS_PATH}`;
+  const body = JSON.stringify(payload);
 
-  // TODO: replace the dev access token (set on the options page) with a real
-  // login/refresh flow once the extension can authenticate against /auth.
+  let token = await getAccessToken();
   if (!token) {
-    throw new ApiError(
-      "Не задан access-токен. Откройте настройки расширения и вставьте токен.",
-      401,
-      "no_token"
-    );
+    // No access token yet — try to mint one from a stored refresh token before
+    // giving up, so a returning user doesn't have to re-login on every launch.
+    token = await tryRefresh();
   }
 
-  let res: Response;
+  let res = await authedPost(url, body, token);
+
+  // Access token expired mid-session → refresh once and retry.
+  if (res.status === 401) {
+    token = await tryRefresh();
+    res = await authedPost(url, body, token);
+  }
+
+  if (!res.ok) {
+    const data = await safeJson(res);
+    const message = data?.error?.message || `Ошибка сервера (${res.status})`;
+    throw new ApiError(message, res.status, data?.error?.code);
+  }
+}
+
+/** Refreshes the access token, translating "no session" into a friendly error. */
+async function tryRefresh(): Promise<string> {
   try {
-    res = await fetch(`${baseUrl}${EXTENSION_EVENTS_PATH}`, {
+    return await refreshAccessToken();
+  } catch (e) {
+    if (e instanceof AuthError) {
+      throw new ApiError(
+        "Аккаунт не подключён. Откройте настройки расширения и войдите в Engram.",
+        401,
+        e.code ?? "unauthorized"
+      );
+    }
+    throw e;
+  }
+}
+
+async function authedPost(url: string, body: string, token: string): Promise<Response> {
+  try {
+    return await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify(payload),
+      body,
     });
-  } catch (e) {
+  } catch {
     throw new ApiError(
-      `Не удалось связаться с Engram (${baseUrl}). Бэкенд запущен?`,
+      "Не удалось связаться с Engram. Проверьте, что бэкенд запущен.",
       0,
       "network"
     );
-  }
-
-  if (!res.ok) {
-    const body = await safeJson(res);
-    const message = body?.error?.message || `Ошибка сервера (${res.status})`;
-    throw new ApiError(message, res.status, body?.error?.code);
   }
 }
 
