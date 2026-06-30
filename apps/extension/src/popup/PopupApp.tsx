@@ -99,7 +99,7 @@ export function PopupApp({ submission, onSave, onClose, onReport }: PopupAppProp
           </div>
           <div>
             <p className="engram-state__title engram-state__title--success">
-              Запланировано ✓
+              Запланировано
             </p>
             <p className="engram-muted" style={{ marginTop: 4 }}>
               Задача добавлена в очередь повторений.
