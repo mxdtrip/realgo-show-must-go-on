@@ -1,0 +1,44 @@
+# Standalone dev stack for the Engram landing (apps/web).
+#
+# Lets you run the Next.js dev server on any machine that has Docker, while
+# editing the source on the host and getting hot-reload inside the container.
+# The whole app folder is bind-mounted, so your edits are ordinary files you
+# can `git commit` / `git push` to the branch as usual.
+#
+# Run from this directory (apps/web):
+#
+#   docker compose up            # -> http://localhost:3000
+#   docker compose up -d         # detached
+#   docker compose down          # stop
+#
+# First start installs Linux-native deps into the `web_node_modules` volume,
+# so it takes a minute; later starts are fast.
+
+name: engram-web
+
+services:
+  web:
+    image: node:22-bookworm-slim
+    working_dir: /app
+    # Install deps if needed, then run the dev server bound to all interfaces
+    # so the host can reach it through the published port.
+    command: sh -c "npm install && npm run dev -- --hostname 0.0.0.0 --port 3000"
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    environment:
+      NODE_ENV: development
+      # File watching over a bind mount is unreliable on macOS/Windows hosts;
+      # polling makes hot-reload work everywhere at a small CPU cost.
+      WATCHPACK_POLLING: "true"
+      CHOKIDAR_USEPOLLING: "true"
+    volumes:
+      - .:/app
+      # Keep the container's own node_modules and .next so the host's artifacts
+      # (or their absence / wrong-OS binaries) don't clobber the Linux install
+      # built inside the container.
+      - web_node_modules:/app/node_modules
+      - web_next:/app/.next
+
+volumes:
+  web_node_modules:
+  web_next:

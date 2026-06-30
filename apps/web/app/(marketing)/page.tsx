@@ -1,0 +1,146 @@
+import { getDictionary } from "../_content/i18n";
+import { SortingMemoryHero } from "../components/SortingMemoryHero";
+
+export default function Home() {
+  const dictionary = getDictionary();
+  const copy = dictionary.marketing;
+
+  return (
+    <>
+      <SortingMemoryHero />
+
+      <section className="landing-section" id="memory">
+        <div className="section-kicker">{copy.sections.memory.kicker}</div>
+        <div className="section-grid">
+          <div className="section-copy">
+            <h2>{copy.sections.memory.title}</h2>
+            <p>{copy.sections.memory.description}</p>
+          </div>
+          <div className="product-demo memory-demo">
+            <div className="demo-toolbar">
+              <span>{copy.sections.memory.demoUrl}</span>
+              <strong>{copy.sections.memory.demoStatus}</strong>
+            </div>
+            <div className="rating-row" aria-label={copy.sections.memory.ratingAria}>
+              {copy.sections.memory.ratings.map((rating) => (
+                <button key={rating}>{rating}</button>
+              ))}
+            </div>
+            <div className="task-table">
+              {copy.memoryTasks.map(([title, pattern, rating, next]) => (
+                <div className="task-row" key={title}>
+                  <strong>{title}</strong>
+                  <span>{pattern}</span>
+                  <em>{rating}</em>
+                  <span>{next}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="landing-section" id="roadmap">
+        <div className="section-kicker">{copy.sections.roadmap.kicker}</div>
+        <div className="section-grid reverse">
+          <div className="product-demo roadmap-demo">
+            <div className="roadmap-head">
+              <span>{copy.sections.roadmap.head}</span>
+              <strong>{copy.sections.roadmap.readiness}</strong>
+            </div>
+            {copy.roadmapWeeks.map(([week, topics, focus]) => (
+              <article className="roadmap-row" key={week}>
+                <span>{week}</span>
+                <strong>{topics}</strong>
+                <p>{focus}</p>
+              </article>
+            ))}
+          </div>
+          <div className="section-copy">
+            <h2>{copy.sections.roadmap.title}</h2>
+            <p>{copy.sections.roadmap.description}</p>
+          </div>
+        </div>
+      </section>
+
+      <section className="landing-section" id="reviews">
+        <div className="section-kicker">{copy.sections.reviews.kicker}</div>
+        <div className="section-copy wide">
+          <h2>{copy.sections.reviews.title}</h2>
+          <p>{copy.sections.reviews.description}</p>
+        </div>
+        <div className="review-grid">
+          {copy.reviewCards.map(([type, front, back]) => (
+            <article className="review-card" key={type}>
+              <span>{type}</span>
+              <h3>{front}</h3>
+              <p>{back}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="landing-section" id="pricing">
+        <div className="section-kicker">{copy.sections.pricing.kicker}</div>
+        <div className="section-grid">
+          <div className="section-copy">
+            <h2>{copy.sections.pricing.title}</h2>
+            <p>{copy.sections.pricing.description}</p>
+          </div>
+          <div className="pricing-grid">
+            {copy.pricing.map(([name, price, features]) => (
+              <article className="price-card" key={name}>
+                <span>{name}</span>
+                <strong>{price}</strong>
+                <ul className="price-features">
+                  {features.map((feature) => (
+                    <li key={feature}>{feature}</li>
+                  ))}
+                </ul>
+                <a
+                  className="price-cta"
+                  href={`/checkout?plan=${name.toLowerCase()}`}
+                >
+                  {copy.sections.pricing.cta}
+                </a>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <footer className="site-footer">
+        <div className="site-footer__inner">
+          <div className="site-footer__brand">
+            <a className="site-brand" href="/">
+              {dictionary.common.brand}
+            </a>
+            <p>{copy.footer.description}</p>
+          </div>
+          {copy.footer.columns.map((column) => (
+            <nav className="footer-col" key={column.title}>
+              <h4>{column.title}</h4>
+              {column.links.map((link) => (
+                <a href={link.href} key={link.label}>
+                  {link.label}
+                </a>
+              ))}
+            </nav>
+          ))}
+        </div>
+        <div className="site-footer__bar">
+          <span>{copy.footer.copyright}</span>
+          <span className="footer-powered">
+            {copy.footer.poweredBy}
+            <img
+              src="/author-tag.png"
+              alt=""
+              className="footer-powered__logo"
+            />
+          </span>
+          <span>{copy.footer.tagline}</span>
+        </div>
+      </footer>
+    </>
+  );
+}
