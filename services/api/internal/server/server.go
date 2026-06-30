@@ -9,9 +9,12 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 
 	"github.com/mxdtrip/freeburger/services/api/internal/auth"
+	v1 "github.com/mxdtrip/freeburger/services/api/internal/controller/v1"
 	"github.com/mxdtrip/freeburger/services/api/internal/patterns"
+	"github.com/mxdtrip/freeburger/services/api/internal/repo"
 	"github.com/mxdtrip/freeburger/services/api/internal/reviews"
 	"github.com/mxdtrip/freeburger/services/api/internal/roadmaps"
+	"github.com/mxdtrip/freeburger/services/api/internal/service"
 	"github.com/mxdtrip/freeburger/services/api/internal/storage/postgres"
 	"github.com/mxdtrip/freeburger/services/api/internal/storage/redis"
 )
@@ -44,8 +47,15 @@ func New(deps Deps) http.Handler {
 	r.Get("/healthz", health.live)
 	r.Get("/readyz", health.ready)
 
+	// Старый модуль reviews (для обратной совместимости)
 	reviewsSvc := reviews.NewService(reviews.NewRepository(deps.Postgres.Pool), deps.Logger)
 	reviewsHandler := reviews.NewHandler(reviewsSvc, deps.Logger)
+
+	// Новый слоистый reviews
+	reviewRepo := repo.NewReviewRepository(deps.Postgres.Pool)
+	reviewService := service.NewReviewService(reviewRepo, deps.Logger)
+	reviewHandler := v1.NewReviewHandler(reviewService)
+
 	patternsHandler := patterns.NewHandler(patterns.NewRepository(deps.Postgres.Pool))
 	roadmapsHandler := roadmaps.NewHandler(roadmaps.NewRepository(deps.Postgres.Pool))
 
@@ -63,8 +73,17 @@ func New(deps Deps) http.Handler {
 		})
 
 		r.Route("/reviews", func(r chi.Router) {
+			// Старый модуль (для обратной совместимости)
 			reviews.RegisterRoutes(r, reviewsHandler)
 		})
+
+		// Новые endpoints согласно контракту
+		r.Route("/me/reviews", func(r chi.Router) {
+			r.With(requireAuth(deps.Auth)).Group(func(r chi.Router) {
+				v1.RegisterReviewRoutes(r, reviewHandler)
+			})
+		})
+
 		r.Route("/patterns", func(r chi.Router) {
 			patterns.RegisterRoutes(r, patternsHandler)
 		})
