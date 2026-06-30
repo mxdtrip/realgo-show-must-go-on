@@ -129,3 +129,39 @@ func ListRoadmapProblems(ctx context.Context, pool *pgxpool.Pool, roadmapCode st
 ```
 
 Для дорожной карты NeetCode 150 передавай `roadmapCode = "neetcode_150"`.
+
+## Demo Users
+
+`seed_users.py` создаёт предсозданные аккаунты для ручного тестирования и
+кладёт им прогресс, due review schedules и review attempts по задачам из
+`neetcode_150`. Перед ним должен быть загружен roadmap seed.
+
+Запуск через compose:
+
+```sh
+make seed-users
+```
+
+Или напрямую:
+
+```sh
+cd services/api/seeds
+python -m pip install -r requirements.txt
+DATABASE_URL='postgres://postgres:postgres@localhost:5432/freeburger?sslmode=disable' \
+  python seed_users.py
+```
+
+Аккаунты для тестера:
+
+| Email | Password | Назначение |
+| --- | --- | --- |
+| `tester@example.test` | `Password123!` | free-пользователь с несколькими статусами задач |
+| `pro@example.test` | `Password123!` | pro-пользователь с короткой историей прогресса |
+| `admin@example.test` | `Password123!` | тестовый admin-профиль через `plan = admin` |
+
+Важно: в текущей схеме нет отдельной роли или прав администратора. `admin`
+сейчас только значение `users.plan`, чтобы тестер мог отличить аккаунт.
+
+Seed идемпотентный для аккаунтов и `user_problem_progress`: повторный запуск
+обновляет эти строки. Review schedules и attempts для seed-аккаунтов перед
+повторной загрузкой пересоздаются, чтобы не копить дубликаты.
