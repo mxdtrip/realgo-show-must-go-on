@@ -3,18 +3,18 @@ import Link from "next/link";
 import { CabinetPanel } from "../_components";
 import { CabinetIcon } from "../_icons";
 import { getDictionary } from "../../_content/i18n";
-import { cards } from "../_mock";
+import { cardRecords } from "../_mock";
 
 export default function CardsPage() {
   const page = getDictionary().cabinet.pages.cards;
   const overview = page.overview;
 
   const mix = overview.types.map(([key, label]) => {
-    const items = cards.filter((card) => card.type === key);
+    const items = cardRecords.filter((card) => card.type === key);
     return {
       label,
       count: items.length,
-      sources: items.map((card) => card.source.split(" · ")[0]).join(", "),
+      sources: items.map((card) => card.source.label.split(" · ")[0]).join(", "),
     };
   });
 
@@ -34,7 +34,7 @@ export default function CardsPage() {
             <p>{overview.readyDescription}</p>
             <div className="cards-overview__meta">
               <span className="cards-overview__stat">
-                <strong>{cards.length}</strong>
+                <strong>{cardRecords.length}</strong>
                 {overview.cardUnit}
               </span>
               <span className="cards-overview__stat cards-overview__stat--muted">
