@@ -50,6 +50,12 @@ export const POPUP_CSS = `
 /* ── Panel ─────────────────────────────────────────────────────────────── */
 .engram-popup {
   width: 360px;
+  /* Fixed height so the window never resizes between states (loading /
+     no-task / form / success / error). The form is the tallest state; this
+     value covers it (incl. the error banner). Centered states fill via flex. */
+  height: 360px;
+  display: flex;
+  flex-direction: column;
   margin: 0;
   background: var(--panel);
   color: var(--text);
@@ -57,12 +63,12 @@ export const POPUP_CSS = `
   font-size: 14px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
-  border: 1px solid var(--border);
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 18px 50px -30px rgba(1, 4, 9, 0.9);
 }
-.engram-popup--wide { width: 440px; }
+/* Options page is a full tab, not a fixed-size popup — let it grow naturally. */
+.engram-popup--wide { width: 440px; height: auto; display: block; }
 
 /* ── Header bar ────────────────────────────────────────────────────────── */
 .engram-header {
@@ -144,11 +150,18 @@ export const POPUP_CSS = `
 
 /* ── Body / question groups ───────────────────────────────────────────── */
 .engram-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 16px;
   padding: 16px;
 }
+/* Anchor the form's primary action to the bottom so the fixed-height window
+   reads as intentional instead of leaving a gap under the questions. */
+.engram-body > .engram-btn--block,
+.engram-body > .engram-error { margin-top: auto; }
 .engram-question__label {
   margin: 0 0 8px;
   font-size: 11px;
@@ -162,21 +175,20 @@ export const POPUP_CSS = `
 .engram-choice {
   flex: 1;
   appearance: none;
-  border: 1px solid var(--border);
-  background: transparent;
+  border: none;
+  background: var(--panel-strong);
   color: var(--text-dim);
   border-radius: 7px;
-  padding: 7px 8px;
+  padding: 8px;
   font-family: var(--font-sans);
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
 }
 .engram-choice:hover:not(:disabled):not([aria-pressed="true"]) {
-  border-color: var(--accent-bright);
   color: var(--text);
-  background: rgba(56, 139, 253, 0.08);
+  background: rgba(56, 139, 253, 0.12);
 }
 .engram-choice:focus-visible {
   outline: none;
@@ -184,9 +196,7 @@ export const POPUP_CSS = `
 }
 .engram-choice[aria-pressed="true"] {
   background: var(--accent);
-  border-color: var(--accent);
   color: #fff;
-  box-shadow: 0 0 0 1px rgba(56, 139, 253, 0.3);
 }
 .engram-choice:disabled { color: var(--text-faint); cursor: not-allowed; }
 
@@ -196,21 +206,20 @@ export const POPUP_CSS = `
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 8px 16px;
+  padding: 9px 16px;
   border-radius: 8px;
-  border: 1px solid transparent;
+  border: none;
   font-family: var(--font-sans);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
 }
 .engram-btn--block { width: 100%; }
 .engram-btn:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--accent-glow); }
 
 .engram-btn--primary {
   background: var(--accent);
-  border-color: var(--accent-strong);
   color: #fff;
 }
 .engram-btn--primary:hover:not(:disabled) {
@@ -220,29 +229,26 @@ export const POPUP_CSS = `
 .engram-btn--primary:active:not(:disabled) { background: var(--accent-active); }
 .engram-btn--primary:disabled {
   background: var(--panel-strong);
-  border-color: var(--border);
   color: var(--text-faint);
   cursor: not-allowed;
 }
 
 .engram-btn--ghost {
-  padding: 7px 12px;
+  padding: 8px 12px;
   font-size: 12px;
   font-weight: 500;
-  background: transparent;
-  border-color: var(--border);
+  background: var(--panel-strong);
   color: var(--text-dim);
 }
-.engram-btn--ghost:hover { border-color: var(--accent-bright); color: var(--text); }
+.engram-btn--ghost:hover { background: var(--border); color: var(--text); }
 .engram-btn--danger {
-  padding: 7px 12px;
+  padding: 8px 12px;
   font-size: 12px;
   font-weight: 500;
-  background: transparent;
-  border-color: var(--danger);
+  background: var(--danger-soft);
   color: var(--danger-fg);
 }
-.engram-btn--danger:hover { background: rgba(218, 54, 51, 0.1); }
+.engram-btn--danger:hover { background: rgba(218, 54, 51, 0.18); }
 
 /* ── Inputs (options) ─────────────────────────────────────────────────── */
 .engram-field { display: flex; flex-direction: column; gap: 6px; }
@@ -304,6 +310,7 @@ export const POPUP_CSS = `
 
 /* ── Centered states (loading / no-task / success) ────────────────────── */
 .engram-state {
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -401,7 +408,7 @@ export const POPUP_CSS = `
   right: 16px;
   z-index: 2147483647;
   border-radius: 12px;
-  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.06);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55);
   overflow: hidden;
 }
 .engram-overlay .engram-popup { border-radius: 12px; }
