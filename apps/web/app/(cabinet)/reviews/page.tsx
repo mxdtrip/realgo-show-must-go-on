@@ -1,6 +1,21 @@
+import { CabinetIcon } from "../_icons";
 import { CabinetPanel } from "../_components";
 import { getDictionary } from "../../_content/i18n";
 import { reviewQueue } from "../_mock";
+
+/** Type → cabinet icon glyph (reuses the shared inline icon family). */
+const iconByType: Record<string, string> = {
+  "problem review": "problems",
+  card: "cards",
+  "pattern review": "patterns",
+};
+
+/** FSRS rating → existing tone token (blue / green / amber). */
+const ratingTone: Record<string, string> = {
+  normal: "accent",
+  easy: "success",
+  hard: "warning",
+};
 
 export default function ReviewsPage() {
   const copy = getDictionary().cabinet;
@@ -8,6 +23,7 @@ export default function ReviewsPage() {
 
   const toneByType = new Map(page.types.map(([key, , tone]) => [key, tone]));
   const summary = page.types.map(([key, label, tone]) => ({
+    key,
     label,
     tone,
     count: reviewQueue.filter((item) => item.type === key).length,
@@ -22,18 +38,26 @@ export default function ReviewsPage() {
       </section>
 
       <div className="cabinet-summary">
-        <div className="cabinet-summary__total">
-          <strong>{reviewQueue.length}</strong>
-          <span>{page.summaryUnit}</span>
+        <div className="review-stat">
+          <span className="review-stat__icon">
+            <CabinetIcon name="reviews" />
+          </span>
+          <div className="review-stat__body">
+            <strong>{reviewQueue.length}</strong>
+            <span>{page.summaryUnit}</span>
+          </div>
         </div>
-        <div className="cabinet-summary__split">
-          {summary.map((item) => (
-            <span className={`review-type review-type--${item.tone}`} key={item.label}>
-              {item.label}
-              <em>{item.count}</em>
+        {summary.map((item) => (
+          <div className={`review-stat review-stat--${item.tone}`} key={item.key}>
+            <span className="review-stat__icon">
+              <CabinetIcon name={iconByType[item.key] ?? "reviews"} />
             </span>
-          ))}
-        </div>
+            <div className="review-stat__body">
+              <strong>{item.count}</strong>
+              <span>{item.label}</span>
+            </div>
+          </div>
+        ))}
       </div>
 
       <CabinetPanel eyebrow={page.panelEyebrow} title={page.panelTitle}>
@@ -41,8 +65,12 @@ export default function ReviewsPage() {
           {reviewQueue.map((item) => {
             const [day, time] = item.next.split(" · ");
             const tone = toneByType.get(item.type) ?? "accent";
+            const badgeTone = ratingTone[item.rating] ?? "accent";
             return (
               <article className="review-board__item" key={item.id}>
+                <span className={`review-board__icon review-board__icon--${tone}`}>
+                  <CabinetIcon name={iconByType[item.type] ?? "reviews"} />
+                </span>
                 <div className="review-board__main">
                   <span className={`review-type review-type--${tone}`}>{item.type}</span>
                   <h2>{item.title}</h2>
@@ -53,11 +81,9 @@ export default function ReviewsPage() {
                     <span>{day}</span>
                     {time ? <strong>{time}</strong> : null}
                   </div>
-                  <div className="rating-row cabinet-rating-row" aria-label={copy.common.ratingAria}>
-                    <button>{copy.common.hard}</button>
-                    <button>{copy.common.normal}</button>
-                    <button>{copy.common.easy}</button>
-                  </div>
+                  <span className={`review-badge review-badge--${badgeTone}`}>
+                    {item.rating}
+                  </span>
                 </div>
               </article>
             );
