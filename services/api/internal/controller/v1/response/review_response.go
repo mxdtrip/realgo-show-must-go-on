@@ -28,7 +28,14 @@ type QueueMeta struct {
 }
 
 // RateReviewResponse для POST /me/reviews/{reviewId}/rate
+// Обёрнут в data согласно контракту
 type RateReviewResponse struct {
+	Data RateReviewData `json:"data"`
+}
+
+// RateReviewData — данные ответа
+// Обёрнут в data согласно контракту
+type RateReviewData struct {
 	ReviewID     int64     `json:"reviewId"`
 	Rating       string    `json:"rating"`
 	NextReviewAt time.Time `json:"nextReviewAt"`

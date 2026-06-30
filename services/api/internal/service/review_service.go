@@ -23,9 +23,10 @@ var (
 const todayReviewsLimit = 100
 
 // ReviewService — бизнес-логика для повторений.
+// Обёрнут в data согласно контракту
 type ReviewService interface {
 	GetQueue(ctx context.Context, userID int64, status string, limit int32) (response.QueueResponse, error)
-	RateReview(ctx context.Context, reviewID, userID int64, rating string) (response.RateReviewResponse, error)
+	RateReview(ctx context.Context, reviewID, userID int64, rating string, reviewedAt time.Time) (response.RateReviewData, error)
 	GetStats(ctx context.Context, userID int64) (response.StatsResponse, error)
 }
 
@@ -72,24 +73,23 @@ func (s *reviewService) GetQueue(ctx context.Context, userID int64, status strin
 	}, nil
 }
 
-func (s *reviewService) RateReview(ctx context.Context, reviewID, userID int64, rating string) (response.RateReviewResponse, error) {
+func (s *reviewService) RateReview(ctx context.Context, reviewID, userID int64, rating string, reviewedAt time.Time) (response.RateReviewData, error) {
 	fsrsRating, err := toFsrsRating(rating)
 	if err != nil {
-		return response.RateReviewResponse{}, fmt.Errorf("reviews: RateReview: %w", err)
+		return response.RateReviewData{}, fmt.Errorf("reviews: RateReview: %w", err)
 	}
 
 	schedule, err := s.repo.ScheduleByID(ctx, reviewID, userID)
 	if err != nil {
 		if errors.Is(err, repo.ErrReviewNotFound) {
-			return response.RateReviewResponse{}, ErrReviewNotFound
+			return response.RateReviewData{}, ErrReviewNotFound
 		}
-		return response.RateReviewResponse{}, fmt.Errorf("reviews: RateReview: %w", err)
+		return response.RateReviewData{}, fmt.Errorf("reviews: RateReview: %w", err)
 	}
 
-	now := time.Now()
-	info := s.fsrs.Next(scheduleToCard(schedule), now, fsrsRating)
+	info := s.fsrs.Next(scheduleToCard(schedule), reviewedAt, fsrsRating)
 
-	next := applyCard(schedule, info.Card, rating, now)
+	next := applyCard(schedule, info.Card, rating, reviewedAt)
 	next, err = s.repo.SaveReview(ctx, next, entity.ReviewAttempt{
 		UserID:      schedule.UserID,
 		ProblemID:   schedule.ProblemID,
@@ -98,10 +98,10 @@ func (s *reviewService) RateReview(ctx context.Context, reviewID, userID int64, 
 		DurationSec: 0, // TODO: получать из запроса
 	})
 	if err != nil {
-		return response.RateReviewResponse{}, fmt.Errorf("reviews: RateReview: %w", err)
+		return response.RateReviewData{}, fmt.Errorf("reviews: RateReview: %w", err)
 	}
 
-	return response.RateReviewResponse{
+	return response.RateReviewData{
 		ReviewID:     next.ID,
 		Rating:       rating,
 		NextReviewAt: next.NextReviewAt,
