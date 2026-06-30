@@ -960,6 +960,29 @@ h3 {
   text-align: center;
 }
 
+/* Success state of the MVP payment stub. */
+.checkout-done {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 14px 16px;
+  border: 1px solid rgba(63, 185, 80, 0.32);
+  border-radius: 10px;
+  background: rgba(46, 160, 67, 0.1);
+}
+
+.checkout-done strong {
+  font-size: 14px;
+  color: var(--success-fg);
+}
+
+.checkout-done span {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+
 @media (max-width: 920px) {
   .checkout-grid {
     grid-template-columns: 1fr;

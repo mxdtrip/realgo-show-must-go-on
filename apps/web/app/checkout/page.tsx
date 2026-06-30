@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { getDictionary } from "../_content/i18n";
+import { CheckoutAction } from "./CheckoutAction";
 
 /**
  * Минимальный платёжный экран. Открывается из карточек тарифов на лендинге
@@ -51,12 +52,7 @@ export default async function CheckoutPage({
             ))}
           </ul>
 
-          <button className="price-cta checkout-pay" type="button" disabled>
-            {isFree ? "Начать бесплатно" : "Перейти к оплате"}
-          </button>
-          <p className="checkout-note">
-            Платёжный провайдер ещё не подключён — экран в разработке.
-          </p>
+          <CheckoutAction isFree={isFree} />
         </article>
       </div>
     </main>
