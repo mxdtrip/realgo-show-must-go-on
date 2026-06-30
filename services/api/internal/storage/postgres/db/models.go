@@ -104,6 +104,7 @@ type ReviewAttempt struct {
 	DurationSec pgtype.Int4
 	WasCorrect  pgtype.Bool
 	CreatedAt   pgtype.Timestamptz
+	CardID      pgtype.Int8
 }
 
 type ReviewSchedule struct {
@@ -133,6 +134,7 @@ type ReviewSchedule struct {
 	LastReviewAt pgtype.Timestamptz
 	// Remaining learning/relearning steps (FSRS Card.RemainingSteps).
 	RemainingSteps int32
+	CardID         pgtype.Int8
 }
 
 type RoadmapItem struct {

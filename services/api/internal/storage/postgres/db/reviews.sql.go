@@ -12,37 +12,53 @@ import (
 )
 
 const createReviewAttempt = `-- name: CreateReviewAttempt :one
-INSERT INTO review_attempts (user_id, problem_id, pattern_id, rating, review_type, duration_sec, was_correct)
-VALUES ($1, $2, $3, $4, $5, $6, $7)
-RETURNING id, user_id, problem_id, pattern_id, rating, review_type, duration_sec, was_correct, created_at
+INSERT INTO review_attempts (user_id, problem_id, pattern_id, card_id, rating, review_type, duration_sec, was_correct)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+RETURNING id, user_id, problem_id, pattern_id, card_id, rating, review_type, duration_sec, was_correct, created_at
 `
 
 type CreateReviewAttemptParams struct {
 	UserID      int64
 	ProblemID   pgtype.Int8
 	PatternID   pgtype.Int8
+	CardID      pgtype.Int8
 	Rating      string
 	ReviewType  string
 	DurationSec pgtype.Int4
 	WasCorrect  pgtype.Bool
 }
 
-func (q *Queries) CreateReviewAttempt(ctx context.Context, arg CreateReviewAttemptParams) (ReviewAttempt, error) {
+type CreateReviewAttemptRow struct {
+	ID          int64
+	UserID      int64
+	ProblemID   pgtype.Int8
+	PatternID   pgtype.Int8
+	CardID      pgtype.Int8
+	Rating      string
+	ReviewType  string
+	DurationSec pgtype.Int4
+	WasCorrect  pgtype.Bool
+	CreatedAt   pgtype.Timestamptz
+}
+
+func (q *Queries) CreateReviewAttempt(ctx context.Context, arg CreateReviewAttemptParams) (CreateReviewAttemptRow, error) {
 	row := q.db.QueryRow(ctx, createReviewAttempt,
 		arg.UserID,
 		arg.ProblemID,
 		arg.PatternID,
+		arg.CardID,
 		arg.Rating,
 		arg.ReviewType,
 		arg.DurationSec,
 		arg.WasCorrect,
 	)
-	var i ReviewAttempt
+	var i CreateReviewAttemptRow
 	err := row.Scan(
 		&i.ID,
 		&i.UserID,
 		&i.ProblemID,
 		&i.PatternID,
+		&i.CardID,
 		&i.Rating,
 		&i.ReviewType,
 		&i.DurationSec,
@@ -53,7 +69,7 @@ func (q *Queries) CreateReviewAttempt(ctx context.Context, arg CreateReviewAttem
 }
 
 const getReviewScheduleByID = `-- name: GetReviewScheduleByID :one
-SELECT id, user_id, problem_id, pattern_id, next_review_at,
+SELECT id, user_id, problem_id, pattern_id, card_id, next_review_at,
        interval_days, stability, difficulty, review_count, last_rating,
        state, lapses, last_review_at, remaining_steps
 FROM review_schedules
@@ -70,6 +86,7 @@ type GetReviewScheduleByIDRow struct {
 	UserID         int64
 	ProblemID      pgtype.Int8
 	PatternID      pgtype.Int8
+	CardID         pgtype.Int8
 	NextReviewAt   pgtype.Timestamptz
 	IntervalDays   float64
 	Stability      float64
@@ -90,6 +107,7 @@ func (q *Queries) GetReviewScheduleByID(ctx context.Context, arg GetReviewSchedu
 		&i.UserID,
 		&i.ProblemID,
 		&i.PatternID,
+		&i.CardID,
 		&i.NextReviewAt,
 		&i.IntervalDays,
 		&i.Stability,
@@ -134,7 +152,7 @@ func (q *Queries) GetReviewStats(ctx context.Context, userID int64) (GetReviewSt
 }
 
 const getTodayReviews = `-- name: GetTodayReviews :many
-SELECT rs.id, rs.user_id, rs.problem_id, rs.pattern_id, rs.next_review_at,
+SELECT rs.id, rs.user_id, rs.problem_id, rs.pattern_id, rs.card_id, rs.next_review_at,
        rs.interval_days, rs.stability, rs.difficulty, rs.review_count,
        rs.last_rating, rs.state, rs.lapses, rs.last_review_at, rs.remaining_steps,
        p.title AS problem_title, p.url AS problem_url,
@@ -157,6 +175,7 @@ type GetTodayReviewsRow struct {
 	UserID         int64
 	ProblemID      pgtype.Int8
 	PatternID      pgtype.Int8
+	CardID         pgtype.Int8
 	NextReviewAt   pgtype.Timestamptz
 	IntervalDays   float64
 	Stability      float64
@@ -186,6 +205,7 @@ func (q *Queries) GetTodayReviews(ctx context.Context, arg GetTodayReviewsParams
 			&i.UserID,
 			&i.ProblemID,
 			&i.PatternID,
+			&i.CardID,
 			&i.NextReviewAt,
 			&i.IntervalDays,
 			&i.Stability,
@@ -210,13 +230,34 @@ func (q *Queries) GetTodayReviews(ctx context.Context, arg GetTodayReviewsParams
 	return items, nil
 }
 
+const updateProgressConfidence = `-- name: UpdateProgressConfidence :exec
+UPDATE user_problem_progress
+SET confidence = CASE
+    WHEN confidence + $3::int < 0 THEN 0
+    WHEN confidence + $3::int > 100 THEN 100
+    ELSE confidence + $3::int
+END
+WHERE user_id = $1 AND problem_id = $2
+`
+
+type UpdateProgressConfidenceParams struct {
+	UserID    int64
+	ProblemID int64
+	Column3   int32
+}
+
+func (q *Queries) UpdateProgressConfidence(ctx context.Context, arg UpdateProgressConfidenceParams) error {
+	_, err := q.db.Exec(ctx, updateProgressConfidence, arg.UserID, arg.ProblemID, arg.Column3)
+	return err
+}
+
 const updateReviewSchedule = `-- name: UpdateReviewSchedule :one
 UPDATE review_schedules
 SET next_review_at = $2, interval_days = $3, stability = $4, difficulty = $5,
     review_count = $6, last_rating = $7, state = $8, lapses = $9,
     last_review_at = $10, remaining_steps = $11, updated_at = NOW()
 WHERE id = $1
-RETURNING id, user_id, problem_id, pattern_id, next_review_at,
+RETURNING id, user_id, problem_id, pattern_id, card_id, next_review_at,
           interval_days, stability, difficulty, review_count, last_rating,
           state, lapses, last_review_at, remaining_steps
 `
@@ -240,6 +281,7 @@ type UpdateReviewScheduleRow struct {
 	UserID         int64
 	ProblemID      pgtype.Int8
 	PatternID      pgtype.Int8
+	CardID         pgtype.Int8
 	NextReviewAt   pgtype.Timestamptz
 	IntervalDays   float64
 	Stability      float64
@@ -272,6 +314,7 @@ func (q *Queries) UpdateReviewSchedule(ctx context.Context, arg UpdateReviewSche
 		&i.UserID,
 		&i.ProblemID,
 		&i.PatternID,
+		&i.CardID,
 		&i.NextReviewAt,
 		&i.IntervalDays,
 		&i.Stability,

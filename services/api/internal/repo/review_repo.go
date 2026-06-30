@@ -19,4 +19,7 @@ type ReviewRepository interface {
 
 	// Stats возвращает статистику повторений.
 	Stats(ctx context.Context, userID int64) (entity.StatsData, error)
+
+	// UpdateProgressConfidence обновляет confidence по задаче.
+	UpdateProgressConfidence(ctx context.Context, userID, problemID int64, rating string) error
 }

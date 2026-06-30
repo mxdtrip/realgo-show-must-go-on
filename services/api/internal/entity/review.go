@@ -8,6 +8,7 @@ type ReviewSchedule struct {
 	UserID         int64
 	ProblemID      *int64
 	PatternID      *int64
+	CardID         *int64 // Карточка для тренировки паттернов
 	NextReviewAt   time.Time
 	IntervalDays   float64
 	Stability      float64
@@ -26,8 +27,9 @@ type ReviewAttempt struct {
 	UserID      int64
 	ProblemID   *int64
 	PatternID   *int64
+	CardID      *int64 // Карточка для тренировки паттернов
 	Rating      string // hard, normal, easy
-	ReviewType  string // problem, pattern
+	ReviewType  string // problem, pattern, card
 	DurationSec int
 	WasCorrect  bool
 	CreatedAt   time.Time
