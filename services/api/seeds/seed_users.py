@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import json
 import os
 from datetime import datetime, timezone
 
@@ -20,6 +21,12 @@ USERS = [
             ("group-anagrams", "in_progress", None, 30, "Smoke: in progress"),
             ("top-k-frequent-elements", "not_started", None, 10, "Smoke: not started"),
         ],
+        "events": [
+            ("leetcode", "problem_viewed", "contains-duplicate", None, 6),
+            ("leetcode", "problem_solved", "contains-duplicate", "easy", 5),
+            ("leetcode", "rating_changed", "two-sum", "hard", 2),
+            ("leetcode", "problem_viewed", "group-anagrams", None, 1),
+        ],
     },
     {
         "email": "pro@example.test",
@@ -30,6 +37,10 @@ USERS = [
             ("contains-duplicate", "solved", "normal", 80, "Pro smoke data"),
             ("valid-palindrome", "reviewing", "easy", 70, "Pro review item"),
         ],
+        "events": [
+            ("leetcode", "problem_viewed", "valid-palindrome", None, 4),
+            ("leetcode", "problem_solved", "valid-palindrome", "easy", 3),
+        ],
     },
     {
         "email": "admin@example.test",
@@ -37,6 +48,7 @@ USERS = [
         "plan": "admin",
         "interview_date": None,
         "progress": [],
+        "events": [],
     },
 ]
 
@@ -73,6 +85,16 @@ def upsert_user(cur, user, password_hash):
 
 def problem_ids(cur):
     cur.execute("SELECT external_slug, id FROM problems")
+    return dict(cur.fetchall())
+
+
+def problem_rows(cur):
+    cur.execute("SELECT external_slug, title, url FROM problems")
+    return {slug: {"title": title, "url": url} for slug, title, url in cur.fetchall()}
+
+
+def platform_ids(cur):
+    cur.execute("SELECT code, id FROM platforms")
     return dict(cur.fetchall())
 
 
@@ -201,6 +223,51 @@ def seed_progress(cur, user_id, progress, problems, schedule_columns):
             )
 
 
+def seed_extension_events(cur, user_id, email, events, platforms, problems):
+    for platform_code, event_type, slug, rating, age_hours in events:
+        platform_id = platforms.get(platform_code)
+        if not platform_id:
+            raise ValueError(f"platform {platform_code!r} is missing; run migrations first")
+        problem = problems.get(slug)
+        if not problem:
+            raise ValueError(f"problem {slug!r} is missing; run seed_roadmap.py first")
+
+        payload = {
+            "event": event_type,
+            "source": platform_code,
+            "rating": rating,
+            "problem": {
+                "externalId": slug,
+                "title": problem["title"],
+                "url": problem["url"],
+            },
+        }
+        cur.execute(
+            """
+            INSERT INTO extension_events (
+                user_id, platform_id, url, external_slug, title, event_type,
+                rating, extension_version, event_time, idempotency_key, raw_payload
+            )
+            VALUES (
+                %s, %s, %s, %s, %s, %s, %s, 'seed-demo',
+                CURRENT_TIMESTAMP - (%s * INTERVAL '1 hour'), %s, %s::jsonb
+            )
+            """,
+            (
+                user_id,
+                platform_id,
+                problem["url"],
+                slug,
+                problem["title"],
+                event_type,
+                rating,
+                age_hours,
+                f"seed:{email}:{event_type}:{slug}:{age_hours}",
+                json.dumps(payload),
+            ),
+        )
+
+
 def main():
     dsn = os.environ.get("DATABASE_URL")
     if not dsn:
@@ -216,9 +283,14 @@ def main():
                 users = [(upsert_user(cur, user, password_hash), user) for user in USERS]
                 reset_seeded_demo_data(cur, [user_id for user_id, _ in users])
                 problems = problem_ids(cur)
+                event_problems = problem_rows(cur)
+                platforms = platform_ids(cur)
                 schedule_columns = table_columns(cur, "review_schedules")
                 for user_id, user in users:
                     seed_progress(cur, user_id, user["progress"], problems, schedule_columns)
+                    seed_extension_events(
+                        cur, user_id, user["email"], user["events"], platforms, event_problems
+                    )
 
     print(f"seeded {len(USERS)} users with password {PASSWORD!r}")
 
