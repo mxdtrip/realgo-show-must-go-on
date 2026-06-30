@@ -1,8 +1,10 @@
 import Link from "next/link";
 
 import { getDictionary } from "../_content/i18n";
+import { CabinetGuard } from "./CabinetGuard";
 import { CabinetNav } from "./CabinetNav";
 import { CabinetInterviewCountdown } from "./CabinetInterviewCountdown";
+import { LogoutButton } from "./LogoutButton";
 
 export default function CabinetLayout({
   children,
@@ -13,7 +15,8 @@ export default function CabinetLayout({
   const copy = dictionary.cabinet.layout;
 
   return (
-    <div className="cabinet-shell">
+    <CabinetGuard>
+      <div className="cabinet-shell">
       <aside className="cabinet-sidebar">
         <div className="cabinet-brand-block">
           <Link className="site-brand" href="/">
@@ -36,10 +39,12 @@ export default function CabinetLayout({
             <Link className="cabinet-topbar__link" href="/">
               {copy.backToMarketing}
             </Link>
+            <LogoutButton label="Выйти" />
           </div>
         </header>
         {children}
       </div>
-    </div>
+      </div>
+    </CabinetGuard>
   );
 }

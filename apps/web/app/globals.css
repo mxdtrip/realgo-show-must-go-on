@@ -4358,3 +4358,88 @@ h3 {
     transform: none;
   }
 }
+
+/* ============================================================
+   AUTH PAGES / GUARD (web API client + login/register)
+   ============================================================ */
+
+/* Standalone /login and /register pages reuse the .auth-* panel styles, but
+   render full-page instead of as a fixed overlay over the landing. */
+.auth-layer--page {
+  position: relative;
+  min-height: 100vh;
+}
+
+/* Tabs are <Link>s on the standalone pages (buttons in the landing modal). */
+.auth-tabs a {
+  flex: 1;
+  display: block;
+  text-align: center;
+  font-family: var(--font-stack-mono);
+  font-size: 13px;
+  padding: 9px;
+  border-radius: 7px;
+  color: var(--text-dim);
+  transition: all 0.18s ease;
+}
+
+.auth-tabs a.active {
+  background: var(--accent-soft);
+  color: var(--accent-bright);
+}
+
+.auth-form__error {
+  margin: 0;
+  font-size: 13px;
+  color: var(--danger, #ff7b72);
+}
+
+.auth-form button[type="submit"]:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Logout button styled like the topbar link but with a button reset. */
+.cabinet-logout {
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.cabinet-logout:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Guard placeholder while the session is being confirmed / redirected. */
+.cabinet-guard {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 100vh;
+  color: var(--text-dim);
+  font-family: var(--font-stack-mono);
+  font-size: 13px;
+}
+
+.cabinet-guard__spinner {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  border-top-color: var(--accent-bright);
+  animation: cabinet-guard-spin 0.7s linear infinite;
+}
+
+@keyframes cabinet-guard-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cabinet-guard__spinner {
+    animation: none;
+  }
+}
