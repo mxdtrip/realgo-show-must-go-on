@@ -10,10 +10,12 @@ import (
 
 	"github.com/mxdtrip/freeburger/services/api/internal/auth"
 	v1 "github.com/mxdtrip/freeburger/services/api/internal/controller/v1"
+	"github.com/mxdtrip/freeburger/services/api/internal/extension"
 	"github.com/mxdtrip/freeburger/services/api/internal/patterns"
 	"github.com/mxdtrip/freeburger/services/api/internal/repo"
 	"github.com/mxdtrip/freeburger/services/api/internal/reviews"
 	"github.com/mxdtrip/freeburger/services/api/internal/roadmaps"
+	"github.com/mxdtrip/freeburger/services/api/internal/scheduler"
 	"github.com/mxdtrip/freeburger/services/api/internal/service"
 	"github.com/mxdtrip/freeburger/services/api/internal/storage/postgres"
 	"github.com/mxdtrip/freeburger/services/api/internal/storage/redis"
@@ -59,6 +61,11 @@ func New(deps Deps) http.Handler {
 	patternsHandler := patterns.NewHandler(patterns.NewRepository(deps.Postgres.Pool))
 	roadmapsHandler := roadmaps.NewHandler(roadmaps.NewRepository(deps.Postgres.Pool))
 
+	// Browser-extension ingest: simple fixed-interval scheduler (issue #17)
+	// behind the Scheduler interface, swappable for FSRS later.
+	extensionSvc := extension.NewService(extension.NewRepository(deps.Postgres.Pool), scheduler.NewSimple())
+	extensionHandler := extension.NewHandler(extensionSvc)
+
 	r.Route("/api/v1", func(r chi.Router) {
 		ah := &authHandler{svc: deps.Auth}
 		authRateLimit := rateLimit(deps.Redis, "auth", 20, time.Minute)
@@ -81,6 +88,12 @@ func New(deps Deps) http.Handler {
 		r.Route("/me/reviews", func(r chi.Router) {
 			r.With(requireAuth(deps.Auth)).Group(func(r chi.Router) {
 				v1.RegisterReviewRoutes(r, reviewHandler)
+			})
+		})
+
+		r.Route("/extension", func(r chi.Router) {
+			r.With(requireAuth(deps.Auth)).Group(func(r chi.Router) {
+				extension.RegisterRoutes(r, extensionHandler)
 			})
 		})
 
