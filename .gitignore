@@ -72,3 +72,5 @@ temp/
 
 # Python
 __pycache__/
+
+.serena/*
