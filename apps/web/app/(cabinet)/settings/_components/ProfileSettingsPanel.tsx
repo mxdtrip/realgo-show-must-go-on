@@ -1,12 +1,15 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 
+import {
+  readProfileSettings,
+  writeProfileSettings,
+  type ProfileSettings,
+} from "../../../_profile/profileSettings";
 import { StatusPill } from "../../_components";
-
-const profileStorageKey = "engram:profile-settings:v1";
-const onboardingStorageKey = "engram:onboarding-profile:v1";
 
 const suggestedTimezones = [
   "UTC",
@@ -23,11 +26,6 @@ const suggestedTimezones = [
   "Asia/Tokyo",
 ] as const;
 
-type ProfileSettings = {
-  timezone: string;
-  interviewDate: string;
-};
-
 type ProfileSettingsPanelProps = {
   copy: {
     email: string;
@@ -36,6 +34,7 @@ type ProfileSettingsPanelProps = {
     interviewDateLabel: string;
     plan: string;
     planLabel: string;
+    quickSetup: string;
     save: string;
     saved: string;
     timezone: string;
@@ -43,20 +42,6 @@ type ProfileSettingsPanelProps = {
     timezonePlaceholder: string;
   };
 };
-
-function parseStoredProfile(raw: string | null): Partial<ProfileSettings> {
-  if (!raw) return {};
-
-  try {
-    const parsed = JSON.parse(raw) as Partial<ProfileSettings>;
-    return {
-      timezone: typeof parsed.timezone === "string" ? parsed.timezone : undefined,
-      interviewDate: typeof parsed.interviewDate === "string" ? parsed.interviewDate : undefined,
-    };
-  } catch {
-    return {};
-  }
-}
 
 export function ProfileSettingsPanel({ copy }: Readonly<ProfileSettingsPanelProps>) {
   const defaults = useMemo(
@@ -67,14 +52,7 @@ export function ProfileSettingsPanel({ copy }: Readonly<ProfileSettingsPanelProp
   const [didSave, setDidSave] = useState(false);
 
   useEffect(() => {
-    const stored = parseStoredProfile(window.localStorage.getItem(profileStorageKey));
-    const onboarding = parseStoredProfile(window.localStorage.getItem(onboardingStorageKey));
-    const nextProfile = {
-      timezone: stored.timezone?.trim() || defaults.timezone,
-      interviewDate: stored.interviewDate ?? onboarding.interviewDate ?? defaults.interviewDate,
-    };
-
-    setProfile(nextProfile);
+    setProfile(readProfileSettings(defaults));
   }, [defaults]);
 
   const update = (patch: Partial<ProfileSettings>) => {
@@ -89,20 +67,7 @@ export function ProfileSettingsPanel({ copy }: Readonly<ProfileSettingsPanelProp
       timezone: String(formData.get("timezone") ?? "").trim(),
       interviewDate: String(formData.get("interviewDate") ?? ""),
     };
-    window.localStorage.setItem(profileStorageKey, JSON.stringify(nextProfile));
-
-    const onboardingRaw = window.localStorage.getItem(onboardingStorageKey);
-    if (onboardingRaw) {
-      try {
-        const onboarding = JSON.parse(onboardingRaw) as Record<string, unknown>;
-        window.localStorage.setItem(
-          onboardingStorageKey,
-          JSON.stringify({ ...onboarding, interviewDate: nextProfile.interviewDate }),
-        );
-      } catch {
-        // Keep profile settings usable even if an old onboarding mock is malformed.
-      }
-    }
+    writeProfileSettings(nextProfile);
 
     setProfile(nextProfile);
     setDidSave(true);
@@ -143,9 +108,12 @@ export function ProfileSettingsPanel({ copy }: Readonly<ProfileSettingsPanelProp
         <StatusPill tone="accent">{copy.plan}</StatusPill>
       </div>
       <div className="profile-settings-actions">
-        <button disabled={!profile.timezone.trim()} type="submit">
-          {copy.save}
-        </button>
+        <div>
+          <button disabled={!profile.timezone.trim()} type="submit">
+            {copy.save}
+          </button>
+          <Link href="/onboarding/profile">{copy.quickSetup}</Link>
+        </div>
         <small aria-live="polite">{didSave ? copy.saved : ""}</small>
       </div>
     </form>

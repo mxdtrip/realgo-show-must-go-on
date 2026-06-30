@@ -238,9 +238,17 @@ const ru = {
       profile: {
         monogram: "BS",
         name: "Backend SWE",
-        meta: "interview · через 21 день",
         plan: "free mock",
         menuAria: "Открыть аккаунт",
+        interview: {
+          prefix: "interview",
+          today: "сегодня",
+          past: "дата прошла",
+          missing: "дата не указана",
+          dayOne: "день",
+          dayFew: "дня",
+          dayMany: "дней",
+        },
       },
     },
     common: {
@@ -453,6 +461,7 @@ const ru = {
           plan: "Free mock",
           save: "Save changes",
           saved: "changes saved locally",
+          quickSetup: "Запустить быструю настройку",
         },
         install: {
           description:

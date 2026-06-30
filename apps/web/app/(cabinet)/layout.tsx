@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { getDictionary } from "../_content/i18n";
 import { CabinetNav } from "./CabinetNav";
-import { CabinetIcon } from "./_icons";
+import { CabinetProfileLink } from "./CabinetProfileLink";
 
 export default function CabinetLayout({
   children,
@@ -21,17 +21,11 @@ export default function CabinetLayout({
 
         <CabinetNav groups={copy.navGroups} ariaLabel={copy.navAria} />
 
-        <Link className="cabinet-user" href="/settings" aria-label={copy.profile.menuAria}>
-          <span className="cabinet-user__avatar" aria-hidden="true">
-            {copy.profile.monogram}
-          </span>
-          <span className="cabinet-user__body">
-            <span className="cabinet-user__name">{copy.profile.name}</span>
-            <span className="cabinet-user__meta">{copy.profile.meta}</span>
-            <span className="cabinet-user__plan">{copy.profile.plan}</span>
-          </span>
-          <CabinetIcon className="cabinet-user__chevron" name="selector" />
-        </Link>
+        <CabinetProfileLink
+          copy={copy.profile}
+          defaultInterviewDate={dictionary.cabinet.pages.settings.profile.interviewDate}
+          defaultTimezone={dictionary.cabinet.pages.settings.profile.timezone}
+        />
       </aside>
 
       <div className="cabinet-main">
