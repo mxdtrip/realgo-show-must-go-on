@@ -1,5 +1,6 @@
-const CACHE_NAME = "engram-shell-v1";
-const APP_SHELL = ["/", "/dashboard", "/cards", "/cards/session", "/manifest.webmanifest", "/icons/icon.svg"];
+const CACHE_NAME = "engram-shell-v2";
+const OFFLINE_URL = "/offline.html";
+const APP_SHELL = ["/", "/dashboard", "/cards", "/cards/session", "/manifest.webmanifest", "/icons/icon.svg", OFFLINE_URL];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -29,7 +30,15 @@ self.addEventListener("fetch", (event) => {
         caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
         return response;
       })
-      .catch(() => caches.match(event.request).then((cached) => cached || caches.match("/"))),
+      .catch(() =>
+        caches.match(event.request).then((cached) => {
+          if (cached) return cached;
+          // For page navigations with nothing cached, show the offline page
+          // instead of a blank screen. Sub-resources just fail.
+          if (event.request.mode === "navigate") return caches.match(OFFLINE_URL);
+          return Response.error();
+        }),
+      ),
   );
 });
 
