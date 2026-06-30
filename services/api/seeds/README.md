@@ -142,6 +142,12 @@ func ListRoadmapProblems(ctx context.Context, pool *pgxpool.Pool, roadmapCode st
 make seed-users
 ```
 
+Сброс демо-аккаунтов к исходному состоянию:
+
+```sh
+make reset-demo
+```
+
 Или напрямую:
 
 ```sh
@@ -162,6 +168,7 @@ DATABASE_URL='postgres://postgres:postgres@localhost:5432/freeburger?sslmode=dis
 Важно: в текущей схеме нет отдельной роли или прав администратора. `admin`
 сейчас только значение `users.plan`, чтобы тестер мог отличить аккаунт.
 
-Seed идемпотентный для аккаунтов и `user_problem_progress`: повторный запуск
-обновляет эти строки. Review schedules и attempts для seed-аккаунтов перед
-повторной загрузкой пересоздаются, чтобы не копить дубликаты.
+Seed идемпотентный: повторный запуск обновляет аккаунты, чистит
+`user_problem_progress`, `review_schedules`, `review_attempts` и
+`extension_events` только для demo-аккаунтов, затем заново кладёт исходное
+demo-состояние.

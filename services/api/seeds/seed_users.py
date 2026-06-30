@@ -76,9 +76,11 @@ def problem_ids(cur):
     return dict(cur.fetchall())
 
 
-def reset_seeded_review_data(cur, user_ids):
+def reset_seeded_demo_data(cur, user_ids):
+    cur.execute("DELETE FROM extension_events WHERE user_id = ANY(%s)", (user_ids,))
     cur.execute("DELETE FROM review_attempts WHERE user_id = ANY(%s)", (user_ids,))
     cur.execute("DELETE FROM review_schedules WHERE user_id = ANY(%s)", (user_ids,))
+    cur.execute("DELETE FROM user_problem_progress WHERE user_id = ANY(%s)", (user_ids,))
 
 
 def table_columns(cur, table):
@@ -212,7 +214,7 @@ def main():
         with conn.transaction():
             with conn.cursor() as cur:
                 users = [(upsert_user(cur, user, password_hash), user) for user in USERS]
-                reset_seeded_review_data(cur, [user_id for user_id, _ in users])
+                reset_seeded_demo_data(cur, [user_id for user_id, _ in users])
                 problems = problem_ids(cur)
                 schedule_columns = table_columns(cur, "review_schedules")
                 for user_id, user in users:
