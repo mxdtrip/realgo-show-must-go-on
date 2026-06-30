@@ -3760,14 +3760,16 @@ h3 {
   padding: 12px 18px;
 }
 
-.onboarding-actions__primary {
+.onboarding-actions button.onboarding-actions__primary {
   border-color: var(--accent-line);
   background: var(--accent);
   color: #ffffff;
 }
 
-.onboarding-actions__primary:hover {
+.onboarding-actions button.onboarding-actions__primary:hover {
+  border-color: var(--accent-bright);
   background: var(--accent-bright);
+  color: #ffffff;
 }
 
 .onboarding-page--welcome {
