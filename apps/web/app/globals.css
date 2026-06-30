@@ -1177,7 +1177,7 @@ h3 {
 }
 
 .cabinet-page-head h1 {
-  font-size: clamp(32px, 4vw, 52px);
+  font-size: clamp(26px, 3vw, 40px);
 }
 
 .cabinet-hero h1 {
