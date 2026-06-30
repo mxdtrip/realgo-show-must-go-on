@@ -133,8 +133,8 @@ func ListRoadmapProblems(ctx context.Context, pool *pgxpool.Pool, roadmapCode st
 ## Demo Users
 
 `seed_users.py` создаёт предсозданные аккаунты для ручного тестирования и
-кладёт им прогресс, due review schedules и review attempts по задачам из
-`neetcode_150`. Перед ним должен быть загружен roadmap seed.
+кладёт им прогресс, due review schedules, review attempts и extension events
+по задачам из `neetcode_150`. Перед ним должен быть загружен roadmap seed.
 
 Запуск через compose:
 
