@@ -231,29 +231,49 @@ const ru = {
       reviews: {
         eyebrow: "/reviews",
         title: "Очередь повторений",
-        description: "Моковый список того, что пользователь должен повторить сегодня: задачи, паттерны и карточки.",
+        description:
+          "То, что Engram советует повторить сегодня: задачи, паттерны и карточки — по одному короткому подходу на каждый.",
+        summaryUnit: "повторений сегодня",
+        types: [
+          ["problem review", "задачи", "accent"],
+          ["card", "карточки", "success"],
+          ["pattern review", "паттерны", "warning"],
+        ],
         panelEyebrow: "today",
         panelTitle: "Review queue",
       },
       problems: {
         eyebrow: "/problems",
         title: "Личная база задач",
-        description: "Здесь будут задачи, сохранённые расширением или вручную. Сейчас — статичный мок без backend.",
+        description:
+          "Все задачи, которые ты решил и сохранил — расширением из браузера или вручную. Отсюда Engram планирует повторения.",
         panelEyebrow: "library",
         panelTitle: "Saved problems",
-        tableHead: ["task", "platform", "pattern", "status", "next review"],
+        summaryUnit: "задач в библиотеке",
+        nextLabel: "следующее повторение",
+        statuses: [
+          ["saved", "сохранена", "default"],
+          ["reviewing", "повторяется", "accent"],
+          ["mastered", "освоена", "success"],
+        ],
       },
       roadmap: {
         eyebrow: "/roadmap",
         title: "Engram Core Roadmap",
-        description: "Первый кабинет показывает собственный roadmap Engram без копирования чужих курсов и premium-данных.",
+        description:
+          "План подготовки на 21 день: от базовых паттернов до формата интервью. На каждой неделе — свой набор тем и прогресс по ним.",
         panelEyebrow: "plan",
         panelTitle: "21-day preparation track",
+        overallLabel: "общий прогресс трека",
+        statusDone: "пройдено",
+        statusActive: "в работе",
+        statusTodo: "впереди",
       },
       patterns: {
         eyebrow: "/patterns",
         title: "Паттерны и confidence",
-        description: "Сводка слабых тем, чтобы кабинет подсказывал не просто “реши ещё”, а что именно закрепить.",
+        description:
+          "Темы, где уверенность проседает. Engram показывает не просто «реши ещё», а что именно закрепить в первую очередь.",
         panelEyebrow: "weak spots",
         panelTitle: "Pattern confidence",
       },
@@ -261,7 +281,7 @@ const ru = {
         eyebrow: "/cards",
         title: "Карточки повторения",
         description:
-          "Стартовая структура карточек Type A/B/C: без готового кода, только паттерн, механика и edge cases.",
+          "Короткие карточки на распознавание паттерна, механику алгоритма и пограничные случаи — без готового кода, только суть.",
         panelEyebrow: "anki-like",
         panelTitle: "Today cards",
         overview: {
@@ -333,12 +353,12 @@ const ru = {
         eyebrow: "/extension",
         title: "Расширение и синхронизация",
         description:
-          "Показываем только безопасный слой событий: slug, URL, title, rating и timestamp. HTML страниц не храним.",
+          "Расширение само сохраняет решённые задачи и оценки прямо из браузера. Храним только нужный минимум — без содержимого страниц.",
         statusEyebrow: "status",
         statusTitle: "Connection",
-        status: "connected mock",
+        status: "connected",
         statusDescription:
-          "Авто-синхронизация включена для LeetCode. Подключение пока визуальное, без обращения к backend.",
+          "Авто-синхронизация включена для LeetCode: решённые задачи и оценки попадают в кабинет автоматически.",
         disableSync: "Disable auto-sync",
         eventsEyebrow: "events",
         eventsTitle: "Last events",
@@ -347,7 +367,7 @@ const ru = {
         eyebrow: "/settings",
         title: "Настройки аккаунта",
         description:
-          "Моковый экран для timezone, даты интервью, PWA-установки, уведомлений, privacy controls и будущих billing-настроек.",
+          "Профиль, дата интервью, установка приложения, напоминания и приватность — всё, что настраивает твою подготовку.",
         profileEyebrow: "profile",
         profileTitle: "Preparation settings",
         installEyebrow: "pwa",
