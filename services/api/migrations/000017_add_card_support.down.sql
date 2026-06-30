@@ -1,6 +1,8 @@
 BEGIN;
 
 -- Откат в обратном порядке
+ALTER TABLE review_attempts DROP COLUMN card_id;
+
 ALTER TABLE review_attempts DROP CONSTRAINT review_attempt_review_type_check;
 
 ALTER TABLE review_schedules DROP CONSTRAINT problem_or_pattern_or_card_check;

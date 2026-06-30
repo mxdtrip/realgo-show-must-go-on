@@ -12,37 +12,53 @@ import (
 )
 
 const createReviewAttempt = `-- name: CreateReviewAttempt :one
-INSERT INTO review_attempts (user_id, problem_id, pattern_id, rating, review_type, duration_sec, was_correct)
-VALUES ($1, $2, $3, $4, $5, $6, $7)
-RETURNING id, user_id, problem_id, pattern_id, rating, review_type, duration_sec, was_correct, created_at
+INSERT INTO review_attempts (user_id, problem_id, pattern_id, card_id, rating, review_type, duration_sec, was_correct)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+RETURNING id, user_id, problem_id, pattern_id, card_id, rating, review_type, duration_sec, was_correct, created_at
 `
 
 type CreateReviewAttemptParams struct {
 	UserID      int64
 	ProblemID   pgtype.Int8
 	PatternID   pgtype.Int8
+	CardID      pgtype.Int8
 	Rating      string
 	ReviewType  string
 	DurationSec pgtype.Int4
 	WasCorrect  pgtype.Bool
 }
 
-func (q *Queries) CreateReviewAttempt(ctx context.Context, arg CreateReviewAttemptParams) (ReviewAttempt, error) {
+type CreateReviewAttemptRow struct {
+	ID          int64
+	UserID      int64
+	ProblemID   pgtype.Int8
+	PatternID   pgtype.Int8
+	CardID      pgtype.Int8
+	Rating      string
+	ReviewType  string
+	DurationSec pgtype.Int4
+	WasCorrect  pgtype.Bool
+	CreatedAt   pgtype.Timestamptz
+}
+
+func (q *Queries) CreateReviewAttempt(ctx context.Context, arg CreateReviewAttemptParams) (CreateReviewAttemptRow, error) {
 	row := q.db.QueryRow(ctx, createReviewAttempt,
 		arg.UserID,
 		arg.ProblemID,
 		arg.PatternID,
+		arg.CardID,
 		arg.Rating,
 		arg.ReviewType,
 		arg.DurationSec,
 		arg.WasCorrect,
 	)
-	var i ReviewAttempt
+	var i CreateReviewAttemptRow
 	err := row.Scan(
 		&i.ID,
 		&i.UserID,
 		&i.ProblemID,
 		&i.PatternID,
+		&i.CardID,
 		&i.Rating,
 		&i.ReviewType,
 		&i.DurationSec,

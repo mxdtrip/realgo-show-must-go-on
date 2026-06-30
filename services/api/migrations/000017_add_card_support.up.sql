@@ -17,4 +17,8 @@ ALTER TABLE review_attempts
   ADD CONSTRAINT review_attempt_review_type_check
   CHECK (review_type IN ('problem', 'pattern', 'card'));
 
+-- A4: Добавить card_id в review_attempts
+ALTER TABLE review_attempts
+  ADD COLUMN card_id BIGINT REFERENCES cards(id) ON DELETE CASCADE;
+
 COMMIT;

@@ -104,6 +104,7 @@ type ReviewAttempt struct {
 	DurationSec pgtype.Int4
 	WasCorrect  pgtype.Bool
 	CreatedAt   pgtype.Timestamptz
+	CardID      pgtype.Int8
 }
 
 type ReviewSchedule struct {
