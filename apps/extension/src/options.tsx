@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
 
+import { checkApiStatus } from "./lib/api";
 import { AuthError, getCurrentUserEmail, login, logout } from "./lib/auth";
 import { getApiBaseUrl, setApiBaseUrl } from "./lib/storage";
 import { BrandMark } from "./popup/PopupApp";
 import { POPUP_CSS } from "./popup/popup.styles";
+
+type ConnStatus = "idle" | "checking" | "online" | "offline";
 
 /**
  * Options page — account connection.
@@ -23,6 +26,7 @@ function Options() {
   const [account, setAccount] = useState<string | null | undefined>(undefined);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [conn, setConn] = useState<ConnStatus>("idle");
 
   useEffect(() => {
     getApiBaseUrl().then(setBaseUrl);
@@ -33,6 +37,13 @@ function Options() {
     await setApiBaseUrl(baseUrl);
     setBaseSaved(true);
     setTimeout(() => setBaseSaved(false), 2000);
+  }
+
+  async function handleCheckConnection() {
+    await setApiBaseUrl(baseUrl); // probe the value currently in the field
+    setConn("checking");
+    const ok = await checkApiStatus();
+    setConn(ok ? "online" : "offline");
   }
 
   async function handleLogin(e: React.FormEvent) {
@@ -82,7 +93,10 @@ function Options() {
               className="engram-input"
               value={baseUrl}
               placeholder="http://localhost:8080"
-              onChange={(e) => setBaseUrl(e.target.value)}
+              onChange={(e) => {
+                setBaseUrl(e.target.value);
+                setConn("idle");
+              }}
             />
             <button
               type="button"
@@ -91,7 +105,25 @@ function Options() {
             >
               {baseSaved ? "✓" : "OK"}
             </button>
+            <button
+              type="button"
+              className="engram-btn engram-btn--ghost"
+              disabled={conn === "checking"}
+              onClick={handleCheckConnection}
+            >
+              {conn === "checking" ? "…" : "Проверить"}
+            </button>
           </div>
+          {conn === "online" && (
+            <p className="engram-account__note" style={{ color: "var(--success-fg)" }}>
+              Бэкенд на связи
+            </p>
+          )}
+          {conn === "offline" && (
+            <p className="engram-account__note" style={{ color: "var(--danger-fg)" }}>
+              Бэкенд недоступен по этому адресу
+            </p>
+          )}
         </div>
 
         <hr className="engram-divider" />
