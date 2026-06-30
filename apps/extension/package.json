@@ -1,0 +1,39 @@
+{
+  "name": "@freeburger/extension",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Engram browser extension — fixes a coding-problem result after submit and feeds it into the spaced-repetition queue.",
+  "scripts": {
+    "dev": "plasmo dev",
+    "build": "plasmo build",
+    "package": "plasmo package",
+    "preview": "vite --config preview/vite.config.ts",
+    "preview:build": "vite --config preview/vite.config.ts build",
+    "preview:serve": "vite --config preview/vite.config.ts preview --host 0.0.0.0 --port 5174",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "plasmo": "0.90.5",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "@types/chrome": "0.0.287",
+    "@types/node": "22.10.7",
+    "@types/react": "18.3.12",
+    "@types/react-dom": "18.3.1",
+    "@vitejs/plugin-react": "4.3.4",
+    "typescript": "5.7.3",
+    "vite": "6.0.7"
+  },
+  "manifest": {
+    "name": "Engram",
+    "permissions": ["storage", "activeTab", "scripting"],
+    "host_permissions": [
+      "https://neetcode.io/*",
+      "https://*.neetcode.io/*",
+      "https://leetcode.com/*",
+      "http://localhost:8080/*"
+    ]
+  }
+}
