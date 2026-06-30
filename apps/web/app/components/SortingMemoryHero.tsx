@@ -363,9 +363,9 @@ export function SortingMemoryHero() {
   const handleAuthSubmit = useCallback(
     (event: React.FormEvent<HTMLFormElement>) => {
       event.preventDefault();
-      router.push("/dashboard");
+      router.push(authMode === "signup" ? "/onboarding/profile" : "/dashboard");
     },
-    [router],
+    [authMode, router],
   );
 
   useEffect(() => {
@@ -596,12 +596,6 @@ export function SortingMemoryHero() {
                   type="password"
                 />
               </label>
-              {authMode === "signup" ? (
-                <label>
-                  {copy.auth.interviewDate}
-                  <input type="date" />
-                </label>
-              ) : null}
               <button type="submit">
                 {authMode === "login" ? copy.auth.continue : copy.auth.createAccount}
               </button>

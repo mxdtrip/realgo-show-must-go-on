@@ -165,6 +165,44 @@ const ru = {
       tagline: "built for people who interview",
     },
   },
+  onboarding: {
+    profile: {
+      eyebrow: "// quick setup",
+      title: "Расскажем Engram, к чему тебя готовить.",
+      description:
+        "Это моковый first-run экран: можно ответить на всё, пропустить отдельные вопросы или сразу перейти в кабинет.",
+      skip: "Пропустить вопрос",
+      company: {
+        title: "Компания мечты",
+        description:
+          "Если укажешь компанию, Engram сможет позже приоритизировать темы и задачи под её интервью-паттерны.",
+        label: "В какую компанию хочешь устроиться?",
+        placeholder: "Например, Google, Amazon, Yandex…",
+        suggestionsLabel: "Подсказки компаний из GitHub-репозитория",
+      },
+      date: {
+        title: "Дата интервью",
+        description:
+          "Выбери день в ближайшие три месяца или введи свою дату, если интервью дальше по календарю.",
+        calendarLabel: "Календарь интервью на ближайшие три месяца",
+        customLabel: "Своя дата",
+        customPlaceholder: "Например, конец октября или 2026-10-28",
+        weekdays: ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"],
+      },
+      topics: {
+        title: "Темы для повторения",
+        description:
+          "Нажимай на темы по краям — выбранные карточки мягко переезжают в центр и собирают твой фокус подготовки.",
+        empty: "Выбранные темы появятся здесь",
+        selected: "Фокус подготовки",
+        fieldLabel: "Выбор алгоритмических тем для повторения",
+      },
+      finish: {
+        skipAll: "Пропустить настройку",
+        continue: "Continue to dashboard",
+      },
+    },
+  },
   cabinet: {
     layout: {
       navAria: "Personal cabinet",
