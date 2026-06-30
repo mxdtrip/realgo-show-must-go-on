@@ -90,8 +90,8 @@ export async function saveSubmission(
 
 /**
  * Maps the extension's internal payload onto the `/extension/events` contract.
- * `canSolveAgain` is intentionally dropped — the backend doesn't consume it in
- * the MVP (confirmed in services/api .../extension/models.go).
+ * The MVP collects a single difficulty rating; the backend consumes nothing
+ * else (confirmed in services/api .../extension/models.go).
  */
 function buildEventRequest(payload: SubmissionPayload): EventRequest {
   if (payload.platform === "unknown") {

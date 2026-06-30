@@ -1,7 +1,6 @@
 import { useState } from "react";
 
 import type {
-  CanSolveAgain,
   DetectedSubmission,
   SubmissionPayload,
   UserDifficulty,
@@ -36,12 +35,6 @@ const DIFFICULTY_OPTIONS: { value: UserDifficulty; label: string }[] = [
   { value: "hard", label: "Тяжело" },
 ];
 
-const AGAIN_OPTIONS: { value: CanSolveAgain; label: string }[] = [
-  { value: "no", label: "Нет" },
-  { value: "probably", label: "Скорее да" },
-  { value: "yes", label: "Да" },
-];
-
 /** Where "Сообщить об ошибке" points when the host doesn't override it. */
 const REPORT_ISSUE_URL =
   "https://github.com/mxdtrip/freeburger/issues/new?labels=extension&title=" +
@@ -53,7 +46,6 @@ type Status = "form" | "saving" | "success" | "error";
 
 export function PopupApp({ submission, onSave, onClose, onReview, onReport }: PopupAppProps) {
   const [difficulty, setDifficulty] = useState<UserDifficulty | null>(null);
-  const [again, setAgain] = useState<CanSolveAgain | null>(null);
   const [status, setStatus] = useState<Status>("form");
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -138,16 +130,15 @@ export function PopupApp({ submission, onSave, onClose, onReview, onReport }: Po
   }
 
   const saving = status === "saving";
-  const canSave = difficulty !== null && again !== null && !saving;
+  const canSave = difficulty !== null && !saving;
 
   async function handleSave() {
-    if (difficulty === null || again === null || submission == null) return;
+    if (difficulty === null || submission == null) return;
     setStatus("saving");
     setErrorMsg("");
     const payload: SubmissionPayload = {
       ...submission,
       userDifficulty: difficulty,
-      canSolveAgain: again,
     };
     try {
       await onSave(payload);
@@ -166,14 +157,6 @@ export function PopupApp({ submission, onSave, onClose, onReview, onReport }: Po
           options={DIFFICULTY_OPTIONS}
           value={difficulty}
           onChange={setDifficulty}
-          disabled={saving}
-        />
-
-        <ChoiceGroup
-          label="Сможешь решить заново без подсказок?"
-          options={AGAIN_OPTIONS}
-          value={again}
-          onChange={setAgain}
           disabled={saving}
         />
 
@@ -217,13 +200,18 @@ function Shell({
           <BrandMark />
           Engram
         </span>
+        {task && (
+          <span className="engram-chip engram-chip--accent">
+            Вы справились с заданием!
+          </span>
+        )}
       </div>
       {task && (
         <div className="engram-task">
           <p className="engram-task__title">{task.taskTitle}</p>
           <div className="engram-task__meta">
             <span className="engram-task__platform">{task.platform}</span>
-            <span className="engram-chip engram-chip--accent">Вы справились с заданием!</span>
+            <span className="engram-chip engram-chip--accent">submitted ✓</span>
           </div>
         </div>
       )}

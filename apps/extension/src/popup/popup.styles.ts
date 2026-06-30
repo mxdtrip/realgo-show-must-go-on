@@ -113,10 +113,12 @@ export const POPUP_CSS = `
   line-height: 1.35;
   letter-spacing: -0.01em;
   color: var(--text);
+  text-align: center;
 }
 .engram-task__meta {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   margin-top: 6px;
 }

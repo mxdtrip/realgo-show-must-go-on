@@ -39,7 +39,6 @@ export interface DetectedSubmission {
 /** The full payload the popup sends to the backend after the user rates the task. */
 export interface SubmissionPayload extends DetectedSubmission {
   userDifficulty: UserDifficulty;
-  canSolveAgain: CanSolveAgain;
 }
 
 /** Messages exchanged between content script, background and popup. */
