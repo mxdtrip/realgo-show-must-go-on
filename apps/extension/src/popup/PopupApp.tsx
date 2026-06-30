@@ -1,7 +1,6 @@
 import { useState } from "react";
 
 import type {
-  CanSolveAgain,
   DetectedSubmission,
   SubmissionPayload,
   UserDifficulty,
@@ -31,12 +30,6 @@ const DIFFICULTY_OPTIONS: { value: UserDifficulty; label: string }[] = [
   { value: "hard", label: "Тяжело" },
 ];
 
-const AGAIN_OPTIONS: { value: CanSolveAgain; label: string }[] = [
-  { value: "no", label: "Нет" },
-  { value: "probably", label: "Скорее да" },
-  { value: "yes", label: "Да" },
-];
-
 /** Where "Сообщить об ошибке" points when the host doesn't override it. */
 const REPORT_ISSUE_URL =
   "https://github.com/mxdtrip/freeburger/issues/new?labels=extension&title=" +
@@ -48,7 +41,6 @@ type Status = "form" | "saving" | "success" | "error";
 
 export function PopupApp({ submission, onSave, onClose, onReport }: PopupAppProps) {
   const [difficulty, setDifficulty] = useState<UserDifficulty | null>(null);
-  const [again, setAgain] = useState<CanSolveAgain | null>(null);
   const [status, setStatus] = useState<Status>("form");
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -62,7 +54,7 @@ export function PopupApp({ submission, onSave, onClose, onReport }: PopupAppProp
 
   if (submission === undefined) {
     return (
-      <Shell>
+      <Shell onClose={onClose}>
         <div className="engram-state">
           <div className="engram-spinner" aria-label="Загрузка" />
           <span className="engram-muted">Определяем задачу…</span>
@@ -73,7 +65,7 @@ export function PopupApp({ submission, onSave, onClose, onReport }: PopupAppProp
 
   if (submission === null) {
     return (
-      <Shell>
+      <Shell onClose={onClose}>
         <div className="engram-state">
           <div className="engram-state__icon engram-state__icon--muted" aria-hidden="true">
             <IconExternal />
@@ -92,7 +84,7 @@ export function PopupApp({ submission, onSave, onClose, onReport }: PopupAppProp
 
   if (status === "success") {
     return (
-      <Shell>
+      <Shell onClose={onClose}>
         <div className="engram-state">
           <div className="engram-state__icon engram-state__icon--success" aria-hidden="true">
             <IconCheck />
@@ -116,16 +108,15 @@ export function PopupApp({ submission, onSave, onClose, onReport }: PopupAppProp
   }
 
   const saving = status === "saving";
-  const canSave = difficulty !== null && again !== null && !saving;
+  const canSave = difficulty !== null && !saving;
 
   async function handleSave() {
-    if (difficulty === null || again === null || submission == null) return;
+    if (difficulty === null || submission == null) return;
     setStatus("saving");
     setErrorMsg("");
     const payload: SubmissionPayload = {
       ...submission,
       userDifficulty: difficulty,
-      canSolveAgain: again,
     };
     try {
       await onSave(payload);
@@ -137,44 +128,51 @@ export function PopupApp({ submission, onSave, onClose, onReport }: PopupAppProp
   }
 
   return (
-    <Shell task={submission}>
+    <Shell task={submission} onClose={onClose}>
       <div className="engram-body">
         <ChoiceGroup
-          label="Как далась задача?"
+          title="Оцени сложность"
+          subtitle="Насколько тяжело далось решение?"
           options={DIFFICULTY_OPTIONS}
           value={difficulty}
           onChange={setDifficulty}
           disabled={saving}
         />
 
-        <ChoiceGroup
-          label="Сможешь решить заново без подсказок?"
-          options={AGAIN_OPTIONS}
-          value={again}
-          onChange={setAgain}
-          disabled={saving}
-        />
+        <div className="engram-foot">
+          {status === "error" ? (
+            <div className="engram-error" role="alert">
+              <span className="engram-error__icon" aria-hidden="true">
+                <IconAlert />
+              </span>
+              <span className="engram-error__text">{errorMsg}</span>
+              <button className="engram-error__retry" onClick={handleSave}>
+                Повторить
+              </button>
+            </div>
+          ) : (
+            <p className="engram-hint">
+              <span className="engram-hint__icon" aria-hidden="true">
+                <IconInfo />
+              </span>
+              Следующее повторение будет рассчитано после сохранения
+            </p>
+          )}
 
-        {status === "error" ? (
-          <div className="engram-error" role="alert">
-            <span className="engram-error__icon" aria-hidden="true">
-              <IconAlert />
-            </span>
-            <span className="engram-error__text">{errorMsg}</span>
-            <button className="engram-error__retry" onClick={handleSave}>
-              Повторить
-            </button>
-          </div>
-        ) : (
           <button
-            className="engram-btn engram-btn--primary engram-btn--block"
+            className="engram-btn engram-btn--primary engram-btn--block engram-btn--lg"
             disabled={!canSave}
             onClick={handleSave}
           >
-            {saving ? <span className="engram-spinner" style={{ width: 14, height: 14, borderWidth: 2 }} /> : null}
+            {saving ? (
+              <span
+                className="engram-spinner"
+                style={{ width: 15, height: 15, borderWidth: 2 }}
+              />
+            ) : null}
             {saving ? "Сохраняю…" : "Сохранить"}
           </button>
-        )}
+        </div>
       </div>
     </Shell>
   );
@@ -183,25 +181,49 @@ export function PopupApp({ submission, onSave, onClose, onReport }: PopupAppProp
 function Shell({
   children,
   task,
+  onClose,
 }: {
   children: React.ReactNode;
   task?: DetectedSubmission;
+  onClose?: () => void;
 }) {
   return (
     <div className="engram-popup">
       <style>{POPUP_CSS}</style>
       <div className="engram-header">
-        <span className="engram-brand">
-          <BrandMark />
+        <span className="engram-brand engram-brand--md">
+          <BrandMark size={20} />
           Engram
         </span>
+        <div className="engram-header__right">
+          {task && (
+            <span className="engram-status">
+              Отправлено
+              <IconCheckSm />
+            </span>
+          )}
+          {onClose && (
+            <button
+              type="button"
+              className="engram-iconbtn"
+              onClick={onClose}
+              aria-label="Закрыть"
+            >
+              <IconClose />
+            </button>
+          )}
+        </div>
       </div>
       {task && (
         <div className="engram-task">
           <p className="engram-task__title">{task.taskTitle}</p>
           <div className="engram-task__meta">
-            <span className="engram-task__platform">{task.platform}</span>
-            <span className="engram-chip engram-chip--accent">submitted ✓</span>
+            <span className="engram-tag">{task.platform}</span>
+            {task.tags?.map((tag) => (
+              <span className="engram-tag" key={tag}>
+                {tag}
+              </span>
+            ))}
           </div>
         </div>
       )}
@@ -211,7 +233,8 @@ function Shell({
 }
 
 interface ChoiceGroupProps<T extends string> {
-  label: string;
+  title: string;
+  subtitle: string;
   options: { value: T; label: string }[];
   value: T | null;
   onChange: (value: T) => void;
@@ -219,28 +242,40 @@ interface ChoiceGroupProps<T extends string> {
 }
 
 function ChoiceGroup<T extends string>({
-  label,
+  title,
+  subtitle,
   options,
   value,
   onChange,
   disabled,
 }: ChoiceGroupProps<T>) {
   return (
-    <div className="engram-question">
-      <p className="engram-question__label">{label}</p>
-      <div className="engram-choices" role="group" aria-label={label}>
-        {options.map((opt) => (
-          <button
-            key={opt.value}
-            type="button"
-            className="engram-choice"
-            aria-pressed={value === opt.value}
-            disabled={disabled}
-            onClick={() => onChange(opt.value)}
-          >
-            {opt.label}
-          </button>
-        ))}
+    <div className="engram-section">
+      <div className="engram-section__head">
+        <h3 className="engram-section__title">{title}</h3>
+        <p className="engram-section__sub">{subtitle}</p>
+      </div>
+      <div className="engram-choices" role="group" aria-label={title}>
+        {options.map((opt) => {
+          const active = value === opt.value;
+          return (
+            <button
+              key={opt.value}
+              type="button"
+              className="engram-choice"
+              aria-pressed={active}
+              disabled={disabled}
+              onClick={() => onChange(opt.value)}
+            >
+              <span className="engram-choice__label">{opt.label}</span>
+              {active && (
+                <span className="engram-choice__check" aria-hidden="true">
+                  <IconCheckSm />
+                </span>
+              )}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -274,6 +309,16 @@ function IconCheck() {
   );
 }
 
+/** Small check used inside the "submitted" chip and the selected-choice badge. */
+function IconCheckSm() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M20 6 9 17l-5-5" />
+    </svg>
+  );
+}
+
 function IconExternal() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -292,6 +337,27 @@ function IconAlert() {
       <circle cx="12" cy="12" r="10" />
       <path d="M12 8v4" />
       <path d="M12 16h.01" />
+    </svg>
+  );
+}
+
+function IconInfo() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 16v-4" />
+      <path d="M12 8h.01" />
+    </svg>
+  );
+}
+
+function IconClose() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M18 6 6 18" />
+      <path d="m6 6 12 12" />
     </svg>
   );
 }

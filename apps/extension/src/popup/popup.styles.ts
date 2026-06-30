@@ -51,9 +51,11 @@ export const POPUP_CSS = `
 .engram-popup {
   width: 360px;
   /* Fixed height so the window never resizes between states (loading /
-     no-task / form / success / error). The form is the tallest state; this
-     value covers it (incl. the error banner). Centered states fill via flex. */
-  height: 360px;
+     no-task / form / success / error). Sized to the tallest state — the form
+     with the two-line error banner (~388px). Shorter states keep the CTA
+     pinned to the bottom (.engram-foot margin-top:auto); centered states fill
+     via flex. */
+  height: 392px;
   display: flex;
   flex-direction: column;
   margin: 0;
@@ -98,54 +100,67 @@ export const POPUP_CSS = `
   font-weight: 500;
   color: var(--accent-bright);
 }
+.engram-header__right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+/* Borderless "submitted" status that lives on the top bar next to the brand. */
+.engram-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--accent-bright);
+}
+.engram-iconbtn {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 8px;
+  background: var(--panel-strong);
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.engram-iconbtn:hover { background: var(--border); color: var(--text); }
+.engram-iconbtn:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--accent-glow); }
 
 /* ── Detected task block ──────────────────────────────────────────────── */
 .engram-task {
-  padding: 12px 16px;
+  padding: 14px 16px;
   border-bottom: 1px solid var(--border);
   background: rgba(13, 17, 23, 0.4);
 }
 .engram-task__title {
   margin: 0;
   font-family: var(--font-display);
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 1.35;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.3;
   letter-spacing: -0.01em;
   color: var(--text);
 }
 .engram-task__meta {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-top: 6px;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
 }
-.engram-task__platform {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  color: var(--text-faint);
-}
-
-.engram-chip {
+.engram-tag {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 2px 6px;
-  border-radius: 5px;
-  border: 1px solid var(--border);
-  font-family: var(--font-mono);
-  font-size: 10px;
+  padding: 3px 9px;
+  border-radius: 6px;
+  background: var(--panel-strong);
+  font-size: 11px;
+  font-weight: 500;
   color: var(--text-dim);
-}
-.engram-chip--accent {
-  color: var(--accent-bright);
-  border-color: var(--accent);
-  background: var(--accent-soft);
-}
-.engram-chip--success {
-  color: var(--success-fg);
-  border-color: var(--success);
-  background: var(--success-soft);
 }
 
 /* ── Body / question groups ───────────────────────────────────────────── */
@@ -155,50 +170,96 @@ export const POPUP_CSS = `
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 16px;
+  gap: 18px;
+  padding: 18px 16px 16px;
 }
-/* Anchor the form's primary action to the bottom so the fixed-height window
-   reads as intentional instead of leaving a gap under the questions. */
-.engram-body > .engram-btn--block,
-.engram-body > .engram-error { margin-top: auto; }
-.engram-question__label {
-  margin: 0 0 8px;
-  font-size: 11px;
-  font-weight: 500;
+/* The footer (hint/error + CTA) is pinned to the bottom so the fixed-height
+   window reads as intentional rather than leaving a gap under the questions. */
+.engram-foot {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ── Section (titled question group) ──────────────────────────────────── */
+.engram-section__head { margin-bottom: 10px; }
+.engram-section__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+.engram-section__sub {
+  margin: 3px 0 0;
+  font-size: 12px;
   color: var(--text-dim);
 }
+
+/* ── Hint line ────────────────────────────────────────────────────────── */
+.engram-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--text-faint);
+}
+.engram-hint__icon { display: inline-flex; flex-shrink: 0; color: var(--text-faint); }
+
 .engram-choices {
   display: flex;
-  gap: 6px;
+  gap: 8px;
 }
 .engram-choice {
   flex: 1;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   appearance: none;
-  border: none;
+  border: 1.5px solid transparent;
   background: var(--panel-strong);
-  color: var(--text-dim);
-  border-radius: 7px;
-  padding: 8px;
-  font-family: var(--font-sans);
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
-}
-.engram-choice:hover:not(:disabled):not([aria-pressed="true"]) {
   color: var(--text);
-  background: rgba(56, 139, 253, 0.12);
+  border-radius: 10px;
+  padding: 13px 10px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+.engram-choice__label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.engram-choice:hover:not(:disabled):not([aria-pressed="true"]) {
+  background: #232a33;
+  border-color: var(--border-strong);
 }
 .engram-choice:focus-visible {
   outline: none;
   box-shadow: 0 0 0 2px var(--accent-glow);
 }
 .engram-choice[aria-pressed="true"] {
+  background: rgba(47, 129, 247, 0.16);
+  border-color: var(--accent);
+  color: var(--text);
+  box-shadow: 0 0 0 1px var(--accent), 0 0 12px -2px var(--accent-glow);
+}
+/* Blue circular check badge on the selected option. */
+.engram-choice__check {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  border-radius: 50%;
   background: var(--accent);
   color: #fff;
 }
-.engram-choice:disabled { color: var(--text-faint); cursor: not-allowed; }
+.engram-choice:disabled { cursor: not-allowed; opacity: 0.6; }
 
 /* ── Buttons ──────────────────────────────────────────────────────────── */
 .engram-btn {
@@ -216,6 +277,7 @@ export const POPUP_CSS = `
   transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
 }
 .engram-btn--block { width: 100%; }
+.engram-btn--lg { padding: 13px 16px; font-size: 14px; border-radius: 10px; }
 .engram-btn:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--accent-glow); }
 
 .engram-btn--primary {
@@ -224,12 +286,15 @@ export const POPUP_CSS = `
 }
 .engram-btn--primary:hover:not(:disabled) {
   background: var(--accent-strong);
-  box-shadow: 0 0 8px var(--accent-glow);
+  box-shadow: 0 0 10px var(--accent-glow);
 }
 .engram-btn--primary:active:not(:disabled) { background: var(--accent-active); }
+/* Stay visibly "primary" when disabled (just dimmed) instead of going gray —
+   the CTA should never read as a dead control. */
 .engram-btn--primary:disabled {
-  background: var(--panel-strong);
-  color: var(--text-faint);
+  background: var(--accent);
+  color: #fff;
+  opacity: 0.45;
   cursor: not-allowed;
 }
 
@@ -412,19 +477,6 @@ export const POPUP_CSS = `
   overflow: hidden;
 }
 .engram-overlay .engram-popup { border-radius: 12px; }
-.engram-overlay-close {
-  position: absolute;
-  top: 13px;
-  right: 14px;
-  background: none;
-  border: 0;
-  color: var(--text-dim);
-  font-size: 16px;
-  line-height: 1;
-  cursor: pointer;
-  z-index: 1;
-}
-.engram-overlay-close:hover { color: var(--text); }
 
 @media (prefers-reduced-motion: reduce) {
   .engram-spinner { animation: none; }

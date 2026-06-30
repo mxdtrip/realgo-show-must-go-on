@@ -98,6 +98,7 @@ function finalize(adapter: PlatformAdapter, submitResult: SubmitResult) {
     taskTitle: info.taskTitle,
     taskUrl: info.taskUrl,
     platformTaskSlug: info.platformTaskSlug,
+    tags: info.tags,
     submitResult,
     submittedAt: new Date().toISOString(),
   };
@@ -137,13 +138,8 @@ function showOverlay(submission: DetectedSubmission) {
   const mount = document.createElement("div");
   mount.className = "engram-overlay";
 
-  const closeBtn = document.createElement("button");
-  closeBtn.className = "engram-overlay-close";
-  closeBtn.textContent = "×";
-  closeBtn.setAttribute("aria-label", "Закрыть");
-  closeBtn.addEventListener("click", removeOverlay);
-
-  mount.appendChild(closeBtn);
+  // The close affordance lives in the popup header (PopupApp renders an X when
+  // given onClose), so the overlay doesn't add its own button.
   shadow.appendChild(mount);
   document.body.appendChild(overlayHost);
 

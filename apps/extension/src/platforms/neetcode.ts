@@ -42,6 +42,7 @@ export const neetcodeAdapter: PlatformAdapter = {
       taskTitle: title,
       taskUrl: location.href,
       platformTaskSlug: slug,
+      tags: extractTags(),
     };
   },
 
@@ -77,4 +78,23 @@ function slugToTitle(slug: string): string {
 
 function cleanDocTitle(): string {
   return document.title.replace(/\s*[-|]\s*NeetCode.*$/i, "").trim();
+}
+
+/**
+ * Best-effort topic tags (e.g. "arrays", "two pointers"). NeetCode exposes no
+ * stable hooks, so we scan likely "topic/tag/category" containers and keep a few
+ * short, sane labels. Returns [] when nothing trustworthy is found — the popup
+ * simply renders no tags rather than guessing wrong.
+ */
+function extractTags(): string[] {
+  const nodes = document.querySelectorAll<HTMLElement>(
+    "[class*='topic'] a, [class*='topic'] span, [class*='tag'] a, [class*='category'] a"
+  );
+  const seen = new Set<string>();
+  for (const el of nodes) {
+    const t = (el.textContent ?? "").trim().toLowerCase();
+    if (t && t.length <= 24 && !t.includes("\n")) seen.add(t);
+    if (seen.size >= 4) break;
+  }
+  return [...seen];
 }

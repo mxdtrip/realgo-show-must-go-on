@@ -7,5 +7,6 @@ export const MOCK_SUBMISSION: DetectedSubmission = {
   taskUrl: "https://neetcode.io/problems/two-integer-sum-ii",
   platformTaskSlug: "two-integer-sum-ii",
   submitResult: "accepted",
+  tags: ["arrays", "two pointers"],
   submittedAt: new Date().toISOString(),
 };

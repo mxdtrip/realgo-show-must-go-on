@@ -2,7 +2,7 @@
  * Shared types for the Engram extension.
  *
  * TODO: promote the cross-cutting payload/DTO types (SubmissionPayload,
- * UserDifficulty, CanSolveAgain) into `packages/shared` once that package is
+ * UserDifficulty) into `packages/shared` once that package is
  * wired up, so the Go API client and the web app can share the same contract.
  */
 
@@ -17,8 +17,6 @@ export type SubmitResult =
 
 export type UserDifficulty = "hard" | "normal" | "easy";
 
-export type CanSolveAgain = "no" | "probably" | "yes";
-
 /** What the content script detects on the page and hands to the popup. */
 export interface DetectedSubmission {
   platform: Platform;
@@ -26,6 +24,8 @@ export interface DetectedSubmission {
   taskUrl: string;
   platformTaskSlug?: string;
   submitResult?: SubmitResult;
+  /** Topic tags for the task (e.g. ["arrays", "two pointers"]), best-effort. */
+  tags?: string[];
   /** ISO-8601 timestamp of when the submit was observed. */
   submittedAt: string;
 }
@@ -33,7 +33,6 @@ export interface DetectedSubmission {
 /** The full payload the popup sends to the backend after the user rates the task. */
 export interface SubmissionPayload extends DetectedSubmission {
   userDifficulty: UserDifficulty;
-  canSolveAgain: CanSolveAgain;
 }
 
 /** Messages exchanged between content script, background and popup. */
