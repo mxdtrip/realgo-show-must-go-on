@@ -128,6 +128,7 @@ const ru = {
         title: "Начни бесплатно. Подключи Pro, когда нужна подготовка под конкретное интервью.",
         description:
           "Бесплатный план помогает собрать личную базу решённых задач. Pro добавляет маршрут под цель, больше повторений, тесты и экспорт в Anki.",
+        cta: "Оформить",
       },
     },
     footer: {
@@ -163,6 +164,7 @@ const ru = {
       ],
       copyright: "© 2026 Engram. All rights reserved.",
       tagline: "built for people who interview",
+      poweredBy: "powered by",
     },
   },
   onboarding: {

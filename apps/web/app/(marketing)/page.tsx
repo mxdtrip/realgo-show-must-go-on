@@ -97,6 +97,12 @@ export default function Home() {
                     <li key={feature}>{feature}</li>
                   ))}
                 </ul>
+                <a
+                  className="price-cta"
+                  href={`/checkout?plan=${name.toLowerCase()}`}
+                >
+                  {copy.sections.pricing.cta}
+                </a>
               </article>
             ))}
           </div>
@@ -124,6 +130,14 @@ export default function Home() {
         </div>
         <div className="site-footer__bar">
           <span>{copy.footer.copyright}</span>
+          <span className="footer-powered">
+            {copy.footer.poweredBy}
+            <img
+              src="/author-tag.png"
+              alt=""
+              className="footer-powered__logo"
+            />
+          </span>
           <span>{copy.footer.tagline}</span>
         </div>
       </footer>

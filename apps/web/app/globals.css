@@ -174,7 +174,9 @@ h3 {
 .site-nav {
   display: flex;
   gap: 28px;
-  margin-left: auto;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
 .site-nav a {
@@ -848,6 +850,122 @@ h3 {
   background: linear-gradient(180deg, var(--accent-soft), transparent 60%), var(--panel);
 }
 
+/* Pricing: give the two plans the full section width so they breathe. */
+#pricing .section-grid {
+  grid-template-columns: 1fr;
+  gap: clamp(28px, 4vw, 48px);
+}
+
+#pricing .pricing-grid {
+  width: 100%;
+  max-width: 920px;
+  margin: 0 auto;
+  gap: clamp(20px, 2.4vw, 32px);
+  align-items: stretch;
+}
+
+.price-card {
+  display: flex;
+  flex-direction: column;
+  padding: clamp(28px, 2.6vw, 40px);
+}
+
+.price-card .price-features {
+  margin-bottom: 24px;
+}
+
+/* Checkout CTA pinned to the bottom of each card. */
+.price-cta {
+  margin-top: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 13px 18px;
+  border-radius: 10px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 13.5px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  border: 1px solid transparent;
+  transition:
+    background 0.18s ease,
+    transform 0.18s ease;
+}
+
+.price-cta:hover {
+  background: var(--accent-bright);
+  transform: translateY(-1px);
+}
+
+.price-card:first-child .price-cta {
+  background: transparent;
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+
+.price-card:first-child .price-cta:hover {
+  background: var(--panel-strong);
+  border-color: var(--accent-line);
+}
+
+/* Checkout screen ----------------------------------------------------- */
+.checkout-screen {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.checkout-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(36px, 6vw, 84px);
+  align-items: center;
+  max-width: 920px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.checkout-back {
+  display: inline-block;
+  margin-top: 20px;
+  font-size: 13.5px;
+  color: var(--text-dim);
+  transition: color 0.18s ease;
+}
+
+.checkout-back:hover {
+  color: var(--text);
+}
+
+.checkout-period {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-dim);
+  letter-spacing: 0;
+}
+
+.checkout-pay:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.checkout-note {
+  margin: 12px 0 0;
+  font-size: 12.5px;
+  color: var(--text-faint);
+  text-align: center;
+}
+
+@media (max-width: 920px) {
+  .checkout-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ============================================================
    FOOTER (terminal tree)
    ============================================================ */
@@ -922,6 +1040,25 @@ h3 {
   justify-content: space-between;
   gap: 16px;
   flex-wrap: wrap;
+}
+
+/* Author tag: subtle "powered by <logo>" attribution, centred in the bar. */
+.footer-powered {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  opacity: 0.55;
+  transition: opacity 0.2s ease;
+}
+
+.footer-powered:hover {
+  opacity: 1;
+}
+
+.footer-powered__logo {
+  height: 48px;
+  width: auto;
+  display: block;
 }
 
 /* ============================================================

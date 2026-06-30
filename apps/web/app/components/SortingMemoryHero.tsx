@@ -425,20 +425,32 @@ export function SortingMemoryHero() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [metricsVersion, isSorting, size.width, size.height]);
 
-  // Intro auto-gather: hold the scattered word for a beat, then sort it in.
+  // Intro auto-gather: as soon as the REAL scene size is measured, gather the
+  // scattered word immediately (no hold). Gating on `measured` is essential —
+  // firing before the ResizeObserver reports the size lays the letters out with
+  // the default 1200×760 centre, which sits up-left of the true centre, so the
+  // word would scatter/gather off to the corner (notably on soft navigation
+  // back to "/" via the brand link, where the component remounts size-less).
+  //
+  // Double rAF, not setTimeout(0): we must let the scattered chaos poses PAINT
+  // for one frame before starting the gather, otherwise the transform
+  // transition has no wide "from" position and the letters just appear in a
+  // tight shuffled row instead of flying in from the edges.
   useEffect(() => {
-    introTimerRef.current = window.setTimeout(() => {
-      introRef.current = false;
-      introTimerRef.current = null;
-      sortRef.current();
-    }, 1600);
+    if (!measured || !introRef.current) return;
+    let raf1 = 0;
+    let raf2 = 0;
+    raf1 = window.requestAnimationFrame(() => {
+      raf2 = window.requestAnimationFrame(() => {
+        introRef.current = false;
+        sortRef.current();
+      });
+    });
     return () => {
-      if (introTimerRef.current !== null) {
-        window.clearTimeout(introTimerRef.current);
-        introTimerRef.current = null;
-      }
+      window.cancelAnimationFrame(raf1);
+      window.cancelAnimationFrame(raf2);
     };
-  }, []);
+  }, [measured]);
 
   return (
     <main className="minimal-scene" ref={sceneRef} onClick={handleSceneClick}>
