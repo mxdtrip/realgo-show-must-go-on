@@ -101,6 +101,14 @@ func (s *reviewService) RateReview(ctx context.Context, reviewID, userID int64, 
 		return response.RateReviewData{}, fmt.Errorf("reviews: RateReview: %w", err)
 	}
 
+	// Обновляем confidence в user_problem_progress (только для problems)
+	if schedule.ProblemID != nil {
+		if err := s.repo.UpdateProgressConfidence(ctx, userID, *schedule.ProblemID, rating); err != nil {
+			s.logger.Warn("failed to update confidence", "user_id", userID, "problem_id", *schedule.ProblemID, "error", err)
+			// Не прерываем процесс, это не критичная ошибка
+		}
+	}
+
 	return response.RateReviewData{
 		ReviewID:     next.ID,
 		Rating:       rating,

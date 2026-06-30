@@ -125,20 +125,58 @@ func (r *pgReviewRepository) Stats(ctx context.Context, userID int64) (entity.St
 	}, nil
 }
 
+// UpdateProgressConfidence обновляет confidence по задаче.
+func (r *pgReviewRepository) UpdateProgressConfidence(ctx context.Context, userID, problemID int64, rating string) error {
+	delta := confidenceDelta(rating)
+	if delta == 0 {
+		return nil
+	}
+	err := r.q.UpdateProgressConfidence(ctx, db.UpdateProgressConfidenceParams{
+		UserID:    userID,
+		ProblemID: problemID,
+		Column3:   int32(delta),
+	})
+	return err
+}
+
+// confidenceDelta возвращает изменение confidence на основе рейтинга.
+func confidenceDelta(rating string) int {
+	switch rating {
+	case "easy":
+		return 10
+	case "hard":
+		return -10
+	default:
+		return 0
+	}
+}
+
 // Helper functions
 
 func entityType(row db.GetTodayReviewsRow) string {
 	if row.ProblemID.Valid {
 		return "problem"
 	}
-	return "pattern"
+	if row.PatternID.Valid {
+		return "pattern"
+	}
+	if row.CardID.Valid {
+		return "card"
+	}
+	return ""
 }
 
 func entityID(row db.GetTodayReviewsRow) int64 {
 	if row.ProblemID.Valid {
 		return row.ProblemID.Int64
 	}
-	return row.PatternID.Int64
+	if row.PatternID.Valid {
+		return row.PatternID.Int64
+	}
+	if row.CardID.Valid {
+		return row.CardID.Int64
+	}
+	return 0
 }
 
 func buildMeta(row db.GetTodayReviewsRow) string {
@@ -155,7 +193,13 @@ func typeLabel(row db.GetTodayReviewsRow) string {
 	if row.ProblemID.Valid {
 		return "problem review"
 	}
-	return "pattern review"
+	if row.PatternID.Valid {
+		return "pattern review"
+	}
+	if row.CardID.Valid {
+		return "card review"
+	}
+	return ""
 }
 
 func statusFromState(state int8) string {
@@ -180,10 +224,12 @@ func difficultyFromState(state int8) string {
 
 func reviewType(attempt entity.ReviewAttempt) (string, error) {
 	switch {
-	case attempt.ProblemID != nil && attempt.PatternID == nil:
+	case attempt.ProblemID != nil && attempt.PatternID == nil && attempt.CardID == nil:
 		return "problem", nil
-	case attempt.ProblemID == nil && attempt.PatternID != nil:
+	case attempt.ProblemID == nil && attempt.PatternID != nil && attempt.CardID == nil:
 		return "pattern", nil
+	case attempt.ProblemID == nil && attempt.PatternID == nil && attempt.CardID != nil:
+		return "card", nil
 	default:
 		return "", ErrInvalidTarget
 	}
@@ -195,6 +241,7 @@ func scheduleFromRow(row db.GetReviewScheduleByIDRow) entity.ReviewSchedule {
 		UserID:         row.UserID,
 		ProblemID:      int64PtrFromPg(row.ProblemID),
 		PatternID:      int64PtrFromPg(row.PatternID),
+		CardID:         int64PtrFromPg(row.CardID),
 		NextReviewAt:   row.NextReviewAt.Time,
 		IntervalDays:   row.IntervalDays,
 		Stability:      row.Stability,
@@ -214,6 +261,7 @@ func scheduleFromUpdate(row db.UpdateReviewScheduleRow) entity.ReviewSchedule {
 		UserID:         row.UserID,
 		ProblemID:      int64PtrFromPg(row.ProblemID),
 		PatternID:      int64PtrFromPg(row.PatternID),
+		CardID:         int64PtrFromPg(row.CardID),
 		NextReviewAt:   row.NextReviewAt.Time,
 		IntervalDays:   row.IntervalDays,
 		Stability:      row.Stability,

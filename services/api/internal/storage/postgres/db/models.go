@@ -133,6 +133,7 @@ type ReviewSchedule struct {
 	LastReviewAt pgtype.Timestamptz
 	// Remaining learning/relearning steps (FSRS Card.RemainingSteps).
 	RemainingSteps int32
+	CardID         pgtype.Int8
 }
 
 type RoadmapItem struct {
