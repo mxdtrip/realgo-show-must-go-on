@@ -276,6 +276,10 @@ const ru = {
           "Темы, где уверенность проседает. Engram показывает не просто «реши ещё», а что именно закрепить в первую очередь.",
         panelEyebrow: "weak spots",
         panelTitle: "Pattern confidence",
+        summaryUnit: "паттерна требуют внимания",
+        confidenceLabel: "уверенность",
+        priorityHigh: "высокий приоритет",
+        priorityMed: "стоит повторить",
       },
       cards: {
         eyebrow: "/cards",
@@ -289,9 +293,17 @@ const ru = {
           readyTitle: "Короткая сессия без лишнего шума.",
           readyDescription:
             "Сначала попробуй воспроизвести ответ самостоятельно. Затем открой правильный ответ и честно оцени сложность.",
-          start: "Start review session",
-          cardsCount: "6 cards",
-          estimatedTime: "~5 min",
+          start: "Начать сессию",
+          cardsCount: "6 карточек",
+          estimatedTime: "~5 минут",
+          mixEyebrow: "today's mix",
+          mixTitle: "Что повторяем сегодня",
+          cardUnit: "карт.",
+          types: [
+            ["Pattern Recognition", "Распознавание паттерна"],
+            ["Algorithm Mechanics", "Механика алгоритма"],
+            ["Edge Case", "Пограничные случаи"],
+          ],
           methodEyebrow: "method",
           methodTitle: "Как проходит повторение",
           methodSteps: [
@@ -359,9 +371,16 @@ const ru = {
         status: "connected",
         statusDescription:
           "Авто-синхронизация включена для LeetCode: решённые задачи и оценки попадают в кабинет автоматически.",
-        disableSync: "Disable auto-sync",
+        disableSync: "Отключить авто-синхронизацию",
+        liveLabel: "на связи",
+        platform: "LeetCode",
         eventsEyebrow: "events",
-        eventsTitle: "Last events",
+        eventsTitle: "Последние события",
+        eventTypes: [
+          ["problem_solved", "решено", "success"],
+          ["rating_changed", "оценка обновлена", "accent"],
+          ["problem_viewed", "просмотрено", "default"],
+        ],
       },
       settings: {
         eyebrow: "/settings",

@@ -61,12 +61,17 @@ export function MetricCard({
 export function ProgressBar({
   value,
   label,
+  tone = "default",
 }: Readonly<{
   value: number;
   label?: string;
+  tone?: "default" | "warning" | "danger";
 }>) {
   return (
-    <div className="progress-line" aria-label={label}>
+    <div
+      className={tone === "default" ? "progress-line" : `progress-line progress-line--${tone}`}
+      aria-label={label}
+    >
       <span style={{ width: `${value}%` }} />
     </div>
   );
