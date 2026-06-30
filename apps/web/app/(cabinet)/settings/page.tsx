@@ -1,7 +1,8 @@
-import { CabinetPanel, StatusPill } from "../_components";
+import { CabinetPanel } from "../_components";
 import { getDictionary } from "../../_content/i18n";
 import { InstallAppPanel } from "./_components/InstallAppPanel";
 import { NotificationSettingsPanel } from "./_components/NotificationSettingsPanel";
+import { ProfileSettingsPanel } from "./_components/ProfileSettingsPanel";
 
 export default function SettingsPage() {
   const page = getDictionary().cabinet.pages.settings;
@@ -16,18 +17,7 @@ export default function SettingsPage() {
 
       <div className="cabinet-grid">
         <CabinetPanel eyebrow={page.profileEyebrow} title={page.profileTitle}>
-          <div className="settings-list">
-            {page.settings.map(([label, value]) => (
-              <div key={label}>
-                <span>{label}</span>
-                <strong>{value}</strong>
-              </div>
-            ))}
-            <div>
-              <span>{page.planLabel}</span>
-              <StatusPill tone="accent">{page.plan}</StatusPill>
-            </div>
-          </div>
+          <ProfileSettingsPanel copy={page.profile} />
         </CabinetPanel>
 
         <CabinetPanel eyebrow={page.installEyebrow} title={page.installTitle}>

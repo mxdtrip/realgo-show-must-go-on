@@ -1529,6 +1529,7 @@ h3 {
 .review-board,
 .event-list,
 .settings-list,
+.profile-settings-list,
 .privacy-box,
 .extension-status {
   display: grid;
@@ -1537,14 +1538,16 @@ h3 {
 .review-list__item,
 .review-board__item,
 .event-list article,
-.settings-list > div {
+.settings-list > div,
+.settings-list > label {
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .review-list__item:last-child,
 .review-board__item:last-child,
 .event-list article:last-child,
-.settings-list > div:last-child {
+.settings-list > div:last-child,
+.settings-list > label:last-child {
   border-bottom: 0;
 }
 
@@ -2114,6 +2117,7 @@ h3 {
 
 .event-list article,
 .settings-list > div,
+.settings-list > label,
 .extension-status,
 .privacy-box {
   padding: 18px 20px;
@@ -2159,7 +2163,8 @@ h3 {
   color: var(--text-faint);
 }
 
-.settings-list > div {
+.settings-list > div,
+.settings-list > label {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -2208,14 +2213,16 @@ h3 {
 .install-app-panel__status span,
 .notification-status-row span,
 .settings-toggle span,
-.settings-time span {
+.settings-time span,
+.settings-profile-field span {
   font-family: var(--font-stack-mono);
   font-size: 12px;
   color: var(--text-dim);
 }
 
 .install-app-panel button,
-.notification-settings-panel button {
+.notification-settings-panel button,
+.profile-settings-actions button {
   width: max-content;
   min-height: 42px;
   border: 0;
@@ -2230,18 +2237,21 @@ h3 {
 }
 
 .install-app-panel button:not(:disabled):hover,
-.notification-settings-panel button:not(:disabled):hover {
+.notification-settings-panel button:not(:disabled):hover,
+.profile-settings-actions button:not(:disabled):hover {
   background: var(--accent-bright);
 }
 
 .install-app-panel button:disabled,
-.notification-settings-panel button:disabled {
+.notification-settings-panel button:disabled,
+.profile-settings-actions button:disabled {
   cursor: not-allowed;
   opacity: 0.52;
 }
 
 .install-app-panel small,
-.notification-settings-panel small {
+.notification-settings-panel small,
+.profile-settings-actions small {
   color: var(--text-faint);
   font-size: 12px;
 }
@@ -2283,8 +2293,50 @@ h3 {
   font-family: var(--font-stack-mono);
 }
 
+.install-app-panel__fallback {
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+  border: 1px solid rgba(88, 166, 255, 0.2);
+  border-radius: 12px;
+  background: rgba(56, 139, 253, 0.055);
+}
+
+.install-app-panel__fallback strong {
+  color: var(--text);
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.settings-profile-field input {
+  min-width: min(240px, 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 9px;
+  padding: 9px 11px;
+  background: rgba(255, 255, 255, 0.025);
+  color: var(--text);
+  color-scheme: dark;
+  font-family: var(--font-stack-mono);
+  font-size: 13px;
+}
+
+.settings-profile-field input:focus {
+  border-color: var(--accent-line);
+  outline: 0;
+  box-shadow: 0 0 0 3px rgba(47, 129, 247, 0.12);
+}
+
+.profile-settings-actions {
+  min-height: 70px;
+}
+
+.profile-settings-actions small {
+  min-height: 1em;
+}
+
 /* settings profile rows — calm labels, aligned values */
-.settings-list > div span {
+.settings-list > div span,
+.settings-list > label span {
   color: var(--text-faint);
 }
 
@@ -3969,6 +4021,7 @@ h3 {
 
   .review-list__item,
   .settings-list > div,
+  .settings-list > label,
   .card-session__header {
     align-items: flex-start;
     grid-template-columns: 1fr;
@@ -4002,9 +4055,14 @@ h3 {
   .card-session__status button,
   .card-session-summary button,
   .install-app-panel button,
-  .notification-settings-panel button {
+  .notification-settings-panel button,
+  .profile-settings-actions button {
     width: 100%;
     min-height: 48px;
+  }
+
+  .settings-profile-field input {
+    width: 100%;
   }
 
   .card-rating-panel {

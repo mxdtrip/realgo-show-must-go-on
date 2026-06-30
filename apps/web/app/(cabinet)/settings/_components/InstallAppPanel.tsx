@@ -2,68 +2,85 @@
 
 import { useEffect, useState } from "react";
 
-type BeforeInstallPromptEvent = Event & {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
-};
+import {
+  clearInstallPrompt,
+  getInstallPrompt,
+  subscribeToInstallPrompt,
+  type BeforeInstallPromptEvent,
+} from "../../../_pwa/installPrompt";
 
 type InstallAppPanelProps = {
   copy: {
     description: string;
     install: string;
     installed: string;
-    iosHint: string;
+    manualHint: string;
+    manualSupport: string;
     ready: string;
-    unavailable: string;
   };
 };
 
 export function InstallAppPanel({ copy }: Readonly<InstallAppPanelProps>) {
   const [promptEvent, setPromptEvent] = useState<BeforeInstallPromptEvent | null>(null);
   const [isStandalone, setIsStandalone] = useState(false);
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
     const standalone =
       window.matchMedia("(display-mode: standalone)").matches ||
       ("standalone" in window.navigator && Boolean(window.navigator.standalone));
     setIsStandalone(standalone);
-
-    const handleBeforeInstallPrompt = (event: Event) => {
-      event.preventDefault();
-      setPromptEvent(event as BeforeInstallPromptEvent);
-    };
+    setPromptEvent(getInstallPrompt());
+    setIsReady(true);
 
     const handleInstalled = () => {
       setIsStandalone(true);
-      setPromptEvent(null);
     };
 
-    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
     window.addEventListener("appinstalled", handleInstalled);
+    const unsubscribe = subscribeToInstallPrompt(setPromptEvent);
 
     return () => {
-      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
       window.removeEventListener("appinstalled", handleInstalled);
+      unsubscribe();
     };
   }, []);
 
   const install = async () => {
     if (!promptEvent) return;
-    await promptEvent.prompt();
-    await promptEvent.userChoice;
-    setPromptEvent(null);
+    try {
+      await promptEvent.prompt();
+      const choice = await promptEvent.userChoice;
+      if (choice.outcome === "accepted") setIsStandalone(true);
+    } finally {
+      clearInstallPrompt();
+    }
   };
 
   return (
     <div className="install-app-panel">
       <p>{copy.description}</p>
-      <div className="install-app-panel__status">
-        <span>{isStandalone ? copy.installed : promptEvent ? copy.ready : copy.unavailable}</span>
-      </div>
-      <button disabled={!promptEvent || isStandalone} type="button" onClick={install}>
-        {copy.install}
-      </button>
-      {!promptEvent && !isStandalone ? <small>{copy.iosHint}</small> : null}
+      {isReady && isStandalone ? (
+        <div className="install-app-panel__status">
+          <span>{copy.installed}</span>
+        </div>
+      ) : null}
+      {isReady && promptEvent && !isStandalone ? (
+        <>
+          <div className="install-app-panel__status">
+            <span>{copy.ready}</span>
+          </div>
+          <button type="button" onClick={install}>
+            {copy.install}
+          </button>
+        </>
+      ) : null}
+      {isReady && !promptEvent && !isStandalone ? (
+        <div className="install-app-panel__fallback">
+          <strong>{copy.manualSupport}</strong>
+          <small>{copy.manualHint}</small>
+        </div>
+      ) : null}
     </div>
   );
 }
