@@ -363,7 +363,9 @@ export function SortingMemoryHero() {
   const handleAuthSubmit = useCallback(
     (event: React.FormEvent<HTMLFormElement>) => {
       event.preventDefault();
-      router.push(authMode === "signup" ? "/onboarding/profile" : "/dashboard");
+      // The landing modal is a teaser; the real auth lives on /login and
+      // /register, which run the actual backend flow + session handling.
+      router.push(authMode === "signup" ? "/register" : "/login");
     },
     [authMode, router],
   );

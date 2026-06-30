@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono, Space_Grotesk, Space_Mono } from "next/font/google";
+import { AuthProvider } from "./_api/AuthProvider";
 import { getDictionary } from "./_content/i18n";
 import { PWAProvider } from "./_pwa/PWAProvider";
 import { ScrollVideoBackground } from "./components/ScrollVideoBackground";
@@ -62,9 +63,11 @@ export default function RootLayout({
       lang="ru"
     >
       <body>
-        <PWAProvider />
-        <ScrollVideoBackground />
-        <div className="site-shell">{children}</div>
+        <AuthProvider>
+          <PWAProvider />
+          <ScrollVideoBackground />
+          <div className="site-shell">{children}</div>
+        </AuthProvider>
       </body>
     </html>
   );
