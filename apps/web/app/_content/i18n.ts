@@ -167,10 +167,6 @@ const ru = {
   },
   onboarding: {
     profile: {
-      eyebrow: "// quick setup",
-      title: "Расскажем Engram, к чему тебя готовить.",
-      description:
-        "Это моковый first-run экран: можно ответить на всё, пропустить отдельные вопросы или сразу перейти в кабинет.",
       stepLabel: "Шаг",
       back: "Назад",
       next: "Далее",

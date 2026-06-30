@@ -3263,12 +3263,9 @@ h3 {
 }
 
 .onboarding-head {
-  display: grid;
-  gap: 16px;
-  padding: clamp(22px, 4vw, 42px);
+  padding: 15px 18px;
 }
 
-.onboarding-head > span,
 .onboarding-section__copy > span,
 .onboarding-welcome > span,
 .onboarding-progress > span {
@@ -3277,21 +3274,6 @@ h3 {
   letter-spacing: 0.1em;
   color: var(--accent-bright);
   text-transform: uppercase;
-}
-
-.onboarding-head h1 {
-  max-width: 760px;
-  margin: 0;
-  font-size: clamp(36px, 5.8vw, 72px);
-  line-height: 0.96;
-}
-
-.onboarding-head p {
-  max-width: 680px;
-  margin: 0;
-  color: var(--text-dim);
-  font-size: clamp(16px, 2vw, 19px);
-  line-height: 1.6;
 }
 
 .onboarding-progress {
@@ -3307,7 +3289,7 @@ h3 {
 }
 
 .onboarding-progress i {
-  width: 42px;
+  width: clamp(34px, 5vw, 54px);
   height: 4px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.08);

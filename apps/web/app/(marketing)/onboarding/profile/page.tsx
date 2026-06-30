@@ -310,10 +310,10 @@ export default function OnboardingProfilePage() {
 
       <section className="onboarding-card" aria-live="polite">
         <header className="onboarding-head">
-          <a className="site-brand" href="/">
-            {dictionary.common.brand}
-          </a>
-          <div className="onboarding-progress">
+          <div
+            className="onboarding-progress"
+            aria-label={`${copy.stepLabel} ${currentStepIndex + 1} / ${steps.length}`}
+          >
             <span>{copy.stepLabel} {currentStepIndex + 1} / {steps.length}</span>
             <div>
               {steps.map((item, index) => (
@@ -321,9 +321,6 @@ export default function OnboardingProfilePage() {
               ))}
             </div>
           </div>
-          <span>{copy.eyebrow}</span>
-          <h1>{copy.title}</h1>
-          <p>{copy.description}</p>
         </header>
 
         {step === "company" ? (
