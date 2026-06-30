@@ -38,6 +38,8 @@ type FocusCopy = {
     of: string;
     progress: string;
     ratePrompt: string;
+    repeatDue: string;
+    repeatDueFallback: string;
     returnToCards: string;
     showAnswer: string;
   };
@@ -106,7 +108,14 @@ export function FocusCardReviewSession({ brand, cards, copy }: Readonly<FocusCar
           <span>{copy.focus.completedEyebrow}</span>
           <h1>{copy.focus.completedTitle}</h1>
           <p>{copy.focus.completedDescription}</p>
-          <Link href="/cards">{copy.focus.returnToCards}</Link>
+          <div className="focus-complete__actions">
+            <button type="button" onClick={session.replayDue}>
+              {session.dueReplayCount > 0
+                ? `${copy.focus.repeatDue} · ${session.dueReplayCount}`
+                : copy.focus.repeatDueFallback}
+            </button>
+            <Link href="/cards">{copy.focus.returnToCards}</Link>
+          </div>
         </section>
       </main>
     );
@@ -145,35 +154,72 @@ export function FocusCardReviewSession({ brand, cards, copy }: Readonly<FocusCar
         </Link>
       </header>
 
-      <section className={`focus-card ${session.isFlipped ? "focus-card--answer" : ""}`} aria-live="polite">
-        <div className="focus-card__meta">
-          <span>{session.currentCard.type}</span>
-          <em>{session.currentCard.source}</em>
-        </div>
+      <section
+        className={`focus-card-stack ${session.isFlipped ? "focus-card-stack--answer" : ""}`}
+        aria-live="polite"
+      >
+        <div className="focus-card-stack__edge focus-card-stack__edge--back" aria-hidden="true" />
+        <div className="focus-card-stack__edge focus-card-stack__edge--middle" aria-hidden="true" />
 
-        <div className="focus-card__content">
-          {session.isFlipped ? <span>{copy.focus.answerPrompt}</span> : null}
-          <h1>{session.isFlipped ? session.currentCard.back : session.currentCard.front}</h1>
-        </div>
+        <div className="focus-card-stage">
+          <article
+            className={`focus-card ${session.isFlipped ? "focus-card--answer" : ""}`}
+            key={session.currentCard.id}
+          >
+            <div className="focus-card__inner">
+              <div className="focus-card__face focus-card__face--front" aria-hidden={session.isFlipped}>
+                <div className="focus-card__meta">
+                  <span>{session.currentCard.type}</span>
+                  <em>{session.currentCard.source}</em>
+                </div>
 
-        {!session.isFlipped ? (
-          <button className="focus-reveal" type="button" onClick={() => session.setIsFlipped(true)}>
-            {copy.focus.showAnswer}
-          </button>
-        ) : (
-          <div className="focus-rating">
-            <span>{copy.focus.ratePrompt}</span>
-            <div>
-              {ratings.map(({ key, shortcut }) => (
-                <button className={`focus-rating__button focus-rating__button--${key}`} key={key} type="button" onClick={() => session.rate(key)}>
-                  <kbd>{shortcut}</kbd>
-                  <strong>{ratingLabels[key].label}</strong>
-                  <small>{ratingLabels[key].hint}</small>
+                <div className="focus-card__content">
+                  <h1>{session.currentCard.front}</h1>
+                </div>
+
+                <button
+                  className="focus-reveal"
+                  disabled={session.isFlipped}
+                  type="button"
+                  onClick={() => session.setIsFlipped(true)}
+                >
+                  {copy.focus.showAnswer}
                 </button>
-              ))}
+              </div>
+
+              <div className="focus-card__face focus-card__face--back" aria-hidden={!session.isFlipped}>
+                <div className="focus-card__meta">
+                  <span>{session.currentCard.type}</span>
+                  <em>{session.currentCard.source}</em>
+                </div>
+
+                <div className="focus-card__content">
+                  <span>{copy.focus.answerPrompt}</span>
+                  <h1>{session.currentCard.back}</h1>
+                </div>
+
+                <div className="focus-rating">
+                  <span>{copy.focus.ratePrompt}</span>
+                  <div>
+                    {ratings.map(({ key, shortcut }) => (
+                      <button
+                        className={`focus-rating__button focus-rating__button--${key}`}
+                        disabled={!session.isFlipped}
+                        key={key}
+                        type="button"
+                        onClick={() => session.rate(key)}
+                      >
+                        <kbd>{shortcut}</kbd>
+                        <strong>{ratingLabels[key].label}</strong>
+                        <small>{ratingLabels[key].hint}</small>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-        )}
+          </article>
+        </div>
       </section>
 
       <footer className="focus-footer">{copy.focus.keyboardHint}</footer>

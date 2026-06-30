@@ -357,6 +357,8 @@ const ru = {
             completedTitle: "Повторение завершено.",
             completedDescription:
               "Сессия сохранена локально. Карточки с оценкой hard уже вернулись в очередь и были повторены.",
+            repeatDue: "Repeat hard/normal",
+            repeatDueFallback: "Start full review again",
             returnToCards: "Return to cards",
           },
         },

@@ -22,20 +22,51 @@ export type ReviewLog = {
 type StoredSession = {
   queue: string[];
   history: ReviewLog[];
+  sessionCardIds: string[];
 };
 
 const storageKey = "engram:card-review-session:v1";
+const replayableRatings = new Set<ReviewRating>(["hard", "normal"]);
+const replayRatingPriority: Record<ReviewRating, number> = {
+  hard: 0,
+  normal: 1,
+  easy: 2,
+};
 
 function initialQueue(cards: readonly ReviewCard[]) {
   return cards.map((card) => card.id);
 }
 
-function readStoredSession(cards: readonly ReviewCard[]): StoredSession {
-  if (typeof window === "undefined") {
-    return { queue: initialQueue(cards), history: [] };
+function initialSession(cards: readonly ReviewCard[]): StoredSession {
+  const cardIds = initialQueue(cards);
+  return { history: [], queue: cardIds, sessionCardIds: cardIds };
+}
+
+function priorityReplayQueue(history: readonly ReviewLog[], cards: readonly ReviewCard[]) {
+  const validIds = new Set(cards.map((card) => card.id));
+  const latestReviewByCard = new Map<string, ReviewLog>();
+
+  for (const item of history) {
+    if (!validIds.has(item.cardId) || latestReviewByCard.has(item.cardId)) continue;
+    latestReviewByCard.set(item.cardId, item);
   }
 
-  const fallback = { queue: initialQueue(cards), history: [] };
+  return [...latestReviewByCard.values()]
+    .filter((item) => replayableRatings.has(item.rating))
+    .sort((first, second) => {
+      const ratingDiff = replayRatingPriority[first.rating] - replayRatingPriority[second.rating];
+      if (ratingDiff !== 0) return ratingDiff;
+      return Date.parse(second.reviewedAt) - Date.parse(first.reviewedAt);
+    })
+    .map((item) => item.cardId);
+}
+
+function readStoredSession(cards: readonly ReviewCard[]): StoredSession {
+  if (typeof window === "undefined") {
+    return initialSession(cards);
+  }
+
+  const fallback = initialSession(cards);
   const raw = window.localStorage.getItem(storageKey);
   if (!raw) return fallback;
 
@@ -45,6 +76,9 @@ function readStoredSession(cards: readonly ReviewCard[]): StoredSession {
     const queue = Array.isArray(parsed.queue)
       ? parsed.queue.filter((id): id is string => typeof id === "string" && validIds.has(id))
       : fallback.queue;
+    const sessionCardIds = Array.isArray(parsed.sessionCardIds)
+      ? parsed.sessionCardIds.filter((id): id is string => typeof id === "string" && validIds.has(id))
+      : fallback.sessionCardIds;
     const history = Array.isArray(parsed.history)
       ? parsed.history.filter(
           (item): item is ReviewLog =>
@@ -56,7 +90,7 @@ function readStoredSession(cards: readonly ReviewCard[]): StoredSession {
         )
       : [];
 
-    return { queue, history };
+    return { queue, history, sessionCardIds: sessionCardIds.length > 0 ? sessionCardIds : fallback.sessionCardIds };
   } catch {
     return fallback;
   }
@@ -71,6 +105,7 @@ export function useCardReviewSession(
   const [queue, setQueue] = useState<string[]>([]);
   const [history, setHistory] = useState<ReviewLog[]>([]);
   const [isFlipped, setIsFlipped] = useState(false);
+  const [sessionCardIds, setSessionCardIds] = useState<string[]>([]);
 
   const cardsById = useMemo(() => new Map(cards.map((card) => [card.id, card])), [cards]);
 
@@ -78,17 +113,19 @@ export function useCardReviewSession(
     const stored = readStoredSession(cards);
     setQueue(stored.queue);
     setHistory(stored.history);
+    setSessionCardIds(stored.sessionCardIds);
     setIsReady(true);
   }, [cards]);
 
   useEffect(() => {
     if (!isReady) return;
-    window.localStorage.setItem(storageKey, JSON.stringify({ queue, history }));
-  }, [history, isReady, queue]);
+    window.localStorage.setItem(storageKey, JSON.stringify({ history, queue, sessionCardIds }));
+  }, [history, isReady, queue, sessionCardIds]);
 
   const currentCard = queue.length > 0 ? cardsById.get(queue[0]) : undefined;
-  const completedUnique = new Set(history.filter((item) => item.rating !== "hard").map((item) => item.cardId)).size;
-  const progressPercent = cards.length === 0 ? 0 : Math.round((completedUnique / cards.length) * 100);
+  const completedUnique = Math.max(0, sessionCardIds.length - new Set(queue).size);
+  const dueReplayQueue = useMemo(() => priorityReplayQueue(history, cards), [cards, history]);
+  const progressPercent = sessionCardIds.length === 0 ? 0 : Math.round((completedUnique / sessionCardIds.length) * 100);
 
   const rate = useCallback(
     (rating: ReviewRating) => {
@@ -117,14 +154,24 @@ export function useCardReviewSession(
   );
 
   const reset = useCallback(() => {
-    setQueue(initialQueue(cards));
+    const cardIds = initialQueue(cards);
+    setQueue(cardIds);
+    setSessionCardIds(cardIds);
     setHistory([]);
     setIsFlipped(false);
   }, [cards]);
 
+  const replayDue = useCallback(() => {
+    const nextQueue = dueReplayQueue.length > 0 ? dueReplayQueue : initialQueue(cards);
+    setQueue(nextQueue);
+    setSessionCardIds(nextQueue);
+    setIsFlipped(false);
+  }, [cards, dueReplayQueue]);
+
   return {
     completedUnique,
     currentCard,
+    dueReplayCount: dueReplayQueue.length,
     history,
     isComplete: isReady && queue.length === 0,
     isFlipped,
@@ -132,8 +179,9 @@ export function useCardReviewSession(
     progressPercent,
     queue,
     rate,
+    replayDue,
     reset,
     setIsFlipped,
-    totalCards: cards.length,
+    totalCards: sessionCardIds.length,
   };
 }

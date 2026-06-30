@@ -2666,13 +2666,15 @@ h3 {
 }
 
 .cards-overview__start,
-.focus-complete a {
+.focus-complete a,
+.focus-complete button {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   justify-content: center;
   min-height: 48px;
   border-radius: 12px;
+  border: 0;
   padding: 12px 18px;
   background: var(--accent);
   color: #ffffff;
@@ -2691,7 +2693,8 @@ h3 {
 }
 
 .cards-overview__start:hover,
-.focus-complete a:hover {
+.focus-complete a:hover,
+.focus-complete button:hover {
   background: var(--accent-bright);
   transform: translateY(-1px);
 }
@@ -2881,17 +2884,97 @@ h3 {
   color: var(--text);
 }
 
-.focus-card {
+.focus-card-stack {
+  position: relative;
   width: min(100%, 980px);
   min-width: 0;
+  height: min(66dvh, 660px);
   min-height: min(66dvh, 660px);
   max-height: calc(100dvh - 150px);
   align-self: center;
   justify-self: center;
+  margin: 24px 0;
+  perspective: 1800px;
+}
+
+.focus-card-stack__edge {
+  position: absolute;
+  pointer-events: none;
+  border: 1px solid rgba(88, 166, 255, 0.14);
+  border-radius: 28px;
+  background:
+    linear-gradient(145deg, rgba(88, 166, 255, 0.08), transparent 38%),
+    rgba(13, 17, 23, 0.5);
+  box-shadow: 0 26px 80px -54px rgba(0, 0, 0, 0.9);
+  backdrop-filter: blur(14px) saturate(112%);
+  -webkit-backdrop-filter: blur(14px) saturate(112%);
+}
+
+.focus-card-stack__edge--back {
+  inset: 30px 44px -22px;
+  opacity: 0.38;
+  transform: translate3d(0, 0, -80px) rotate(-2.1deg);
+}
+
+.focus-card-stack__edge--middle {
+  inset: 16px 24px -12px;
+  opacity: 0.62;
+  transform: translate3d(0, 0, -40px) rotate(1.45deg);
+}
+
+.focus-card-stack--answer .focus-card-stack__edge {
+  border-color: rgba(63, 185, 80, 0.18);
+}
+
+.focus-card-stage {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+}
+
+.focus-card {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  animation: focus-card-enter 0.42s cubic-bezier(0.2, 0.72, 0.22, 1) both;
+  transition: transform 0.68s cubic-bezier(0.2, 0.72, 0.22, 1);
+}
+
+.focus-card--answer {
+  transform: rotateY(180deg);
+}
+
+@keyframes focus-card-enter {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 18px, 0) rotateX(2deg) scale(0.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) rotateX(0) scale(1);
+  }
+}
+
+.focus-card--answer {
+  animation-name: none;
+}
+
+.focus-card__inner {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+}
+
+.focus-card__face {
+  position: absolute;
+  inset: 0;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
   gap: 24px;
-  margin: 24px 0;
   overflow: hidden;
   border: 1px solid rgba(88, 166, 255, 0.22);
   border-radius: 28px;
@@ -2905,11 +2988,29 @@ h3 {
   transition:
     border-color 0.28s ease,
     background 0.28s ease;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
-.focus-card--answer {
+.focus-card__face[aria-hidden="true"] {
+  pointer-events: none;
+}
+
+.focus-card__face--back {
   border-color: rgba(63, 185, 80, 0.32);
   background: rgba(13, 22, 18, 0.82);
+  transform: rotateY(180deg);
+}
+
+.focus-card__face::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.48;
+  background:
+    radial-gradient(520px 260px at 18% 18%, rgba(88, 166, 255, 0.1), transparent 62%),
+    radial-gradient(480px 260px at 82% 82%, rgba(63, 185, 80, 0.08), transparent 62%);
 }
 
 .focus-card__meta {
@@ -3092,6 +3193,25 @@ h3 {
   max-width: 620px;
   margin: 0;
   color: var(--text-dim);
+}
+
+.focus-complete__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+.focus-complete__actions a {
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+}
+
+.focus-complete__actions a:hover {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+  color: var(--accent-bright);
 }
 
 /* ============================================================
@@ -3354,11 +3474,23 @@ h3 {
     font-size: 11px;
   }
 
-  .focus-card {
+  .focus-card-stack {
+    height: calc(100dvh - 126px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
     min-height: calc(100dvh - 126px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
     max-height: calc(100dvh - 126px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
-    gap: 18px;
     margin: 12px 0;
+  }
+
+  .focus-card-stack__edge--back {
+    inset: 18px 24px -14px;
+  }
+
+  .focus-card-stack__edge--middle {
+    inset: 9px 13px -8px;
+  }
+
+  .focus-card__face {
+    gap: 18px;
     border-radius: 22px;
     padding: 22px 18px;
   }
@@ -3395,6 +3527,15 @@ h3 {
     min-height: 60px;
   }
 
+  .focus-complete__actions {
+    width: 100%;
+  }
+
+  .focus-complete a,
+  .focus-complete button {
+    width: 100%;
+  }
+
   .focus-footer {
     display: none;
   }
@@ -3417,7 +3558,9 @@ h3 {
   .focus-card,
   .cards-overview__start,
   .focus-complete a,
+  .focus-complete button,
   .focus-rating__button {
+    animation: none;
     transition: none;
   }
 
