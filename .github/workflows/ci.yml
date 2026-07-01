@@ -23,6 +23,15 @@ jobs:
           --health-interval 5s
           --health-timeout 3s
           --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
     defaults:
       run:
         working-directory: services/api
@@ -46,6 +55,21 @@ jobs:
       - name: Test
         run: go test ./...
 
+      - name: Apply migrations for integration tests
+        run: |
+          docker run --rm --network host \
+            -v "$PWD/migrations:/migrations:ro" \
+            migrate/migrate:v4.18.1 \
+            -path=/migrations \
+            -database=postgres://postgres:postgres@localhost:5432/freeburger?sslmode=disable \
+            up
+
+      - name: Integration test
+        env:
+          DB_PASSWORD: postgres
+          AUTH_JWT_SECRET: ci-secret-with-more-than-32-random-looking-characters
+        run: go test -count=1 -tags=integration ./internal/integration
+
       - name: Build
         run: go build -o /tmp/freeburger-api ./cmd/api
 
@@ -59,3 +83,41 @@ jobs:
         env:
           AUTH_JWT_SECRET: ci-secret-with-more-than-32-random-looking-characters
         run: docker compose config --quiet
+
+  web:
+    name: Web
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+
+  extension:
+    name: Extension
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/extension
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/extension/package-lock.json
+
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run build

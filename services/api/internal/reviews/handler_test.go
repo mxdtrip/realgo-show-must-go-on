@@ -9,22 +9,23 @@ import (
 	"testing"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/mxdtrip/freeburger/services/api/internal/auth"
 )
 
-func TestGetTodayReviews_InvalidUserID(t *testing.T) {
+func TestGetTodayReviews_Unauthorized(t *testing.T) {
 	h := NewHandler(nil, nil)
-	r := httptest.NewRequest(http.MethodGet, "/reviews/today?user_id=abc", nil)
+	r := httptest.NewRequest(http.MethodGet, "/reviews/today", nil)
 	w := httptest.NewRecorder()
 	h.GetTodayReviews(w, r)
 
-	if w.Code != http.StatusBadRequest {
-		t.Errorf("expected 400, got %d", w.Code)
+	if w.Code != http.StatusUnauthorized {
+		t.Errorf("expected 401, got %d", w.Code)
 	}
 }
 
 func TestGetTodayReviews_ResponseShape(t *testing.T) {
 	h := NewHandler(fakeService{}, nil)
-	r := httptest.NewRequest(http.MethodGet, "/reviews/today?user_id=1", nil)
+	r := withUser(httptest.NewRequest(http.MethodGet, "/reviews/today", nil), 1)
 	w := httptest.NewRecorder()
 	h.GetTodayReviews(w, r)
 
@@ -43,8 +44,8 @@ func TestGetTodayReviews_ResponseShape(t *testing.T) {
 
 func TestProcessAttempt_InvalidRating(t *testing.T) {
 	h := NewHandler(nil, nil)
-	r := httptest.NewRequest(http.MethodPost, "/reviews/1/attempt?user_id=1",
-		strings.NewReader(`{"rating": "again", "duration_sec": 10}`))
+	r := withUser(httptest.NewRequest(http.MethodPost, "/reviews/1/attempt",
+		strings.NewReader(`{"rating": "again", "duration_sec": 10}`)), 1)
 	r.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 	routeReviews(h).ServeHTTP(w, r)
@@ -57,8 +58,8 @@ func TestProcessAttempt_InvalidRating(t *testing.T) {
 func TestProcessAttempt_AcceptsProductRatings(t *testing.T) {
 	for _, rating := range []string{"hard", "normal", "easy"} {
 		h := NewHandler(fakeService{}, nil)
-		r := httptest.NewRequest(http.MethodPost, "/reviews/1/attempt?user_id=1",
-			strings.NewReader(`{"rating": "`+rating+`", "duration_sec": 10}`))
+		r := withUser(httptest.NewRequest(http.MethodPost, "/reviews/1/attempt",
+			strings.NewReader(`{"rating": "`+rating+`", "duration_sec": 10}`)), 1)
 		r.Header.Set("Content-Type", "application/json")
 		w := httptest.NewRecorder()
 		routeReviews(h).ServeHTTP(w, r)
@@ -69,20 +70,33 @@ func TestProcessAttempt_AcceptsProductRatings(t *testing.T) {
 	}
 }
 
-func TestGetStats_InvalidUserID(t *testing.T) {
+func TestProcessAttempt_Unauthorized(t *testing.T) {
 	h := NewHandler(nil, nil)
-	r := httptest.NewRequest(http.MethodGet, "/reviews/stats?user_id=abc", nil)
+	r := httptest.NewRequest(http.MethodPost, "/reviews/1/attempt",
+		strings.NewReader(`{"rating": "normal", "duration_sec": 10}`))
+	r.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	routeReviews(h).ServeHTTP(w, r)
+
+	if w.Code != http.StatusUnauthorized {
+		t.Errorf("expected 401, got %d", w.Code)
+	}
+}
+
+func TestGetStats_Unauthorized(t *testing.T) {
+	h := NewHandler(nil, nil)
+	r := httptest.NewRequest(http.MethodGet, "/reviews/stats", nil)
 	w := httptest.NewRecorder()
 	h.GetStats(w, r)
 
-	if w.Code != http.StatusBadRequest {
-		t.Errorf("expected 400, got %d", w.Code)
+	if w.Code != http.StatusUnauthorized {
+		t.Errorf("expected 401, got %d", w.Code)
 	}
 }
 
 func TestGetStats_ResponseShape(t *testing.T) {
 	h := NewHandler(fakeService{}, nil)
-	r := httptest.NewRequest(http.MethodGet, "/reviews/stats?user_id=1", nil)
+	r := withUser(httptest.NewRequest(http.MethodGet, "/reviews/stats", nil), 1)
 	w := httptest.NewRecorder()
 	h.GetStats(w, r)
 
@@ -101,6 +115,10 @@ func routeReviews(h *Handler) http.Handler {
 		RegisterRoutes(r, h)
 	})
 	return r
+}
+
+func withUser(r *http.Request, userID int64) *http.Request {
+	return r.WithContext(auth.ContextWithUserID(r.Context(), userID))
 }
 
 type fakeService struct{}

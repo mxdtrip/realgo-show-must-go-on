@@ -10,6 +10,7 @@ import (
 
 type envelope struct {
 	Data  any    `json:"data,omitempty"`
+	Meta  any    `json:"meta,omitempty"`
 	Error *Error `json:"error,omitempty"`
 }
 
@@ -22,6 +23,11 @@ type Error struct {
 // JSON writes data under the "data" field with the given status code.
 func JSON(w http.ResponseWriter, status int, data any) {
 	write(w, status, envelope{Data: data})
+}
+
+// JSONWithMeta writes a successful response with both top-level data and meta.
+func JSONWithMeta(w http.ResponseWriter, status int, data any, meta any) {
+	write(w, status, envelope{Data: data, Meta: meta})
 }
 
 // Fail writes a structured error under the "error" field with the given status.

@@ -38,7 +38,13 @@ function Preview() {
         onFailNext={setFailNext}
       />
       {/* key forces a fresh PopupApp when switching states */}
-      <PopupApp key={`${choice}-${failNext}`} submission={submission} onSave={onSave} />
+      <PopupApp
+        key={`${choice}-${failNext}`}
+        submission={submission}
+        onSave={onSave}
+        onClose={() => alert("Скрыть (в расширении — прячет оверлей до след. задачи)")}
+        onReview={() => alert("К повторению (в расширении — открывает /cards)")}
+      />
     </div>
   );
 }

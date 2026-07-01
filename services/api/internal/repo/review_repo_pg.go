@@ -17,7 +17,7 @@ import (
 var (
 	ErrReviewNotFound = errors.New("review not found")
 	ErrInvalidRating  = errors.New("invalid rating: must be hard, normal, or easy")
-	ErrInvalidTarget  = errors.New("review target must have exactly one of problem_id or pattern_id")
+	ErrInvalidTarget  = errors.New("review target must have exactly one of problem_id, pattern_id, or card_id")
 )
 
 type pgReviewRepository struct {
@@ -29,21 +29,21 @@ func NewReviewRepository(pool *pgxpool.Pool) ReviewRepository {
 	return &pgReviewRepository{pool: pool, q: db.New(pool)}
 }
 
-func (r *pgReviewRepository) TodayReviews(ctx context.Context, userID int64, limit int32) ([]entity.ReviewItem, error) {
-	rows, err := r.q.GetTodayReviews(ctx, db.GetTodayReviewsParams{UserID: userID, Limit: limit})
+func (r *pgReviewRepository) QueueReviews(ctx context.Context, userID int64, status string, limit int32) ([]entity.ReviewItem, error) {
+	rows, err := r.q.ListReviewQueue(ctx, db.ListReviewQueueParams{UserID: userID, Status: status, QueueLimit: limit})
 	if err != nil {
-		return nil, fmt.Errorf("reviews: query today reviews: %w", err)
+		return nil, fmt.Errorf("reviews: query review queue: %w", err)
 	}
 
 	items := make([]entity.ReviewItem, 0, len(rows))
 	for _, row := range rows {
 		items = append(items, entity.ReviewItem{
 			ID:         row.ID,
-			EntityType: entityType(row),
-			EntityID:   entityID(row),
-			Title:      row.ProblemTitle.String,
-			Meta:       buildMeta(row),
-			TypeLabel:  typeLabel(row),
+			EntityType: entityType(row.ProblemID, row.PatternID, row.CardID),
+			EntityID:   entityID(row.ProblemID, row.PatternID, row.CardID),
+			Title:      title(row.ProblemID, row.CardID, row.ProblemTitle, row.PatternTitle, row.CardQuestion),
+			Meta:       buildMeta(row.CardID, row.PatternTitle, row.ProblemDifficulty, row.CardType),
+			TypeLabel:  typeLabel(row.ProblemID, row.PatternID, row.CardID),
 			DueAt:      row.NextReviewAt.Time,
 			Status:     statusFromState(int8(row.State)),
 			LastRating: stringPtrFromPg(row.LastRating),
@@ -98,6 +98,7 @@ func (r *pgReviewRepository) SaveReview(ctx context.Context, schedule entity.Rev
 		UserID:      attempt.UserID,
 		ProblemID:   toPgInt8(attempt.ProblemID),
 		PatternID:   toPgInt8(attempt.PatternID),
+		CardID:      toPgInt8(attempt.CardID),
 		Rating:      attempt.Rating,
 		ReviewType:  kind,
 		DurationSec: toPgInt4(attempt.DurationSec),
@@ -153,50 +154,74 @@ func confidenceDelta(rating string) int {
 
 // Helper functions
 
-func entityType(row db.GetTodayReviewsRow) string {
-	if row.ProblemID.Valid {
+func entityType(problemID, patternID, cardID pgtype.Int8) string {
+	if problemID.Valid {
 		return "problem"
 	}
-	if row.PatternID.Valid {
+	if patternID.Valid {
 		return "pattern"
 	}
-	if row.CardID.Valid {
+	if cardID.Valid {
 		return "card"
 	}
 	return ""
 }
 
-func entityID(row db.GetTodayReviewsRow) int64 {
-	if row.ProblemID.Valid {
-		return row.ProblemID.Int64
+func entityID(problemID, patternID, cardID pgtype.Int8) int64 {
+	if problemID.Valid {
+		return problemID.Int64
 	}
-	if row.PatternID.Valid {
-		return row.PatternID.Int64
+	if cardID.Valid {
+		return cardID.Int64
 	}
-	if row.CardID.Valid {
-		return row.CardID.Int64
+	if !patternID.Valid {
+		return 0
 	}
-	return 0
+	return patternID.Int64
 }
 
-func buildMeta(row db.GetTodayReviewsRow) string {
-	if row.ProblemTitle.Valid && row.PatternTitle.Valid {
-		return fmt.Sprintf("%s · %s", row.PatternTitle.String, difficultyFromState(int8(row.State)))
+func title(problemID, cardID pgtype.Int8, problemTitle pgtype.Text, patternTitle string, cardQuestion pgtype.Text) string {
+	if cardID.Valid && cardQuestion.Valid && cardQuestion.String != "" {
+		return cardQuestion.String
 	}
-	if row.PatternTitle.Valid {
-		return row.PatternTitle.String
+	if problemID.Valid {
+		return problemTitle.String
 	}
-	return ""
+	return patternTitle
 }
 
-func typeLabel(row db.GetTodayReviewsRow) string {
-	if row.ProblemID.Valid {
+func buildMeta(cardID pgtype.Int8, patternTitle string, problemDifficulty pgtype.Text, cardType string) string {
+	if cardID.Valid {
+		if patternTitle != "" && cardType != "" {
+			return fmt.Sprintf("%s · %s", patternTitle, cardType)
+		}
+		if cardType != "" {
+			return cardType
+		}
+		if patternTitle != "" {
+			return patternTitle
+		}
+		return "card"
+	}
+
+	difficulty := "unknown"
+	if problemDifficulty.Valid && problemDifficulty.String != "" {
+		difficulty = problemDifficulty.String
+	}
+	if patternTitle != "" {
+		return fmt.Sprintf("%s · %s", patternTitle, difficulty)
+	}
+	return difficulty
+}
+
+func typeLabel(problemID, patternID, cardID pgtype.Int8) string {
+	if problemID.Valid {
 		return "problem review"
 	}
-	if row.PatternID.Valid {
+	if patternID.Valid {
 		return "pattern review"
 	}
-	if row.CardID.Valid {
+	if cardID.Valid {
 		return "card review"
 	}
 	return ""
@@ -215,11 +240,6 @@ func statusFromState(state int8) string {
 	default:
 		return "due"
 	}
-}
-
-func difficultyFromState(state int8) string {
-	// TODO: получать сложность из problems.difficulty
-	return "medium"
 }
 
 func reviewType(attempt entity.ReviewAttempt) (string, error) {

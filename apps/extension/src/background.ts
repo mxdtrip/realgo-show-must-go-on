@@ -1,6 +1,6 @@
-import { saveSubmission } from "./lib/api";
-import { setLastSubmission } from "./lib/storage";
-import type { DetectedSubmission, RuntimeMessage } from "./lib/types";
+import { ApiError, saveSubmission } from "./lib/api";
+import { clearLastSubmission, setLastSubmission } from "./lib/storage";
+import type { DetectedSubmission, RuntimeMessage, SaveResponse } from "./lib/types";
 
 /**
  * Background service worker.
@@ -20,23 +20,44 @@ chrome.runtime.onMessage.addListener(
     }
 
     if (message.type === "ENGRAM_SAVE_SUBMISSION") {
-      // Proxy saves from the in-page overlay through the background worker: it
-      // runs on the extension origin with host_permissions, so the request is
-      // not subject to the host page's CORS policy.
+      // Single transport entry point: both the in-page overlay AND the toolbar
+      // popup save through here. The background worker runs on the extension
+      // origin with host_permissions, so the request dodges the host page's CORS
+      // policy — and the UI never duplicates network/business logic (#35, #38).
       saveSubmission(message.payload)
-        .then(() => sendResponse({ ok: true }))
-        .catch((e) =>
-          sendResponse({
-            ok: false,
-            error: e instanceof Error ? e.message : String(e),
-          })
-        );
+        .then(async (result) => {
+          // Saved successfully: drop the pending submission and clear the badge
+          // so the extension doesn't keep showing a stale "1" pending state.
+          await clearLastSubmission();
+          try {
+            await chrome.action.setBadgeText({ text: "" });
+          } catch {
+            /* badge is cosmetic */
+          }
+          sendResponse({ ok: true, result } satisfies SaveResponse);
+        })
+        .catch((e) => sendResponse(toErrorResponse(e)))
+        .catch(() => {
+          /* sendResponse can throw if the channel closed; nothing to do */
+        });
       return true;
     }
 
     return false;
   }
 );
+
+/** Normalises any thrown error into the UI's SaveResponse shape. */
+function toErrorResponse(e: unknown): SaveResponse {
+  if (e instanceof ApiError) {
+    return { ok: false, error: e.message, code: e.code ?? String(e.status) };
+  }
+  return {
+    ok: false,
+    error: e instanceof Error ? e.message : String(e),
+    code: "unknown",
+  };
+}
 
 async function handleDetected(submission: DetectedSubmission): Promise<void> {
   await setLastSubmission(submission);

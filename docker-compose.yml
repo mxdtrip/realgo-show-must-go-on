@@ -62,10 +62,38 @@ services:
     command: sh -c "pip install --no-cache-dir -r requirements.txt && python seed_roadmap.py neetcode_150.yaml"
     restart: "no"
 
+  seed-cards:
+    image: python:3.12-slim
+    depends_on:
+      seed-roadmap:
+        condition: service_completed_successfully
+    working_dir: /seeds
+    volumes:
+      - ./services/api/seeds:/seeds:ro
+    environment:
+      DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-freeburger}?sslmode=disable
+    command: sh -c "pip install --no-cache-dir -r requirements.txt && python seed_cards.py engram_demo_cards.yaml"
+    restart: "no"
+
+  seed-users:
+    image: python:3.12-slim
+    depends_on:
+      seed-roadmap:
+        condition: service_completed_successfully
+    working_dir: /seeds
+    volumes:
+      - ./services/api/seeds:/seeds:ro
+    environment:
+      DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-freeburger}?sslmode=disable
+    command: sh -c "pip install --no-cache-dir -r requirements.txt && python seed_users.py"
+    restart: "no"
+
   caddy:
     image: caddy:2-alpine
     depends_on:
       - api
+    environment:
+      ENGRAM_EXTENSION_ORIGIN: ${ENGRAM_EXTENSION_ORIGIN:-chrome-extension://invalidextensionidorigin}
     ports:
       - "${API_PORT:-8080}:80"
     volumes:
@@ -96,6 +124,7 @@ services:
       AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:?AUTH_JWT_SECRET must be set}
       AUTH_ACCESS_TTL: ${AUTH_ACCESS_TTL:-15m}
       AUTH_REFRESH_TTL: ${AUTH_REFRESH_TTL:-720h}
+      TRUSTED_PROXY_CIDRS: ${TRUSTED_PROXY_CIDRS:-}
     expose:
       - "8080"
 

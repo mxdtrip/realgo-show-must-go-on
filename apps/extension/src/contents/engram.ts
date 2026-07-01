@@ -8,6 +8,7 @@ import type {
   SubmissionPayload,
   SubmitResult,
 } from "../lib/types";
+import { getReviewUrl } from "../lib/storage";
 import { detectAdapter, type PlatformAdapter } from "../platforms";
 import { PopupApp } from "../popup/PopupApp";
 
@@ -30,14 +31,15 @@ const RESULT_POLL_MS = 500;
 const RESULT_TIMEOUT_MS = 20_000;
 
 function init() {
-  const adapter = detectAdapter(location.href);
-  if (!adapter) return;
-
-  // Capture-phase delegation survives the SPA re-rendering its buttons.
-  document.addEventListener("click", (event) => onDocumentClick(event, adapter), true);
+  // Capture-phase delegation survives SPA re-renders and route changes. Resolve
+  // the adapter lazily on every click so navigation from a list page to a problem
+  // page does not require reloading the tab.
+  document.addEventListener("click", onDocumentClick, true);
 }
 
-function onDocumentClick(event: MouseEvent, adapter: PlatformAdapter) {
+function onDocumentClick(event: MouseEvent) {
+  const adapter = detectAdapter(location.href);
+  if (!adapter) return;
   const target = event.target as HTMLElement | null;
   if (!target) return;
   if (!isSubmitClick(target, adapter)) return;
@@ -88,12 +90,28 @@ function watchForResult(adapter: PlatformAdapter) {
 }
 
 let lastKey = "";
+let lastKeyAt = 0;
+const DEDUPE_WINDOW_MS = 3_000;
+
+/** Stable idempotency id for one submit. Falls back when randomUUID is absent. */
+function newEventId(): string {
+  try {
+    if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID();
+  } catch {
+    /* fall through to the manual id below */
+  }
+  return `ev-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
 
 function finalize(adapter: PlatformAdapter, submitResult: SubmitResult) {
   const info = adapter.extractTaskInfo();
   if (!info) return;
 
   const submission: DetectedSubmission = {
+    // One id per detected submit. The dedupe below stops the same task firing
+    // twice in a page session, so this id stays stable for retries (overlay or
+    // toolbar popup) and the backend treats re-sends as idempotent.
+    eventId: newEventId(),
     platform: adapter.platform,
     taskTitle: info.taskTitle,
     taskUrl: info.taskUrl,
@@ -102,10 +120,12 @@ function finalize(adapter: PlatformAdapter, submitResult: SubmitResult) {
     submittedAt: new Date().toISOString(),
   };
 
-  // Dedupe rapid double submits of the same task within one page session.
-  const key = `${submission.platformTaskSlug}|${submission.taskUrl}`;
-  if (key === lastKey) return;
+  // Dedupe duplicate click/mutation notifications, not genuine later submits.
+  const key = `${submission.platformTaskSlug}|${submission.taskUrl}|${submitResult}`;
+  const now = Date.now();
+  if (key === lastKey && now - lastKeyAt < DEDUPE_WINDOW_MS) return;
   lastKey = key;
+  lastKeyAt = now;
 
   try {
     chrome.runtime.sendMessage({ type: "ENGRAM_SUBMISSION_DETECTED", submission });
@@ -152,9 +172,19 @@ function showOverlay(submission: DetectedSubmission) {
     createElement(PopupApp, {
       submission,
       onSave: saveViaBackground,
+      // "Скрыть": hide until the next solved task (overlay re-renders on submit).
       onClose: removeOverlay,
+      // "К повторению": open the web app's review cards in a new tab.
+      onReview: openReview,
     })
   );
+}
+
+/** Opens the Engram review cards section in a new browser tab. */
+async function openReview() {
+  const url = await getReviewUrl();
+  window.open(url, "_blank", "noopener,noreferrer");
+  removeOverlay();
 }
 
 /** Routes the save through the background worker to dodge host-page CORS. */

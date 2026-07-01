@@ -137,3 +137,73 @@ func TestHandle_NonSolved_NoRatingNeeded(t *testing.T) {
 		t.Errorf("non-solved must not schedule: solved=%v interval=%v", repo.lastIn.Solved, repo.lastIn.IntervalDays)
 	}
 }
+
+func TestHandle_SubmissionPayload_Accepted(t *testing.T) {
+	now := time.Date(2026, 6, 30, 9, 0, 0, 0, time.UTC)
+	submittedAt := now.Add(-15 * time.Minute)
+	repo := &fakeRepo{platformID: 5, out: IngestOutput{ProblemID: 11, Status: "reviewing"}}
+	svc := newTestService(repo, now)
+
+	res, err := svc.Handle(context.Background(), 7, EventRequest{
+		Platform:         "leetcode",
+		TaskTitle:        "Two Sum",
+		TaskURL:          "https://leetcode.com/problems/two-sum/",
+		PlatformTaskSlug: "Two-Sum",
+		SubmitResult:     "accepted",
+		SubmittedAt:      submittedAt.Format(time.RFC3339),
+		UserDifficulty:   "normal",
+		CanSolveAgain:    "probably",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !res.Accepted || res.Status != "reviewing" {
+		t.Fatalf("unexpected result: %+v", res)
+	}
+
+	in := repo.lastIn
+	if !in.Solved || in.EventType != EventProblemSolved {
+		t.Fatalf("event type = %q solved=%v, want solved", in.EventType, in.Solved)
+	}
+	if in.PlatformID != 5 || in.Slug != "two-sum" || in.Title != "Two Sum" {
+		t.Fatalf("normalization off: platform=%d slug=%q title=%q", in.PlatformID, in.Slug, in.Title)
+	}
+	if in.Rating != "normal" || in.IntervalDays != 3 {
+		t.Fatalf("rating=%q interval=%v, want normal/3", in.Rating, in.IntervalDays)
+	}
+	if !in.EventTime.Equal(submittedAt) {
+		t.Fatalf("event time = %v, want %v", in.EventTime, submittedAt)
+	}
+	if in.IdempotencyKey == "" {
+		t.Fatal("generated idempotency key must not be empty")
+	}
+}
+
+func TestHandle_SubmissionPayload_NonAcceptedRecordsSubmittedOnly(t *testing.T) {
+	now := time.Date(2026, 6, 30, 9, 0, 0, 0, time.UTC)
+	repo := &fakeRepo{platformID: 5, out: IngestOutput{ProblemID: 12, Status: "saved"}}
+	svc := newTestService(repo, now)
+
+	_, err := svc.Handle(context.Background(), 7, EventRequest{
+		Platform:       "neetcode",
+		TaskTitle:      "Valid Parentheses",
+		TaskURL:        "https://neetcode.io/problems/valid-parentheses",
+		SubmitResult:   "wrong_answer",
+		SubmittedAt:    now.Format(time.RFC3339),
+		UserDifficulty: "hard",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	in := repo.lastIn
+	if in.Solved || in.EventType != EventProblemSubmitted {
+		t.Fatalf("event type = %q solved=%v, want submitted only", in.EventType, in.Solved)
+	}
+	if in.IntervalDays != 0 || !in.NextReviewAt.IsZero() {
+		t.Fatalf("non-accepted submit must not schedule: interval=%v next=%v", in.IntervalDays, in.NextReviewAt)
+	}
+	if in.Rating != "hard" {
+		t.Fatalf("rating = %q, want hard", in.Rating)
+	}
+}

@@ -1,5 +1,43 @@
+import type { Metadata } from "next";
+
 import { getDictionary } from "../_content/i18n";
+import { ScrollVideoBackground } from "../components/ScrollVideoBackground";
 import { SortingMemoryHero } from "../components/SortingMemoryHero";
+import { LandingFAQ } from "./LandingFAQ";
+
+const metadataCopy = getDictionary().common.metadata;
+
+export const metadata: Metadata = {
+  title: {
+    absolute: metadataCopy.title,
+  },
+  description: metadataCopy.description,
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    title: metadataCopy.title,
+    description: metadataCopy.description,
+    url: "/",
+    siteName: metadataCopy.applicationName,
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: metadataCopy.ogImageAlt,
+      },
+    ],
+    locale: "ru_RU",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: metadataCopy.title,
+    description: metadataCopy.description,
+    images: ["/opengraph-image"],
+  },
+};
 
 export default function Home() {
   const dictionary = getDictionary();
@@ -7,6 +45,7 @@ export default function Home() {
 
   return (
     <>
+      <ScrollVideoBackground />
       <SortingMemoryHero />
 
       <section className="landing-section" id="memory">
@@ -109,6 +148,8 @@ export default function Home() {
         </div>
       </section>
 
+      <LandingFAQ section={copy.sections.faq} />
+
       <footer className="site-footer">
         <div className="site-footer__inner">
           <div className="site-footer__brand">
@@ -136,6 +177,10 @@ export default function Home() {
               src="/author-tag.png"
               alt=""
               className="footer-powered__logo"
+              decoding="async"
+              height="600"
+              loading="lazy"
+              width="1586"
             />
           </span>
           <span>{copy.footer.tagline}</span>

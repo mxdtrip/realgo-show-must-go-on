@@ -8,23 +8,24 @@ import (
 	"testing"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/mxdtrip/freeburger/services/api/internal/auth"
 )
 
-func TestListWeak_InvalidUserID(t *testing.T) {
+func TestListWeak_Unauthorized(t *testing.T) {
 	h := NewHandler(nil)
-	r := httptest.NewRequest(http.MethodGet, "/patterns/weak?user_id=abc", nil)
+	r := httptest.NewRequest(http.MethodGet, "/patterns/weak", nil)
 	w := httptest.NewRecorder()
 
 	h.ListWeak(w, r)
 
-	if w.Code != http.StatusBadRequest {
-		t.Fatalf("expected 400, got %d", w.Code)
+	if w.Code != http.StatusUnauthorized {
+		t.Fatalf("expected 401, got %d", w.Code)
 	}
 }
 
 func TestListWeak_ResponseShape(t *testing.T) {
 	h := NewHandler(fakeRepository{items: []WeakPattern{{PatternCode: "dp", Pattern: "Dynamic Programming", HardCount: 3, ReviewCount: 4, LowConfidence: true}}})
-	r := httptest.NewRequest(http.MethodGet, "/patterns/weak?user_id=1", nil)
+	r := withUser(httptest.NewRequest(http.MethodGet, "/patterns/weak", nil), 1)
 	w := httptest.NewRecorder()
 
 	routePatterns(h).ServeHTTP(w, r)
@@ -45,7 +46,7 @@ func TestListWeak_ResponseShape(t *testing.T) {
 
 func TestListWeak_EmptyState(t *testing.T) {
 	h := NewHandler(fakeRepository{})
-	r := httptest.NewRequest(http.MethodGet, "/patterns/weak?user_id=1", nil)
+	r := withUser(httptest.NewRequest(http.MethodGet, "/patterns/weak", nil), 1)
 	w := httptest.NewRecorder()
 
 	routePatterns(h).ServeHTTP(w, r)
@@ -74,6 +75,10 @@ func routePatterns(h *Handler) http.Handler {
 		RegisterRoutes(r, h)
 	})
 	return r
+}
+
+func withUser(r *http.Request, userID int64) *http.Request {
+	return r.WithContext(auth.ContextWithUserID(r.Context(), userID))
 }
 
 type fakeRepository struct {
