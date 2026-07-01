@@ -173,7 +173,7 @@ func TestContractRefreshTokensRotateOnce(t *testing.T) {
 	requireErrorEnvelope(t, reused, http.StatusUnauthorized, "invalid_token")
 
 	queue := h.request(t, http.MethodGet, "/api/v1/me/reviews/queue", refreshed.access, nil)
-	requireSuccessEnvelope(t, queue, http.StatusOK)
+	requireQueueEnvelope(t, queue, http.StatusOK)
 }
 
 func TestContractExtensionEventsAreIdempotent(t *testing.T) {
@@ -239,8 +239,8 @@ func TestCoreLoopRegisterLoginSolveQueueAndRateMovesDue(t *testing.T) {
 	require.Equal(t, "reviewing", stringField(t, solveData, "status"))
 
 	queueBefore := h.request(t, http.MethodGet, "/api/v1/me/reviews/queue?status=due&limit=50", loggedIn.access, nil)
-	queueData := requireSuccessEnvelope(t, queueBefore, http.StatusOK)
-	review := findReviewByTitle(t, queueData, "Contract Core Loop")
+	queueItems := requireQueueEnvelope(t, queueBefore, http.StatusOK)
+	review := findReviewByTitle(t, queueItems, "Contract Core Loop")
 	reviewID := int64Field(t, review, "id")
 	require.Equal(t, "problem", stringField(t, review, "entityType"))
 	require.Equal(t, "due", stringField(t, review, "status"))
@@ -258,8 +258,8 @@ func TestCoreLoopRegisterLoginSolveQueueAndRateMovesDue(t *testing.T) {
 	require.True(t, nextReviewAt.After(reviewedAt), "nextReviewAt=%s reviewedAt=%s", nextReviewAt, reviewedAt)
 
 	queueAfter := h.request(t, http.MethodGet, "/api/v1/me/reviews/queue?status=due&limit=50", loggedIn.access, nil)
-	afterData := requireSuccessEnvelope(t, queueAfter, http.StatusOK)
-	requireNoReviewID(t, afterData, reviewID)
+	afterItems := requireQueueEnvelope(t, queueAfter, http.StatusOK)
+	requireNoReviewID(t, afterItems, reviewID)
 }
 
 func TestContractProtectedRoutesShouldUseUppercaseUnauthorizedCodes(t *testing.T) {
@@ -286,8 +286,6 @@ func TestContractProtectedBodiesShouldRejectUnknownFields(t *testing.T) {
 }
 
 func TestContractReviewQueueShouldNotDoubleNestData(t *testing.T) {
-	t.Skip("TODO(#79): GET /me/reviews/queue сейчас отдаёт {data:{data,meta}}, а контракт ожидает {data:[...],meta:{...}}")
-
 	h := newContractHarness(t)
 	email := uniqueEmail("queue-shape")
 	t.Cleanup(func() { h.cleanupUser(email) })
@@ -512,11 +510,21 @@ func timeField(t *testing.T, obj map[string]any, name string) time.Time {
 	return ts
 }
 
-func findReviewByTitle(t *testing.T, queueData map[string]any, title string) map[string]any {
+// requireQueueEnvelope asserts the flat list envelope of GET /me/reviews/queue
+// ({"data": [...], "meta": {...}}) and returns the review items.
+func requireQueueEnvelope(t *testing.T, resp contractResponse, status int) []any {
 	t.Helper()
 
-	items, ok := queueData["data"].([]any)
-	require.True(t, ok, "expected queue data.data array, got %T", queueData["data"])
+	require.Equal(t, status, resp.status, resp.raw)
+	require.NotContains(t, resp.body, "error", resp.raw)
+	items, ok := resp.body["data"].([]any)
+	require.True(t, ok, "expected array data envelope, got %T: %s", resp.body["data"], resp.raw)
+	return items
+}
+
+func findReviewByTitle(t *testing.T, items []any, title string) map[string]any {
+	t.Helper()
+
 	for _, raw := range items {
 		item, ok := raw.(map[string]any)
 		require.True(t, ok, "expected queue item object, got %T", raw)
@@ -528,11 +536,9 @@ func findReviewByTitle(t *testing.T, queueData map[string]any, title string) map
 	return nil
 }
 
-func requireNoReviewID(t *testing.T, queueData map[string]any, reviewID int64) {
+func requireNoReviewID(t *testing.T, items []any, reviewID int64) {
 	t.Helper()
 
-	items, ok := queueData["data"].([]any)
-	require.True(t, ok, "expected queue data.data array, got %T", queueData["data"])
 	for _, raw := range items {
 		item, ok := raw.(map[string]any)
 		require.True(t, ok, "expected queue item object, got %T", raw)

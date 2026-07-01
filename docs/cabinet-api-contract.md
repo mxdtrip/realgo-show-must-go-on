@@ -109,9 +109,10 @@ Response:
       "onboardingStatus": "profile_required"
     },
     "tokens": {
-      "accessToken": "jwt",
-      "refreshToken": "opaque_refresh_token",
-      "expiresAt": "2026-06-30T11:00:00Z"
+      "access_token": "jwt",
+      "refresh_token": "opaque_refresh_token",
+      "token_type": "Bearer",
+      "expires_in": 900
     }
   }
 }
@@ -610,24 +611,20 @@ roadmap.status: todo | active | done
 
 ### `POST /extension/events`
 
-Расширение отправляет события после решения задачи, изменения оценки или просмотра задачи. Backend должен быть идемпотентным по `eventId`.
+Расширение отправляет событие после submit'а задачи и пользовательской оценки. Backend идемпотентен по ключу, который строится из пользователя, задачи, времени submit'а и оценки.
 
 Request:
 
 ```json
 {
-  "eventId": "evt_01J...",
-  "source": "leetcode",
-  "event": "problem_solved",
-  "occurredAt": "2026-06-30T08:45:00Z",
-  "problem": {
-    "externalId": "leetcode_valid_parentheses",
-    "title": "Valid Parentheses",
-    "url": "https://leetcode.com/problems/valid-parentheses/",
-    "difficulty": "easy",
-    "patternName": "Stack"
-  },
-  "rating": "normal"
+  "platform": "leetcode",
+  "taskTitle": "Valid Parentheses",
+  "taskUrl": "https://leetcode.com/problems/valid-parentheses/",
+  "platformTaskSlug": "valid-parentheses",
+  "submitResult": "accepted",
+  "submittedAt": "2026-06-30T08:45:00Z",
+  "userDifficulty": "normal",
+  "canSolveAgain": "probably"
 }
 ```
 
@@ -637,9 +634,10 @@ Response:
 {
   "data": {
     "accepted": true,
-    "problemId": "prb_01J...",
-    "createdReviewIds": ["rev_01J..."],
-    "createdCardIds": ["card_01J..."]
+    "duplicate": false,
+    "problemId": 123,
+    "status": "reviewing",
+    "nextReviewAt": "2026-07-03T08:45:00Z"
   }
 }
 ```
@@ -647,8 +645,10 @@ Response:
 Enums:
 
 ```text
-event: problem_viewed | problem_solved | rating_changed | sync_disabled
-source: leetcode | neetcode | custom
+platform: leetcode | neetcode | unknown
+submitResult: accepted | wrong_answer | runtime_error | time_limit | unknown
+userDifficulty: hard | normal | easy
+canSolveAgain: no | probably | yes
 ```
 
 ### `GET /me/extension/status`

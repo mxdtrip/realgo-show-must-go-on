@@ -49,8 +49,10 @@ func (s *Service) Handle(ctx context.Context, userID int64, req EventRequest) (E
 		Solved:           norm.solved,
 	}
 
-	if norm.solved {
+	if norm.rating != "" {
 		in.Rating = string(norm.rating)
+	}
+	if norm.solved {
 		decision, derr := s.sched.Next(norm.rating, norm.occurredAt)
 		if derr != nil {
 			return EventResult{}, derr

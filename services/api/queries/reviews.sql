@@ -3,13 +3,44 @@ SELECT rs.id, rs.user_id, rs.problem_id, rs.pattern_id, rs.card_id, rs.next_revi
        rs.interval_days, rs.stability, rs.difficulty, rs.review_count,
        rs.last_rating, rs.state, rs.lapses, rs.last_review_at, rs.remaining_steps,
        p.title AS problem_title, p.url AS problem_url,
-       pt.name AS pattern_title
+       COALESCE(pt.name, cpt.name, rpt.name, '') AS pattern_title,
+       p.difficulty AS problem_difficulty,
+       c.question AS card_question,
+       COALESCE(c.type, '') AS card_type
 FROM review_schedules rs
-LEFT JOIN problems p ON p.id = rs.problem_id
+LEFT JOIN cards c ON c.id = rs.card_id
+LEFT JOIN problems p ON p.id = COALESCE(rs.problem_id, c.problem_id)
 LEFT JOIN patterns pt ON pt.id = rs.pattern_id
+LEFT JOIN patterns cpt ON cpt.id = c.pattern_id
+LEFT JOIN roadmap_items ri ON ri.problem_id = p.id AND ri.roadmap_code = 'neetcode_150'
+LEFT JOIN patterns rpt ON rpt.id = ri.pattern_id
 WHERE rs.user_id = $1 AND rs.next_review_at <= NOW()
 ORDER BY rs.next_review_at ASC
 LIMIT $2;
+
+-- name: ListReviewQueue :many
+SELECT rs.id, rs.user_id, rs.problem_id, rs.pattern_id, rs.card_id, rs.next_review_at,
+       rs.interval_days, rs.stability, rs.difficulty, rs.review_count,
+       rs.last_rating, rs.state, rs.lapses, rs.last_review_at, rs.remaining_steps,
+       p.title AS problem_title, p.url AS problem_url,
+       COALESCE(pt.name, cpt.name, rpt.name, '') AS pattern_title,
+       p.difficulty AS problem_difficulty,
+       c.question AS card_question,
+       COALESCE(c.type, '') AS card_type
+FROM review_schedules rs
+LEFT JOIN cards c ON c.id = rs.card_id
+LEFT JOIN problems p ON p.id = COALESCE(rs.problem_id, c.problem_id)
+LEFT JOIN patterns pt ON pt.id = rs.pattern_id
+LEFT JOIN patterns cpt ON cpt.id = c.pattern_id
+LEFT JOIN roadmap_items ri ON ri.problem_id = p.id AND ri.roadmap_code = 'neetcode_150'
+LEFT JOIN patterns rpt ON rpt.id = ri.pattern_id
+WHERE rs.user_id = sqlc.arg(user_id)
+  AND (
+    (sqlc.arg(status)::text = 'due' AND rs.next_review_at <= NOW())
+    OR (sqlc.arg(status)::text = 'upcoming' AND rs.next_review_at > NOW())
+  )
+ORDER BY rs.next_review_at ASC
+LIMIT sqlc.arg(queue_limit);
 
 -- name: GetReviewScheduleByID :one
 SELECT id, user_id, problem_id, pattern_id, card_id, next_review_at,

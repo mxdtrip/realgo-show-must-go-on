@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { getDictionary } from "../_content/i18n";
+import { ScrollVideoBackground } from "../components/ScrollVideoBackground";
 import { SortingMemoryHero } from "../components/SortingMemoryHero";
 import { LandingFAQ } from "./LandingFAQ";
 
@@ -44,6 +45,7 @@ export default function Home() {
 
   return (
     <>
+      <ScrollVideoBackground />
       <SortingMemoryHero />
 
       <section className="landing-section" id="memory">

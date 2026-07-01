@@ -20,7 +20,7 @@ LeetCode заложен заглушкой.
 src/
 ├── background.ts          # service worker: хранит последний submit, бейдж, попытка открыть popup
 ├── popup.tsx              # toolbar-popup (Plasmo), показывает последнюю задачу
-├── options.tsx            # dev-настройки: API base URL + access token
+├── options.tsx            # настройки: API base URL + вход по email/password
 ├── contents/engram.ts     # content script: детект submit + результата, fallback-overlay
 ├── platforms/             # detectPlatform / extractTaskInfo / detectSubmit / detectSubmitResult
 ├── popup/
@@ -42,9 +42,8 @@ Extension options):
   **обновляет access-токен автоматически** при истечении (`/api/v1/auth/refresh`).
   Кнопка «Выйти» отзывает сессию (`/api/v1/auth/logout`).
 
-> Бэкенд-эндпоинт `POST /api/v1/extension/events` ещё не реализован (эта ветка —
-> только фронтенд). Клиент уже шлёт в него корректный payload с Bearer-токеном;
-> ошибки сети/сервера/авторизации показываются в popup.
+`POST /api/v1/extension/events` требует Bearer-токен, сохраняет задачу и ставит
+ее в очередь повторений. Ошибки сети, сервера и авторизации показываются в popup.
 
 ## Команды
 

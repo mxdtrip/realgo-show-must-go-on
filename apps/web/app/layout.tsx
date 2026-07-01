@@ -4,7 +4,6 @@ import { AuthProvider } from "./_api/AuthProvider";
 import { getDictionary } from "./_content/i18n";
 import { PWAProvider } from "./_pwa/PWAProvider";
 import { ToastProvider } from "./_toast";
-import { ScrollVideoBackground } from "./components/ScrollVideoBackground";
 import "./globals.css";
 
 const inter = Inter({
@@ -102,7 +101,6 @@ export default function RootLayout({
         <AuthProvider>
           <ToastProvider>
             <PWAProvider />
-            <ScrollVideoBackground />
             <div className="site-shell">{children}</div>
           </ToastProvider>
         </AuthProvider>

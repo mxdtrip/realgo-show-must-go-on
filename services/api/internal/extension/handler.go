@@ -12,6 +12,8 @@ import (
 	"github.com/mxdtrip/freeburger/services/api/internal/server/response"
 )
 
+const maxEventBodyBytes = 1 << 20
+
 // eventService is the behaviour the handler needs; satisfied by *Service.
 type eventService interface {
 	Handle(ctx context.Context, userID int64, req EventRequest) (EventResult, error)
@@ -41,7 +43,9 @@ func (h *Handler) PostEvent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req EventRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	dec := json.NewDecoder(http.MaxBytesReader(w, r.Body, maxEventBodyBytes))
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&req); err != nil {
 		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "invalid request body")
 		return
 	}
@@ -54,7 +58,7 @@ func (h *Handler) PostEvent(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, ErrUnknownPlatform):
 			response.Fail(w, http.StatusUnprocessableEntity, "UNKNOWN_PLATFORM", err.Error())
 		default:
-			response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", err.Error())
+			response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", "could not save extension event")
 		}
 		return
 	}

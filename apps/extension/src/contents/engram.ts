@@ -31,14 +31,15 @@ const RESULT_POLL_MS = 500;
 const RESULT_TIMEOUT_MS = 20_000;
 
 function init() {
-  const adapter = detectAdapter(location.href);
-  if (!adapter) return;
-
-  // Capture-phase delegation survives the SPA re-rendering its buttons.
-  document.addEventListener("click", (event) => onDocumentClick(event, adapter), true);
+  // Capture-phase delegation survives SPA re-renders and route changes. Resolve
+  // the adapter lazily on every click so navigation from a list page to a problem
+  // page does not require reloading the tab.
+  document.addEventListener("click", onDocumentClick, true);
 }
 
-function onDocumentClick(event: MouseEvent, adapter: PlatformAdapter) {
+function onDocumentClick(event: MouseEvent) {
+  const adapter = detectAdapter(location.href);
+  if (!adapter) return;
   const target = event.target as HTMLElement | null;
   if (!target) return;
   if (!isSubmitClick(target, adapter)) return;
@@ -89,6 +90,8 @@ function watchForResult(adapter: PlatformAdapter) {
 }
 
 let lastKey = "";
+let lastKeyAt = 0;
+const DEDUPE_WINDOW_MS = 3_000;
 
 /** Stable idempotency id for one submit. Falls back when randomUUID is absent. */
 function newEventId(): string {
@@ -117,10 +120,12 @@ function finalize(adapter: PlatformAdapter, submitResult: SubmitResult) {
     submittedAt: new Date().toISOString(),
   };
 
-  // Dedupe rapid double submits of the same task within one page session.
-  const key = `${submission.platformTaskSlug}|${submission.taskUrl}`;
-  if (key === lastKey) return;
+  // Dedupe duplicate click/mutation notifications, not genuine later submits.
+  const key = `${submission.platformTaskSlug}|${submission.taskUrl}|${submitResult}`;
+  const now = Date.now();
+  if (key === lastKey && now - lastKeyAt < DEDUPE_WINDOW_MS) return;
   lastKey = key;
+  lastKeyAt = now;
 
   try {
     chrome.runtime.sendMessage({ type: "ENGRAM_SUBMISSION_DETECTED", submission });

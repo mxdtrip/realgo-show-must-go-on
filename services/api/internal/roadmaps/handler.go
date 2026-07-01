@@ -30,7 +30,7 @@ func RegisterRoutes(r chi.Router, h *Handler) {
 func (h *Handler) GetNeetCode150(w http.ResponseWriter, r *http.Request) {
 	items, err := h.repo.List(r.Context(), neetcode150Code)
 	if err != nil {
-		response.Fail(w, http.StatusInternalServerError, "internal_error", err.Error())
+		response.Fail(w, http.StatusInternalServerError, "internal_error", "could not load roadmap")
 		return
 	}
 	response.JSON(w, http.StatusOK, Response{Code: neetcode150Code, Items: items})

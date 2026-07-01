@@ -1,5 +1,5 @@
 import { ApiError, saveSubmission } from "./lib/api";
-import { setLastSubmission } from "./lib/storage";
+import { clearLastSubmission, setLastSubmission } from "./lib/storage";
 import type { DetectedSubmission, RuntimeMessage, SaveResponse } from "./lib/types";
 
 /**
@@ -25,7 +25,17 @@ chrome.runtime.onMessage.addListener(
       // origin with host_permissions, so the request dodges the host page's CORS
       // policy — and the UI never duplicates network/business logic (#35, #38).
       saveSubmission(message.payload)
-        .then((result) => sendResponse({ ok: true, result } satisfies SaveResponse))
+        .then(async (result) => {
+          // Saved successfully: drop the pending submission and clear the badge
+          // so the extension doesn't keep showing a stale "1" pending state.
+          await clearLastSubmission();
+          try {
+            await chrome.action.setBadgeText({ text: "" });
+          } catch {
+            /* badge is cosmetic */
+          }
+          sendResponse({ ok: true, result } satisfies SaveResponse);
+        })
         .catch((e) => sendResponse(toErrorResponse(e)))
         .catch(() => {
           /* sendResponse can throw if the channel closed; nothing to do */

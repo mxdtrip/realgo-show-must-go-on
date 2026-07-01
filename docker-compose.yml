@@ -92,6 +92,8 @@ services:
     image: caddy:2-alpine
     depends_on:
       - api
+    environment:
+      ENGRAM_EXTENSION_ORIGIN: ${ENGRAM_EXTENSION_ORIGIN:-chrome-extension://invalidextensionidorigin}
     ports:
       - "${API_PORT:-8080}:80"
     volumes:
@@ -122,6 +124,7 @@ services:
       AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:?AUTH_JWT_SECRET must be set}
       AUTH_ACCESS_TTL: ${AUTH_ACCESS_TTL:-15m}
       AUTH_REFRESH_TTL: ${AUTH_REFRESH_TTL:-720h}
+      TRUSTED_PROXY_CIDRS: ${TRUSTED_PROXY_CIDRS:-}
     expose:
       - "8080"
 
