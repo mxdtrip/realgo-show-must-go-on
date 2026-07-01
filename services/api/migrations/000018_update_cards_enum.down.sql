@@ -1,6 +1,12 @@
 BEGIN;
 
-ALTER TABLE cards DROP CONSTRAINT cards_type_check;
+-- Idempotent drops: a full `migrate down -all` runs 000020's down first, which
+-- already restores the legacy cards_type_check/card_type_target_check pair. Use
+-- IF EXISTS (matching this migration's up) so re-adding them here can't collide
+-- with 000020's rollback.
+ALTER TABLE cards
+  DROP CONSTRAINT IF EXISTS cards_type_check,
+  DROP CONSTRAINT IF EXISTS card_type_target_check;
 
 UPDATE cards
   SET type = CASE
