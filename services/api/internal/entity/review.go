@@ -38,7 +38,7 @@ type ReviewAttempt struct {
 // ReviewItem для ответа API (очередь повторений).
 type ReviewItem struct {
 	ID         int64     `json:"id"`
-	EntityType string    `json:"entityType"`  // problem, card, pattern
+	EntityType string    `json:"entityType"` // problem, card, pattern
 	EntityID   int64     `json:"entityId"`
 	Title      string    `json:"title"`
 	Meta       string    `json:"meta"`
