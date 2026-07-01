@@ -76,7 +76,7 @@ func TestCoreLoopAuthEventsQueueRate(t *testing.T) {
 	require.True(t, duplicate["data"].(map[string]any)["duplicate"].(bool))
 
 	queue := getJSON(t, h, "/api/v1/me/reviews/queue", token)
-	items := queue["data"].(map[string]any)["data"].([]any)
+	items := queue["data"].([]any)
 	require.NotEmpty(t, items)
 	reviewID := int64(items[0].(map[string]any)["id"].(float64))
 
