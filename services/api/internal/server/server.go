@@ -80,6 +80,10 @@ func New(deps Deps) http.Handler {
 			r.Post("/logout", ah.logout)
 		})
 		r.With(requireAuth(deps.Auth)).Get("/me", ah.me)
+		r.With(requireAuth(deps.Auth)).Patch("/me/profile", ah.patchProfile)
+		r.With(requireAuth(deps.Auth)).Patch("/me/notification-settings", ah.patchNotificationSettings)
+		r.With(requireAuth(deps.Auth)).Post("/me/export", ah.postExport)
+		r.With(requireAuth(deps.Auth)).Delete("/me", ah.deleteMe)
 		r.Route("/users", func(r chi.Router) {
 			// Backward-compatible alias. New clients should call GET /api/v1/me.
 			r.With(requireAuth(deps.Auth)).Get("/me", ah.me)

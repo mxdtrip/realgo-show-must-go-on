@@ -145,14 +145,22 @@ type RoadmapItem struct {
 }
 
 type User struct {
-	ID            int64
-	Email         string
-	PasswordHash  string
-	Timezone      pgtype.Text
-	Plan          pgtype.Text
-	InterviewDate pgtype.Timestamptz
-	CreatedAt     pgtype.Timestamptz
-	UpdatedAt     pgtype.Timestamptz
+	ID                    int64
+	Email                 string
+	PasswordHash          string
+	Timezone              pgtype.Text
+	Plan                  pgtype.Text
+	InterviewDate         pgtype.Timestamptz
+	CreatedAt             pgtype.Timestamptz
+	UpdatedAt             pgtype.Timestamptz
+	PrepGoal              pgtype.Text
+	Grade                 pgtype.Text
+	TargetCompany         pgtype.Text
+	TargetPosition        pgtype.Text
+	OnboardingCompletedAt pgtype.Timestamptz
+	NotifyReviewReminder  bool
+	NotifyWeeklyDigest    bool
+	NotifyEmailEnabled    bool
 }
 
 type UserProblemProgress struct {

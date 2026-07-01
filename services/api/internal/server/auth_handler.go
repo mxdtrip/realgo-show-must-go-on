@@ -30,13 +30,29 @@ type refreshRequest struct {
 	RefreshToken string `json:"refresh_token"`
 }
 
+type profileResponse struct {
+	PrepGoal       *string `json:"prep_goal"`
+	Grade          *string `json:"grade"`
+	TargetCompany  *string `json:"target_company"`
+	TargetPosition *string `json:"target_position"`
+}
+
+type notificationSettingsResponse struct {
+	ReviewReminder bool `json:"review_reminder"`
+	WeeklyDigest   bool `json:"weekly_digest"`
+	EmailEnabled   bool `json:"email_enabled"`
+}
+
 type userResponse struct {
-	ID            int64   `json:"id"`
-	Email         string  `json:"email"`
-	Timezone      string  `json:"timezone"`
-	Plan          string  `json:"plan"`
-	InterviewDate *string `json:"interview_date"`
-	CreatedAt     string  `json:"created_at"`
+	ID                   int64                        `json:"id"`
+	Email                string                       `json:"email"`
+	Timezone             string                       `json:"timezone"`
+	Plan                 string                       `json:"plan"`
+	InterviewDate        *string                      `json:"interview_date"`
+	CreatedAt            string                       `json:"created_at"`
+	OnboardingCompleted  bool                         `json:"onboarding_completed"`
+	Profile              profileResponse              `json:"profile"`
+	NotificationSettings notificationSettingsResponse `json:"notification_settings"`
 }
 
 type authResponse struct {
@@ -46,10 +62,16 @@ type authResponse struct {
 
 func newUserResponse(u db.User) userResponse {
 	resp := userResponse{
-		ID:       u.ID,
-		Email:    u.Email,
-		Timezone: u.Timezone.String,
-		Plan:     u.Plan.String,
+		ID:                  u.ID,
+		Email:               u.Email,
+		Timezone:            u.Timezone.String,
+		Plan:                u.Plan.String,
+		OnboardingCompleted: u.OnboardingCompletedAt.Valid,
+		NotificationSettings: notificationSettingsResponse{
+			ReviewReminder: u.NotifyReviewReminder,
+			WeeklyDigest:   u.NotifyWeeklyDigest,
+			EmailEnabled:   u.NotifyEmailEnabled,
+		},
 	}
 	if u.CreatedAt.Valid {
 		resp.CreatedAt = u.CreatedAt.Time.UTC().Format(time.RFC3339)
@@ -57,6 +79,18 @@ func newUserResponse(u db.User) userResponse {
 	if u.InterviewDate.Valid {
 		d := u.InterviewDate.Time.UTC().Format(time.RFC3339)
 		resp.InterviewDate = &d
+	}
+	if u.PrepGoal.Valid {
+		resp.Profile.PrepGoal = &u.PrepGoal.String
+	}
+	if u.Grade.Valid {
+		resp.Profile.Grade = &u.Grade.String
+	}
+	if u.TargetCompany.Valid {
+		resp.Profile.TargetCompany = &u.TargetCompany.String
+	}
+	if u.TargetPosition.Valid {
+		resp.Profile.TargetPosition = &u.TargetPosition.String
 	}
 	return resp
 }
@@ -187,6 +221,157 @@ func decodeJSON(w http.ResponseWriter, r *http.Request, dst any) bool {
 		return false
 	}
 	return true
+}
+
+type patchProfileRequest struct {
+	Timezone            *string `json:"timezone"`
+	InterviewDate       *string `json:"interview_date"`
+	PrepGoal            *string `json:"prep_goal"`
+	Grade               *string `json:"grade"`
+	TargetCompany       *string `json:"target_company"`
+	TargetPosition      *string `json:"target_position"`
+	OnboardingCompleted *bool   `json:"onboarding_completed"`
+}
+
+var validGrades = map[string]bool{
+	"junior": true, "middle": true, "senior": true, "staff": true, "principal": true,
+}
+
+// patchProfile handles PATCH /me/profile — a partial update of the onboarding
+// profile. Omitted fields are left untouched; an explicit value (including "")
+// overwrites the field.
+func (h *authHandler) patchProfile(w http.ResponseWriter, r *http.Request) {
+	if h.unavailable(w) {
+		return
+	}
+	userID, ok := auth.UserIDFromContext(r.Context())
+	if !ok {
+		response.Fail(w, http.StatusUnauthorized, "unauthorized", "authentication required")
+		return
+	}
+
+	var req patchProfileRequest
+	if !decodeJSON(w, r, &req) {
+		return
+	}
+
+	if req.Grade != nil && *req.Grade != "" && !validGrades[*req.Grade] {
+		response.Fail(w, http.StatusBadRequest, "validation_error", "grade must be one of: junior, middle, senior, staff, principal")
+		return
+	}
+
+	upd := auth.ProfileUpdate{
+		Timezone:       req.Timezone,
+		PrepGoal:       req.PrepGoal,
+		Grade:          req.Grade,
+		TargetCompany:  req.TargetCompany,
+		TargetPosition: req.TargetPosition,
+	}
+	if req.InterviewDate != nil {
+		t, err := time.Parse(time.RFC3339, *req.InterviewDate)
+		if err != nil {
+			response.Fail(w, http.StatusBadRequest, "validation_error", "interview_date must be RFC3339")
+			return
+		}
+		upd.InterviewDate = &t
+	}
+	if req.OnboardingCompleted != nil && *req.OnboardingCompleted {
+		upd.SetOnboardingDone = true
+	}
+
+	user, err := h.svc.UpdateProfile(r.Context(), userID, upd)
+	if err != nil {
+		writeAuthError(w, err)
+		return
+	}
+	response.JSON(w, http.StatusOK, map[string]userResponse{"user": newUserResponse(user)})
+}
+
+type patchNotificationSettingsRequest struct {
+	ReviewReminder *bool `json:"review_reminder"`
+	WeeklyDigest   *bool `json:"weekly_digest"`
+	EmailEnabled   *bool `json:"email_enabled"`
+}
+
+// patchNotificationSettings handles PATCH /me/notification-settings.
+func (h *authHandler) patchNotificationSettings(w http.ResponseWriter, r *http.Request) {
+	if h.unavailable(w) {
+		return
+	}
+	userID, ok := auth.UserIDFromContext(r.Context())
+	if !ok {
+		response.Fail(w, http.StatusUnauthorized, "unauthorized", "authentication required")
+		return
+	}
+
+	var req patchNotificationSettingsRequest
+	if !decodeJSON(w, r, &req) {
+		return
+	}
+	if req.ReviewReminder == nil && req.WeeklyDigest == nil && req.EmailEnabled == nil {
+		response.Fail(w, http.StatusBadRequest, "validation_error", "at least one field is required")
+		return
+	}
+
+	user, err := h.svc.UpdateNotificationSettings(r.Context(), userID, auth.NotificationSettings{
+		ReviewReminder: req.ReviewReminder,
+		WeeklyDigest:   req.WeeklyDigest,
+		EmailEnabled:   req.EmailEnabled,
+	})
+	if err != nil {
+		writeAuthError(w, err)
+		return
+	}
+	response.JSON(w, http.StatusOK, map[string]userResponse{"user": newUserResponse(user)})
+}
+
+// postExport handles POST /me/export. MVP stub: real generation and email
+// delivery are post-MVP; the endpoint acknowledges the request only.
+func (h *authHandler) postExport(w http.ResponseWriter, r *http.Request) {
+	if h.unavailable(w) {
+		return
+	}
+	if _, ok := auth.UserIDFromContext(r.Context()); !ok {
+		response.Fail(w, http.StatusUnauthorized, "unauthorized", "authentication required")
+		return
+	}
+	response.JSON(w, http.StatusAccepted, map[string]string{
+		"status":  "accepted",
+		"message": "data export is not implemented yet",
+	})
+}
+
+type deleteMeRequest struct {
+	Password     string `json:"password"`
+	RefreshToken string `json:"refresh_token"`
+}
+
+// deleteMe handles DELETE /me. Account removal is irreversible, so it requires
+// the current password for confirmation.
+func (h *authHandler) deleteMe(w http.ResponseWriter, r *http.Request) {
+	if h.unavailable(w) {
+		return
+	}
+	userID, ok := auth.UserIDFromContext(r.Context())
+	if !ok {
+		response.Fail(w, http.StatusUnauthorized, "unauthorized", "authentication required")
+		return
+	}
+
+	var req deleteMeRequest
+	if !decodeJSON(w, r, &req) {
+		return
+	}
+	if req.Password == "" {
+		response.Fail(w, http.StatusBadRequest, "validation_error", "password is required to delete the account")
+		return
+	}
+
+	if err := h.svc.DeleteAccount(r.Context(), userID, req.Password, req.RefreshToken); err != nil {
+		writeAuthError(w, err)
+		return
+	}
+	response.JSON(w, http.StatusOK, map[string]string{"status": "deleted"})
 }
 
 func writeAuthError(w http.ResponseWriter, err error) {
