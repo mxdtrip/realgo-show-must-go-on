@@ -9,11 +9,13 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 
 	"github.com/mxdtrip/freeburger/services/api/internal/auth"
+	"github.com/mxdtrip/freeburger/services/api/internal/companies"
 	v1 "github.com/mxdtrip/freeburger/services/api/internal/controller/v1"
 	"github.com/mxdtrip/freeburger/services/api/internal/extension"
 	"github.com/mxdtrip/freeburger/services/api/internal/patterns"
 	"github.com/mxdtrip/freeburger/services/api/internal/repo"
 	"github.com/mxdtrip/freeburger/services/api/internal/reviews"
+	"github.com/mxdtrip/freeburger/services/api/internal/roadmap"
 	"github.com/mxdtrip/freeburger/services/api/internal/roadmaps"
 	"github.com/mxdtrip/freeburger/services/api/internal/scheduler"
 	"github.com/mxdtrip/freeburger/services/api/internal/service"
@@ -59,7 +61,9 @@ func New(deps Deps) http.Handler {
 	reviewHandler := v1.NewReviewHandler(reviewService)
 
 	patternsHandler := patterns.NewHandler(patterns.NewRepository(deps.Postgres.Pool))
+	roadmapHandler := roadmap.NewHandler(roadmap.NewRepository(deps.Postgres.Pool))
 	roadmapsHandler := roadmaps.NewHandler(roadmaps.NewRepository(deps.Postgres.Pool))
+	companiesHandler := companies.NewHandler()
 
 	// Browser-extension ingest: simple fixed-interval scheduler (issue #17)
 	// behind the Scheduler interface, swappable for FSRS later.
@@ -90,6 +94,9 @@ func New(deps Deps) http.Handler {
 				v1.RegisterReviewRoutes(r, reviewHandler)
 			})
 		})
+		// S4: personalized roadmap progress and authenticated company suggestions.
+		r.With(requireAuth(deps.Auth)).Get("/me/roadmap", roadmapHandler.Get)
+		r.With(requireAuth(deps.Auth)).Get("/companies/search", companiesHandler.Search)
 
 		r.Route("/extension", func(r chi.Router) {
 			r.With(requireAuth(deps.Auth)).Group(func(r chi.Router) {
