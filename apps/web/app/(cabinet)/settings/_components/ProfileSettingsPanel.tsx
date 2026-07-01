@@ -82,13 +82,13 @@ export function ProfileSettingsPanel({ copy }: Readonly<ProfileSettingsPanelProp
       <label className="settings-profile-field">
         <span>{copy.timezoneLabel}</span>
         <input
-          list="engram-timezones"
+          list="realgo-timezones"
           name="timezone"
           placeholder={copy.timezonePlaceholder}
           value={profile.timezone}
           onChange={(event) => update({ timezone: event.target.value })}
         />
-        <datalist id="engram-timezones">
+        <datalist id="realgo-timezones">
           {suggestedTimezones.map((timezone) => (
             <option key={timezone} value={timezone} />
           ))}

@@ -72,7 +72,7 @@ services:
       - ./services/api/seeds:/seeds:ro
     environment:
       DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-freeburger}?sslmode=disable
-    command: sh -c "pip install --no-cache-dir -r requirements.txt && python seed_cards.py engram_demo_cards.yaml"
+    command: sh -c "pip install --no-cache-dir -r requirements.txt && python seed_cards.py realgo_demo_cards.yaml"
     restart: "no"
 
   seed-users:
@@ -93,7 +93,7 @@ services:
     depends_on:
       - api
     environment:
-      ENGRAM_EXTENSION_ORIGIN: ${ENGRAM_EXTENSION_ORIGIN:-chrome-extension://invalidextensionidorigin}
+      REALGO_EXTENSION_ORIGIN: ${REALGO_EXTENSION_ORIGIN:-chrome-extension://invalidextensionidorigin}
     ports:
       - "${API_PORT:-8080}:80"
     volumes:

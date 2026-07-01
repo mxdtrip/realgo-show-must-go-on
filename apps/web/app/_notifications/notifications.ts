@@ -10,7 +10,7 @@ export type NotificationSettingsState = {
   reminderTime: string;
 };
 
-export const notificationSettingsStorageKey = "engram:notification-settings:v1";
+export const notificationSettingsStorageKey = "realgo:notification-settings:v1";
 
 export const defaultNotificationSettings: NotificationSettingsState = {
   enabled: false,
@@ -67,7 +67,7 @@ export async function requestNotificationPermission() {
   return permission;
 }
 
-export async function showEngramNotification(title: string, options?: NotificationOptions) {
+export async function showRealgoNotification(title: string, options?: NotificationOptions) {
   if (!("Notification" in window) || Notification.permission !== "granted") return false;
 
   const notificationOptions: NotificationOptions = {

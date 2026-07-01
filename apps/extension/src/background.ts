@@ -12,14 +12,14 @@ import type { DetectedSubmission, RuntimeMessage, SaveResponse } from "./lib/typ
  */
 chrome.runtime.onMessage.addListener(
   (message: RuntimeMessage, _sender, sendResponse) => {
-    if (message.type === "ENGRAM_SUBMISSION_DETECTED") {
+    if (message.type === "REALGO_SUBMISSION_DETECTED") {
       handleDetected(message.submission)
         .then(() => sendResponse({ ok: true }))
         .catch((e) => sendResponse({ ok: false, error: String(e) }));
       return true; // keep the message channel open for the async response
     }
 
-    if (message.type === "ENGRAM_SAVE_SUBMISSION") {
+    if (message.type === "REALGO_SAVE_SUBMISSION") {
       // Single transport entry point: both the in-page overlay AND the toolbar
       // popup save through here. The background worker runs on the extension
       // origin with host_permissions, so the request dodges the host page's CORS

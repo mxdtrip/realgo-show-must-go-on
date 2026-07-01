@@ -6,7 +6,7 @@ import {
   getNotificationPermission,
   readNotificationSettings,
   requestNotificationPermission,
-  showEngramNotification,
+  showRealgoNotification,
   writeNotificationSettings,
   type NotificationPermissionState,
   type NotificationSettingsState,
@@ -69,10 +69,10 @@ export function NotificationSettingsPanel({ copy }: Readonly<NotificationSetting
   };
 
   const sendTest = async () => {
-    const didShow = await showEngramNotification(copy.testTitle, {
+    const didShow = await showRealgoNotification(copy.testTitle, {
       body: copy.testBody,
       data: { url: "/cards" },
-      tag: "engram-test-notification",
+      tag: "realgo-test-notification",
     });
     setLastResult(didShow ? copy.testSent : permissionLabel);
   };

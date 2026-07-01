@@ -6,9 +6,9 @@
 
 import type { AuthTokens } from "./types";
 
-export const accessTokenStorageKey = "engram:auth:access:v1";
-export const refreshTokenStorageKey = "engram:auth:refresh:v1";
-export const authChangedEvent = "engram:auth-changed";
+export const accessTokenStorageKey = "realgo:auth:access:v1";
+export const refreshTokenStorageKey = "realgo:auth:refresh:v1";
+export const authChangedEvent = "realgo:auth-changed";
 
 export function getAccessToken(): string | null {
   if (typeof window === "undefined") return null;

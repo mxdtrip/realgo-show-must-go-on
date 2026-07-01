@@ -1,4 +1,4 @@
-# Engram — демо-окружение и сценарий
+# realgo — демо-окружение и сценарий
 
 Сшивающий рунбук для локального демо MVP: поднять стек, создать пользователя,
 прогнать сценарий **login → extension event → dashboard → review → weak
@@ -44,7 +44,7 @@ make seed-roadmap  # загрузить NeetCode 150 (seeds/neetcode_150.yaml)
 ```sh
 curl -s -X POST http://localhost:8080/api/v1/auth/register \
   -H 'Content-Type: application/json' \
-  -d '{"email":"demo@engram.dev","password":"demo-pass-123"}'
+  -d '{"email":"demo@realgo.dev","password":"demo-pass-123"}'
 ```
 
 **Expected:** `200` с envelope `{ "data": { "user": {...}, "tokens": {...} } }`.
@@ -79,8 +79,8 @@ npm run build      # plasmo build → build/chrome-mv3-prod
    - **API base URL** = `http://localhost:8080` → **OK** → **Проверить**.
      **Expected:** «Бэкенд на связи».
    - **Web URL** = `http://localhost:3000` → **OK** (куда ведёт кнопка «К повторению»).
-   - Ввести `demo@engram.dev` / `demo-pass-123` → **Войти**.
-     **Expected:** «Расширение подключено к Engram», показан email.
+   - Ввести `demo@realgo.dev` / `demo-pass-123` → **Войти**.
+     **Expected:** «Расширение подключено к realgo», показан email.
 
 ## 5. Demo-сценарий (соответствует #30)
 

@@ -1,15 +1,15 @@
 /*
- * Engram popup styles as a string so they can be injected via a <style> tag.
+ * realgo popup styles as a string so they can be injected via a <style> tag.
  *
  * Why a string and not a .css import: the popup is reused in three hosts —
  * the toolbar popup (light DOM), the Vite preview (light DOM) and the in-page
  * fallback overlay (shadow DOM). Injecting <style> from the component keeps a
  * single source that also works inside a shadow root.
  *
- * Design tokens are scoped to `.engram-popup` / `:host` (NOT `:root`) so the
+ * Design tokens are scoped to `.realgo-popup` / `:host` (NOT `:root`) so the
  * custom properties cascade correctly inside a shadow root too.
  *
- * Visual system ported from the Figma Make design ("Engram Chrome Extension
+ * Visual system ported from the Figma Make design ("realgo Chrome Extension
  * UI"): a bordered panel with a header bar, a detected-task block and blue
  * (primary) selections — green is reserved for success only. Tokens mirror
  * apps/web/app/globals.css. TODO: move to packages/ui tokens.
@@ -17,7 +17,7 @@
 export const POPUP_CSS = `
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap");
 
-:host, .engram-popup {
+:host, .realgo-popup {
   --bg: #0d1117;
   --panel: #161b22;
   --panel-strong: #1c2128;
@@ -45,10 +45,10 @@ export const POPUP_CSS = `
   --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
 }
 
-.engram-popup, .engram-popup * { box-sizing: border-box; }
+.realgo-popup, .realgo-popup * { box-sizing: border-box; }
 
 /* ── Panel ─────────────────────────────────────────────────────────────── */
-.engram-popup {
+.realgo-popup {
   width: 360px;
   /* Fixed height so the window never resizes between states (loading /
      no-task / form / success / error). The form is the tallest state; this
@@ -68,10 +68,10 @@ export const POPUP_CSS = `
   box-shadow: 0 18px 50px -30px rgba(1, 4, 9, 0.9);
 }
 /* Options page is a full tab, not a fixed-size popup — let it grow naturally. */
-.engram-popup--wide { width: 440px; height: auto; display: block; }
+.realgo-popup--wide { width: 440px; height: auto; display: block; }
 
 /* ── Header bar ────────────────────────────────────────────────────────── */
-.engram-header {
+.realgo-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -80,7 +80,7 @@ export const POPUP_CSS = `
   border-bottom: 1px solid var(--border);
   background: var(--panel-strong);
 }
-.engram-brand {
+.realgo-brand {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -90,9 +90,9 @@ export const POPUP_CSS = `
   letter-spacing: -0.01em;
   color: var(--text);
 }
-.engram-brand--md { font-size: 15px; }
-.engram-brand__mark { display: block; flex-shrink: 0; }
-.engram-header__sub {
+.realgo-brand--md { font-size: 15px; }
+.realgo-brand__mark { display: block; flex-shrink: 0; }
+.realgo-header__sub {
   font-family: var(--font-sans);
   font-size: 11px;
   font-weight: 500;
@@ -100,12 +100,12 @@ export const POPUP_CSS = `
 }
 
 /* ── Detected task block ──────────────────────────────────────────────── */
-.engram-task {
+.realgo-task {
   padding: 12px 16px;
   border-bottom: 1px solid var(--border);
   background: rgba(13, 17, 23, 0.4);
 }
-.engram-task__title {
+.realgo-task__title {
   margin: 0;
   font-family: var(--font-display);
   font-size: 13px;
@@ -115,20 +115,20 @@ export const POPUP_CSS = `
   color: var(--text);
   text-align: center;
 }
-.engram-task__meta {
+.realgo-task__meta {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   margin-top: 6px;
 }
-.engram-task__platform {
+.realgo-task__platform {
   font-family: var(--font-mono);
   font-size: 10px;
   color: var(--text-faint);
 }
 
-.engram-chip {
+.realgo-chip {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -139,19 +139,19 @@ export const POPUP_CSS = `
   font-size: 10px;
   color: var(--text-dim);
 }
-.engram-chip--accent {
+.realgo-chip--accent {
   color: var(--accent-bright);
   border-color: var(--accent);
   background: var(--accent-soft);
 }
-.engram-chip--success {
+.realgo-chip--success {
   color: var(--success-fg);
   border-color: var(--success);
   background: var(--success-soft);
 }
 
 /* ── Body / question groups ───────────────────────────────────────────── */
-.engram-body {
+.realgo-body {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
@@ -162,19 +162,19 @@ export const POPUP_CSS = `
 }
 /* Anchor the form's primary action to the bottom so the fixed-height window
    reads as intentional instead of leaving a gap under the questions. */
-.engram-body > .engram-btn--block,
-.engram-body > .engram-error { margin-top: auto; }
-.engram-question__label {
+.realgo-body > .realgo-btn--block,
+.realgo-body > .realgo-error { margin-top: auto; }
+.realgo-question__label {
   margin: 0 0 8px;
   font-size: 11px;
   font-weight: 500;
   color: var(--text-dim);
 }
-.engram-choices {
+.realgo-choices {
   display: flex;
   gap: 6px;
 }
-.engram-choice {
+.realgo-choice {
   flex: 1;
   appearance: none;
   border: none;
@@ -188,22 +188,22 @@ export const POPUP_CSS = `
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
 }
-.engram-choice:hover:not(:disabled):not([aria-pressed="true"]) {
+.realgo-choice:hover:not(:disabled):not([aria-pressed="true"]) {
   color: var(--text);
   background: rgba(56, 139, 253, 0.12);
 }
-.engram-choice:focus-visible {
+.realgo-choice:focus-visible {
   outline: none;
   box-shadow: 0 0 0 2px var(--accent-glow);
 }
-.engram-choice[aria-pressed="true"] {
+.realgo-choice[aria-pressed="true"] {
   background: var(--accent);
   color: #fff;
 }
-.engram-choice:disabled { color: var(--text-faint); cursor: not-allowed; }
+.realgo-choice:disabled { color: var(--text-faint); cursor: not-allowed; }
 
 /* ── Buttons ──────────────────────────────────────────────────────────── */
-.engram-btn {
+.realgo-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -217,51 +217,51 @@ export const POPUP_CSS = `
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
 }
-.engram-btn--block { width: 100%; }
-.engram-btn:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--accent-glow); }
+.realgo-btn--block { width: 100%; }
+.realgo-btn:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--accent-glow); }
 
-.engram-btn--primary {
+.realgo-btn--primary {
   background: var(--accent);
   color: #fff;
 }
-.engram-btn--primary:hover:not(:disabled) {
+.realgo-btn--primary:hover:not(:disabled) {
   background: var(--accent-strong);
   box-shadow: 0 0 8px var(--accent-glow);
 }
-.engram-btn--primary:active:not(:disabled) { background: var(--accent-active); }
-.engram-btn--primary:disabled {
+.realgo-btn--primary:active:not(:disabled) { background: var(--accent-active); }
+.realgo-btn--primary:disabled {
   background: var(--panel-strong);
   color: var(--text-faint);
   cursor: not-allowed;
 }
 
-.engram-btn--ghost {
+.realgo-btn--ghost {
   padding: 8px 12px;
   font-size: 12px;
   font-weight: 500;
   background: var(--panel-strong);
   color: var(--text-dim);
 }
-.engram-btn--ghost:hover { background: var(--border); color: var(--text); }
-.engram-btn--danger {
+.realgo-btn--ghost:hover { background: var(--border); color: var(--text); }
+.realgo-btn--danger {
   padding: 8px 12px;
   font-size: 12px;
   font-weight: 500;
   background: var(--danger-soft);
   color: var(--danger-fg);
 }
-.engram-btn--danger:hover { background: rgba(218, 54, 51, 0.18); }
+.realgo-btn--danger:hover { background: rgba(218, 54, 51, 0.18); }
 
 /* ── Inputs (options) ─────────────────────────────────────────────────── */
-.engram-field { display: flex; flex-direction: column; gap: 6px; }
-.engram-field__label {
+.realgo-field { display: flex; flex-direction: column; gap: 6px; }
+.realgo-field__label {
   font-size: 11px;
   font-weight: 500;
   color: var(--text-dim);
 }
-.engram-row { display: flex; gap: 8px; }
-.engram-row > .engram-input { flex: 1; }
-.engram-input {
+.realgo-row { display: flex; gap: 8px; }
+.realgo-row > .realgo-input { flex: 1; }
+.realgo-input {
   width: 100%;
   border: 1px solid var(--border);
   background: var(--bg);
@@ -272,23 +272,23 @@ export const POPUP_CSS = `
   font-size: 12px;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
-.engram-input::placeholder { color: var(--text-faint); }
-.engram-input:focus {
+.realgo-input::placeholder { color: var(--text-faint); }
+.realgo-input:focus {
   outline: none;
   border-color: var(--accent);
   box-shadow: 0 0 0 2px var(--accent-soft);
 }
 
-.engram-divider { height: 1px; background: var(--border); border: 0; margin: 0; }
+.realgo-divider { height: 1px; background: var(--border); border: 0; margin: 0; }
 
 /* ── Account row (options, logged in) ─────────────────────────────────── */
-.engram-account {
+.realgo-account {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
 }
-.engram-account__email {
+.realgo-account__email {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -297,21 +297,21 @@ export const POPUP_CSS = `
   font-weight: 500;
   color: var(--text);
 }
-.engram-dot {
+.realgo-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
   background: var(--success-fg);
   flex-shrink: 0;
 }
-.engram-account__note {
+.realgo-account__note {
   margin: 4px 0 0 16px;
   font-size: 11px;
   color: var(--text-faint);
 }
 
 /* ── Centered states (loading / no-task / success) ────────────────────── */
-.engram-state {
+.realgo-state {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -321,39 +321,39 @@ export const POPUP_CSS = `
   padding: 28px 16px;
   text-align: center;
 }
-.engram-state__icon {
+.realgo-state__icon {
   width: 40px;
   height: 40px;
   border-radius: 50%;
   display: grid;
   place-items: center;
 }
-.engram-state__icon--muted {
+.realgo-state__icon--muted {
   background: var(--panel-strong);
   border: 1px solid var(--border);
   color: var(--text-faint);
 }
-.engram-state__icon--success {
+.realgo-state__icon--success {
   background: var(--success-soft);
   border: 1px solid var(--success);
   color: var(--success-fg);
 }
-.engram-state__title {
+.realgo-state__title {
   font-family: var(--font-display);
   font-size: 14px;
   font-weight: 700;
   color: var(--text);
 }
-.engram-state__title--success { color: var(--success-fg); }
-.engram-state__text {
+.realgo-state__title--success { color: var(--success-fg); }
+.realgo-state__text {
   max-width: 230px;
   font-size: 12px;
   line-height: 1.5;
   color: var(--text-faint);
 }
-.engram-muted { color: var(--text-dim); font-size: 11px; }
+.realgo-muted { color: var(--text-dim); font-size: 11px; }
 
-.engram-link {
+.realgo-link {
   background: none;
   border: 0;
   padding: 0;
@@ -365,22 +365,22 @@ export const POPUP_CSS = `
   text-underline-offset: 2px;
   transition: color 0.15s ease;
 }
-.engram-link:hover { color: var(--text-dim); }
-.engram-link--accent { color: var(--accent-bright); }
-.engram-link--accent:hover { color: var(--accent-bright); filter: brightness(1.1); }
+.realgo-link:hover { color: var(--text-dim); }
+.realgo-link--accent { color: var(--accent-bright); }
+.realgo-link--accent:hover { color: var(--accent-bright); filter: brightness(1.1); }
 
-.engram-spinner {
+.realgo-spinner {
   width: 26px;
   height: 26px;
   border-radius: 50%;
   border: 3px solid rgba(255, 255, 255, 0.12);
   border-top-color: var(--accent);
-  animation: engram-spin 0.7s linear infinite;
+  animation: realgo-spin 0.7s linear infinite;
 }
-@keyframes engram-spin { to { transform: rotate(360deg); } }
+@keyframes realgo-spin { to { transform: rotate(360deg); } }
 
 /* ── Error banner ─────────────────────────────────────────────────────── */
-.engram-error {
+.realgo-error {
   display: flex;
   align-items: flex-start;
   gap: 8px;
@@ -389,9 +389,9 @@ export const POPUP_CSS = `
   border: 1px solid var(--danger-line);
   background: var(--danger-soft);
 }
-.engram-error__icon { color: var(--danger-fg); flex-shrink: 0; margin-top: 1px; }
-.engram-error__text { flex: 1; color: var(--danger-fg); font-size: 11px; }
-.engram-error__retry {
+.realgo-error__icon { color: var(--danger-fg); flex-shrink: 0; margin-top: 1px; }
+.realgo-error__text { flex: 1; color: var(--danger-fg); font-size: 11px; }
+.realgo-error__retry {
   flex-shrink: 0;
   background: none;
   border: 0;
@@ -404,7 +404,7 @@ export const POPUP_CSS = `
 }
 
 /* ── In-page fallback overlay (shadow DOM host content) ───────────────── */
-.engram-overlay {
+.realgo-overlay {
   position: fixed;
   top: 16px;
   right: 16px;
@@ -413,8 +413,8 @@ export const POPUP_CSS = `
   box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55);
   overflow: hidden;
 }
-.engram-overlay .engram-popup { border-radius: 12px; }
-.engram-overlay-close {
+.realgo-overlay .realgo-popup { border-radius: 12px; }
+.realgo-overlay-close {
   position: absolute;
   top: 13px;
   right: 14px;
@@ -426,10 +426,10 @@ export const POPUP_CSS = `
   cursor: pointer;
   z-index: 1;
 }
-.engram-overlay-close:hover { color: var(--text); }
+.realgo-overlay-close:hover { color: var(--text); }
 
 @media (prefers-reduced-motion: reduce) {
-  .engram-spinner { animation: none; }
-  .engram-choice, .engram-btn { transition: none; }
+  .realgo-spinner { animation: none; }
+  .realgo-choice, .realgo-btn { transition: none; }
 }
 `;

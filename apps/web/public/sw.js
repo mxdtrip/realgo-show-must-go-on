@@ -1,4 +1,4 @@
-const CACHE_NAME = "engram-shell-v2";
+const CACHE_NAME = "realgo-shell-v2";
 const OFFLINE_URL = "/offline.html";
 const APP_SHELL = ["/", "/dashboard", "/cards", "/cards/session", "/manifest.webmanifest", "/icons/icon.svg", OFFLINE_URL];
 const CACHEABLE_DESTINATIONS = new Set(["document", "script", "style", "image", "font"]);

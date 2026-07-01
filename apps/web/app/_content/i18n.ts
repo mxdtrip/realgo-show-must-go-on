@@ -6,14 +6,14 @@ export const defaultLocale: Locale = "ru";
 
 const ru = {
   common: {
-    brand: "Engram",
+    brand: "realgo",
     metadata: {
-      title: "Engram — Memory layer for interview prep",
+      title: "realgo — Memory layer for interview prep",
       description:
-        "Engram helps you remember solved interview tasks, review them at the right time, and prepare with a clearer plan.",
-      applicationName: "Engram",
-      siteUrl: "https://engram.dev",
-      ogImageAlt: "Engram interview prep memory layer preview",
+        "realgo helps you remember solved interview tasks, review them at the right time, and prepare with a clearer plan.",
+      applicationName: "realgo",
+      siteUrl: "https://realgo.dev",
+      ogImageAlt: "realgo interview prep memory layer preview",
       ogEyebrow: "/memory /roadmap /reviews",
       ogHeadline: "Memory layer for interview prep",
       ogFooter: "LeetCode solved tasks -> spaced repetition -> interview roadmap",
@@ -28,14 +28,14 @@ const ru = {
     },
   },
   pwa: {
-    name: "Engram — Memory layer for interview prep",
-    shortName: "Engram",
+    name: "realgo — Memory layer for interview prep",
+    shortName: "realgo",
     description:
-      "Engram helps you remember solved interview tasks, review them at the right time, and prepare with a clearer plan.",
+      "realgo helps you remember solved interview tasks, review them at the right time, and prepare with a clearer plan.",
   },
   marketing: {
     hero: {
-      homeAria: "Engram home",
+      homeAria: "realgo home",
       navAria: "Site sections",
       nav: ["Memory", "Roadmap", "Reviews", "Pricing", "FAQ"],
       auth: {
@@ -54,12 +54,12 @@ const ru = {
       sortingCodeAria: "Sorting code",
       eyebrow: "// spaced-repetition for interview prep",
       tagline:
-        "Реши задачу один раз — Engram пересоберёт её в памяти к нужному дню. Перепиши код сортировки слева и запусти: алгоритм наводит порядок прямо в названии.",
+        "Реши задачу один раз — realgo пересоберёт её в памяти к нужному дню. Перепиши код сортировки слева и запусти: алгоритм наводит порядок прямо в названии.",
       sortingControlsAria: "Sorting controls",
-      wordAria: "engram",
+      wordAria: "realgo",
       chaos: "Chaos",
       sort: "Sort",
-      codeError: "Код не компилируется — Engram не смог его выполнить. Проверь синтаксис.",
+      codeError: "Код не компилируется — realgo не смог его выполнить. Проверь синтаксис.",
     },
     memoryTasks: [
       ["Two Sum II", "Two Pointers", "повторить", "завтра"],
@@ -115,9 +115,9 @@ const ru = {
     sections: {
       memory: {
         kicker: "Memory",
-        title: "Решай задачи где удобно. Engram запомнит, что важно повторить.",
+        title: "Решай задачи где удобно. realgo запомнит, что важно повторить.",
         description:
-          "После практики ты отмечаешь уровень уверенности. Engram превращает это в понятное расписание повторений и возвращает к темам, которые нужно закрепить перед интервью.",
+          "После практики ты отмечаешь уровень уверенности. realgo превращает это в понятное расписание повторений и возвращает к темам, которые нужно закрепить перед интервью.",
         demoUrl: "leetcode.com/problems/two-sum-ii",
         demoStatus: "Saved",
         ratingAria: "Difficulty rating",
@@ -129,13 +129,13 @@ const ru = {
         readiness: "68% готовность",
         title: "План подготовки под твою цель и дату интервью.",
         description:
-          "Укажи роль, компанию и сколько времени осталось. Engram соберёт маршрут по темам, задачам и повторениям, чтобы каждый день подготовки имел понятный следующий шаг.",
+          "Укажи роль, компанию и сколько времени осталось. realgo соберёт маршрут по темам, задачам и повторениям, чтобы каждый день подготовки имел понятный следующий шаг.",
       },
       reviews: {
         kicker: "Reviews",
         title: "Повторяй паттерны так, чтобы вспомнить их на интервью.",
         description:
-          "Engram создаёт короткие карточки по подходу, шагам решения и граничным случаям. Вместо длинных конспектов ты получаешь вопросы, которые тренируют воспроизведение.",
+          "realgo создаёт короткие карточки по подходу, шагам решения и граничным случаям. Вместо длинных конспектов ты получаешь вопросы, которые тренируют воспроизведение.",
       },
       pricing: {
         kicker: "Pricing",
@@ -146,14 +146,14 @@ const ru = {
       },
       faq: {
         kicker: "FAQ",
-        title: "Коротко о том, как Engram вписывается в подготовку.",
+        title: "Коротко о том, как realgo вписывается в подготовку.",
         description:
           "FAQ закрывает практические вопросы: что сохраняет расширение, как работают повторения и можно ли начать без полного перехода на новый инструмент.",
         items: [
           {
-            question: "Engram сам решает задачи или только помогает повторять?",
+            question: "realgo сам решает задачи или только помогает повторять?",
             answer:
-              "Engram не подменяет практику. Ты решаешь задачи на LeetCode или NeetCode, отмечаешь уверенность, а сервис возвращает нужные задачи, паттерны и карточки в расписание повторений.",
+              "realgo не подменяет практику. Ты решаешь задачи на LeetCode или NeetCode, отмечаешь уверенность, а сервис возвращает нужные задачи, паттерны и карточки в расписание повторений.",
           },
           {
             question: "Что именно сохраняет браузерное расширение?",
@@ -163,7 +163,7 @@ const ru = {
           {
             question: "Чем это отличается от обычного списка решённых задач?",
             answer:
-              "Список показывает, что уже было сделано. Engram планирует, когда к этому вернуться, превращает решение в короткие карточки и подсвечивает паттерны, которые чаще всего забываются.",
+              "Список показывает, что уже было сделано. realgo планирует, когда к этому вернуться, превращает решение в короткие карточки и подсвечивает паттерны, которые чаще всего забываются.",
           },
           {
             question: "Можно пользоваться бесплатно?",
@@ -205,7 +205,7 @@ const ru = {
           ],
         },
       ],
-      copyright: "© 2026 Engram. All rights reserved.",
+      copyright: "© 2026 realgo. All rights reserved.",
       tagline: "built for people who interview",
       poweredBy: "powered by",
     },
@@ -219,7 +219,7 @@ const ru = {
       company: {
         title: "Компания мечты",
         description:
-          "Если укажешь компанию, Engram сможет позже приоритизировать темы и задачи под её интервью-паттерны.",
+          "Если укажешь компанию, realgo сможет позже приоритизировать темы и задачи под её интервью-паттерны.",
         label: "В какие компании хочешь устроиться?",
         placeholder: "Например, Google, Amazon, Yandex…",
         selectedLabel: "Выбранные компании",
@@ -243,7 +243,7 @@ const ru = {
       },
       welcome: {
         eyebrow: "setup complete",
-        title: "Добро пожаловать в Engram",
+        title: "Добро пожаловать в realgo",
         description:
           "Мы сохранили стартовые настройки локально. Теперь можно перейти в кабинет и начать повторение без лишнего шума.",
         action: "Перейти в Dashboard",
@@ -304,7 +304,7 @@ const ru = {
         eyebrow: "/dashboard",
         title: "Сегодня повторяем то, что реально может забыться.",
         description:
-          "Каждый день Engram собирает короткую очередь повторений, подсвечивает слабые темы и показывает, насколько ты готов к интервью — чтобы решённое не забывалось до собеседования.",
+          "Каждый день realgo собирает короткую очередь повторений, подсвечивает слабые темы и показывает, насколько ты готов к интервью — чтобы решённое не забывалось до собеседования.",
         nextAction: "next action",
         nextUp: "next up",
         nextTitle: "Longest Substring",
@@ -315,13 +315,13 @@ const ru = {
         patternsEyebrow: "patterns",
         patternsTitle: "Слабые зоны",
         roadmapEyebrow: "roadmap",
-        roadmapTitle: "Engram Core Roadmap",
+        roadmapTitle: "realgo Core Roadmap",
       },
       reviews: {
         eyebrow: "/reviews",
         title: "Очередь повторений",
         description:
-          "То, что Engram советует повторить сегодня: задачи, паттерны и карточки — по одному короткому подходу на каждый.",
+          "То, что realgo советует повторить сегодня: задачи, паттерны и карточки — по одному короткому подходу на каждый.",
         summaryUnit: "повторений сегодня",
         types: [
           ["problem review", "задачи", "accent"],
@@ -335,7 +335,7 @@ const ru = {
         eyebrow: "/problems",
         title: "Личная база задач",
         description:
-          "Все задачи, которые ты решил и сохранил — расширением из браузера или вручную. Отсюда Engram планирует повторения.",
+          "Все задачи, которые ты решил и сохранил — расширением из браузера или вручную. Отсюда realgo планирует повторения.",
         panelEyebrow: "library",
         panelTitle: "Saved problems",
         summaryUnit: "задач в библиотеке",
@@ -348,7 +348,7 @@ const ru = {
       },
       roadmap: {
         eyebrow: "/roadmap",
-        title: "Engram Core Roadmap",
+        title: "realgo Core Roadmap",
         description:
           "План подготовки на 21 день: от базовых паттернов до формата интервью. На каждой неделе — свой набор тем и прогресс по ним.",
         panelEyebrow: "plan",
@@ -362,7 +362,7 @@ const ru = {
         eyebrow: "/patterns",
         title: "Паттерны и confidence",
         description:
-          "Темы, где уверенность проседает. Engram показывает не просто «реши ещё», а что именно закрепить в первую очередь.",
+          "Темы, где уверенность проседает. realgo показывает не просто «реши ещё», а что именно закрепить в первую очередь.",
         panelEyebrow: "weak spots",
         panelTitle: "Pattern confidence",
         summaryUnit: "паттерна требуют внимания",
@@ -426,7 +426,7 @@ const ru = {
             easy: "через 7 дней",
           },
           emptyHistory: "Оценок пока нет — открой ответ и выбери сложность.",
-          sessionCompleteTitle: "Engram cards complete",
+          sessionCompleteTitle: "realgo cards complete",
           sessionCompleteBody: "Карточки на сегодня разобраны. Завтра вернём нужные паттерны.",
           focus: {
             exit: "Exit session",
@@ -481,7 +481,7 @@ const ru = {
         profileEyebrow: "profile",
         profileTitle: "Preparation settings",
         installEyebrow: "pwa",
-        installTitle: "Install Engram PWA",
+        installTitle: "Install realgo PWA",
         notificationsEyebrow: "notifications",
         notificationsTitle: "Review reminders",
         privacyEyebrow: "privacy",
@@ -492,7 +492,7 @@ const ru = {
         deleteAccount: "Delete account",
         profile: {
           emailLabel: "email",
-          email: "demo@engram.dev",
+          email: "demo@realgo.dev",
           timezoneLabel: "timezone",
           timezone: "Europe/Moscow",
           timezonePlaceholder: "Например, Europe/Moscow",
@@ -506,10 +506,10 @@ const ru = {
         },
         install: {
           description:
-            "Сохрани Engram как приложение, чтобы открывать кабинет и карточки с домашнего экрана.",
+            "Сохрани realgo как приложение, чтобы открывать кабинет и карточки с домашнего экрана.",
           install: "Install app",
           installed: "installed",
-          manualSupport: "Engram поддерживает установку как PWA-приложение.",
+          manualSupport: "realgo поддерживает установку как PWA-приложение.",
           manualHint: "Используй меню браузера: Share → Add to Home Screen.",
           ready: "ready to install",
         },
@@ -527,7 +527,7 @@ const ru = {
           streakReminder: "Streak protection reminder",
           reminderTime: "Reminder time",
           sendTest: "Send test notification",
-          testTitle: "Engram review reminder",
+          testTitle: "realgo review reminder",
           testBody: "Карточки ждут короткого повторения.",
           testSent: "test notification sent",
         },

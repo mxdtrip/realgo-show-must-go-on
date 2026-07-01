@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 const AUTH_BYPASS = process.env.NEXT_PUBLIC_AUTH_BYPASS === "1";
-const DEMO_BANNER_STORAGE_KEY = "engram.demo-banner.dismissed";
+const DEMO_BANNER_STORAGE_KEY = "realgo.demo-banner.dismissed";
 
 export function DemoBanner() {
   const [dismissed, setDismissed] = useState(false);

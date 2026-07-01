@@ -11,13 +11,13 @@ type Mode = "login" | "register";
 
 const COPY = {
   login: {
-    aria: "Вход в Engram",
+    aria: "Вход в realgo",
     submit: "Войти",
     pending: "Входим…",
     redirect: "/dashboard",
   },
   register: {
-    aria: "Регистрация в Engram",
+    aria: "Регистрация в realgo",
     submit: "Создать аккаунт",
     pending: "Создаём…",
     redirect: "/onboarding/profile",

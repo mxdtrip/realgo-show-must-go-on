@@ -13,7 +13,7 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
   const retryRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    console.error("Engram global error", error);
+    console.error("realgo global error", error);
   }, [error]);
 
   useEffect(() => {
@@ -23,7 +23,7 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
   return (
     <html lang="ru">
       <head>
-        <title>Engram — ошибка сервера</title>
+        <title>realgo — ошибка сервера</title>
       </head>
       <body className="global-error-body">
         <main
@@ -40,7 +40,7 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
               </svg>
             </div>
             <p className="error-screen-kicker">500</p>
-            <h1 id="global-error-title">Engram не смог загрузить приложение</h1>
+            <h1 id="global-error-title">realgo не смог загрузить приложение</h1>
             <p className="error-screen-copy">
               Сбой произошёл выше основного layout. Повторите загрузку; если ошибка вернётся,
               используйте код для поиска в серверных логах.
