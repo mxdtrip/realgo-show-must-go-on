@@ -1,38 +1,32 @@
 /*
- * Engram popup styles as a string so they can be injected via a <style> tag.
+ * realgo popup styles as a string so they can be injected via a <style> tag.
  *
- * Why a string and not a .css import: the popup is reused in three hosts —
- * the toolbar popup (light DOM), the Vite preview (light DOM) and the in-page
+ * Why a string and not a .css import: the popup is reused in three hosts:
+ * the toolbar popup (light DOM), the Vite preview (light DOM), and the in-page
  * fallback overlay (shadow DOM). Injecting <style> from the component keeps a
  * single source that also works inside a shadow root.
  *
- * Design tokens are scoped to `.engram-popup` / `:host` (NOT `:root`) so the
+ * Design tokens are scoped to `.realgo-popup` / `:host` (NOT `:root`) so the
  * custom properties cascade correctly inside a shadow root too.
- *
- * Visual system ported from the Figma Make design ("Engram Chrome Extension
- * UI"): a bordered panel with a header bar, a detected-task block and blue
- * (primary) selections — green is reserved for success only. Tokens mirror
- * apps/web/app/globals.css. TODO: move to packages/ui tokens.
  */
 export const POPUP_CSS = `
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap");
 
-:host, .engram-popup {
-  --bg: #0d1117;
-  --panel: #161b22;
-  --panel-strong: #1c2128;
-  --border: #30363d;
-  --border-strong: #444c56;
-  --text: #e6edf3;
-  --text-dim: #7d8590;
-  --text-faint: #6e7681;
-  --accent: #2f81f7;
-  --accent-strong: #388bfd;
-  --accent-bright: #58a6ff;
-  --accent-active: #1f6feb;
-  --accent-soft: rgba(56, 139, 253, 0.12);
-  --accent-line: rgba(56, 139, 253, 0.4);
-  --accent-glow: rgba(56, 139, 253, 0.35);
+:host, .realgo-popup {
+  --bg: #020812;
+  --panel: rgba(4, 12, 22, 0.98);
+  --panel-raised: rgba(7, 16, 29, 0.96);
+  --panel-strong: rgba(10, 22, 38, 0.92);
+  --border: rgba(148, 163, 184, 0.2);
+  --border-strong: rgba(148, 163, 184, 0.3);
+  --text: #f3f7ff;
+  --text-dim: #9ba9c2;
+  --text-faint: #718096;
+  --accent: #2f8dff;
+  --accent-strong: #58a6ff;
+  --accent-soft: rgba(47, 141, 255, 0.15);
+  --accent-line: rgba(47, 141, 255, 0.5);
+  --accent-glow: rgba(47, 141, 255, 0.35);
   --success: #238636;
   --success-fg: #3fb950;
   --success-soft: rgba(35, 134, 54, 0.15);
@@ -40,291 +34,408 @@ export const POPUP_CSS = `
   --danger-fg: #f85149;
   --danger-soft: rgba(218, 54, 51, 0.08);
   --danger-line: rgba(218, 54, 51, 0.35);
+  --difficulty-muted: #6f7d92;
+  --difficulty-easy: #3fb950;
+  --difficulty-easy-soft: rgba(63, 185, 80, 0.13);
+  --difficulty-normal: #f5b84b;
+  --difficulty-normal-soft: rgba(245, 184, 75, 0.13);
+  --difficulty-hard: #ff5a5f;
+  --difficulty-hard-soft: rgba(255, 90, 95, 0.12);
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Space Grotesk", "Inter", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --compact-scale: 0.5882352941;
 }
 
-.engram-popup, .engram-popup * { box-sizing: border-box; }
+.realgo-popup, .realgo-popup * { box-sizing: border-box; }
 
-/* ── Panel ─────────────────────────────────────────────────────────────── */
-.engram-popup {
-  width: 360px;
-  /* Fixed height so the window never resizes between states (loading /
-     no-task / form / success / error). Sized to the tallest state — the form
-     with the two-line error banner (~388px). Shorter states keep the CTA
-     pinned to the bottom (.engram-foot margin-top:auto); centered states fill
-     via flex. */
-  height: 392px;
+/* Panel */
+.realgo-popup {
+  width: 560px;
+  height: 544px;
   display: flex;
   flex-direction: column;
   margin: 0;
-  background: var(--panel);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background:
+    radial-gradient(circle at 50% 37%, rgba(47, 141, 255, 0.22), transparent 33%),
+    linear-gradient(180deg, rgba(7, 16, 29, 0.98), rgba(3, 10, 18, 0.99));
   color: var(--text);
+  box-shadow:
+    0 24px 72px rgba(0, 0, 0, 0.55),
+    0 0 80px rgba(47, 141, 255, 0.08);
   font-family: var(--font-sans);
   font-size: 14px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 18px 50px -30px rgba(1, 4, 9, 0.9);
 }
-/* Options page is a full tab, not a fixed-size popup — let it grow naturally. */
-.engram-popup--wide { width: 440px; height: auto; display: block; }
+.realgo-popup--compact {
+  zoom: var(--compact-scale);
+}
 
-/* ── Header bar ────────────────────────────────────────────────────────── */
-.engram-header {
+/* Options page is a full tab, not a fixed-size popup. */
+.realgo-popup--wide {
+  width: 440px;
+  height: auto;
+  display: block;
+  background: var(--panel);
+}
+.realgo-popup--wide .realgo-header { min-height: 62px; padding: 14px 18px; }
+.realgo-popup--wide .realgo-brand { gap: 10px; font-size: 16px; }
+.realgo-popup--wide .realgo-body { padding: 20px; overflow: visible; }
+
+/* Header bar */
+.realgo-header {
+  min-height: 80px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 12px 16px;
+  gap: 18px;
+  padding: 22px 28px;
   border-bottom: 1px solid var(--border);
-  background: var(--panel-strong);
+  background: rgba(3, 10, 18, 0.58);
 }
-.engram-brand {
+.realgo-brand {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 16px;
+  min-width: 0;
   font-family: var(--font-display);
+  font-size: 21px;
   font-weight: 700;
-  font-size: 13px;
-  letter-spacing: -0.01em;
+  letter-spacing: 0;
   color: var(--text);
 }
-.engram-brand--md { font-size: 15px; }
-.engram-brand__mark { display: block; flex-shrink: 0; }
-.engram-header__sub {
-  font-family: var(--font-sans);
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--accent-bright);
+.realgo-brand--md { font-size: 21px; }
+.realgo-brand__mark {
+  display: block;
+  flex-shrink: 0;
+  filter: drop-shadow(0 8px 18px rgba(47, 141, 255, 0.35));
 }
-.engram-header__right {
+.realgo-header__sub {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--accent-strong);
+}
+.realgo-header__right {
   display: flex;
   align-items: center;
   gap: 10px;
+  min-width: 0;
 }
-/* Borderless "submitted" status that lives on the top bar next to the brand. */
-.engram-status {
+.realgo-status {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 10px;
+  max-width: 100%;
+  min-height: 36px;
+  padding: 8px 13px;
+  border: 1px solid var(--accent-line);
+  border-radius: 9px;
+  background: rgba(8, 20, 36, 0.68);
+  color: var(--accent-strong);
   font-family: var(--font-sans);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 500;
-  color: var(--accent-bright);
+  line-height: 1.2;
+  white-space: nowrap;
 }
-.engram-iconbtn {
+.realgo-status__icon {
+  width: 20px;
+  height: 20px;
   display: grid;
   place-items: center;
-  width: 30px;
-  height: 30px;
-  border: none;
+  flex-shrink: 0;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+}
+.realgo-iconbtn {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border: 1px solid transparent;
   border-radius: 8px;
-  background: var(--panel-strong);
+  background: transparent;
   color: var(--text-dim);
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
-.engram-iconbtn:hover { background: var(--border); color: var(--text); }
-.engram-iconbtn:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--accent-glow); }
-
-/* ── Detected task block ──────────────────────────────────────────────── */
-.engram-task {
-  padding: 14px 16px;
-  border-bottom: 1px solid var(--border);
-  background: rgba(13, 17, 23, 0.4);
-}
-.engram-task__title {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: 16px;
-  font-weight: 700;
-  line-height: 1.3;
-  letter-spacing: -0.01em;
+.realgo-iconbtn:hover {
+  border-color: var(--border);
+  background: rgba(148, 163, 184, 0.08);
   color: var(--text);
 }
-.engram-task__meta {
+.realgo-iconbtn:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--accent-glow); }
+
+/* Detected task block */
+.realgo-task {
+  min-height: 160px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 32px 32px 30px;
+  border-bottom: 1px solid var(--border);
+  background:
+    radial-gradient(circle at 50% 50%, rgba(47, 141, 255, 0.22), transparent 46%),
+    rgba(4, 12, 22, 0.36);
+  text-align: center;
+}
+.realgo-task__title {
+  margin: 0;
+  max-width: 460px;
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: 0;
+}
+.realgo-task__meta {
   display: flex;
   align-items: center;
+  justify-content: center;
   flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 8px;
+  gap: 8px;
+  margin: 0;
 }
-.engram-tag {
+.realgo-tag {
   display: inline-flex;
   align-items: center;
-  padding: 3px 9px;
-  border-radius: 6px;
-  background: var(--panel-strong);
-  font-size: 11px;
-  font-weight: 500;
+  max-width: 160px;
+  min-height: 30px;
+  padding: 5px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: rgba(10, 22, 38, 0.58);
   color: var(--text-dim);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* ── Body / question groups ───────────────────────────────────────────── */
-.engram-body {
+/* Body / question groups */
+.realgo-body {
   flex: 1;
   min-height: 0;
-  overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 18px;
-  padding: 18px 16px 16px;
+  justify-content: center;
+  padding: 0 24px;
+  overflow: hidden;
 }
-/* The footer (hint/error + CTA) is pinned to the bottom so the fixed-height
-   window reads as intentional rather than leaving a gap under the questions. */
-.engram-foot {
-  margin-top: auto;
+.realgo-foot {
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
   gap: 12px;
+  padding: 0 24px 24px;
+  background: rgba(3, 10, 18, 0.24);
 }
 
-/* ── Section (titled question group) ──────────────────────────────────── */
-.engram-section__head { margin-bottom: 10px; }
-.engram-section__title {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: 14px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  color: var(--text);
+/* Section */
+.realgo-section {
+  width: 100%;
+  padding: 0;
 }
-.engram-section__sub {
-  margin: 3px 0 0;
-  font-size: 12px;
-  color: var(--text-dim);
-}
-
-/* ── Hint line ────────────────────────────────────────────────────────── */
-.engram-hint {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0;
-  font-size: 11px;
-  line-height: 1.4;
-  color: var(--text-faint);
-}
-.engram-hint__icon { display: inline-flex; flex-shrink: 0; color: var(--text-faint); }
-
-.engram-choices {
-  display: flex;
-  gap: 8px;
-}
-.engram-choice {
-  flex: 1;
-  min-width: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  appearance: none;
-  border: 1.5px solid transparent;
-  background: var(--panel-strong);
-  color: var(--text);
-  border-radius: 10px;
-  padding: 13px 10px;
-  font-family: var(--font-sans);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
-}
-.engram-choice__label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.engram-choice:hover:not(:disabled):not([aria-pressed="true"]) {
-  background: #232a33;
-  border-color: var(--border-strong);
-}
-.engram-choice:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 2px var(--accent-glow);
-}
-.engram-choice[aria-pressed="true"] {
-  background: rgba(47, 129, 247, 0.16);
-  border-color: var(--accent);
-  color: var(--text);
-  box-shadow: 0 0 0 1px var(--accent), 0 0 12px -2px var(--accent-glow);
-}
-/* Blue circular check badge on the selected option. */
-.engram-choice__check {
+.realgo-section__head {
+  min-height: 64px;
   display: grid;
   place-items: center;
-  width: 18px;
-  height: 18px;
-  flex-shrink: 0;
-  border-radius: 50%;
-  background: var(--accent);
-  color: #fff;
+  margin-bottom: 0;
+  text-align: center;
 }
-.engram-choice:disabled { cursor: not-allowed; opacity: 0.6; }
+.realgo-section__title {
+  margin: 0;
+  transform: translateY(-10px);
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: 21.6px;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: 0;
+}
+.realgo-choices {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(4, 12, 22, 0.62);
+}
+.realgo-choice {
+  min-width: 0;
+  min-height: 100px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 12px;
+  appearance: none;
+  border: 0;
+  border-right: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  padding: 18px 10px 17px;
+  font-family: var(--font-sans);
+  font-size: 21.6px;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+.realgo-choice:last-child { border-right: 0; }
+.realgo-choice__icon {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 1.5px solid var(--difficulty-muted);
+  border-radius: 50%;
+  color: var(--difficulty-muted);
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+.realgo-choice__label {
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.realgo-choice:hover:not(:disabled):not([aria-pressed="true"]) {
+  background: rgba(47, 141, 255, 0.08);
+}
+.realgo-choice:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px rgba(88, 166, 255, 0.35);
+}
+.realgo-choice[aria-pressed="true"] {
+  color: var(--text);
+}
+.realgo-choice[data-difficulty="easy"][aria-pressed="true"] {
+  background: var(--difficulty-easy-soft);
+}
+.realgo-choice[data-difficulty="easy"][aria-pressed="true"] .realgo-choice__icon {
+  background: var(--difficulty-easy-soft);
+  border-color: var(--difficulty-easy);
+  color: var(--difficulty-easy);
+}
+.realgo-choice[data-difficulty="normal"][aria-pressed="true"] {
+  background: var(--difficulty-normal-soft);
+}
+.realgo-choice[data-difficulty="normal"][aria-pressed="true"] .realgo-choice__icon {
+  background: var(--difficulty-normal-soft);
+  border-color: var(--difficulty-normal);
+  color: var(--difficulty-normal);
+}
+.realgo-choice[data-difficulty="hard"][aria-pressed="true"] {
+  background: var(--difficulty-hard-soft);
+}
+.realgo-choice[data-difficulty="hard"][aria-pressed="true"] .realgo-choice__icon {
+  background: var(--difficulty-hard-soft);
+  border-color: var(--difficulty-hard);
+  color: var(--difficulty-hard);
+}
+.realgo-choice:disabled { cursor: not-allowed; opacity: 0.62; }
 
-/* ── Buttons ──────────────────────────────────────────────────────────── */
-.engram-btn {
+/* Buttons */
+.realgo-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 9px 16px;
-  border-radius: 8px;
-  border: none;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 10px 16px;
   font-family: var(--font-sans);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
+  line-height: 1.2;
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease,
+    opacity 0.15s ease;
 }
-.engram-btn--block { width: 100%; }
-.engram-btn--lg { padding: 13px 16px; font-size: 14px; border-radius: 10px; }
-.engram-btn:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--accent-glow); }
-
-.engram-btn--primary {
+.realgo-btn--block { width: 100%; }
+.realgo-btn--lg {
+  min-height: 48px;
+  padding: 13px 16px;
+  border-radius: 8px;
+  font-size: 21.6px;
+}
+.realgo-btn--state {
+  min-width: 128px;
+  min-height: 42px;
+  padding: 11px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+.realgo-btn:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--accent-glow); }
+.realgo-btn--primary {
+  border-color: var(--accent);
   background: var(--accent);
   color: #fff;
 }
-.engram-btn--primary:hover:not(:disabled) {
+.realgo-btn--primary:hover:not(:disabled) {
+  border-color: var(--accent-strong);
   background: var(--accent-strong);
-  box-shadow: 0 0 10px var(--accent-glow);
+  box-shadow: 0 0 16px rgba(47, 141, 255, 0.25);
 }
-.engram-btn--primary:active:not(:disabled) { background: var(--accent-active); }
-/* Stay visibly "primary" when disabled (just dimmed) instead of going gray —
-   the CTA should never read as a dead control. */
-.engram-btn--primary:disabled {
-  background: var(--accent);
-  color: #fff;
-  opacity: 0.45;
+.realgo-btn--primary:active:not(:disabled) { background: #1f6feb; }
+.realgo-btn--primary:disabled {
+  border-color: var(--border);
+  background: rgba(10, 22, 38, 0.42);
+  color: var(--text-faint);
+  opacity: 1;
   cursor: not-allowed;
 }
-
-.engram-btn--ghost {
-  padding: 8px 12px;
-  font-size: 12px;
-  font-weight: 500;
-  background: var(--panel-strong);
+.realgo-btn--ghost {
+  border-color: var(--border);
+  background: rgba(10, 22, 38, 0.48);
   color: var(--text-dim);
 }
-.engram-btn--ghost:hover { background: var(--border); color: var(--text); }
-.engram-btn--danger {
+.realgo-btn--ghost:hover {
+  border-color: var(--border-strong);
+  background: rgba(148, 163, 184, 0.12);
+  color: var(--text);
+}
+.realgo-btn--danger {
   padding: 8px 12px;
   font-size: 12px;
   font-weight: 500;
   background: var(--danger-soft);
   color: var(--danger-fg);
 }
-.engram-btn--danger:hover { background: rgba(218, 54, 51, 0.18); }
+.realgo-btn--danger:hover { background: rgba(218, 54, 51, 0.18); }
 
-/* ── Inputs (options) ─────────────────────────────────────────────────── */
-.engram-field { display: flex; flex-direction: column; gap: 6px; }
-.engram-field__label {
+/* Inputs (options) */
+.realgo-field { display: flex; flex-direction: column; gap: 6px; }
+.realgo-field__label {
   font-size: 11px;
   font-weight: 500;
   color: var(--text-dim);
 }
-.engram-row { display: flex; gap: 8px; }
-.engram-row > .engram-input { flex: 1; }
-.engram-input {
+.realgo-row { display: flex; gap: 8px; }
+.realgo-row > .realgo-input { flex: 1; }
+.realgo-input {
   width: 100%;
   border: 1px solid var(--border);
   background: var(--bg);
@@ -335,23 +446,22 @@ export const POPUP_CSS = `
   font-size: 12px;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
-.engram-input::placeholder { color: var(--text-faint); }
-.engram-input:focus {
+.realgo-input::placeholder { color: var(--text-faint); }
+.realgo-input:focus {
   outline: none;
   border-color: var(--accent);
   box-shadow: 0 0 0 2px var(--accent-soft);
 }
+.realgo-divider { height: 1px; background: var(--border); border: 0; margin: 0; }
 
-.engram-divider { height: 1px; background: var(--border); border: 0; margin: 0; }
-
-/* ── Account row (options, logged in) ─────────────────────────────────── */
-.engram-account {
+/* Account row (options, logged in) */
+.realgo-account {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
 }
-.engram-account__email {
+.realgo-account__email {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -360,126 +470,215 @@ export const POPUP_CSS = `
   font-weight: 500;
   color: var(--text);
 }
-.engram-dot {
+.realgo-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
   background: var(--success-fg);
   flex-shrink: 0;
 }
-.engram-account__note {
+.realgo-account__note {
   margin: 4px 0 0 16px;
   font-size: 11px;
   color: var(--text-faint);
 }
 
-/* ── Centered states (loading / no-task / success) ────────────────────── */
-.engram-state {
+/* Centered states (loading / no-task / success) */
+.realgo-state {
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 12px;
-  padding: 28px 16px;
+  padding: 32px 28px;
   text-align: center;
 }
-.engram-state__icon {
-  width: 40px;
-  height: 40px;
+.realgo-state__icon {
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   display: grid;
   place-items: center;
 }
-.engram-state__icon--muted {
+.realgo-state__icon--muted {
   background: var(--panel-strong);
   border: 1px solid var(--border);
   color: var(--text-faint);
 }
-.engram-state__icon--success {
+.realgo-state__icon--success {
   background: var(--success-soft);
   border: 1px solid var(--success);
   color: var(--success-fg);
 }
-.engram-state__title {
+.realgo-state__title {
+  margin: 0;
   font-family: var(--font-display);
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--text);
 }
-.engram-state__title--success { color: var(--success-fg); }
-.engram-state__text {
-  max-width: 230px;
-  font-size: 12px;
+.realgo-state__title--success { color: var(--success-fg); }
+.realgo-state__text {
+  max-width: 310px;
+  margin: 0;
+  font-size: 13px;
   line-height: 1.5;
   color: var(--text-faint);
 }
-.engram-muted { color: var(--text-dim); font-size: 11px; }
+.realgo-state__actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  width: 100%;
+  margin-top: 6px;
+}
+.realgo-state--loading-scene {
+  gap: 20px;
+  padding: 34px 40px 42px;
+}
+.realgo-state--loading-scene .realgo-spinner {
+  width: 58px;
+  height: 58px;
+  border-width: 5px;
+}
+.realgo-state--loading-scene .realgo-muted {
+  font-size: 20px;
+  line-height: 1.45;
+}
+.realgo-state--no-task-scene .realgo-state__text,
+.realgo-state--no-task-scene .realgo-link {
+  font-size: 20px;
+  line-height: 1.45;
+}
+.realgo-state--success-scene {
+  --success-action-gap: 24px;
+  justify-content: flex-start;
+  gap: 20px;
+  padding: 34px var(--success-action-gap) var(--success-action-gap);
+}
+.realgo-state--success-scene > div:not(.realgo-state__actions) {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.realgo-state--success-scene .realgo-state__icon {
+  width: 58px;
+  height: 58px;
+  /* Absorb the free space above the icon; the actions get the same auto margin
+     below, so the icon + text block sits centered and the buttons stay pinned
+     to the bottom of the card. */
+  margin-top: auto;
+}
+.realgo-state--success-scene .realgo-state__icon svg {
+  width: 24px;
+  height: 24px;
+  /* Inline SVG is aligned on the text baseline, so inside the grid cell it
+     floats above the true center. display:block drops the baseline gap; the
+     tiny nudge compensates the check glyph's own ~0.5px high ink center. */
+  display: block;
+  transform: translateY(0.5px);
+}
+.realgo-state--success-scene .realgo-state__title {
+  font-size: 21.6px;
+  line-height: 1.15;
+}
+.realgo-state--success-scene .realgo-muted {
+  margin-top: 8px !important;
+  font-size: 16px;
+  line-height: 1.45;
+}
+.realgo-state--success-scene .realgo-state__actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--success-action-gap);
+  margin-top: auto;
+}
+.realgo-state--success-scene .realgo-btn--state {
+  width: 100%;
+  min-width: 0;
+  min-height: 54px;
+  padding: 14px 20px;
+  font-size: 21.6px;
+}
+.realgo-muted { color: var(--text-dim); font-size: 12px; }
 
-.engram-link {
+.realgo-link {
   background: none;
   border: 0;
   padding: 0;
   color: var(--text-faint);
   font-family: var(--font-sans);
-  font-size: 11px;
+  font-size: 12px;
   cursor: pointer;
   text-decoration: underline;
   text-underline-offset: 2px;
   transition: color 0.15s ease;
 }
-.engram-link:hover { color: var(--text-dim); }
-.engram-link--accent { color: var(--accent-bright); }
-.engram-link--accent:hover { color: var(--accent-bright); filter: brightness(1.1); }
+.realgo-link:hover { color: var(--text-dim); }
+.realgo-link--accent { color: var(--accent-strong); }
+.realgo-link--accent:hover { color: var(--accent-strong); filter: brightness(1.1); }
 
-.engram-spinner {
+.realgo-spinner {
   width: 26px;
   height: 26px;
   border-radius: 50%;
   border: 3px solid rgba(255, 255, 255, 0.12);
   border-top-color: var(--accent);
-  animation: engram-spin 0.7s linear infinite;
+  animation: realgo-spin 0.7s linear infinite;
 }
-@keyframes engram-spin { to { transform: rotate(360deg); } }
+@keyframes realgo-spin { to { transform: rotate(360deg); } }
 
-/* ── Error banner ─────────────────────────────────────────────────────── */
-.engram-error {
+/* Error banner */
+.realgo-error {
   display: flex;
   align-items: flex-start;
   gap: 8px;
   padding: 10px 12px;
-  border-radius: 8px;
   border: 1px solid var(--danger-line);
+  border-radius: 8px;
   background: var(--danger-soft);
 }
-.engram-error__icon { color: var(--danger-fg); flex-shrink: 0; margin-top: 1px; }
-.engram-error__text { flex: 1; color: var(--danger-fg); font-size: 11px; }
-.engram-error__retry {
+.realgo-error__icon {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: var(--danger-fg);
+}
+.realgo-error__text {
+  flex: 1;
+  color: var(--danger-fg);
+  font-size: 18px;
+  line-height: 1.25;
+}
+.realgo-error__retry {
   flex-shrink: 0;
   background: none;
   border: 0;
   padding: 0;
-  color: var(--accent-bright);
-  font-size: 11px;
+  color: var(--accent-strong);
+  font-size: 18px;
+  line-height: 1.25;
   cursor: pointer;
   text-decoration: underline;
   text-underline-offset: 2px;
 }
 
-/* ── In-page fallback overlay (shadow DOM host content) ───────────────── */
-.engram-overlay {
+/* In-page fallback overlay (shadow DOM host content) */
+.realgo-overlay {
   position: fixed;
   top: 16px;
   right: 16px;
   z-index: 2147483647;
-  border-radius: 12px;
-  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55);
   overflow: hidden;
+  border-radius: 16px;
+  box-shadow: 0 24px 72px rgba(0, 0, 0, 0.55);
 }
-.engram-overlay .engram-popup { border-radius: 12px; }
+.realgo-overlay .realgo-popup { border-radius: 16px; }
 
 @media (prefers-reduced-motion: reduce) {
-  .engram-spinner { animation: none; }
-  .engram-choice, .engram-btn { transition: none; }
+  .realgo-spinner { animation: none; }
+  .realgo-choice, .realgo-btn, .realgo-iconbtn { transition: none; }
 }
 `;

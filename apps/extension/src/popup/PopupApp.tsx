@@ -18,16 +18,22 @@ export interface PopupAppProps {
   onSave: (payload: SubmissionPayload) => Promise<void>;
   /** Optional close handler (extension popup can't always close itself). */
   onClose?: () => void;
+  /** Optional collapse handler for the success state, without forcing a header X. */
+  onCollapse?: () => void;
   /** Optional bug-report handler; falls back to opening a GitHub issue. */
   onReport?: () => void;
 }
 
 // Difficulty is shown easy → hard (Figma order); the value still maps 1:1 to the
 // backend FSRS rating (hard | normal | easy), only the visual order/labels changed.
-const DIFFICULTY_OPTIONS: { value: UserDifficulty; label: string }[] = [
-  { value: "easy", label: "Легко" },
-  { value: "normal", label: "Средне" },
-  { value: "hard", label: "Тяжело" },
+const DIFFICULTY_OPTIONS: {
+  value: UserDifficulty;
+  label: string;
+  icon: "easy" | "normal" | "hard";
+}[] = [
+  { value: "easy", label: "Легко", icon: "easy" },
+  { value: "normal", label: "Средне", icon: "normal" },
+  { value: "hard", label: "Тяжело", icon: "hard" },
 ];
 
 /** Where "Сообщить об ошибке" points when the host doesn't override it. */
@@ -36,10 +42,17 @@ const REPORT_ISSUE_URL =
   encodeURIComponent("Расширение: не распознана задача") +
   "&body=" +
   encodeURIComponent("Страница: \nЧто ожидали: \nЧто произошло: ");
+const REVIEWS_URL = "http://localhost:3000/cabinet/reviews";
 
 type Status = "form" | "saving" | "success" | "error";
 
-export function PopupApp({ submission, onSave, onClose, onReport }: PopupAppProps) {
+export function PopupApp({
+  submission,
+  onSave,
+  onClose,
+  onCollapse,
+  onReport,
+}: PopupAppProps) {
   const [difficulty, setDifficulty] = useState<UserDifficulty | null>(null);
   const [status, setStatus] = useState<Status>("form");
   const [errorMsg, setErrorMsg] = useState("");
@@ -52,12 +65,33 @@ export function PopupApp({ submission, onSave, onClose, onReport }: PopupAppProp
     window.open(REPORT_ISSUE_URL, "_blank", "noopener,noreferrer");
   }
 
+  function handleCollapse() {
+    if (onCollapse) {
+      onCollapse();
+      return;
+    }
+    if (onClose) {
+      onClose();
+      return;
+    }
+    window.close();
+  }
+
+  function handleGoToReviews() {
+    window.open(REVIEWS_URL, "_blank", "noopener,noreferrer");
+    if (onCollapse) {
+      onCollapse();
+    } else if (onClose) {
+      onClose();
+    }
+  }
+
   if (submission === undefined) {
     return (
-      <Shell onClose={onClose}>
-        <div className="engram-state">
-          <div className="engram-spinner" aria-label="Загрузка" />
-          <span className="engram-muted">Определяем задачу…</span>
+      <Shell onClose={onClose} compact>
+        <div className="realgo-state realgo-state--loading-scene">
+          <div className="realgo-spinner" aria-label="Загрузка" />
+          <span className="realgo-muted">Определяем задачу…</span>
         </div>
       </Shell>
     );
@@ -65,16 +99,16 @@ export function PopupApp({ submission, onSave, onClose, onReport }: PopupAppProp
 
   if (submission === null) {
     return (
-      <Shell onClose={onClose}>
-        <div className="engram-state">
-          <div className="engram-state__icon engram-state__icon--muted" aria-hidden="true">
+      <Shell onClose={onClose} compact>
+        <div className="realgo-state realgo-state--no-task-scene">
+          <div className="realgo-state__icon realgo-state__icon--muted" aria-hidden="true">
             <IconExternal />
           </div>
-          <p className="engram-state__text">
-            Откройте задачу на NeetCode и отправьте решение — Engram подхватит её
+          <p className="realgo-state__text">
+            Откройте задачу на NeetCode и отправьте решение — realgo подхватит её
             автоматически.
           </p>
-          <button type="button" className="engram-link" onClick={handleReport}>
+          <button type="button" className="realgo-link" onClick={handleReport}>
             Сообщить об ошибке
           </button>
         </div>
@@ -84,24 +118,35 @@ export function PopupApp({ submission, onSave, onClose, onReport }: PopupAppProp
 
   if (status === "success") {
     return (
-      <Shell onClose={onClose}>
-        <div className="engram-state">
-          <div className="engram-state__icon engram-state__icon--success" aria-hidden="true">
+      <Shell onClose={onClose} compact scene="success">
+        <div className="realgo-state realgo-state--success-scene">
+          <div className="realgo-state__icon realgo-state__icon--success" aria-hidden="true">
             <IconCheck />
           </div>
           <div>
-            <p className="engram-state__title engram-state__title--success">
+            <p className="realgo-state__title realgo-state__title--success">
               Запланировано
             </p>
-            <p className="engram-muted" style={{ marginTop: 4 }}>
+            <p className="realgo-muted" style={{ marginTop: 4 }}>
               Задача добавлена в очередь повторений.
             </p>
           </div>
-          {onClose && (
-            <button className="engram-link" onClick={onClose}>
-              Закрыть
+          <div className="realgo-state__actions">
+            <button
+              type="button"
+              className="realgo-btn realgo-btn--ghost realgo-btn--state"
+              onClick={handleCollapse}
+            >
+              Свернуть
             </button>
-          )}
+            <button
+              type="button"
+              className="realgo-btn realgo-btn--primary realgo-btn--state"
+              onClick={handleGoToReviews}
+            >
+              К повторению
+            </button>
+          </div>
         </div>
       </Shell>
     );
@@ -128,51 +173,43 @@ export function PopupApp({ submission, onSave, onClose, onReport }: PopupAppProp
   }
 
   return (
-    <Shell task={submission} onClose={onClose}>
-      <div className="engram-body">
+    <Shell task={submission} onClose={onClose} compact>
+      <div className="realgo-body">
         <ChoiceGroup
-          title="Оцени сложность"
-          subtitle="Насколько тяжело далось решение?"
+          title="Как далась задача?"
           options={DIFFICULTY_OPTIONS}
           value={difficulty}
           onChange={setDifficulty}
           disabled={saving}
         />
+      </div>
 
-        <div className="engram-foot">
-          {status === "error" ? (
-            <div className="engram-error" role="alert">
-              <span className="engram-error__icon" aria-hidden="true">
-                <IconAlert />
-              </span>
-              <span className="engram-error__text">{errorMsg}</span>
-              <button className="engram-error__retry" onClick={handleSave}>
-                Повторить
-              </button>
-            </div>
-          ) : (
-            <p className="engram-hint">
-              <span className="engram-hint__icon" aria-hidden="true">
-                <IconInfo />
-              </span>
-              Следующее повторение будет рассчитано после сохранения
-            </p>
-          )}
+      <div className="realgo-foot">
+        {status === "error" && (
+          <div className="realgo-error" role="alert">
+            <span className="realgo-error__icon" aria-hidden="true">
+              <IconAlert />
+            </span>
+            <span className="realgo-error__text">{errorMsg}</span>
+            <button className="realgo-error__retry" onClick={handleSave}>
+              Повторить
+            </button>
+          </div>
+        )}
 
-          <button
-            className="engram-btn engram-btn--primary engram-btn--block engram-btn--lg"
-            disabled={!canSave}
-            onClick={handleSave}
-          >
-            {saving ? (
-              <span
-                className="engram-spinner"
-                style={{ width: 15, height: 15, borderWidth: 2 }}
-              />
-            ) : null}
-            {saving ? "Сохраняю…" : "Сохранить"}
-          </button>
-        </div>
+        <button
+          className="realgo-btn realgo-btn--primary realgo-btn--block realgo-btn--lg"
+          disabled={!canSave}
+          onClick={handleSave}
+        >
+          {saving ? (
+            <span
+              className="realgo-spinner"
+              style={{ width: 15, height: 15, borderWidth: 2 }}
+            />
+          ) : null}
+          {saving ? "Сохраняю…" : "Сохранить"}
+        </button>
       </div>
     </Shell>
   );
@@ -182,30 +219,46 @@ function Shell({
   children,
   task,
   onClose,
+  compact,
+  scene,
 }: {
   children: React.ReactNode;
   task?: DetectedSubmission;
   onClose?: () => void;
+  compact?: boolean;
+  scene?: "success";
 }) {
+  const className = [
+    "realgo-popup",
+    compact ? "realgo-popup--compact" : "",
+    scene === "success" ? "realgo-popup--success" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
-    <div className="engram-popup">
+    <div className={className}>
       <style>{POPUP_CSS}</style>
-      <div className="engram-header">
-        <span className="engram-brand engram-brand--md">
-          <BrandMark size={20} />
-          Engram
+      <div className="realgo-header">
+        <span className="realgo-brand realgo-brand--md">
+          <BrandMark size={32} />
+          realgo
         </span>
-        <div className="engram-header__right">
+        <div className="realgo-header__right">
           {task && (
-            <span className="engram-status">
-              Отправлено
-              <IconCheckSm />
+            <span className="realgo-status">
+              <span className="realgo-status__icon" aria-hidden="true">
+                <IconCheckSm />
+              </span>
+              {task.submitResult === "accepted"
+                ? "Вы справились с заданием!"
+                : "Результат отправлен"}
             </span>
           )}
           {onClose && (
             <button
               type="button"
-              className="engram-iconbtn"
+              className="realgo-iconbtn"
               onClick={onClose}
               aria-label="Закрыть"
             >
@@ -215,12 +268,12 @@ function Shell({
         </div>
       </div>
       {task && (
-        <div className="engram-task">
-          <p className="engram-task__title">{task.taskTitle}</p>
-          <div className="engram-task__meta">
-            <span className="engram-tag">{task.platform}</span>
+        <div className="realgo-task">
+          <p className="realgo-task__title">{task.taskTitle}</p>
+          <div className="realgo-task__meta">
+            <span className="realgo-tag">{task.platform}</span>
             {task.tags?.map((tag) => (
-              <span className="engram-tag" key={tag}>
+              <span className="realgo-tag" key={tag}>
                 {tag}
               </span>
             ))}
@@ -234,8 +287,7 @@ function Shell({
 
 interface ChoiceGroupProps<T extends string> {
   title: string;
-  subtitle: string;
-  options: { value: T; label: string }[];
+  options: { value: T; label: string; icon: "easy" | "normal" | "hard" }[];
   value: T | null;
   onChange: (value: T) => void;
   disabled?: boolean;
@@ -243,36 +295,38 @@ interface ChoiceGroupProps<T extends string> {
 
 function ChoiceGroup<T extends string>({
   title,
-  subtitle,
   options,
   value,
   onChange,
   disabled,
 }: ChoiceGroupProps<T>) {
   return (
-    <div className="engram-section">
-      <div className="engram-section__head">
-        <h3 className="engram-section__title">{title}</h3>
-        <p className="engram-section__sub">{subtitle}</p>
+    <div className="realgo-section">
+      <div className="realgo-section__head">
+        <h3 className="realgo-section__title">{title}</h3>
       </div>
-      <div className="engram-choices" role="group" aria-label={title}>
+      <div className="realgo-choices" role="group" aria-label={title}>
         {options.map((opt) => {
           const active = value === opt.value;
           return (
             <button
               key={opt.value}
               type="button"
-              className="engram-choice"
+              className="realgo-choice"
+              data-difficulty={opt.icon}
               aria-pressed={active}
               disabled={disabled}
+              // Hover selects immediately; moving to another option switches the
+              // selection, and leaving the group keeps the last-hovered choice.
+              onMouseEnter={() => {
+                if (!disabled) onChange(opt.value);
+              }}
               onClick={() => onChange(opt.value)}
             >
-              <span className="engram-choice__label">{opt.label}</span>
-              {active && (
-                <span className="engram-choice__check" aria-hidden="true">
-                  <IconCheckSm />
-                </span>
-              )}
+              <span className="realgo-choice__icon" aria-hidden="true">
+                <IconDifficulty kind={opt.icon} />
+              </span>
+              <span className="realgo-choice__label">{opt.label}</span>
             </button>
           );
         })}
@@ -285,7 +339,7 @@ function ChoiceGroup<T extends string>({
 function BrandMark({ size = 16 }: { size?: number }) {
   return (
     <svg
-      className="engram-brand__mark"
+      className="realgo-brand__mark"
       width={size}
       height={size}
       viewBox="0 0 16 16"
@@ -319,6 +373,29 @@ function IconCheckSm() {
   );
 }
 
+function IconDifficulty({ kind }: { kind: "easy" | "normal" | "hard" }) {
+  if (kind === "easy") {
+    return <IconCheck />;
+  }
+
+  if (kind === "normal") {
+    return (
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M3.5 12.5c2.4-5.2 5.2-5.2 8 0s5.6 5.2 9 0" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 5v8" />
+      <path d="M12 18h.01" />
+    </svg>
+  );
+}
+
 function IconExternal() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -337,17 +414,6 @@ function IconAlert() {
       <circle cx="12" cy="12" r="10" />
       <path d="M12 8v4" />
       <path d="M12 16h.01" />
-    </svg>
-  );
-}
-
-function IconInfo() {
-  return (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <circle cx="12" cy="12" r="10" />
-      <path d="M12 16v-4" />
-      <path d="M12 8h.01" />
     </svg>
   );
 }

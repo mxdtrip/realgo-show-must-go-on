@@ -63,7 +63,7 @@ async function tryRefresh(): Promise<string> {
   } catch (e) {
     if (e instanceof AuthError) {
       throw new ApiError(
-        "Аккаунт не подключён. Откройте настройки расширения и войдите в Engram.",
+        "Аккаунт не подключён. Откройте настройки расширения и войдите в realgo.",
         401,
         e.code ?? "unauthorized"
       );
@@ -84,7 +84,7 @@ async function authedPost(url: string, body: string, token: string): Promise<Res
     });
   } catch {
     throw new ApiError(
-      "Не удалось связаться с Engram. Проверьте, что бэкенд запущен.",
+      "Не удалось связаться с realgo. Проверьте, что бэкенд запущен.",
       0,
       "network"
     );

@@ -109,7 +109,7 @@ function finalize(adapter: PlatformAdapter, submitResult: SubmitResult) {
   lastKey = key;
 
   try {
-    chrome.runtime.sendMessage({ type: "ENGRAM_SUBMISSION_DETECTED", submission });
+    chrome.runtime.sendMessage({ type: "REALGO_SUBMISSION_DETECTED", submission });
   } catch {
     /* background may be asleep; overlay still works */
   }
@@ -133,10 +133,10 @@ function showOverlay(submission: DetectedSubmission) {
   removeOverlay();
 
   overlayHost = document.createElement("div");
-  overlayHost.id = "engram-overlay-host";
+  overlayHost.id = "realgo-overlay-host";
   const shadow = overlayHost.attachShadow({ mode: "open" });
   const mount = document.createElement("div");
-  mount.className = "engram-overlay";
+  mount.className = "realgo-overlay";
 
   // The close affordance lives in the popup header (PopupApp renders an X when
   // given onClose), so the overlay doesn't add its own button.
@@ -156,7 +156,7 @@ function showOverlay(submission: DetectedSubmission) {
 /** Routes the save through the background worker to dodge host-page CORS. */
 async function saveViaBackground(payload: SubmissionPayload): Promise<void> {
   const res: SaveResponse | undefined = await chrome.runtime.sendMessage({
-    type: "ENGRAM_SAVE_SUBMISSION",
+    type: "REALGO_SAVE_SUBMISSION",
     payload,
   });
   if (!res?.ok) {

@@ -7,7 +7,7 @@ import { PopupApp } from "./popup/PopupApp";
 
 /**
  * Toolbar popup entry. Shows the most recently detected submission (stored by
- * the background worker), so clicking the Engram icon after a submit always
+ * the background worker), so clicking the realgo icon after a submit always
  * works even when the popup could not be opened programmatically.
  */
 function IndexPopup() {
@@ -35,7 +35,7 @@ function IndexPopup() {
     <PopupApp
       submission={submission}
       onSave={handleSave}
-      onClose={() => window.close()}
+      onCollapse={() => window.close()}
     />
   );
 }

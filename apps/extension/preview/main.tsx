@@ -18,6 +18,8 @@ type StateChoice = "form" | "loading" | "notask";
 function Preview() {
   const [choice, setChoice] = useState<StateChoice>("form");
   const [failNext, setFailNext] = useState(false);
+  const showControls =
+    new URLSearchParams(window.location.search).get("controls") !== "0";
 
   const submission: DetectedSubmission | null | undefined =
     choice === "form" ? MOCK_SUBMISSION : choice === "loading" ? undefined : null;
@@ -25,18 +27,20 @@ function Preview() {
   async function onSave(_payload: SubmissionPayload) {
     await delay(700);
     if (failNext) {
-      throw new Error("Ошибка сервера (500). Это эмуляция для предпросмотра.");
+      throw new Error("Ошибка сервера 500");
     }
   }
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16, alignItems: "center" }}>
-      <Toolbar
-        choice={choice}
-        onChoice={setChoice}
-        failNext={failNext}
-        onFailNext={setFailNext}
-      />
+      {showControls && (
+        <Toolbar
+          choice={choice}
+          onChoice={setChoice}
+          failNext={failNext}
+          onFailNext={setFailNext}
+        />
+      )}
       {/* key forces a fresh PopupApp when switching states */}
       <PopupApp key={`${choice}-${failNext}`} submission={submission} onSave={onSave} />
     </div>

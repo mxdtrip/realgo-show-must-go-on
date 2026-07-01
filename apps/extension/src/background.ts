@@ -12,14 +12,14 @@ import type { DetectedSubmission, RuntimeMessage } from "./lib/types";
  */
 chrome.runtime.onMessage.addListener(
   (message: RuntimeMessage, _sender, sendResponse) => {
-    if (message.type === "ENGRAM_SUBMISSION_DETECTED") {
+    if (message.type === "REALGO_SUBMISSION_DETECTED") {
       handleDetected(message.submission)
         .then(() => sendResponse({ ok: true }))
         .catch((e) => sendResponse({ ok: false, error: String(e) }));
       return true; // keep the message channel open for the async response
     }
 
-    if (message.type === "ENGRAM_SAVE_SUBMISSION") {
+    if (message.type === "REALGO_SAVE_SUBMISSION") {
       // Proxy saves from the in-page overlay through the background worker: it
       // runs on the extension origin with host_permissions, so the request is
       // not subject to the host page's CORS policy.

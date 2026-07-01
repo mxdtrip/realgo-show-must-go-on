@@ -2,7 +2,7 @@
   "name": "@freeburger/extension",
   "version": "0.1.0",
   "private": true,
-  "description": "Engram browser extension — fixes a coding-problem result after submit and feeds it into the spaced-repetition queue.",
+  "description": "realgo browser extension — fixes a coding-problem result after submit and feeds it into the spaced-repetition queue.",
   "scripts": {
     "dev": "plasmo dev",
     "build": "plasmo build",
@@ -27,7 +27,7 @@
     "vite": "6.0.7"
   },
   "manifest": {
-    "name": "Engram",
+    "name": "realgo",
     "permissions": ["storage", "activeTab", "scripting"],
     "host_permissions": [
       "https://neetcode.io/*",

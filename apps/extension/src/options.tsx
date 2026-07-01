@@ -8,7 +8,7 @@ import { POPUP_CSS } from "./popup/popup.styles";
 /**
  * Options page — account connection.
  *
- * Logs the extension into the existing Engram backend via email + password
+ * Logs the extension into the existing realgo backend via email + password
  * (POST /api/v1/auth/login) and keeps the issued tokens in chrome.storage. The
  * access token is refreshed automatically on demand (see lib/api.ts).
  *
@@ -60,33 +60,33 @@ function Options() {
   }
 
   return (
-    <div className="engram-popup engram-popup--wide">
+    <div className="realgo-popup realgo-popup--wide">
       <style>{POPUP_CSS}</style>
 
-      <div className="engram-header">
-        <span className="engram-brand engram-brand--md">
+      <div className="realgo-header">
+        <span className="realgo-brand realgo-brand--md">
           <BrandMark size={18} />
-          Engram
+          realgo
         </span>
-        <span className="engram-header__sub">Настройки расширения</span>
+        <span className="realgo-header__sub">Настройки расширения</span>
       </div>
 
-      <div className="engram-body">
-        <div className="engram-field">
-          <label className="engram-field__label" htmlFor="engram-base-url">
+      <div className="realgo-body">
+        <div className="realgo-field">
+          <label className="realgo-field__label" htmlFor="realgo-base-url">
             API base URL
           </label>
-          <div className="engram-row">
+          <div className="realgo-row">
             <input
-              id="engram-base-url"
-              className="engram-input"
+              id="realgo-base-url"
+              className="realgo-input"
               value={baseUrl}
               placeholder="http://localhost:8080"
               onChange={(e) => setBaseUrl(e.target.value)}
             />
             <button
               type="button"
-              className="engram-btn engram-btn--ghost"
+              className="realgo-btn realgo-btn--ghost"
               onClick={handleSaveBaseUrl}
             >
               {baseSaved ? "✓" : "OK"}
@@ -94,20 +94,20 @@ function Options() {
           </div>
         </div>
 
-        <hr className="engram-divider" />
+        <hr className="realgo-divider" />
 
         {account === undefined ? null : account ? (
-          <div className="engram-account">
+          <div className="realgo-account">
             <div>
-              <div className="engram-account__email">
-                <span className="engram-dot" aria-hidden="true" />
+              <div className="realgo-account__email">
+                <span className="realgo-dot" aria-hidden="true" />
                 {account}
               </div>
-              <p className="engram-account__note">Расширение подключено к Engram</p>
+              <p className="realgo-account__note">Расширение подключено к realgo</p>
             </div>
             <button
               type="button"
-              className="engram-btn engram-btn--danger"
+              className="realgo-btn realgo-btn--danger"
               disabled={busy}
               onClick={handleLogout}
             >
@@ -115,12 +115,12 @@ function Options() {
             </button>
           </div>
         ) : (
-          <form className="engram-field" onSubmit={handleLogin}>
-            <div className="engram-field__label" style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>
-              Вход в Engram
+          <form className="realgo-field" onSubmit={handleLogin}>
+            <div className="realgo-field__label" style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>
+              Вход в realgo
             </div>
             <input
-              className="engram-input"
+              className="realgo-input"
               type="email"
               autoComplete="username"
               value={email}
@@ -128,7 +128,7 @@ function Options() {
               onChange={(e) => setEmail(e.target.value)}
             />
             <input
-              className="engram-input"
+              className="realgo-input"
               type="password"
               autoComplete="current-password"
               value={password}
@@ -136,12 +136,12 @@ function Options() {
               onChange={(e) => setPassword(e.target.value)}
             />
             {error && (
-              <div className="engram-error" role="alert">
-                <span className="engram-error__text">{error}</span>
+              <div className="realgo-error" role="alert">
+                <span className="realgo-error__text">{error}</span>
               </div>
             )}
             <button
-              className="engram-btn engram-btn--primary engram-btn--block"
+              className="realgo-btn realgo-btn--primary realgo-btn--block"
               type="submit"
               disabled={busy || !email || !password}
             >
