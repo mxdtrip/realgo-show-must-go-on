@@ -11,6 +11,7 @@ import (
 	"github.com/mxdtrip/freeburger/services/api/internal/auth"
 	"github.com/mxdtrip/freeburger/services/api/internal/companies"
 	v1 "github.com/mxdtrip/freeburger/services/api/internal/controller/v1"
+	"github.com/mxdtrip/freeburger/services/api/internal/dashboard"
 	"github.com/mxdtrip/freeburger/services/api/internal/extension"
 	"github.com/mxdtrip/freeburger/services/api/internal/patterns"
 	"github.com/mxdtrip/freeburger/services/api/internal/problems"
@@ -66,6 +67,7 @@ func New(deps Deps) http.Handler {
 	problemsHandler := problems.NewHandler(problems.NewRepository(deps.Postgres.Pool))
 	roadmapsHandler := roadmaps.NewHandler(roadmaps.NewRepository(deps.Postgres.Pool))
 	companiesHandler := companies.NewHandler()
+	dashboardHandler := dashboard.NewHandler(dashboard.NewService(dashboard.NewRepository(deps.Postgres.Pool), patterns.NewRepository(deps.Postgres.Pool)))
 
 	// Browser-extension ingest: simple fixed-interval scheduler (issue #17)
 	// behind the Scheduler interface, swappable for FSRS later.
@@ -110,6 +112,8 @@ func New(deps Deps) http.Handler {
 
 		// S2 problems.
 		r.With(requireAuth(deps.Auth)).Get("/me/problems", problemsHandler.List)
+
+		r.With(requireAuth(deps.Auth)).Get("/me/dashboard", dashboardHandler.Get) // codex/s1-dashboard
 
 		r.Route("/patterns", func(r chi.Router) {
 			patterns.RegisterRoutes(r, patternsHandler)
