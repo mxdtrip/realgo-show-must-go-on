@@ -5,13 +5,14 @@ import { usePathname } from "next/navigation";
 
 import { CabinetIcon } from "./_icons";
 
-type NavItem = Readonly<{ href: string; label: string; icon: string; count: string }>;
-type NavGroup = Readonly<{ title: string; items: readonly NavItem[] }>;
+export type CabinetNavItem = Readonly<{ href: string; label: string; icon: string; count: string }>;
+export type CabinetNavGroup = Readonly<{ title: string; items: readonly CabinetNavItem[] }>;
 
 export function CabinetNav({
   groups,
   ariaLabel,
-}: Readonly<{ groups: readonly NavGroup[]; ariaLabel: string }>) {
+  onNavigate,
+}: Readonly<{ groups: readonly CabinetNavGroup[]; ariaLabel: string; onNavigate?: () => void }>) {
   const pathname = usePathname();
 
   return (
@@ -27,6 +28,7 @@ export function CabinetNav({
                 href={item.href}
                 key={item.href}
                 aria-current={active ? "page" : undefined}
+                onClick={onNavigate}
               >
                 <CabinetIcon name={item.icon} />
                 <span>{item.label}</span>
