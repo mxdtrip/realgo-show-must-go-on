@@ -58,3 +58,27 @@ SET next_review_at = $2,
     updated_at = NOW()
 WHERE id = $1
 RETURNING id, next_review_at;
+
+-- name: ListExtensionPlatformStatuses :many
+SELECT
+    p.code AS source,
+    'connected'::text AS status,
+    MAX(ee.event_time)::timestamptz AS last_sync_at
+FROM extension_events ee
+JOIN platforms p ON p.id = ee.platform_id
+WHERE ee.user_id = sqlc.arg(user_id)::bigint
+GROUP BY p.code
+ORDER BY last_sync_at DESC, p.code ASC;
+
+-- name: ListExtensionRecentEvents :many
+SELECT
+    COALESCE(ee.idempotency_key, ee.id::text)::text AS event_id,
+    p.code AS source,
+    ee.event_type AS event,
+    COALESCE(NULLIF(ee.title, ''), NULLIF(ee.external_slug, ''), ee.url) AS title,
+    ee.event_time AS occurred_at
+FROM extension_events ee
+JOIN platforms p ON p.id = ee.platform_id
+WHERE ee.user_id = sqlc.arg(user_id)::bigint
+ORDER BY ee.event_time DESC, ee.id DESC
+LIMIT sqlc.arg(event_limit)::int;

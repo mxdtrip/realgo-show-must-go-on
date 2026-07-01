@@ -69,6 +69,7 @@ func New(deps Deps) http.Handler {
 	// behind the Scheduler interface, swappable for FSRS later.
 	extensionSvc := extension.NewService(extension.NewRepository(deps.Postgres.Pool), scheduler.NewSimple())
 	extensionHandler := extension.NewHandler(extensionSvc)
+	extensionStatusHandler := extension.NewStatusHandler(extension.NewStatusService(extension.NewStatusRepository(deps.Postgres.Pool)))
 
 	r.Route("/api/v1", func(r chi.Router) {
 		ah := &authHandler{svc: deps.Auth}
@@ -103,6 +104,7 @@ func New(deps Deps) http.Handler {
 				extension.RegisterRoutes(r, extensionHandler)
 			})
 		})
+		r.With(requireAuth(deps.Auth)).Get("/me/extension/status", extensionStatusHandler.GetStatus) // codex/s3-ext-status
 
 		r.Route("/patterns", func(r chi.Router) {
 			patterns.RegisterRoutes(r, patternsHandler)
