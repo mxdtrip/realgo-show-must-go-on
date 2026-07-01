@@ -11,6 +11,20 @@ const ru = {
       title: "Engram — Memory layer for interview prep",
       description:
         "Engram helps you remember solved interview tasks, review them at the right time, and prepare with a clearer plan.",
+      applicationName: "Engram",
+      siteUrl: "https://engram.dev",
+      ogImageAlt: "Engram interview prep memory layer preview",
+      ogEyebrow: "/memory /roadmap /reviews",
+      ogHeadline: "Memory layer for interview prep",
+      ogFooter: "LeetCode solved tasks -> spaced repetition -> interview roadmap",
+      keywords: [
+        "interview prep",
+        "spaced repetition",
+        "LeetCode",
+        "NeetCode",
+        "algorithm practice",
+        "technical interviews",
+      ],
     },
   },
   pwa: {
@@ -23,7 +37,7 @@ const ru = {
     hero: {
       homeAria: "Engram home",
       navAria: "Site sections",
-      nav: ["Memory", "Roadmap", "Reviews", "Pricing"],
+      nav: ["Memory", "Roadmap", "Reviews", "Pricing", "FAQ"],
       auth: {
         login: "Log in",
         signup: "Sign up",
@@ -130,6 +144,34 @@ const ru = {
           "Бесплатный план помогает собрать личную базу решённых задач. Pro добавляет маршрут под цель, больше повторений, тесты и экспорт в Anki.",
         cta: "Оформить",
       },
+      faq: {
+        kicker: "FAQ",
+        title: "Коротко о том, как Engram вписывается в подготовку.",
+        description:
+          "FAQ закрывает практические вопросы: что сохраняет расширение, как работают повторения и можно ли начать без полного перехода на новый инструмент.",
+        items: [
+          {
+            question: "Engram сам решает задачи или только помогает повторять?",
+            answer:
+              "Engram не подменяет практику. Ты решаешь задачи на LeetCode или NeetCode, отмечаешь уверенность, а сервис возвращает нужные задачи, паттерны и карточки в расписание повторений.",
+          },
+          {
+            question: "Что именно сохраняет браузерное расширение?",
+            answer:
+              "Расширение фиксирует минимальный учебный контекст: платформу, задачу, статус решения, выбранную оценку уверенности и паттерн, если он известен. Закрытые материалы и содержимое premium-страниц не нужны.",
+          },
+          {
+            question: "Чем это отличается от обычного списка решённых задач?",
+            answer:
+              "Список показывает, что уже было сделано. Engram планирует, когда к этому вернуться, превращает решение в короткие карточки и подсвечивает паттерны, которые чаще всего забываются.",
+          },
+          {
+            question: "Можно пользоваться бесплатно?",
+            answer:
+              "Да. Free-план рассчитан на сбор личной базы задач и базовые повторения. Pro нужен, когда подготовка привязана к роли, дате интервью и более подробному roadmap.",
+          },
+        ],
+      },
     },
     footer: {
       description: "Память для подготовки к интервью. Решай, отмечай, возвращайся в нужный момент.",
@@ -141,6 +183,7 @@ const ru = {
             { href: "#roadmap", label: "Roadmap" },
             { href: "#reviews", label: "Reviews" },
             { href: "#pricing", label: "Pricing" },
+            { href: "#faq", label: "FAQ" },
           ],
         },
         {

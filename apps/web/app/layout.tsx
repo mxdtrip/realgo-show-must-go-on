@@ -35,16 +35,51 @@ const spaceMono = Space_Mono({
 });
 
 const metadataCopy = getDictionary().common.metadata;
+const metadataBase = new URL(process.env.NEXT_PUBLIC_SITE_URL ?? metadataCopy.siteUrl);
 
 export const metadata: Metadata = {
-  title: metadataCopy.title,
+  metadataBase,
+  title: {
+    default: metadataCopy.title,
+    template: `%s | ${metadataCopy.applicationName}`,
+  },
   description: metadataCopy.description,
+  keywords: [...metadataCopy.keywords],
+  authors: [{ name: metadataCopy.applicationName }],
+  creator: metadataCopy.applicationName,
+  publisher: metadataCopy.applicationName,
+  openGraph: {
+    title: metadataCopy.title,
+    description: metadataCopy.description,
+    url: "/",
+    siteName: metadataCopy.applicationName,
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: metadataCopy.ogImageAlt,
+      },
+    ],
+    locale: "ru_RU",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: metadataCopy.title,
+    description: metadataCopy.description,
+    images: ["/opengraph-image"],
+  },
+  icons: {
+    icon: "/icon",
+    apple: "/icon",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Engram",
+    title: metadataCopy.applicationName,
   },
-  applicationName: "Engram",
+  applicationName: metadataCopy.applicationName,
   manifest: "/manifest.webmanifest",
 };
 
