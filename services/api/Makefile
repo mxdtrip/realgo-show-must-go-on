@@ -1,7 +1,7 @@
 GO ?= go
 COMPOSE ?= docker compose -f ../../docker-compose.yml
 
-.PHONY: help build run test test-integration vet fmt tidy sqlc up down migrate seed-roadmap seed-users reset-demo logs
+.PHONY: help build run test test-integration vet fmt tidy sqlc up down migrate seed-roadmap seed-cards seed-users reset-demo logs
 
 help: ## Show available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-10s\033[0m %s\n", $$1, $$2}'
@@ -41,6 +41,9 @@ migrate: ## Apply database migrations inside the compose network
 
 seed-roadmap: ## Seed the NeetCode roadmap inside the compose network
 	$(COMPOSE) run --rm seed-roadmap
+
+seed-cards: ## Seed demo Anki-style cards inside the compose network
+	$(COMPOSE) run --rm seed-cards
 
 seed-users: ## Seed demo users and review data inside the compose network
 	$(COMPOSE) run --rm seed-users

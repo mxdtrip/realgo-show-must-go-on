@@ -130,11 +130,74 @@ func ListRoadmapProblems(ctx context.Context, pool *pgxpool.Pool, roadmapCode st
 
 Для дорожной карты NeetCode 150 передавай `roadmapCode = "neetcode_150"`.
 
+## Engram Demo Cards
+
+`engram_demo_cards.yaml` - демо-набор Anki-style карточек для задач и
+паттернов из `neetcode_150`. Ответы короткие, без кода, на русском с
+английскими терминами из интервью-практики.
+
+Перед загрузкой карточек должен быть загружен roadmap seed, потому что
+карточки резолвят `problem_slug` и `pattern_code` в реальные `problems` и
+`patterns`.
+
+Запуск через compose:
+
+```sh
+make seed-roadmap
+make seed-cards
+```
+
+Или напрямую:
+
+```sh
+cd services/api/seeds
+python -m pip install -r requirements.txt
+DATABASE_URL='postgres://postgres:postgres@localhost:5432/freeburger?sslmode=disable' \
+  python seed_cards.py engram_demo_cards.yaml
+```
+
+Локальная проверка YAML без подключения к Postgres:
+
+```sh
+cd services/api/seeds
+python seed_cards.py engram_demo_cards.yaml --validate-only
+```
+
+Формат карточек:
+
+```yaml
+code: engram_demo_cards
+title: Engram Demo Cards
+cards:
+  - key: two-sum-complement
+    type: pattern_recognition
+    problem_slug: two-sum
+    question: "Two Sum: почему complement lookup лучше полного перебора?"
+    answer: "Для каждого числа достаточно проверить, видели ли мы target minus current."
+```
+
+У карточки должен быть ровно один target:
+
+- `problem_slug` - задача из `neetcode_150.yaml`
+- `pattern_code` - паттерн из `neetcode_150.yaml`
+
+`type` должен быть одним из значений контракта Cards:
+`pattern_recognition`, `algorithm_mechanics`, `edge_case`.
+
+Seed идемпотентный: перед вставкой он удаляет только карточки своего source
+`engram_demo_cards:*`, затем заново вставляет manifest. Если база ещё содержит
+legacy constraint `cards.card_type_target_check` со старыми типами
+`problem|pattern|concept`, загрузчик остановится с понятной ошибкой: этот
+constraint должен быть исправлен миграцией вне seed-скриптов.
+
 ## Demo Users
 
 `seed_users.py` создаёт предсозданные аккаунты для ручного тестирования и
 кладёт им прогресс, due review schedules, review attempts и extension events
-по задачам из `neetcode_150`. Перед ним должен быть загружен roadmap seed.
+по задачам из `neetcode_150`. Также добавляет demo review schedules для
+паттернов и, если `seed_cards.py` уже загружен, для карточек. Перед ним должен
+быть загружен roadmap seed; для полной очереди `problem/card/pattern` сначала
+загрузи `seed-cards`.
 
 Запуск через compose:
 
