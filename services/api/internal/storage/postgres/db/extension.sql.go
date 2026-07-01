@@ -176,6 +176,97 @@ func (q *Queries) InsertExtensionEvent(ctx context.Context, arg InsertExtensionE
 	return id, err
 }
 
+const listExtensionPlatformStatuses = `-- name: ListExtensionPlatformStatuses :many
+SELECT
+    p.code AS source,
+    'connected'::text AS status,
+    MAX(ee.event_time)::timestamptz AS last_sync_at
+FROM extension_events ee
+JOIN platforms p ON p.id = ee.platform_id
+WHERE ee.user_id = $1::bigint
+GROUP BY p.code
+ORDER BY last_sync_at DESC, p.code ASC
+`
+
+type ListExtensionPlatformStatusesRow struct {
+	Source     string
+	Status     string
+	LastSyncAt pgtype.Timestamptz
+}
+
+func (q *Queries) ListExtensionPlatformStatuses(ctx context.Context, userID int64) ([]ListExtensionPlatformStatusesRow, error) {
+	rows, err := q.db.Query(ctx, listExtensionPlatformStatuses, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListExtensionPlatformStatusesRow
+	for rows.Next() {
+		var i ListExtensionPlatformStatusesRow
+		if err := rows.Scan(&i.Source, &i.Status, &i.LastSyncAt); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listExtensionRecentEvents = `-- name: ListExtensionRecentEvents :many
+SELECT
+    COALESCE(ee.idempotency_key, ee.id::text)::text AS event_id,
+    p.code AS source,
+    ee.event_type AS event,
+    COALESCE(NULLIF(ee.title, ''), NULLIF(ee.external_slug, ''), ee.url) AS title,
+    ee.event_time AS occurred_at
+FROM extension_events ee
+JOIN platforms p ON p.id = ee.platform_id
+WHERE ee.user_id = $1::bigint
+ORDER BY ee.event_time DESC, ee.id DESC
+LIMIT $2::int
+`
+
+type ListExtensionRecentEventsParams struct {
+	UserID     int64
+	EventLimit int32
+}
+
+type ListExtensionRecentEventsRow struct {
+	EventID    string
+	Source     string
+	Event      string
+	Title      string
+	OccurredAt pgtype.Timestamptz
+}
+
+func (q *Queries) ListExtensionRecentEvents(ctx context.Context, arg ListExtensionRecentEventsParams) ([]ListExtensionRecentEventsRow, error) {
+	rows, err := q.db.Query(ctx, listExtensionRecentEvents, arg.UserID, arg.EventLimit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListExtensionRecentEventsRow
+	for rows.Next() {
+		var i ListExtensionRecentEventsRow
+		if err := rows.Scan(
+			&i.EventID,
+			&i.Source,
+			&i.Event,
+			&i.Title,
+			&i.OccurredAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const upsertExtensionProblem = `-- name: UpsertExtensionProblem :one
 INSERT INTO problems (platform_id, external_slug, title, url, difficulty, source_type, created_by_user_id)
 VALUES ($1, $2, $3, $4, $5, 'extension', $6)
