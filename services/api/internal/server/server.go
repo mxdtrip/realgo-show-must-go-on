@@ -12,6 +12,7 @@ import (
 	v1 "github.com/mxdtrip/freeburger/services/api/internal/controller/v1"
 	"github.com/mxdtrip/freeburger/services/api/internal/extension"
 	"github.com/mxdtrip/freeburger/services/api/internal/patterns"
+	"github.com/mxdtrip/freeburger/services/api/internal/problems"
 	"github.com/mxdtrip/freeburger/services/api/internal/repo"
 	"github.com/mxdtrip/freeburger/services/api/internal/reviews"
 	"github.com/mxdtrip/freeburger/services/api/internal/roadmaps"
@@ -59,6 +60,7 @@ func New(deps Deps) http.Handler {
 	reviewHandler := v1.NewReviewHandler(reviewService)
 
 	patternsHandler := patterns.NewHandler(patterns.NewRepository(deps.Postgres.Pool))
+	problemsHandler := problems.NewHandler(problems.NewRepository(deps.Postgres.Pool))
 	roadmapsHandler := roadmaps.NewHandler(roadmaps.NewRepository(deps.Postgres.Pool))
 
 	// Browser-extension ingest: simple fixed-interval scheduler (issue #17)
@@ -96,6 +98,9 @@ func New(deps Deps) http.Handler {
 				extension.RegisterRoutes(r, extensionHandler)
 			})
 		})
+
+		// S2 problems.
+		r.With(requireAuth(deps.Auth)).Get("/me/problems", problemsHandler.List)
 
 		r.Route("/patterns", func(r chi.Router) {
 			patterns.RegisterRoutes(r, patternsHandler)
