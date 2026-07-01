@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 
 // Background clip @ 120fps. At the top of the page the video sits at START_TIME;
 // scrolling scrubs it forward (down) / backward (up). The scrub range is mapped
@@ -13,9 +14,38 @@ const SCRUB_END_SECTION_ID = "memory";
 const SMOOTHING = 0.12;
 
 export function ScrollVideoBackground() {
+  const pathname = usePathname();
+  const isLanding = pathname === "/";
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const [shouldLoadVideo, setShouldLoadVideo] = useState(false);
 
   useEffect(() => {
+    if (!isLanding || shouldLoadVideo) return undefined;
+
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduceMotion) return undefined;
+
+    const loadVideo = () => setShouldLoadVideo(true);
+    const timerId = window.setTimeout(loadVideo, 1400);
+    const listenerOptions = { passive: true };
+
+    window.addEventListener("scroll", loadVideo, listenerOptions);
+    window.addEventListener("pointerdown", loadVideo, listenerOptions);
+    window.addEventListener("keydown", loadVideo);
+    window.addEventListener("touchstart", loadVideo, listenerOptions);
+
+    return () => {
+      window.clearTimeout(timerId);
+      window.removeEventListener("scroll", loadVideo);
+      window.removeEventListener("pointerdown", loadVideo);
+      window.removeEventListener("keydown", loadVideo);
+      window.removeEventListener("touchstart", loadVideo);
+    };
+  }, [isLanding, shouldLoadVideo]);
+
+  useEffect(() => {
+    if (!isLanding || !shouldLoadVideo) return undefined;
+
     const video = videoRef.current;
     if (!video) return undefined;
 
@@ -80,6 +110,7 @@ export function ScrollVideoBackground() {
     if (video.readyState >= 1) onLoaded();
     else video.addEventListener("loadedmetadata", onLoaded);
     video.addEventListener("loadeddata", prime, { once: true });
+    video.load();
 
     if (reduceMotion) {
       return () => {
@@ -98,11 +129,17 @@ export function ScrollVideoBackground() {
       window.removeEventListener("resize", onScroll);
       video.removeEventListener("loadedmetadata", onLoaded);
     };
-  }, []);
+  }, [isLanding, shouldLoadVideo]);
+
+  if (!isLanding) {
+    return null;
+  }
 
   return (
     <div className="scroll-video-bg" aria-hidden="true">
-      <video ref={videoRef} src="/engram-hero.mp4" muted playsInline preload="auto" tabIndex={-1} />
+      {shouldLoadVideo ? (
+        <video ref={videoRef} src="/engram-hero.mp4" muted playsInline preload="none" tabIndex={-1} />
+      ) : null}
       <div className="scroll-video-bg__overlay" />
     </div>
   );
