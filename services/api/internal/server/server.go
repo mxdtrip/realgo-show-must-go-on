@@ -13,6 +13,7 @@ import (
 	v1 "github.com/mxdtrip/freeburger/services/api/internal/controller/v1"
 	"github.com/mxdtrip/freeburger/services/api/internal/extension"
 	"github.com/mxdtrip/freeburger/services/api/internal/patterns"
+	"github.com/mxdtrip/freeburger/services/api/internal/problems"
 	"github.com/mxdtrip/freeburger/services/api/internal/repo"
 	"github.com/mxdtrip/freeburger/services/api/internal/reviews"
 	"github.com/mxdtrip/freeburger/services/api/internal/roadmap"
@@ -62,6 +63,7 @@ func New(deps Deps) http.Handler {
 
 	patternsHandler := patterns.NewHandler(patterns.NewRepository(deps.Postgres.Pool))
 	roadmapHandler := roadmap.NewHandler(roadmap.NewRepository(deps.Postgres.Pool))
+	problemsHandler := problems.NewHandler(problems.NewRepository(deps.Postgres.Pool))
 	roadmapsHandler := roadmaps.NewHandler(roadmaps.NewRepository(deps.Postgres.Pool))
 	companiesHandler := companies.NewHandler()
 
@@ -105,6 +107,9 @@ func New(deps Deps) http.Handler {
 			})
 		})
 		r.With(requireAuth(deps.Auth)).Get("/me/extension/status", extensionStatusHandler.GetStatus) // codex/s3-ext-status
+
+		// S2 problems.
+		r.With(requireAuth(deps.Auth)).Get("/me/problems", problemsHandler.List)
 
 		r.Route("/patterns", func(r chi.Router) {
 			patterns.RegisterRoutes(r, patternsHandler)
