@@ -1,9 +1,17 @@
 import { useEffect, useState } from "react";
 
+import { checkApiStatus } from "./lib/api";
 import { AuthError, getCurrentUserEmail, login, logout } from "./lib/auth";
-import { getApiBaseUrl, setApiBaseUrl } from "./lib/storage";
+import {
+  getApiBaseUrl,
+  getWebBaseUrl,
+  setApiBaseUrl,
+  setWebBaseUrl,
+} from "./lib/storage";
 import { BrandMark } from "./popup/PopupApp";
 import { POPUP_CSS } from "./popup/popup.styles";
+
+type ConnStatus = "idle" | "checking" | "online" | "offline";
 
 /**
  * Options page — account connection.
@@ -18,14 +26,19 @@ function Options() {
   const [baseUrl, setBaseUrl] = useState("");
   const [baseSaved, setBaseSaved] = useState(false);
 
+  const [webUrl, setWebUrl] = useState("");
+  const [webSaved, setWebSaved] = useState(false);
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [account, setAccount] = useState<string | null | undefined>(undefined);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [conn, setConn] = useState<ConnStatus>("idle");
 
   useEffect(() => {
     getApiBaseUrl().then(setBaseUrl);
+    getWebBaseUrl().then(setWebUrl);
     getCurrentUserEmail().then((e) => setAccount(e ?? null));
   }, []);
 
@@ -39,6 +52,19 @@ function Options() {
     } catch (err) {
       setError(err instanceof AuthError ? err.message : "Не удалось сохранить API URL.");
     }
+  }
+
+  async function handleSaveWebUrl() {
+    await setWebBaseUrl(webUrl);
+    setWebSaved(true);
+    setTimeout(() => setWebSaved(false), 2000);
+  }
+
+  async function handleCheckConnection() {
+    await setApiBaseUrl(baseUrl); // probe the value currently in the field
+    setConn("checking");
+    const ok = await checkApiStatus();
+    setConn(ok ? "online" : "offline");
   }
 
   async function handleLogin(e: React.FormEvent) {
@@ -89,7 +115,10 @@ function Options() {
               className="engram-input"
               value={baseUrl}
               placeholder="http://localhost:8080"
-              onChange={(e) => setBaseUrl(e.target.value)}
+              onChange={(e) => {
+                setBaseUrl(e.target.value);
+                setConn("idle");
+              }}
             />
             <button
               type="button"
@@ -98,7 +127,50 @@ function Options() {
             >
               {baseSaved ? "✓" : "OK"}
             </button>
+            <button
+              type="button"
+              className="engram-btn engram-btn--ghost"
+              disabled={conn === "checking"}
+              onClick={handleCheckConnection}
+            >
+              {conn === "checking" ? "…" : "Проверить"}
+            </button>
           </div>
+          {conn === "online" && (
+            <p className="engram-account__note" style={{ color: "var(--success-fg)" }}>
+              Бэкенд на связи
+            </p>
+          )}
+          {conn === "offline" && (
+            <p className="engram-account__note" style={{ color: "var(--danger-fg)" }}>
+              Бэкенд недоступен по этому адресу
+            </p>
+          )}
+        </div>
+
+        <div className="engram-field">
+          <label className="engram-field__label" htmlFor="engram-web-url">
+            Web URL
+          </label>
+          <div className="engram-row">
+            <input
+              id="engram-web-url"
+              className="engram-input"
+              value={webUrl}
+              placeholder="http://localhost:3000"
+              onChange={(e) => setWebUrl(e.target.value)}
+            />
+            <button
+              type="button"
+              className="engram-btn engram-btn--ghost"
+              onClick={handleSaveWebUrl}
+            >
+              {webSaved ? "✓" : "OK"}
+            </button>
+          </div>
+          <p className="engram-account__note">
+            Куда ведёт «К повторению» — раздел карточек кабинета.
+          </p>
         </div>
 
         <hr className="engram-divider" />
