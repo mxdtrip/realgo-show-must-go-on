@@ -70,6 +70,7 @@ func (s *Service) Handle(ctx context.Context, userID int64, req EventRequest) (E
 		Accepted:     true,
 		Duplicate:    out.Duplicate,
 		ProblemID:    out.ProblemID,
+		ReviewID:     out.ReviewID,
 		Status:       out.Status,
 		NextReviewAt: out.NextReviewAt,
 	}, nil

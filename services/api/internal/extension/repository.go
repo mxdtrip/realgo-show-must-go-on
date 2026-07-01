@@ -45,6 +45,7 @@ type IngestInput struct {
 // IngestOutput is the result of persisting one event.
 type IngestOutput struct {
 	ProblemID    int64
+	ReviewID     int64
 	Duplicate    bool
 	Status       string
 	NextReviewAt *time.Time
@@ -128,6 +129,7 @@ func (r *pgRepository) Ingest(ctx context.Context, in IngestInput) (IngestOutput
 			UserID: in.UserID, ProblemID: toInt8(problemID),
 		}); e == nil {
 			out.Status = "reviewing"
+			out.ReviewID = sched.ID
 			out.NextReviewAt = timePtr(sched.NextReviewAt)
 		}
 		if err := tx.Commit(ctx); err != nil {
@@ -154,11 +156,12 @@ func (r *pgRepository) Ingest(ctx context.Context, in IngestInput) (IngestOutput
 		return IngestOutput{}, fmt.Errorf("extension: upsert progress: %w", err)
 	}
 
-	nextReviewAt, err := r.upsertSchedule(ctx, q, in, problemID)
+	reviewID, nextReviewAt, err := r.upsertSchedule(ctx, q, in, problemID)
 	if err != nil {
 		return IngestOutput{}, err
 	}
 	out.Status = "reviewing"
+	out.ReviewID = reviewID
 	out.NextReviewAt = &nextReviewAt
 
 	if err := tx.Commit(ctx); err != nil {
@@ -169,7 +172,7 @@ func (r *pgRepository) Ingest(ctx context.Context, in IngestInput) (IngestOutput
 
 // upsertSchedule creates the problem's schedule on first solve, otherwise
 // advances the existing one to the new due date.
-func (r *pgRepository) upsertSchedule(ctx context.Context, q *db.Queries, in IngestInput, problemID int64) (time.Time, error) {
+func (r *pgRepository) upsertSchedule(ctx context.Context, q *db.Queries, in IngestInput, problemID int64) (int64, time.Time, error) {
 	existing, err := q.GetProblemReviewSchedule(ctx, db.GetProblemReviewScheduleParams{
 		UserID: in.UserID, ProblemID: toInt8(problemID),
 	})
@@ -187,11 +190,11 @@ func (r *pgRepository) upsertSchedule(ctx context.Context, q *db.Queries, in Ing
 			Algorithm:    optText(algorithmSimple),
 		})
 		if cerr != nil {
-			return time.Time{}, fmt.Errorf("extension: create schedule: %w", cerr)
+			return 0, time.Time{}, fmt.Errorf("extension: create schedule: %w", cerr)
 		}
-		return row.NextReviewAt.Time, nil
+		return row.ID, row.NextReviewAt.Time, nil
 	case err != nil:
-		return time.Time{}, fmt.Errorf("extension: lookup schedule: %w", err)
+		return 0, time.Time{}, fmt.Errorf("extension: lookup schedule: %w", err)
 	default:
 		row, uerr := q.AdvanceProblemReviewSchedule(ctx, db.AdvanceProblemReviewScheduleParams{
 			ID:           existing.ID,
@@ -200,9 +203,9 @@ func (r *pgRepository) upsertSchedule(ctx context.Context, q *db.Queries, in Ing
 			LastRating:   optText(in.Rating),
 		})
 		if uerr != nil {
-			return time.Time{}, fmt.Errorf("extension: advance schedule: %w", uerr)
+			return 0, time.Time{}, fmt.Errorf("extension: advance schedule: %w", uerr)
 		}
-		return row.NextReviewAt.Time, nil
+		return row.ID, row.NextReviewAt.Time, nil
 	}
 }
 
