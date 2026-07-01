@@ -3,6 +3,7 @@ import { Inter, JetBrains_Mono, Space_Grotesk, Space_Mono } from "next/font/goog
 import { AuthProvider } from "./_api/AuthProvider";
 import { getDictionary } from "./_content/i18n";
 import { PWAProvider } from "./_pwa/PWAProvider";
+import { ToastProvider } from "./_toast";
 import { ScrollVideoBackground } from "./components/ScrollVideoBackground";
 import "./globals.css";
 
@@ -64,9 +65,11 @@ export default function RootLayout({
     >
       <body>
         <AuthProvider>
-          <PWAProvider />
-          <ScrollVideoBackground />
-          <div className="site-shell">{children}</div>
+          <ToastProvider>
+            <PWAProvider />
+            <ScrollVideoBackground />
+            <div className="site-shell">{children}</div>
+          </ToastProvider>
         </AuthProvider>
       </body>
     </html>
