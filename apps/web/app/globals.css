@@ -696,6 +696,22 @@ h3 {
   overflow: hidden;
 }
 
+/* Memory section — live extension-popup demo (MemoryExtensionDemo).
+   The popup is a fixed 400x372 card; center it in the grid cell and scale it
+   down on narrow columns so it never overflows the viewport. */
+.memory-ext-demo {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+@media (max-width: 520px) {
+  .memory-ext-demo {
+    transform: scale(0.82);
+    transform-origin: top center;
+    margin-bottom: -67px; /* reclaim the height freed by the down-scale */
+  }
+}
+
 .demo-toolbar {
   display: flex;
   align-items: center;

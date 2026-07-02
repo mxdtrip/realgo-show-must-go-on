@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { getDictionary } from "../_content/i18n";
+import { MemoryExtensionDemo } from "../components/MemoryExtensionDemo";
 import { ScrollVideoBackground } from "../components/ScrollVideoBackground";
 import { SortingMemoryHero } from "../components/SortingMemoryHero";
 import { LandingFAQ } from "./LandingFAQ";
@@ -55,26 +56,8 @@ export default function Home() {
             <h2>{copy.sections.memory.title}</h2>
             <p>{copy.sections.memory.description}</p>
           </div>
-          <div className="product-demo memory-demo">
-            <div className="demo-toolbar">
-              <span>{copy.sections.memory.demoUrl}</span>
-              <strong>{copy.sections.memory.demoStatus}</strong>
-            </div>
-            <div className="rating-row" aria-label={copy.sections.memory.ratingAria}>
-              {copy.sections.memory.ratings.map((rating) => (
-                <button key={rating}>{rating}</button>
-              ))}
-            </div>
-            <div className="task-table">
-              {copy.memoryTasks.map(([title, pattern, rating, next]) => (
-                <div className="task-row" key={title}>
-                  <strong>{title}</strong>
-                  <span>{pattern}</span>
-                  <em>{rating}</em>
-                  <span>{next}</span>
-                </div>
-              ))}
-            </div>
+          <div className="memory-ext-demo">
+            <MemoryExtensionDemo />
           </div>
         </div>
       </section>
