@@ -10,10 +10,11 @@ SELECT
     pt.code                                AS pattern_id,
     pt.name                                AS pattern_name,
     CASE
-        WHEN upp.status = 'reviewing' THEN 'reviewing'
-        WHEN upp.status IN ('solved','mastered') THEN 'mastered'
-        WHEN upp.status IN ('skipped','archived') THEN 'archived'
-        WHEN upp.status IS NOT NULL THEN upp.status
+        WHEN upp.status = 'reviewing'   THEN 'reviewing'
+        WHEN upp.status = 'solved'      THEN 'solved'
+        WHEN upp.status = 'in_progress' THEN 'in_progress'
+        WHEN upp.status = 'skipped'     THEN 'skipped'
+        WHEN upp.status = 'not_started' THEN 'not_started'
         ELSE 'unsaved'
     END::text                              AS status,
     rs.next_review_at,
@@ -37,11 +38,11 @@ WHERE p.id = sqlc.arg(problem_id)::bigint;
 -- name: UpsertProblemProgress :one
 -- Save a problem to the user's list (idempotent; won't downgrade reviewing/solved status).
 INSERT INTO user_problem_progress (user_id, problem_id, status, first_seen_at)
-VALUES (sqlc.arg(user_id)::bigint, sqlc.arg(problem_id)::bigint, 'saved', NOW())
+VALUES (sqlc.arg(user_id)::bigint, sqlc.arg(problem_id)::bigint, 'not_started', NOW())
 ON CONFLICT (user_id, problem_id) DO UPDATE
     SET status = CASE
-        WHEN user_problem_progress.status IN ('reviewing','solved','mastered') THEN user_problem_progress.status
-        ELSE 'saved'
+        WHEN user_problem_progress.status IN ('reviewing','solved','in_progress') THEN user_problem_progress.status
+        ELSE 'not_started'
     END,
     first_seen_at = COALESCE(user_problem_progress.first_seen_at, EXCLUDED.first_seen_at)
 RETURNING user_id, problem_id, status;

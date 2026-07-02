@@ -358,7 +358,7 @@ func (h *Handler) create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response.JSON(w, http.StatusCreated, cardFromRecord(card, pgText(""), pgText(""), pgText("")))
+	response.JSON(w, http.StatusCreated, cardFromRecord(card, pgtype.Text{}, pgtype.Text{}, pgtype.Text{}))
 }
 
 // GET /me/cards/{cardId}
@@ -465,7 +465,7 @@ func (h *Handler) update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response.JSON(w, http.StatusOK, cardFromRecord(card, pgText(""), pgText(""), pgText("")))
+	response.JSON(w, http.StatusOK, cardFromRecord(card, pgtype.Text{}, pgtype.Text{}, pgtype.Text{}))
 }
 
 // DELETE /me/cards/{cardId}
