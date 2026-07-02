@@ -25,13 +25,12 @@ jobs:
           docker logs freeburger-api-1 --tail 20 2>&1 | tail -20 || echo "(no api container)"
       - name: Network probes
         run: |
-          echo "===== cloudflared -> caddy:80 (the 502 suspect) ====="
-          docker exec freeburger-cloudflared-1 sh -c 'wget -qO- -T5 -S http://caddy:80/ 2>&1 | head -20' 2>&1 || echo "(cloudflared has no wget/shell)"
-          echo "===== which network is cloudflared vs caddy on ====="
-          docker inspect -f '{{.Name}} nets={{range $k,$v := .NetworkSettings.Networks}}{{$k}} {{end}}' freeburger-cloudflared-1 freeburger-caddy-1 freeburger-web-1 2>&1 || true
-          echo "===== can cloudflared even resolve caddy? ====="
-          docker exec freeburger-cloudflared-1 sh -c 'nslookup caddy 2>&1 || getent hosts caddy 2>&1 || echo no-resolver' 2>&1 || true
-          echo "===== host -> caddy publish :8080 ====="
-          curl -sS -o /dev/null -w "localhost:8080/ -> %{http_code}\n" --max-time 8 http://localhost:8080/ 2>&1 || true
-          echo "===== recent cloudflared log (http2 registered?) ====="
-          docker logs freeburger-cloudflared-1 --tail 25 2>&1 | tail -25 || true
+          echo "===== FRESH cloudflared log (last 50, look for terminated/lost) ====="
+          docker logs freeburger-cloudflared-1 --since 3m 2>&1 | tail -50 || true
+          echo "===== count registered vs terminated in full log ====="
+          echo "Registered: $(docker logs freeburger-cloudflared-1 2>&1 | grep -c 'Registered tunnel connection')"
+          echo "Terminated: $(docker logs freeburger-cloudflared-1 2>&1 | grep -c 'Connection terminated')"
+          echo "LostEdge:   $(docker logs freeburger-cloudflared-1 2>&1 | grep -c 'Lost connection with edge')"
+          echo "===== add a diag container with curl, hit the tunnel path locally ====="
+          docker run --rm --network freeburger_default curlimages/curl:latest -sS -o /dev/null -w "curl caddy:80/ -> %{http_code}\n" --max-time 8 http://caddy:80/ 2>&1 || true
+          docker run --rm --network freeburger_default curlimages/curl:latest -sS -o /dev/null -w "curl caddy:80/api/v1/health -> %{http_code}\n" --max-time 8 http://caddy:80/api/v1/health 2>&1 || true
