@@ -213,6 +213,8 @@ github.com/testcontainers/testcontainers-go v0.43.0 h1:oEQx5MW2DGd9z3AeEQfB2lPM0
 github.com/testcontainers/testcontainers-go v0.43.0/go.mod h1:+VxkT2NQnKOZPKi6praMuMKYHYyOGXr0XSBSlSMCzFo=
 github.com/testcontainers/testcontainers-go/modules/postgres v0.43.0 h1:ShNOFYAF4lKHvdIG258hi69bSxC88uXnxJkJvNs/IVs=
 github.com/testcontainers/testcontainers-go/modules/postgres v0.43.0/go.mod h1:vdq5/RqmGfWeefzyfcVI/pID1rzmc1TDvqXa15bPJks=
+github.com/testcontainers/testcontainers-go/modules/redis v0.43.0 h1:qzATMhrltLr07KcGl/d674ouqI0AFtf6wnQb3VnqP7M=
+github.com/testcontainers/testcontainers-go/modules/redis v0.43.0/go.mod h1:ygEcEUIZzmIlOKpjBfnPn/lUIRNorr1kPj3XfFPTQXM=
 github.com/tetratelabs/wazero v1.9.0 h1:IcZ56OuxrtaEz8UYNRHBrUa9bYeX9oVY93KspZZBf/I=
 github.com/tetratelabs/wazero v1.9.0/go.mod h1:TSbcXCfFP0L2FGkRPxHphadXPjo1T6W+CseNNY7EkjM=
 github.com/tklauser/go-sysconf v0.3.16 h1:frioLaCQSsF5Cy1jgRBrzr6t502KIIwQ0MArYICU0nA=
