@@ -11,6 +11,7 @@ import {
   type NotificationPermissionState,
   type NotificationSettingsState,
 } from "../../../_notifications/notifications";
+import { useToast } from "../../../_toast";
 
 type NotificationSettingsPanelProps = {
   copy: {
@@ -33,6 +34,7 @@ type NotificationSettingsPanelProps = {
 };
 
 export function NotificationSettingsPanel({ copy }: Readonly<NotificationSettingsPanelProps>) {
+  const toast = useToast();
   const [permission, setPermission] = useState<NotificationPermissionState>("default");
   const [settings, setSettings] = useState<NotificationSettingsState | null>(null);
   const [lastResult, setLastResult] = useState("");
@@ -51,12 +53,13 @@ export function NotificationSettingsPanel({ copy }: Readonly<NotificationSetting
     return <div className="notification-settings-panel" />;
   }
 
-  const permissionLabel = {
+  const permissionLabelByState = {
     default: copy.disabled,
     denied: copy.permissionDenied,
     granted: copy.permissionGranted,
     unsupported: copy.permissionUnsupported,
-  }[permission];
+  };
+  const permissionLabel = permissionLabelByState[permission];
 
   const update = (patch: Partial<NotificationSettingsState>) => {
     setSettings((current) => (current ? { ...current, ...patch } : current));
@@ -66,6 +69,12 @@ export function NotificationSettingsPanel({ copy }: Readonly<NotificationSetting
     const nextPermission = await requestNotificationPermission();
     setPermission(nextPermission);
     update({ enabled: nextPermission === "granted" });
+    const message = nextPermission === "granted" ? copy.enabled : permissionLabelByState[nextPermission];
+    if (nextPermission === "granted") {
+      toast.success(message);
+    } else {
+      toast.error(message);
+    }
   };
 
   const sendTest = async () => {
@@ -74,7 +83,13 @@ export function NotificationSettingsPanel({ copy }: Readonly<NotificationSetting
       data: { url: "/cards" },
       tag: "realgo-test-notification",
     });
-    setLastResult(didShow ? copy.testSent : permissionLabel);
+    const message = didShow ? copy.testSent : permissionLabel;
+    setLastResult(message);
+    if (didShow) {
+      toast.success(message);
+    } else {
+      toast.error(message);
+    }
   };
 
   return (

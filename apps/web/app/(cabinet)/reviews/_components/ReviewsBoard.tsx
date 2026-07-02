@@ -5,12 +5,14 @@ import { useState } from "react";
 import { CabinetPanel } from "../../_components";
 
 type ReviewItem = Readonly<{
-  id: number;
+  id: number | string;
   title: string;
   meta: string;
   type: string;
   next: string;
   rating: string;
+  ratingLabel: string;
+  attemptsLabel: string;
 }>;
 
 type ReviewsBoardCopy = Readonly<{
@@ -19,23 +21,35 @@ type ReviewsBoardCopy = Readonly<{
   panelTitle: string;
   summaryUnit: string;
   empty: string;
+  loading: string;
+  errorTitle: string;
+  retry: string;
 }>;
+
+type LoadState = "loading" | "loaded" | "error";
 
 /** FSRS rating → tone token (blue / green / amber). */
 const ratingTone: Record<string, string> = {
   normal: "accent",
   easy: "success",
   hard: "warning",
+  new: "default",
 };
 
 export function ReviewsBoard({
   items,
   types,
   copy,
+  loadState = "loaded",
+  errorMessage,
+  onRetry,
 }: Readonly<{
   items: readonly ReviewItem[];
   types: readonly (readonly [string, string, string])[];
   copy: ReviewsBoardCopy;
+  loadState?: LoadState;
+  errorMessage?: string;
+  onRetry?: () => void;
 }>) {
   const [filter, setFilter] = useState("all");
 
@@ -83,30 +97,63 @@ export function ReviewsBoard({
         }
       >
         <div className="review-list">
-          {visible.map((item) => {
-            const [day, time] = item.next.split(" · ");
-            const tone = typeTones.get(item.type) ?? "accent";
-            const badge = ratingTone[item.rating] ?? "accent";
-            return (
-              <article className="review-list__item" key={item.id}>
-                <div className="review-list__main">
-                  <div className="review-list__title-row">
-                    <span className={`review-type review-type--${tone}`} aria-hidden="true" />
-                    <strong>{item.title}</strong>
-                  </div>
-                  <p>{item.meta}</p>
-                </div>
-                <div className="review-list__side">
-                  <span className="review-when">
-                    <em>{day} · </em>
-                    {time}
-                  </span>
-                  <span className={`review-badge review-badge--${badge}`}>{item.rating}</span>
-                </div>
-              </article>
-            );
-          })}
-          {visible.length === 0 ? <div className="data-table__empty">{copy.empty}</div> : null}
+          {loadState === "loading" ? (
+            <div className="review-list__state" role="status" aria-live="polite">
+              {copy.loading}
+            </div>
+          ) : null}
+
+          {loadState === "error" ? (
+            <div className="review-list__state review-list__state--error" role="alert">
+              <strong>{copy.errorTitle}</strong>
+              {errorMessage ? <p>{errorMessage}</p> : null}
+              {onRetry ? (
+                <button type="button" onClick={onRetry}>
+                  {copy.retry}
+                </button>
+              ) : null}
+            </div>
+          ) : null}
+
+          {loadState === "loaded"
+            ? visible.map((item) => {
+                const [day, time] = item.next.split(" · ");
+                const tone = typeTones.get(item.type) ?? "accent";
+                const badge = ratingTone[item.rating] ?? "accent";
+                return (
+                  <article className="review-list__item" key={item.id}>
+                    <div className="review-list__main">
+                      <div className="review-list__title-row">
+                        <span className={`review-type review-type--${tone}`} aria-hidden="true" />
+                        <strong>{item.title}</strong>
+                      </div>
+                      <p>{item.meta}</p>
+                    </div>
+                    <div className="review-list__side">
+                      <span className="review-when">
+                        {time ? (
+                          <>
+                            <em>{day} · </em>
+                            {time}
+                          </>
+                        ) : (
+                          <em>{day}</em>
+                        )}
+                      </span>
+                      <span className="review-list__rating">
+                        <span className={`review-badge review-badge--${badge}`}>
+                          {item.ratingLabel}
+                        </span>
+                        <em>{item.attemptsLabel}</em>
+                      </span>
+                    </div>
+                  </article>
+                );
+              })
+            : null}
+          {loadState === "loaded" && visible.length === 0 ? (
+            <div className="data-table__empty">{copy.empty}</div>
+          ) : null}
         </div>
       </CabinetPanel>
     </>
