@@ -128,7 +128,7 @@ function finalize(adapter: PlatformAdapter, submitResult: SubmitResult) {
   lastKeyAt = now;
 
   try {
-    chrome.runtime.sendMessage({ type: "ENGRAM_SUBMISSION_DETECTED", submission });
+    chrome.runtime.sendMessage({ type: "REALGO_SUBMISSION_DETECTED", submission });
   } catch {
     /* background may be asleep; overlay still works */
   }
@@ -152,13 +152,13 @@ function showOverlay(submission: DetectedSubmission) {
   removeOverlay();
 
   overlayHost = document.createElement("div");
-  overlayHost.id = "engram-overlay-host";
+  overlayHost.id = "realgo-overlay-host";
   const shadow = overlayHost.attachShadow({ mode: "open" });
   const mount = document.createElement("div");
-  mount.className = "engram-overlay";
+  mount.className = "realgo-overlay";
 
   const closeBtn = document.createElement("button");
-  closeBtn.className = "engram-overlay-close";
+  closeBtn.className = "realgo-overlay-close";
   closeBtn.textContent = "×";
   closeBtn.setAttribute("aria-label", "Закрыть");
   closeBtn.addEventListener("click", removeOverlay);
@@ -180,7 +180,7 @@ function showOverlay(submission: DetectedSubmission) {
   );
 }
 
-/** Opens the Engram review cards section in a new browser tab. */
+/** Opens the realgo review cards section in a new browser tab. */
 async function openReview() {
   const url = await getReviewUrl();
   window.open(url, "_blank", "noopener,noreferrer");
@@ -190,7 +190,7 @@ async function openReview() {
 /** Routes the save through the background worker to dodge host-page CORS. */
 async function saveViaBackground(payload: SubmissionPayload): Promise<void> {
   const res: SaveResponse | undefined = await chrome.runtime.sendMessage({
-    type: "ENGRAM_SAVE_SUBMISSION",
+    type: "REALGO_SAVE_SUBMISSION",
     payload,
   });
   if (!res?.ok) {

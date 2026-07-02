@@ -7,6 +7,8 @@ import type {
 } from "../lib/types";
 import { POPUP_CSS } from "./popup.styles";
 
+const BRAND_LOGO_URL = new URL("../../assets/icon.png", import.meta.url).href;
+
 export interface PopupAppProps {
   /**
    * undefined → still detecting (loading);
@@ -259,19 +261,15 @@ function ChoiceGroup<T extends string>({
 // ── Inline icons (no icon dependency; matches our inline-SVG convention) ──────
 function BrandMark({ size = 16 }: { size?: number }) {
   return (
-    <svg
-      className="realgo-brand__mark"
-      width={size}
-      height={size}
-      viewBox="0 0 16 16"
-      fill="none"
+    <img
+      alt=""
       aria-hidden="true"
-    >
-      <rect width="16" height="16" rx="3" fill="#2f81f7" />
-      <rect x="3" y="4" width="6" height="1.5" rx="0.75" fill="#fff" />
-      <rect x="3" y="7.25" width="10" height="1.5" rx="0.75" fill="#fff" />
-      <rect x="3" y="10.5" width="4" height="1.5" rx="0.75" fill="#fff" />
-    </svg>
+      className="realgo-brand__mark"
+      decoding="async"
+      height={size}
+      src={BRAND_LOGO_URL}
+      width={size}
+    />
   );
 }
 

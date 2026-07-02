@@ -91,7 +91,7 @@ export const POPUP_CSS = `
   color: var(--text);
 }
 .realgo-brand--md { font-size: 15px; }
-.realgo-brand__mark { display: block; flex-shrink: 0; }
+.realgo-brand__mark { display: block; flex-shrink: 0; object-fit: contain; }
 .realgo-header__sub {
   font-family: var(--font-sans);
   font-size: 11px;
