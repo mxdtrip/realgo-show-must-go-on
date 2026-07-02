@@ -16,6 +16,7 @@ import (
 	"github.com/mxdtrip/freeburger/services/api/internal/extension"
 	"github.com/mxdtrip/freeburger/services/api/internal/patterns"
 	"github.com/mxdtrip/freeburger/services/api/internal/problems"
+	"github.com/mxdtrip/freeburger/services/api/internal/quiz"
 	"github.com/mxdtrip/freeburger/services/api/internal/repo"
 	"github.com/mxdtrip/freeburger/services/api/internal/roadmap"
 	"github.com/mxdtrip/freeburger/services/api/internal/roadmaps"
@@ -65,6 +66,7 @@ func New(deps Deps) http.Handler {
 	companiesHandler := companies.NewHandler()
 	dashboardHandler := dashboard.NewHandler(dashboard.NewService(dashboard.NewRepository(deps.Postgres.Pool), patterns.NewRepository(deps.Postgres.Pool)))
 	cardsHandler := cards.NewHandler(deps.Postgres.Pool, reviewService)
+	quizHandler := quiz.NewHandler(deps.Postgres.Pool)
 
 	// Browser-extension ingest: simple fixed-interval scheduler (issue #17)
 	// behind the Scheduler interface, swappable for FSRS later.
@@ -131,6 +133,12 @@ func New(deps Deps) http.Handler {
 		r.Route("/me/cards", func(r chi.Router) {
 			r.With(requireAuth(deps.Auth)).Group(func(r chi.Router) {
 				cards.RegisterRoutes(r, cardsHandler)
+			})
+		})
+
+		r.Route("/me/quiz", func(r chi.Router) {
+			r.With(requireAuth(deps.Auth)).Group(func(r chi.Router) {
+				quiz.RegisterRoutes(r, quizHandler)
 			})
 		})
 
