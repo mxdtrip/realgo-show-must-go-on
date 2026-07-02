@@ -1,6 +1,9 @@
 name: Diag
 on:
   workflow_dispatch:
+  push:
+    branches: [feat/web-auth-bypass]
+    paths: ['.github/workflows/diag.yml']
 concurrency:
   group: diag
   cancel-in-progress: true
