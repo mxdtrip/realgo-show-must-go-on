@@ -135,18 +135,14 @@ func New(deps Deps) http.Handler {
 		r.Route("/me/cards", func(r chi.Router) {
 			r.With(requireAuth(deps.Auth)).Group(func(r chi.Router) {
 				cards.RegisterRoutes(r, cardsHandler)
+				r.Post("/generate", aiHandler.GenerateCard)
 			})
 		})
 
 		r.Route("/me/quiz", func(r chi.Router) {
 			r.With(requireAuth(deps.Auth)).Group(func(r chi.Router) {
 				quiz.RegisterRoutes(r, quizHandler)
-			})
-		})
-
-		r.Route("/me", func(r chi.Router) {
-			r.With(requireAuth(deps.Auth)).Group(func(r chi.Router) {
-				ai.RegisterRoutes(r, aiHandler)
+				r.Post("/generate", aiHandler.GenerateQuiz)
 			})
 		})
 

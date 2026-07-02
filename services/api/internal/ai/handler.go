@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 
@@ -27,10 +26,11 @@ func NewHandler(pool *pgxpool.Pool) *Handler {
 	return &Handler{q: db.New(pool)}
 }
 
-func RegisterRoutes(r chi.Router, h *Handler) {
-	r.Post("/cards/generate", h.generateCard)
-	r.Post("/quiz/generate", h.generateQuiz)
-}
+// GenerateCard is exported for mounting inside the /me/cards route group.
+func (h *Handler) GenerateCard(w http.ResponseWriter, r *http.Request) { h.generateCard(w, r) }
+
+// GenerateQuiz is exported for mounting inside the /me/quiz route group.
+func (h *Handler) GenerateQuiz(w http.ResponseWriter, r *http.Request) { h.generateQuiz(w, r) }
 
 // generateCardRequest describes the context for card generation.
 type generateCardRequest struct {
