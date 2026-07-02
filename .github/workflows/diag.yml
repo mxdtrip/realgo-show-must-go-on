@@ -11,15 +11,22 @@ jobs:
   diag:
     runs-on: [self-hosted, linux, appbox]
     steps:
-      - name: iptables NAT capability (transparent proxy path, no TUN)
+      - name: vpngw + cloudflared through VLESS
         run: |
-          echo "===== can a NET_ADMIN container use iptables -t nat REDIRECT? ====="
-          docker run --rm --cap-add=NET_ADMIN alpine sh -c '
-            apk add --no-cache iptables >/dev/null 2>&1
-            iptables -t nat -N REDSOCKS 2>&1 && echo "NAT chain create OK" || echo "NAT chain create FAILED"
-            iptables -t nat -A REDSOCKS -p tcp -j REDIRECT --to-ports 12345 2>&1 && echo "NAT REDIRECT rule OK" || echo "NAT REDIRECT rule FAILED"
-            iptables -t nat -A OUTPUT -p tcp -j REDSOCKS 2>&1 && echo "NAT OUTPUT hook OK" || echo "NAT OUTPUT hook FAILED"
-            iptables -t nat -L -n 2>&1 | head -5
-          ' 2>&1 || echo "(container failed)"
-          echo "===== nf_conntrack / nat modules loaded on host? ====="
-          lsmod 2>/dev/null | grep -E "nf_nat|nf_conntrack|iptable_nat" | head -5 || echo "(cannot read lsmod)"
+          echo "===== containers ====="
+          docker ps --format '{{.Names}}\t{{.Status}}' | grep -E 'vpngw|cloudflared|caddy|web' || true
+          echo "===== docker network subnet (is caddy in an excluded range?) ====="
+          docker network inspect freeburger_default -f '{{range .IPAM.Config}}{{.Subnet}} {{end}}' 2>&1 || true
+          echo "caddy ip: $(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' freeburger-caddy-1 2>&1)"
+          echo "vpngw ip: $(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' freeburger-vpngw-1 2>&1)"
+          echo "===== vpngw (sing-box) log ====="
+          docker logs freeburger-vpngw-1 --tail 30 2>&1 | tail -30 || true
+          echo "===== cloudflared log (registered via VLESS? origin errors?) ====="
+          docker logs freeburger-cloudflared-1 --tail 30 2>&1 | tail -30 || true
+          echo "===== from vpngw netns: reach caddy:80 directly? (curl is redirected too) ====="
+          docker exec freeburger-vpngw-1 sh -c 'curl -sS -o /dev/null -w "vpngw->caddy:80 = %{http_code}\n" --max-time 8 http://caddy:80/ 2>&1' || echo "(curl failed in vpngw)"
+          docker exec freeburger-vpngw-1 sh -c 'getent hosts caddy 2>&1 || nslookup caddy 2>&1 | tail -3' || true
+          echo "===== does external egress work through VLESS from vpngw? ====="
+          docker exec freeburger-vpngw-1 sh -c 'curl -sS --max-time 10 https://api.ipify.org 2>&1; echo " <- exit IP (should be VLESS server, not RU)"' || true
+          echo "===== iptables nat as installed ====="
+          docker exec freeburger-vpngw-1 sh -c 'iptables -t nat -S' 2>&1 | tail -20 || true
