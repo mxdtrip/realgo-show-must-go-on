@@ -18,6 +18,7 @@ jobs:
         env:
           AUTH_JWT_SECRET: ${{ secrets.AUTH_JWT_SECRET }}
           CLOUDFLARE_TUNNEL_TOKEN: ${{ secrets.CLOUDFLARE_TUNNEL_TOKEN }}
+          VPN_SUB_URL: ${{ secrets.VPN_SUB_URL }}
         run: |
           docker compose pull --ignore-buildable || true
           docker compose up -d --build --remove-orphans

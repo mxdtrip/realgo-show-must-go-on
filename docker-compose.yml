@@ -114,16 +114,43 @@ services:
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
 
+  # VPN gateway. The provider applies SNI-based DPI to Cloudflare, so a plain
+  # tunnel to the CF edge (port 7844) never carries data. sing-box tunnels
+  # outbound TCP through a VLESS/Reality subscription (port 443, indistinguishable
+  # from normal HTTPS), and an iptables transparent redirect sends cloudflared's
+  # edge traffic through it. See vpngw/. Requires the subscription URL.
+  vpngw:
+    build:
+      context: ./vpngw
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+    environment:
+      VPN_SUB_URL: ${VPN_SUB_URL:?VPN_SUB_URL must be set}
+    # Healthy only once traffic actually egresses through the VLESS tunnel: this
+    # curl runs in vpngw's netns and is itself redirected through sing-box.
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "--max-time", "8", "-o", "/dev/null", "https://www.gstatic.com/generate_204"]
+      interval: 15s
+      timeout: 12s
+      retries: 20
+      start_period: 25s
+
   # Cloudflare Tunnel: exposes the stack on realgo.dev without opening any inbound
-  # ports. Create a tunnel in the Cloudflare dashboard, point its public hostname
-  # realgo.dev -> http://caddy:80, and put the tunnel token in CLOUDFLARE_TUNNEL_TOKEN.
+  # ports. Its public hostname realgo.dev -> http://caddy:80 is set in the CF
+  # dashboard; the tunnel token goes in CLOUDFLARE_TUNNEL_TOKEN. cloudflared shares
+  # vpngw's network namespace so its edge traffic rides the VLESS tunnel above.
   cloudflared:
     image: cloudflare/cloudflared:latest
     restart: unless-stopped
+    network_mode: "service:vpngw"
     depends_on:
-      - caddy
-    # Force the http2 (TCP) transport: this network passes TCP :7844 to the CF
-    # edge but drops QUIC/UDP :7844, so the default quic protocol never connects.
+      vpngw:
+        condition: service_healthy
+      caddy:
+        condition: service_started
+    # http2 (TCP) transport: the redirect only captures TCP, and QUIC/UDP to the
+    # edge is blocked anyway.
     command: tunnel --no-autoupdate --protocol http2 run
     environment:
       TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:?CLOUDFLARE_TUNNEL_TOKEN must be set}
