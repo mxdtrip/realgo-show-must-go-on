@@ -50,6 +50,8 @@ const ru = {
         interviewDate: "Interview date",
         loginAria: "Log in",
         signupAria: "Create account",
+        pending: "Please wait…",
+        error: "Something went wrong. Try again.",
       },
       sortingCodeAria: "Sorting code",
       eyebrow: "// spaced-repetition for interview prep",

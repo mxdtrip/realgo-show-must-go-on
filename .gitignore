@@ -29,6 +29,12 @@ build/
 next-env.d.ts
 coverage/
 
+# Playwright e2e artifacts (the specs in apps/web/e2e are committed; output is not)
+test-results/
+playwright-report/
+.playwright/
+blob-report/
+
 # Go build and test artifacts
 bin/
 vendor/

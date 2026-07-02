@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { useAuth } from "../_api/AuthProvider";
+import { ApiError } from "../_api/types";
 import { getDictionary } from "../_content/i18n";
 
 const WORD = "realgo";
@@ -254,6 +256,7 @@ export function SortingMemoryHero() {
   const dictionary = getDictionary();
   const copy = dictionary.marketing.hero;
   const router = useRouter();
+  const auth = useAuth();
   const sceneRef = useRef<HTMLElement | null>(null);
   const runIdRef = useRef(0);
   const [size, setSize] = useState<SceneSize>({ width: 1200, height: 760 });
@@ -266,6 +269,10 @@ export function SortingMemoryHero() {
   useEffect(() => {
     if (authOpen) setAuthRender(true);
   }, [authOpen]);
+  const [authEmail, setAuthEmail] = useState("");
+  const [authPassword, setAuthPassword] = useState("");
+  const [authError, setAuthError] = useState("");
+  const [authPending, setAuthPending] = useState(false);
   const [order, setOrder] = useState(() => shuffle([0, 1, 2, 3, 4, 5]));
   const [poses, setPoses] = useState<Pose[]>([]);
   const [activeKeys, setActiveKeys] = useState<number[]>([]);
@@ -429,13 +436,27 @@ export function SortingMemoryHero() {
   );
 
   const handleAuthSubmit = useCallback(
-    (event: React.FormEvent<HTMLFormElement>) => {
+    async (event: React.FormEvent<HTMLFormElement>) => {
       event.preventDefault();
-      // The landing modal is a teaser; the real auth lives on /login and
-      // /register, which run the actual backend flow + session handling.
-      router.push(authMode === "signup" ? "/register" : "/login");
+      if (authPending) return;
+      setAuthPending(true);
+      setAuthError("");
+      try {
+        if (authMode === "signup") {
+          await auth.register(authEmail.trim(), authPassword);
+          router.push("/onboarding/profile");
+        } else {
+          await auth.login(authEmail.trim(), authPassword);
+          router.push("/dashboard");
+        }
+        // Keep the button disabled while the redirect happens; the component
+        // unmounts on navigation, so there's no need to reset pending here.
+      } catch (e) {
+        setAuthError(e instanceof ApiError ? e.message : copy.auth.error);
+        setAuthPending(false);
+      }
     },
-    [authMode, router],
+    [auth, authEmail, authMode, authPassword, authPending, copy.auth.error, router],
   );
 
   useEffect(() => {
@@ -660,14 +681,20 @@ export function SortingMemoryHero() {
               <button
                 className={authMode === "login" ? "active" : ""}
                 type="button"
-                onClick={() => setAuthMode("login")}
+                onClick={() => {
+                  setAuthMode("login");
+                  setAuthError("");
+                }}
               >
                 {copy.auth.login}
               </button>
               <button
                 className={authMode === "signup" ? "active" : ""}
                 type="button"
-                onClick={() => setAuthMode("signup")}
+                onClick={() => {
+                  setAuthMode("signup");
+                  setAuthError("");
+                }}
               >
                 {copy.auth.signup}
               </button>
@@ -675,7 +702,15 @@ export function SortingMemoryHero() {
             <form className="auth-form" onSubmit={handleAuthSubmit}>
               <label>
                 {copy.auth.email}
-                <input autoComplete="email" placeholder={copy.auth.emailPlaceholder} type="email" />
+                <input
+                  autoComplete="email"
+                  placeholder={copy.auth.emailPlaceholder}
+                  type="email"
+                  required
+                  value={authEmail}
+                  onChange={(event) => setAuthEmail(event.target.value)}
+                  disabled={authPending}
+                />
               </label>
               <label>
                 {copy.auth.password}
@@ -683,10 +718,26 @@ export function SortingMemoryHero() {
                   autoComplete={authMode === "login" ? "current-password" : "new-password"}
                   placeholder={copy.auth.passwordPlaceholder}
                   type="password"
+                  required
+                  minLength={8}
+                  value={authPassword}
+                  onChange={(event) => setAuthPassword(event.target.value)}
+                  disabled={authPending}
                 />
               </label>
-              <button type="submit">
-                {authMode === "login" ? copy.auth.continue : copy.auth.createAccount}
+
+              {authError ? (
+                <p className="auth-form__error" role="alert">
+                  {authError}
+                </p>
+              ) : null}
+
+              <button type="submit" disabled={authPending}>
+                {authPending
+                  ? copy.auth.pending
+                  : authMode === "login"
+                    ? copy.auth.continue
+                    : copy.auth.createAccount}
               </button>
             </form>
           </section>

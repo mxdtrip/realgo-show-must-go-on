@@ -924,6 +924,18 @@ h3 {
   background: linear-gradient(180deg, var(--accent-soft), transparent 60%), var(--panel);
 }
 
+/* Pricing sits lower in the page and the two-card grid is short, so the shared
+   section padding left too much empty space above and below it. Tighten the
+   vertical rhythm for this section only. */
+#pricing {
+  padding-top: clamp(40px, 6vw, 72px);
+  padding-bottom: clamp(40px, 6vw, 72px);
+}
+
+#pricing .section-kicker {
+  margin-bottom: 22px;
+}
+
 /* Pricing: give the two plans the full section width so they breathe. */
 #pricing .section-grid {
   grid-template-columns: 1fr;
