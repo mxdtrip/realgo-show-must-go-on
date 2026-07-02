@@ -1,0 +1,24 @@
+name: Diag
+on:
+  workflow_dispatch:
+  push:
+    branches: [feat/web-auth-bypass]
+    paths: ['.github/workflows/diag.yml']
+concurrency:
+  group: diag
+  cancel-in-progress: true
+jobs:
+  diag:
+    runs-on: [self-hosted, linux, appbox]
+    steps:
+      - name: Home resilience state
+        run: |
+          echo "===== where does the runner live (host or LXD container)? ====="
+          hostname; systemd-detect-virt 2>&1 || true
+          echo "===== docker autostart + stack restart policies ====="
+          systemctl is-enabled docker 2>&1 | sed 's/^/docker enabled: /' || true
+          docker inspect -f '{{.Name}} restart={{.HostConfig.RestartPolicy.Name}}' $(docker ps -q) 2>&1 || true
+          echo "===== is the GitHub runner installed as a service (auto-start)? ====="
+          systemctl list-units --type=service --all 2>/dev/null | grep -iE 'actions.runner|github' || echo "(no runner systemd unit visible from here)"
+          echo "===== can we reach the LXD host to set boot.autostart? (usually NO from inside) ====="
+          command -v lxc 2>&1 || echo "(no lxc here — we're inside the container)"
