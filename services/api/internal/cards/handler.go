@@ -20,6 +20,16 @@ import (
 	"github.com/mxdtrip/freeburger/services/api/internal/storage/postgres/db"
 )
 
+type repository interface {
+	CreateCard(ctx context.Context, arg db.CreateCardParams) (db.Card, error)
+	GetCardByID(ctx context.Context, arg db.GetCardByIDParams) (db.GetCardByIDRow, error)
+	UpdateCard(ctx context.Context, arg db.UpdateCardParams) (db.Card, error)
+	DeleteCard(ctx context.Context, arg db.DeleteCardParams) error
+	ListUserCards(ctx context.Context, arg db.ListUserCardsParams) ([]db.ListUserCardsRow, error)
+	ListDueCardSessions(ctx context.Context, arg db.ListDueCardSessionsParams) ([]db.ListDueCardSessionsRow, error)
+	GetCardScheduleForUser(ctx context.Context, arg db.GetCardScheduleForUserParams) (int64, error)
+}
+
 const (
 	defaultCardsLimit  = 20
 	maxCardsLimit      = 50
@@ -32,12 +42,12 @@ type reviewRater interface {
 }
 
 type Handler struct {
-	q         *db.Queries
+	repo      repository
 	reviewSvc reviewRater
 }
 
 func NewHandler(pool *pgxpool.Pool, reviewSvc service.ReviewService) *Handler {
-	return &Handler{q: db.New(pool), reviewSvc: reviewSvc}
+	return &Handler{repo: db.New(pool), reviewSvc: reviewSvc}
 }
 
 func RegisterRoutes(r chi.Router, h *Handler) {
@@ -96,39 +106,6 @@ type rateRequest struct {
 	ReviewedAt string `json:"reviewed_at"`
 }
 
-type createCardRequest struct {
-	Type        string  `json:"type"`
-	Question    string  `json:"question"`
-	Answer      string  `json:"answer"`
-	Explanation *string `json:"explanation"`
-	Source      *string `json:"source"`
-	ProblemID   *int64  `json:"problem_id"`
-	PatternID   *int64  `json:"pattern_id"`
-}
-
-type updateCardRequest struct {
-	Type        *string `json:"type"`
-	Question    *string `json:"question"`
-	Answer      *string `json:"answer"`
-	Explanation *string `json:"explanation"`
-	Source      *string `json:"source"`
-}
-
-// cardDetail is returned by GET /me/cards/{id} and mutating operations.
-type cardDetail struct {
-	ID           int64   `json:"id"`
-	Type         string  `json:"type"`
-	Question     string  `json:"question"`
-	Answer       string  `json:"answer"`
-	Explanation  *string `json:"explanation"`
-	Source       *string `json:"source"`
-	CreatedByAI  bool    `json:"created_by_ai"`
-	CreatedAt    string  `json:"created_at"`
-	ProblemTitle *string `json:"problem_title"`
-	ProblemURL   *string `json:"problem_url"`
-	PatternName  *string `json:"pattern_name"`
-}
-
 // --- handlers ---
 
 // GET /me/cards
@@ -140,7 +117,7 @@ func (h *Handler) list(w http.ResponseWriter, r *http.Request) {
 	}
 
 	limit := cardsLimit(r)
-	rows, err := h.q.ListUserCards(r.Context(), db.ListUserCardsParams{Column1: userID, Column2: limit})
+	rows, err := h.repo.ListUserCards(r.Context(), db.ListUserCardsParams{Column1: userID, Column2: limit})
 	if err != nil {
 		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", "could not load cards")
 		return
@@ -202,7 +179,7 @@ func (h *Handler) session(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rows, err := h.q.ListDueCardSessions(r.Context(), db.ListDueCardSessionsParams{
+	rows, err := h.repo.ListDueCardSessions(r.Context(), db.ListDueCardSessionsParams{
 		Column1: userID,
 		Column2: defaultSessionLimit,
 	})
@@ -279,7 +256,7 @@ func (h *Handler) rate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Look up the review schedule for this card.
-	scheduleID, err := h.q.GetCardScheduleForUser(r.Context(), db.GetCardScheduleForUserParams{
+	scheduleID, err := h.repo.GetCardScheduleForUser(r.Context(), db.GetCardScheduleForUserParams{
 		Column1: cardID,
 		Column2: userID,
 	})
@@ -352,7 +329,7 @@ func (h *Handler) create(w http.ResponseWriter, r *http.Request) {
 		params.Source = pgText(*req.Source)
 	}
 
-	card, err := h.q.CreateCard(r.Context(), params)
+	card, err := h.repo.CreateCard(r.Context(), params)
 	if err != nil {
 		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", "could not create card")
 		return
@@ -375,7 +352,7 @@ func (h *Handler) get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	row, err := h.q.GetCardByID(r.Context(), db.GetCardByIDParams{CardID: cardID, UserID: userID})
+	row, err := h.repo.GetCardByID(r.Context(), db.GetCardByIDParams{CardID: cardID, UserID: userID})
 	if errors.Is(err, pgx.ErrNoRows) {
 		response.Fail(w, http.StatusNotFound, "NOT_FOUND", "card not found")
 		return
@@ -455,7 +432,7 @@ func (h *Handler) update(w http.ResponseWriter, r *http.Request) {
 		params.Source = pgText(*req.Source)
 	}
 
-	card, err := h.q.UpdateCard(r.Context(), params)
+	card, err := h.repo.UpdateCard(r.Context(), params)
 	if errors.Is(err, pgx.ErrNoRows) {
 		response.Fail(w, http.StatusNotFound, "NOT_FOUND", "card not found")
 		return
@@ -482,7 +459,7 @@ func (h *Handler) delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.q.DeleteCard(r.Context(), db.DeleteCardParams{CardID: cardID, UserID: userID}); err != nil {
+	if err := h.repo.DeleteCard(r.Context(), db.DeleteCardParams{CardID: cardID, UserID: userID}); err != nil {
 		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", "could not delete card")
 		return
 	}
