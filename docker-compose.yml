@@ -114,7 +114,9 @@ services:
     ports:
       - "${API_PORT:-8080}:80"
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # The local/home stack is reached through the VPS edge Caddy, so it must
+      # listen plainly on :80 and not try to issue a public cert itself.
+      - ./Caddyfile.internal:/etc/caddy/Caddyfile:ro
 
   # Reverse tunnel to the VPS. The home connection is CGNAT'd (no inbound public
   # IP) and the provider's DPI blocks Cloudflare, so instead of exposing anything

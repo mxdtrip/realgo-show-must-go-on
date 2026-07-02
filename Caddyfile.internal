@@ -1,8 +1,6 @@
-# Public direct-deploy entry point. The reverse-tunnel home stack uses
-# Caddyfile.internal instead, because the VPS edge terminates TLS there.
-{$REALGO_SITE_ADDRESS:realgo.dev} {
-	encode zstd gzip
-
+# Internal home-stack router. It intentionally has no public domain: the VPS
+# edge Caddy terminates TLS for realgo.dev and reaches this listener through frp.
+:80 {
 	@api path /api/*
 	@allowed_origin header_regexp Origin ^(https?://(localhost|127[.]0[.]0[.]1):(5173|3000)|{$REALGO_EXTENSION_ORIGIN:chrome-extension://invalidextensionidorigin})$
 
