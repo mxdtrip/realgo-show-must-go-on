@@ -13,7 +13,10 @@ type FAQSectionCopy = Readonly<{
 }>;
 
 export function LandingFAQ({ section }: { section: FAQSectionCopy }) {
-  const [openIndex, setOpenIndex] = useState(0);
+  // Start with every question collapsed; -1 is the "none open" sentinel the
+  // toggle already uses. Opening the first item by default surprised users on
+  // reload (it looked like a rendering glitch).
+  const [openIndex, setOpenIndex] = useState(-1);
 
   return (
     <section className="landing-section faq-section" id="faq">

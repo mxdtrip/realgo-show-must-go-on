@@ -40,6 +40,14 @@ export function ScrollVideoBackground() {
     // visibly lags behind the scroll. We instead hold off until the in-flight
     // seek finishes, always seeking to the *latest* target when it does.
     let seeking = false;
+    // When the in-flight seek was issued. If `seeked` never fires — e.g. the seek
+    // is cancelled by the `video.load()` below when a deep reload restores the
+    // scroll offset — the flag would stay stuck and freeze the clip on frame 0.
+    // A watchdog clears it after SEEK_TIMEOUT_MS so the next tick retries. Normal
+    // scrub seeks resolve well under this, so throttling to the decoder's rate
+    // (the reason the flag exists) still holds.
+    let seekStartedAt = 0;
+    const SEEK_TIMEOUT_MS = 250;
 
     const computeTarget = () => {
       // Scroll distance over which the clip should play: from the top of the page
@@ -73,6 +81,7 @@ export function ScrollVideoBackground() {
       if (Math.abs(time - video.currentTime) < 0.005) return;
       try {
         seeking = true;
+        seekStartedAt = performance.now();
         video.currentTime = time;
       } catch {
         // ignore seeks while metadata is still settling
@@ -81,6 +90,11 @@ export function ScrollVideoBackground() {
     };
 
     const tick = () => {
+      // Self-heal a seek whose `seeked` never arrived (cancelled by a reload's
+      // load()), so the flag can't stay stuck and freeze the clip.
+      if (seeking && performance.now() - seekStartedAt > SEEK_TIMEOUT_MS) {
+        seeking = false;
+      }
       if (ready) {
         // Recompute the target from the live scroll position every frame. The
         // browser restores the scroll offset a beat AFTER the video metadata
@@ -138,6 +152,9 @@ export function ScrollVideoBackground() {
       const settleEnd = performance.now() + 2000;
       let settleRaf = 0;
       const settle = () => {
+        if (seeking && performance.now() - seekStartedAt > SEEK_TIMEOUT_MS) {
+          seeking = false;
+        }
         if (ready) {
           computeTarget();
           current = target;
