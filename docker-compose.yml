@@ -122,7 +122,9 @@ services:
     restart: unless-stopped
     depends_on:
       - caddy
-    command: tunnel --no-autoupdate run
+    # Force the http2 (TCP) transport: this network passes TCP :7844 to the CF
+    # edge but drops QUIC/UDP :7844, so the default quic protocol never connects.
+    command: tunnel --no-autoupdate --protocol http2 run
     environment:
       TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:?CLOUDFLARE_TUNNEL_TOKEN must be set}
 
