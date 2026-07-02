@@ -138,6 +138,7 @@ export const POPUP_CSS = `
 .realgo-header__right {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   min-width: 0;
 }

@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 
-import { saveSubmission } from "./lib/api";
-import { clearLastSubmission, getLastSubmission } from "./lib/storage";
-import type { DetectedSubmission, SubmissionPayload } from "./lib/types";
+import { clearLastSubmission, getLastSubmission, getReviewUrl } from "./lib/storage";
+import type {
+  DetectedSubmission,
+  SaveResponse,
+  SubmissionPayload,
+} from "./lib/types";
 import { PopupApp } from "./popup/PopupApp";
 
 /**
@@ -22,7 +25,15 @@ function IndexPopup() {
   }, []);
 
   async function handleSave(payload: SubmissionPayload) {
-    await saveSubmission(payload);
+    // Route the save through the background worker (same path as the in-page
+    // overlay) so transport/business logic lives in one place (#35, #38).
+    const res: SaveResponse | undefined = await chrome.runtime.sendMessage({
+      type: "REALGO_SAVE_SUBMISSION",
+      payload,
+    });
+    if (!res?.ok) {
+      throw new Error(res?.error ?? "Не удалось сохранить.");
+    }
     await clearLastSubmission();
     try {
       await chrome.action.setBadgeText({ text: "" });
@@ -31,11 +42,23 @@ function IndexPopup() {
     }
   }
 
+  async function handleReview() {
+    // Open the web app's review cards in a new tab, then close the popup.
+    const url = await getReviewUrl();
+    try {
+      await chrome.tabs.create({ url });
+    } catch {
+      window.open(url, "_blank", "noopener,noreferrer");
+    }
+    window.close();
+  }
+
   return (
     <PopupApp
       submission={submission}
       onSave={handleSave}
       onCollapse={() => window.close()}
+      onReview={handleReview}
     />
   );
 }

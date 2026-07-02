@@ -1,5 +1,7 @@
 import {
   DEFAULT_API_BASE_URL,
+  DEFAULT_WEB_BASE_URL,
+  REVIEW_PATH,
   STORAGE_KEYS,
   type DetectedSubmission,
   type TokenPair,
@@ -25,6 +27,19 @@ export async function getApiBaseUrl(): Promise<string> {
 
 export function setApiBaseUrl(url: string): Promise<void> {
   return set(STORAGE_KEYS.apiBaseUrl, url.trim().replace(/\/+$/, ""));
+}
+
+export async function getWebBaseUrl(): Promise<string> {
+  return (await get<string>(STORAGE_KEYS.webBaseUrl)) || DEFAULT_WEB_BASE_URL;
+}
+
+export function setWebBaseUrl(url: string): Promise<void> {
+  return set(STORAGE_KEYS.webBaseUrl, url.trim().replace(/\/+$/, ""));
+}
+
+/** Absolute URL of the review cards section, e.g. http://localhost:3000/cards. */
+export async function getReviewUrl(): Promise<string> {
+  return (await getWebBaseUrl()) + REVIEW_PATH;
 }
 
 export function getAccessToken(): Promise<string | undefined> {

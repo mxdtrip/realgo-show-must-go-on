@@ -18,10 +18,15 @@ export interface PopupAppProps {
   submission: DetectedSubmission | null | undefined;
   /** Persists the rated submission. Rejects with an Error on failure. */
   onSave: (payload: SubmissionPayload) => Promise<void>;
-  /** Optional close handler (extension popup can't always close itself). */
+  /**
+   * "Скрыть" on the success screen — hides the extension UI until the next
+   * solved task (overlay: removes itself; toolbar popup: closes the window).
+   */
   onClose?: () => void;
   /** Optional collapse handler for the success state, without forcing a header X. */
   onCollapse?: () => void;
+  /** "К повторению" on the success screen — opens the web app's review cards. */
+  onReview?: () => void;
   /** Optional bug-report handler; falls back to opening a GitHub issue. */
   onReport?: () => void;
 }
@@ -53,6 +58,7 @@ export function PopupApp({
   onSave,
   onClose,
   onCollapse,
+  onReview,
   onReport,
 }: PopupAppProps) {
   const [difficulty, setDifficulty] = useState<UserDifficulty | null>(null);
@@ -80,6 +86,12 @@ export function PopupApp({
   }
 
   function handleGoToReviews() {
+    // Prefer the host's review handler (toolbar popup opens the web app's cards
+    // via getReviewUrl and closes itself); fall back to a direct URL otherwise.
+    if (onReview) {
+      onReview();
+      return;
+    }
     window.open(REVIEWS_URL, "_blank", "noopener,noreferrer");
     if (onCollapse) {
       onCollapse();
