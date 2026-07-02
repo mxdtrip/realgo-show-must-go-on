@@ -97,13 +97,26 @@ func Start(ctx context.Context) (*Harness, error) {
 		h.Stop()
 		return nil, fmt.Errorf("testutil: parse postgres port %q: %w", pgPort.Port(), err)
 	}
+	// Mirror the production yaml defaults (config.go env-defaults). Every field
+	// here is copied straight onto the pgxpool config by postgres.New, so leaving
+	// any at Go's zero value reproduces a production-shaped bug in tests:
+	//   - MaxConns == 0 -> pgxpool rejects it ("MaxSize must be >= 1").
+	//   - MaxConnLifetime == 0 -> pgxpool v5.10.0 stamps every connection
+	//     maxAgeTime=now, so Pool.Acquire's isExpired check destroys each one at
+	//     acquire time and gives up with a misleading "too many failed attempts
+	//     acquiring connection" error. Must be > 0.
+	//   - MaxConnIdleTime == 0 -> background health check churns idle conns.
 	h.pgCfg = config.Database{
-		Host:     pgHost,
-		Port:     pgPortInt,
-		User:     pgUser,
-		Password: pgPass,
-		DBName:   pgDB,
-		SSLMode:  "disable",
+		Host:            pgHost,
+		Port:            pgPortInt,
+		User:            pgUser,
+		Password:        pgPass,
+		DBName:          pgDB,
+		SSLMode:         "disable",
+		MaxConns:        10,
+		MinConns:        2,
+		MaxConnLifetime: time.Hour,
+		MaxConnIdleTime: 30 * time.Minute,
 	}
 
 	rdC, err := tcredis.Run(ctx, rdImage)
