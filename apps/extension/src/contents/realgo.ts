@@ -153,6 +153,12 @@ function showOverlay(submission: DetectedSubmission) {
 
   overlayHost = document.createElement("div");
   overlayHost.id = "realgo-overlay-host";
+  // `all: initial` walls the host off from the page's global CSS (e.g. a
+  // framework reset that would otherwise paint a border/background frame around
+  // the card). Positioning lives here too; the shadow content stays static.
+  // Placed below the site's top nav so a self-triggered popup doesn't cover it.
+  overlayHost.style.cssText =
+    "all: initial; position: fixed; top: 76px; right: 16px; z-index: 2147483647; color-scheme: dark;";
   const shadow = overlayHost.attachShadow({ mode: "open" });
   const mount = document.createElement("div");
   mount.className = "realgo-overlay";
@@ -172,7 +178,7 @@ function showOverlay(submission: DetectedSubmission) {
     createElement(PopupApp, {
       submission,
       onSave: saveViaBackground,
-      // "Скрыть": hide until the next solved task (overlay re-renders on submit).
+      // "Свернуть": hide until the next solved task (overlay re-renders on submit).
       onClose: removeOverlay,
       // "К повторению": open the web app's review cards in a new tab.
       onReview: openReview,
