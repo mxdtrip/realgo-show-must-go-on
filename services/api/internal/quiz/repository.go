@@ -2,6 +2,7 @@ package quiz
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 
 	"github.com/jackc/pgx/v5"
@@ -34,10 +35,15 @@ func (r *pgRepository) ListQuizSession(ctx context.Context, userID int64, limit 
 
 	items := make([]sessionQuestion, 0, len(rows))
 	for _, row := range rows {
+		var opts []string
+		_ = json.Unmarshal(row.Options, &opts)
+		if opts == nil {
+			opts = []string{}
+		}
 		q := sessionQuestion{
 			ID:          row.ID,
 			Question:    row.Question,
-			Options:     row.Options,
+			Options:     opts,
 			CreatedByAI: row.CreatedByAi.Bool,
 		}
 		if row.CreatedAt.Valid {

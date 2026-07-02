@@ -108,40 +108,30 @@ func (r *pgRepository) CountSessionAttempts(ctx context.Context, userID int64, s
 	return int(count), nil
 }
 
-func recordFromListRow(row db.ListUserCardsRow) CardRecord {
+func newCardRecord(id int64, cardType, question, answer string, createdAt pgtype.Timestamptz, sourceEntityType string, sourceEntityID pgtype.Int8, sourceLabel string, scheduleID int64, nextReviewAt pgtype.Timestamptz, lastRating pgtype.Text, reviewCount, reviewState int32) CardRecord {
 	return CardRecord{
-		ID:               row.ID,
-		Type:             row.Type,
-		Question:         row.Question,
-		Answer:           row.Answer,
-		CreatedAt:        timeFromPg(row.CreatedAt),
-		SourceEntityType: row.SourceEntityType,
-		SourceEntityID:   int64PtrFromPg(row.SourceEntityID),
-		SourceLabel:      row.SourceLabel,
-		ScheduleID:       scheduleIDPtr(row.ScheduleID),
-		NextReviewAt:     timePtrFromPg(row.NextReviewAt),
-		LastRating:       stringPtrFromPg(row.LastRating),
-		ReviewCount:      int(row.ReviewCount),
-		ReviewState:      int(row.ReviewState),
+		ID:               id,
+		Type:             cardType,
+		Question:         question,
+		Answer:           answer,
+		CreatedAt:        timeFromPg(createdAt),
+		SourceEntityType: sourceEntityType,
+		SourceEntityID:   int64PtrFromPg(sourceEntityID),
+		SourceLabel:      sourceLabel,
+		ScheduleID:       scheduleIDPtr(scheduleID),
+		NextReviewAt:     timePtrFromPg(nextReviewAt),
+		LastRating:       stringPtrFromPg(lastRating),
+		ReviewCount:      int(reviewCount),
+		ReviewState:      int(reviewState),
 	}
 }
 
+func recordFromListRow(row db.ListUserCardsRow) CardRecord {
+	return newCardRecord(row.ID, row.Type, row.Question, row.Answer, row.CreatedAt, row.SourceEntityType, row.SourceEntityID, row.SourceLabel, row.ScheduleID, row.NextReviewAt, row.LastRating, row.ReviewCount, row.ReviewState)
+}
+
 func recordFromSessionRow(row db.ListCardSessionRow) CardRecord {
-	return CardRecord{
-		ID:               row.ID,
-		Type:             row.Type,
-		Question:         row.Question,
-		Answer:           row.Answer,
-		CreatedAt:        timeFromPg(row.CreatedAt),
-		SourceEntityType: row.SourceEntityType,
-		SourceEntityID:   int64PtrFromPg(row.SourceEntityID),
-		SourceLabel:      row.SourceLabel,
-		ScheduleID:       scheduleIDPtr(row.ScheduleID),
-		NextReviewAt:     timePtrFromPg(row.NextReviewAt),
-		LastRating:       stringPtrFromPg(row.LastRating),
-		ReviewCount:      int(row.ReviewCount),
-		ReviewState:      int(row.ReviewState),
-	}
+	return newCardRecord(row.ID, row.Type, row.Question, row.Answer, row.CreatedAt, row.SourceEntityType, row.SourceEntityID, row.SourceLabel, row.ScheduleID, row.NextReviewAt, row.LastRating, row.ReviewCount, row.ReviewState)
 }
 
 func (r *pgRepository) Create(ctx context.Context, userID int64, p CreateCardInput) (CardDetail, error) {

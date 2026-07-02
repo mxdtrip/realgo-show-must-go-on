@@ -5,7 +5,7 @@ import "time"
 type sessionQuestion struct {
 	ID           int64
 	Question     string
-	Options      []byte
+	Options      []string
 	Difficulty   *string
 	CreatedByAI  bool
 	CreatedAt    *time.Time

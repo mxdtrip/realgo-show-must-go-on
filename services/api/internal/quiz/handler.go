@@ -60,10 +60,7 @@ func (h *Handler) session(w http.ResponseWriter, r *http.Request) {
 		if q.CreatedAt != nil {
 			item.CreatedAt = q.CreatedAt.UTC().Format(time.RFC3339)
 		}
-		_ = json.Unmarshal(q.Options, &item.Options)
-		if item.Options == nil {
-			item.Options = []string{}
-		}
+		item.Options = q.Options
 		items = append(items, item)
 	}
 
