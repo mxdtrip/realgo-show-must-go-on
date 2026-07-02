@@ -459,6 +459,76 @@ h3 {
   box-shadow: 0 40px 90px -40px rgba(1, 4, 9, 0.9);
 }
 
+/* Landing auth popup enter/exit. Scoped to the modal (is-open/is-closing);
+   the standalone /login and /register pages use .auth-layer--page and stay static.
+   The backdrop fades while the panel rises and scales — the exit reverses both,
+   and the node is kept mounted until auth-layer-out ends (see SortingMemoryHero). */
+.auth-layer.is-open {
+  animation: auth-layer-in 0.22s ease-out both;
+}
+
+.auth-layer.is-closing {
+  animation: auth-layer-out 0.18s ease-in both;
+  pointer-events: none;
+}
+
+.auth-layer.is-open .auth-panel {
+  animation: auth-panel-in 0.28s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.auth-layer.is-closing .auth-panel {
+  animation: auth-panel-out 0.18s ease-in both;
+}
+
+@keyframes auth-layer-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes auth-layer-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes auth-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes auth-panel-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-layer.is-open,
+  .auth-layer.is-closing,
+  .auth-layer.is-open .auth-panel,
+  .auth-layer.is-closing .auth-panel {
+    animation-duration: 0.01ms;
+  }
+}
+
 .auth-tabs {
   display: flex;
   gap: 6px;

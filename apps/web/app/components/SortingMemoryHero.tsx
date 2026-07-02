@@ -260,6 +260,12 @@ export function SortingMemoryHero() {
   const [code, setCode] = useState(DEFAULT_CODE);
   const [authOpen, setAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "signup">("login");
+  // Keep the auth popup mounted through its exit animation: `authOpen` is the
+  // intent, `authRender` keeps the layer in the DOM until the close animation ends.
+  const [authRender, setAuthRender] = useState(false);
+  useEffect(() => {
+    if (authOpen) setAuthRender(true);
+  }, [authOpen]);
   const [order, setOrder] = useState(() => shuffle([0, 1, 2, 3, 4, 5]));
   const [poses, setPoses] = useState<Pose[]>([]);
   const [activeKeys, setActiveKeys] = useState<number[]>([]);
@@ -636,8 +642,15 @@ export function SortingMemoryHero() {
         })}
       </div>
 
-      {authOpen ? (
-        <div className="auth-layer" role="presentation" onMouseDown={() => setAuthOpen(false)}>
+      {authRender ? (
+        <div
+          className={`auth-layer ${authOpen ? "is-open" : "is-closing"}`}
+          role="presentation"
+          onMouseDown={() => setAuthOpen(false)}
+          onAnimationEnd={(event) => {
+            if (event.animationName === "auth-layer-out") setAuthRender(false);
+          }}
+        >
           <section
             aria-label={authMode === "login" ? copy.auth.loginAria : copy.auth.signupAria}
             className="auth-panel"
