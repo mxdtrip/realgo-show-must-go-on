@@ -1,6 +1,7 @@
 # Environment and local secrets
 .env
 .env.*
+config.yaml
 !.env.example
 !**/.env.example
 *.local
@@ -78,3 +79,6 @@ __pycache__/
 # Nested clone kept as a scratch worktree inside this checkout; it has its own
 # .git and must never be committed into this repo as an embedded repository.
 /freeburger/
+
+# AI
+CLAUDE.md

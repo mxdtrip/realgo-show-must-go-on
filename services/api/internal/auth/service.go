@@ -9,6 +9,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgtype"
 	goredis "github.com/redis/go-redis/v9"
 
 	"github.com/mxdtrip/freeburger/services/api/internal/storage/postgres/db"
@@ -123,6 +124,105 @@ func (s *Service) UserByID(ctx context.Context, id int64) (db.User, error) {
 		return db.User{}, ErrInvalidToken
 	}
 	return user, err
+}
+
+// ProfileUpdate carries optional profile fields for a partial PATCH. A nil
+// pointer means "not provided — keep the existing value"; a non-nil pointer
+// (including an empty string) overwrites the column.
+type ProfileUpdate struct {
+	Timezone          *string
+	InterviewDate     *time.Time
+	PrepGoal          *string
+	Grade             *string
+	TargetCompany     *string
+	TargetPosition    *string
+	SetOnboardingDone bool
+}
+
+// UpdateProfile applies a partial profile update for the given user.
+func (s *Service) UpdateProfile(ctx context.Context, userID int64, u ProfileUpdate) (db.User, error) {
+	params := db.UpdateUserProfileParams{
+		ID:                     userID,
+		SetOnboardingCompleted: u.SetOnboardingDone,
+	}
+	if u.Timezone != nil {
+		params.Timezone = pgtype.Text{String: *u.Timezone, Valid: true}
+	}
+	if u.InterviewDate != nil {
+		params.InterviewDate = pgtype.Timestamptz{Time: *u.InterviewDate, Valid: true}
+	}
+	if u.PrepGoal != nil {
+		params.PrepGoal = pgtype.Text{String: *u.PrepGoal, Valid: true}
+	}
+	if u.Grade != nil {
+		params.Grade = pgtype.Text{String: *u.Grade, Valid: true}
+	}
+	if u.TargetCompany != nil {
+		params.TargetCompany = pgtype.Text{String: *u.TargetCompany, Valid: true}
+	}
+	if u.TargetPosition != nil {
+		params.TargetPosition = pgtype.Text{String: *u.TargetPosition, Valid: true}
+	}
+
+	user, err := s.queries.UpdateUserProfile(ctx, params)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return db.User{}, ErrInvalidToken
+	}
+	return user, err
+}
+
+// NotificationSettings carries optional notification preferences. A nil pointer
+// keeps the current preference.
+type NotificationSettings struct {
+	ReviewReminder *bool
+	WeeklyDigest   *bool
+	EmailEnabled   *bool
+}
+
+// UpdateNotificationSettings applies a partial notification-preference update
+// in a single atomic statement.
+func (s *Service) UpdateNotificationSettings(ctx context.Context, userID int64, ns NotificationSettings) (db.User, error) {
+	params := db.UpdateNotificationSettingsParams{ID: userID}
+	if ns.ReviewReminder != nil {
+		params.ReviewReminder = pgtype.Bool{Bool: *ns.ReviewReminder, Valid: true}
+	}
+	if ns.WeeklyDigest != nil {
+		params.WeeklyDigest = pgtype.Bool{Bool: *ns.WeeklyDigest, Valid: true}
+	}
+	if ns.EmailEnabled != nil {
+		params.EmailEnabled = pgtype.Bool{Bool: *ns.EmailEnabled, Valid: true}
+	}
+
+	user, err := s.queries.UpdateNotificationSettings(ctx, params)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return db.User{}, ErrInvalidToken
+	}
+	return user, err
+}
+
+// DeleteAccount permanently removes the user and all cascading data after
+// verifying the account password. The caller's refresh token, when supplied, is
+// revoked immediately; any other sessions expire with their refresh TTL because
+// the account row (and its data) is gone.
+func (s *Service) DeleteAccount(ctx context.Context, userID int64, password, refreshToken string) error {
+	user, err := s.queries.GetUserByID(ctx, userID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrInvalidToken
+		}
+		return err
+	}
+	if !checkPassword(user.PasswordHash, password) {
+		return ErrInvalidCredentials
+	}
+	if err := s.queries.DeleteUserByID(ctx, userID); err != nil {
+		return err
+	}
+	if refreshToken != "" {
+		// Best-effort: the account is already gone, so a revoke failure is not fatal.
+		_ = s.revokeRefreshToken(ctx, refreshToken)
+	}
+	return nil
 }
 
 func normalizeEmail(email string) (string, error) {

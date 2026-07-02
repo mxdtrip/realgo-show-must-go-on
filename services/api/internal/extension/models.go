@@ -59,6 +59,7 @@ type EventResult struct {
 	Accepted     bool       `json:"accepted"`
 	Duplicate    bool       `json:"duplicate"`
 	ProblemID    int64      `json:"problemId"`
+	ReviewID     int64      `json:"reviewId,omitempty"`
 	Status       string     `json:"status"`
 	NextReviewAt *time.Time `json:"nextReviewAt"`
 }

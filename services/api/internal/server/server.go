@@ -9,6 +9,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 
 	"github.com/mxdtrip/freeburger/services/api/internal/auth"
+	"github.com/mxdtrip/freeburger/services/api/internal/cards"
 	"github.com/mxdtrip/freeburger/services/api/internal/companies"
 	v1 "github.com/mxdtrip/freeburger/services/api/internal/controller/v1"
 	"github.com/mxdtrip/freeburger/services/api/internal/dashboard"
@@ -63,6 +64,7 @@ func New(deps Deps) http.Handler {
 	roadmapsHandler := roadmaps.NewHandler(roadmaps.NewRepository(deps.Postgres.Pool))
 	companiesHandler := companies.NewHandler()
 	dashboardHandler := dashboard.NewHandler(dashboard.NewService(dashboard.NewRepository(deps.Postgres.Pool), patterns.NewRepository(deps.Postgres.Pool)))
+	cardsHandler := cards.NewHandler(cards.NewService(cards.NewRepository(deps.Postgres.Pool), reviewService))
 
 	// Browser-extension ingest: simple fixed-interval scheduler (issue #17)
 	// behind the Scheduler interface, swappable for FSRS later.
@@ -80,6 +82,10 @@ func New(deps Deps) http.Handler {
 			r.Post("/logout", ah.logout)
 		})
 		r.With(requireAuth(deps.Auth)).Get("/me", ah.me)
+		r.With(requireAuth(deps.Auth)).Patch("/me/profile", ah.patchProfile)
+		r.With(requireAuth(deps.Auth)).Patch("/me/notification-settings", ah.patchNotificationSettings)
+		r.With(requireAuth(deps.Auth)).Post("/me/export", ah.postExport)
+		r.With(requireAuth(deps.Auth)).Delete("/me", ah.deleteMe)
 		r.Route("/users", func(r chi.Router) {
 			// Backward-compatible alias. New clients should call GET /api/v1/me.
 			r.With(requireAuth(deps.Auth)).Get("/me", ah.me)
@@ -117,6 +123,12 @@ func New(deps Deps) http.Handler {
 		r.With(requireAuth(deps.Auth)).Get("/me/problems", problemsHandler.List)
 
 		r.With(requireAuth(deps.Auth)).Get("/me/dashboard", dashboardHandler.Get) // codex/s1-dashboard
+
+		r.Route("/me/cards", func(r chi.Router) {
+			r.With(requireAuth(deps.Auth)).Group(func(r chi.Router) {
+				cards.RegisterRoutes(r, cardsHandler)
+			})
+		})
 
 		r.Route("/roadmaps", func(r chi.Router) {
 			roadmaps.RegisterRoutes(r, roadmapsHandler)

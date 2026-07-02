@@ -7,12 +7,14 @@ package db
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (email, password_hash)
 VALUES ($1, $2)
-RETURNING id, email, password_hash, timezone, plan, interview_date, created_at, updated_at
+RETURNING id, email, password_hash, timezone, plan, interview_date, created_at, updated_at, prep_goal, grade, target_company, target_position, onboarding_completed_at, notify_review_reminder, notify_weekly_digest, notify_email_enabled
 `
 
 type CreateUserParams struct {
@@ -32,6 +34,14 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.InterviewDate,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.PrepGoal,
+		&i.Grade,
+		&i.TargetCompany,
+		&i.TargetPosition,
+		&i.OnboardingCompletedAt,
+		&i.NotifyReviewReminder,
+		&i.NotifyWeeklyDigest,
+		&i.NotifyEmailEnabled,
 	)
 	return i, err
 }
@@ -47,7 +57,7 @@ func (q *Queries) DeleteUserByID(ctx context.Context, id int64) error {
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, email, password_hash, timezone, plan, interview_date, created_at, updated_at FROM users
+SELECT id, email, password_hash, timezone, plan, interview_date, created_at, updated_at, prep_goal, grade, target_company, target_position, onboarding_completed_at, notify_review_reminder, notify_weekly_digest, notify_email_enabled FROM users
 WHERE email = $1
 `
 
@@ -63,12 +73,20 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.InterviewDate,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.PrepGoal,
+		&i.Grade,
+		&i.TargetCompany,
+		&i.TargetPosition,
+		&i.OnboardingCompletedAt,
+		&i.NotifyReviewReminder,
+		&i.NotifyWeeklyDigest,
+		&i.NotifyEmailEnabled,
 	)
 	return i, err
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, email, password_hash, timezone, plan, interview_date, created_at, updated_at FROM users
+SELECT id, email, password_hash, timezone, plan, interview_date, created_at, updated_at, prep_goal, grade, target_company, target_position, onboarding_completed_at, notify_review_reminder, notify_weekly_digest, notify_email_enabled FROM users
 WHERE id = $1
 `
 
@@ -84,6 +102,127 @@ func (q *Queries) GetUserByID(ctx context.Context, id int64) (User, error) {
 		&i.InterviewDate,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.PrepGoal,
+		&i.Grade,
+		&i.TargetCompany,
+		&i.TargetPosition,
+		&i.OnboardingCompletedAt,
+		&i.NotifyReviewReminder,
+		&i.NotifyWeeklyDigest,
+		&i.NotifyEmailEnabled,
+	)
+	return i, err
+}
+
+const updateNotificationSettings = `-- name: UpdateNotificationSettings :one
+UPDATE users
+SET
+  notify_review_reminder = COALESCE($1, notify_review_reminder),
+  notify_weekly_digest   = COALESCE($2, notify_weekly_digest),
+  notify_email_enabled   = COALESCE($3, notify_email_enabled),
+  updated_at             = NOW()
+WHERE id = $4
+RETURNING id, email, password_hash, timezone, plan, interview_date, created_at, updated_at, prep_goal, grade, target_company, target_position, onboarding_completed_at, notify_review_reminder, notify_weekly_digest, notify_email_enabled
+`
+
+type UpdateNotificationSettingsParams struct {
+	ReviewReminder pgtype.Bool
+	WeeklyDigest   pgtype.Bool
+	EmailEnabled   pgtype.Bool
+	ID             int64
+}
+
+// Partial update: a NULL param keeps the current preference.
+func (q *Queries) UpdateNotificationSettings(ctx context.Context, arg UpdateNotificationSettingsParams) (User, error) {
+	row := q.db.QueryRow(ctx, updateNotificationSettings,
+		arg.ReviewReminder,
+		arg.WeeklyDigest,
+		arg.EmailEnabled,
+		arg.ID,
+	)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.PasswordHash,
+		&i.Timezone,
+		&i.Plan,
+		&i.InterviewDate,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.PrepGoal,
+		&i.Grade,
+		&i.TargetCompany,
+		&i.TargetPosition,
+		&i.OnboardingCompletedAt,
+		&i.NotifyReviewReminder,
+		&i.NotifyWeeklyDigest,
+		&i.NotifyEmailEnabled,
+	)
+	return i, err
+}
+
+const updateUserProfile = `-- name: UpdateUserProfile :one
+UPDATE users
+SET
+  timezone                = COALESCE($1, timezone),
+  interview_date          = COALESCE($2, interview_date),
+  prep_goal               = COALESCE($3, prep_goal),
+  grade                   = COALESCE($4, grade),
+  target_company          = COALESCE($5, target_company),
+  target_position         = COALESCE($6, target_position),
+  onboarding_completed_at = CASE
+    WHEN $7::bool THEN COALESCE(onboarding_completed_at, NOW())
+    ELSE onboarding_completed_at
+  END,
+  updated_at              = NOW()
+WHERE id = $8
+RETURNING id, email, password_hash, timezone, plan, interview_date, created_at, updated_at, prep_goal, grade, target_company, target_position, onboarding_completed_at, notify_review_reminder, notify_weekly_digest, notify_email_enabled
+`
+
+type UpdateUserProfileParams struct {
+	Timezone               pgtype.Text
+	InterviewDate          pgtype.Timestamptz
+	PrepGoal               pgtype.Text
+	Grade                  pgtype.Text
+	TargetCompany          pgtype.Text
+	TargetPosition         pgtype.Text
+	SetOnboardingCompleted bool
+	ID                     int64
+}
+
+// Partial update: a NULL param keeps the existing value, a non-NULL value
+// (including an empty string) overwrites it. set_onboarding_completed, when
+// true, stamps onboarding_completed_at once (idempotent first completion).
+func (q *Queries) UpdateUserProfile(ctx context.Context, arg UpdateUserProfileParams) (User, error) {
+	row := q.db.QueryRow(ctx, updateUserProfile,
+		arg.Timezone,
+		arg.InterviewDate,
+		arg.PrepGoal,
+		arg.Grade,
+		arg.TargetCompany,
+		arg.TargetPosition,
+		arg.SetOnboardingCompleted,
+		arg.ID,
+	)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.PasswordHash,
+		&i.Timezone,
+		&i.Plan,
+		&i.InterviewDate,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.PrepGoal,
+		&i.Grade,
+		&i.TargetCompany,
+		&i.TargetPosition,
+		&i.OnboardingCompletedAt,
+		&i.NotifyReviewReminder,
+		&i.NotifyWeeklyDigest,
+		&i.NotifyEmailEnabled,
 	)
 	return i, err
 }
