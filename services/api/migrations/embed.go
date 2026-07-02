@@ -1,10 +1,13 @@
-// Package migrations embeds the SQL migration files so they can be applied by
-// tests via golang-migrate's iofs source, without depending on the working
-// directory or a file:// path.
+// Package migrations встраивает SQL-файлы миграций в бинарный файл,
+// чтобы тесты могли применять их через источник iofs библиотеки
+// golang-migrate, не завися от текущей рабочей директории
+// или пути вида file://.
 package migrations
 
 import "embed"
 
-// FS holds every *.sql migration in this directory, embedded at build time.
+// FS содержит все SQL-файлы миграций (*.sql) из этой директории,
+// встроенные в бинарный файл на этапе сборки.
+//
 //go:embed *.sql
 var FS embed.FS
