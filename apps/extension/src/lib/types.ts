@@ -93,10 +93,10 @@ export const STORAGE_KEYS = {
   userEmail: "realgo:userEmail",
 } as const;
 
-export const DEFAULT_API_BASE_URL = "http://localhost:8080";
+export const DEFAULT_API_BASE_URL = "https://realgo.dev";
 
 /** realgo web app (the cabinet). "К повторению" opens its review cards here. */
-export const DEFAULT_WEB_BASE_URL = "http://localhost:3000";
+export const DEFAULT_WEB_BASE_URL = "https://realgo.dev";
 
 /** Path of the spaced-repetition cards section inside the web app. */
 export const REVIEW_PATH = "/cards";

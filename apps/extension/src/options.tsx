@@ -97,9 +97,10 @@ function Options() {
       <style>{POPUP_CSS}</style>
 
       <div className="realgo-header">
-        <span className="realgo-brand realgo-brand--md">
-          <BrandMark size={18} />
-          realgo
+        <span className="realgo-brand">
+          <BrandMark size={20} />
+          ReAlgo
+          <span className="realgo-path">~/ext/options</span>
         </span>
         <span className="realgo-header__sub">Настройки расширения</span>
       </div>
@@ -114,7 +115,7 @@ function Options() {
               id="realgo-base-url"
               className="realgo-input"
               value={baseUrl}
-              placeholder="http://localhost:8080"
+              placeholder="https://realgo.dev"
               onChange={(e) => {
                 setBaseUrl(e.target.value);
                 setConn("idle");
@@ -157,7 +158,7 @@ function Options() {
               id="realgo-web-url"
               className="realgo-input"
               value={webUrl}
-              placeholder="http://localhost:3000"
+              placeholder="https://realgo.dev"
               onChange={(e) => setWebUrl(e.target.value)}
             />
             <button
@@ -195,9 +196,7 @@ function Options() {
           </div>
         ) : (
           <form className="realgo-field" onSubmit={handleLogin}>
-            <div className="realgo-field__label" style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>
-              Вход в realgo
-            </div>
+            <div className="realgo-form-title">Вход в realgo</div>
             <input
               className="realgo-input"
               type="email"
