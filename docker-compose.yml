@@ -10,6 +10,7 @@ name: freeburger
 services:
   postgres:
     image: postgres:16-alpine
+    restart: unless-stopped
     environment:
       POSTGRES_USER: ${DB_USER:-postgres}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
@@ -26,6 +27,7 @@ services:
 
   redis:
     image: redis:7-alpine
+    restart: unless-stopped
     ports:
       - "${REDIS_PORT:-6379}:6379"
     healthcheck:
@@ -134,6 +136,7 @@ services:
   api:
     build:
       context: ./services/api
+    restart: unless-stopped
     depends_on:
       postgres:
         condition: service_healthy
