@@ -85,6 +85,10 @@ type fakeRepository struct {
 	items []WeakPattern
 }
 
+func (f fakeRepository) List(context.Context, int64) ([]Pattern, error) {
+	return []Pattern{}, nil
+}
+
 func (f fakeRepository) ListWeak(context.Context, int64, int32) ([]WeakPattern, error) {
 	if f.items == nil {
 		return []WeakPattern{}, nil

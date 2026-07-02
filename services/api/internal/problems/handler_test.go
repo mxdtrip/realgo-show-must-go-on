@@ -181,6 +181,14 @@ func (f *fakeRepository) List(_ context.Context, userID int64, params ListParams
 	return f.items, nil
 }
 
+func (f *fakeRepository) GetByID(_ context.Context, _, _ int64) (ProblemDetail, error) {
+	return ProblemDetail{}, nil
+}
+
+func (f *fakeRepository) Save(_ context.Context, _, _ int64) (string, error) {
+	return "not_started", nil
+}
+
 type listEnvelope struct {
 	Data ListResponse `json:"data"`
 }
