@@ -10,12 +10,15 @@ import (
 	"github.com/mxdtrip/freeburger/services/api/migrations"
 )
 
-// ApplyMigrations runs all embedded up-migrations against the given database.
-// connStr must be a postgres:// URL acceptable to the migrate postgres driver
-// (e.g. "postgres://user:pass@host:port/dbname?sslmode=disable"); pgx's
-// "host=... port=..." DSN form will NOT work here.
+// ApplyMigrations применяет все встроенные up-миграции к указанной базе данных.
 //
-// ErrNoChange (DB already fully migrated) is treated as success.
+// connStr должен быть URL в формате postgres://, поддерживаемом драйвером
+// postgres библиотеки migrate (например,
+// "postgres://user:pass@host:port/dbname?sslmode=disable").
+// DSN в формате pgx ("host=... port=...") здесь НЕ поддерживается.
+//
+// Ошибка ErrNoChange (база уже полностью мигрирована) считается успешным
+// результатом.
 func ApplyMigrations(connStr string) error {
 	src, err := iofs.New(migrations.FS, ".")
 	if err != nil {

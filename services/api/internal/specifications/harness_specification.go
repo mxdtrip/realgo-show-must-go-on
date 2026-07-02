@@ -1,7 +1,8 @@
-// Package specifications holds acceptance-test specifications written in the
-// domain language, free of any I/O. A specification is a function that drives a
-// HarnessProvider and asserts essential behaviour. It is reused by every driver
-// (HTTP today, and any future one), so the spec stays ignorant of transport.
+// Package specifications содержит спецификации acceptance-тестов, написанные
+// на языке предметной области и не зависящие от ввода-вывода. Спецификация —
+// это функция, которая управляет HarnessProvider и проверяет ключевое
+// поведение системы. Она переиспользуется всеми драйверами (сейчас HTTP,
+// в будущем — любыми другими), поэтому ничего не знает о транспорте.
 package specifications
 
 import (
@@ -9,26 +10,33 @@ import (
 	"testing"
 )
 
-// HarnessProvider is the contract a driver fulfils so that a specification can
-// exercise the system. The driver owns all I/O (transport, server lifecycle);
-// the spec speaks only in domain terms.
+// HarnessProvider — контракт, который реализует драйвер, чтобы спецификация
+// могла взаимодействовать с системой. Вся работа с вводом-выводом (транспорт,
+// жизненный цикл сервера и т.п.) остаётся ответственностью драйвера;
+// спецификация же оперирует только понятиями предметной области.
 type HarnessProvider interface {
-	// Register creates a fresh account and returns an authenticated handle to it.
+	// Register создаёт новую учётную запись и возвращает уже
+	// аутентифицированного пользователя.
 	Register(t *testing.T, email, password string) AuthenticatedUser
 }
 
-// AuthenticatedUser is an already-logged-in actor the spec can interrogate.
+// AuthenticatedUser представляет пользователя, который уже вошёл в систему
+// и с которым может работать спецификация.
 type AuthenticatedUser interface {
-	// OwnIdentity returns the user's identity as the system reports it back to
-	// them (e.g. the email a GET /me echoes). It is the strongest cheap
-	// invariant for "the pipeline works end to end".
+	// OwnIdentity возвращает идентификатор пользователя таким, каким его
+	// сообщает сама система (например, email, который возвращает GET /me).
+	// Это самая сильная и при этом дешёвая проверка того, что весь конвейер
+	// работает от начала до конца.
 	OwnIdentity(t *testing.T) string
 }
 
-// HarnessSpecification is the walking-skeleton acceptance test: a freshly
-// registered user must be able to read their own identity. It is deliberately
-// minimal — it proves the whole pipeline (register -> bearer auth -> identity)
-// without asserting on any feature's data. Cards specs layer on top later.
+// HarnessSpecification — acceptance-тест уровня walking skeleton:
+// только что зарегистрированный пользователь должен иметь возможность
+// получить собственный идентификатор. Спецификация намеренно минимальна —
+// она подтверждает работоспособность всего конвейера
+// (регистрация → Bearer-аутентификация → получение идентификатора),
+// не проверяя данные какой-либо конкретной функциональности.
+// Спецификации для карточек будут строиться поверх неё.
 func HarnessSpecification(t *testing.T, p HarnessProvider) {
 	t.Helper()
 	t.Run("freshly registered user can read their own identity", func(t *testing.T) {
@@ -40,10 +48,11 @@ func HarnessSpecification(t *testing.T, p HarnessProvider) {
 	})
 }
 
-// uniqueEmail derives a valid, test-local email from the running test's name so
-// parallel/sub-tests never collide on the users.email unique constraint. It
-// only needs to be valid and stable within a single test (the harness wipes
-// users between tests), not globally unique.
+// uniqueEmail строит корректный email, уникальный в рамках текущего теста,
+// используя имя выполняемого теста. Благодаря этому параллельные тесты и
+// подтесты не конфликтуют из-за ограничения уникальности users.email.
+// Email должен быть лишь корректным и стабильным в пределах одного теста
+// (между тестами harness очищает таблицу users), а не глобально уникальным.
 func uniqueEmail(t *testing.T) string {
 	t.Helper()
 	var b strings.Builder
@@ -59,7 +68,7 @@ func uniqueEmail(t *testing.T) string {
 	for strings.Contains(local, "..") {
 		local = strings.ReplaceAll(local, "..", ".")
 	}
-	if len(local) > 48 { // keep within the 64-char local-part limit with margin
+	if len(local) > 48 { // оставляем запас до ограничения в 64 символа для локальной части email
 		local = local[:48]
 	}
 	return local + "@acceptance.test"

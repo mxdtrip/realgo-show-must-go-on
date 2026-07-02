@@ -18,12 +18,14 @@ import (
 	"github.com/mxdtrip/freeburger/services/api/internal/config"
 )
 
-// Harness boots a throwaway Postgres + Redis pair (testcontainers) with the
-// project's real migrations applied, for acceptance and integration tests.
+// Harness поднимает одноразовую пару Postgres + Redis (testcontainers),
+// применяет настоящие миграции проекта и используется в acceptance- и
+// integration-тестах.
 //
-// Lifecycle: Start once per package in TestMain, reuse across tests, then call
-// Stop once after m.Run(). Call Reset at the top of each test for per-test
-// isolation. Nothing here is stubbed: every dependency is a real container.
+// Жизненный цикл: один раз вызвать Start в TestMain, переиспользовать Harness
+// во всех тестах пакета, затем один раз вызвать Stop после m.Run().
+// Для изоляции тестов вызывайте Reset в начале каждого теста.
+// Здесь нет заглушек — все зависимости представлены реальными контейнерами.
 type Harness struct {
 	PGContainer testcontainers.Container
 	RDContainer *tcredis.RedisContainer
@@ -36,16 +38,17 @@ type Harness struct {
 }
 
 const (
-	pgImage = "postgres:16-alpine" // matches project (CLAUDE.md: PostgreSQL 16)
+	pgImage = "postgres:16-alpine"
 	pgUser  = "test"
 	pgPass  = "test"
 	pgDB    = "testdb"
-	rdImage = "redis:7-alpine" // matches project (CLAUDE.md: Redis 7)
+	rdImage = "redis:7-alpine"
 )
 
-// Start boots both containers, applies all embedded migrations, builds a pgx
-// pool, and pings every dependency. The caller MUST call Stop when done
-// (typically once, after m.Run()).
+// Start запускает оба контейнера, применяет все встроенные миграции,
+// создаёт pgx-пул и проверяет доступность всех зависимостей через ping.
+// После завершения работы вызывающая сторона ОБЯЗАНА вызвать Stop
+// (обычно один раз после m.Run()).
 func Start(ctx context.Context) (*Harness, error) {
 	h := &Harness{}
 
@@ -97,15 +100,24 @@ func Start(ctx context.Context) (*Harness, error) {
 		h.Stop()
 		return nil, fmt.Errorf("testutil: parse postgres port %q: %w", pgPort.Port(), err)
 	}
-	// Mirror the production yaml defaults (config.go env-defaults). Every field
-	// here is copied straight onto the pgxpool config by postgres.New, so leaving
-	// any at Go's zero value reproduces a production-shaped bug in tests:
-	//   - MaxConns == 0 -> pgxpool rejects it ("MaxSize must be >= 1").
-	//   - MaxConnLifetime == 0 -> pgxpool v5.10.0 stamps every connection
-	//     maxAgeTime=now, so Pool.Acquire's isExpired check destroys each one at
-	//     acquire time and gives up with a misleading "too many failed attempts
-	//     acquiring connection" error. Must be > 0.
-	//   - MaxConnIdleTime == 0 -> background health check churns idle conns.
+	// Повторяем значения по умолчанию из production-конфигурации
+	// (env-defaults в config.go). Все эти поля postgres.New напрямую
+	// копирует в конфигурацию pgxpool, поэтому если оставить какое-либо
+	// из них равным нулевому значению Go, в тестах воспроизведётся
+	// поведение production-приложения с некорректной конфигурацией:
+	//
+	//   - MaxConns == 0 → pgxpool отклонит конфигурацию
+	//     ("MaxSize must be >= 1").
+	//
+	//   - MaxConnLifetime == 0 → в pgxpool v5.10.0 каждое соединение
+	//     получает maxAgeTime = now, поэтому проверка isExpired в
+	//     Pool.Acquire уничтожает соединение сразу при получении, после
+	//     чего пул завершает попытки с вводящей в заблуждение ошибкой
+	//     "too many failed attempts acquiring connection".
+	//     Значение должно быть больше нуля.
+	//
+	//   - MaxConnIdleTime == 0 → фоновая проверка состояния пула постоянно
+	//     пересоздаёт простаивающие соединения.
 	h.pgCfg = config.Database{
 		Host:            pgHost,
 		Port:            pgPortInt,
@@ -149,8 +161,9 @@ func Start(ctx context.Context) (*Harness, error) {
 	return h, nil
 }
 
-// Stop tears down everything Start created. Safe to call on a partially
-// initialised Harness (each field is nil-checked).
+// Stop освобождает все ресурсы, созданные Start.
+// Безопасно вызывать даже для частично инициализированного Harness:
+// каждое поле предварительно проверяется на nil.
 func (h *Harness) Stop() {
 	if h == nil {
 		return
@@ -169,27 +182,37 @@ func (h *Harness) Stop() {
 	}
 }
 
-// DatabaseConfig returns a config.Database wired to the live Postgres
-// container, ready for postgres.New. Returns a value; take its address at the
-// call site (postgres.New takes *config.Database).
+// DatabaseConfig возвращает config.Database, настроенный для подключения
+// к работающему контейнеру Postgres и готовый для передачи в postgres.New.
+// Возвращается значение; при вызове нужно взять его адрес,
+// поскольку postgres.New принимает *config.Database.
 func (h *Harness) DatabaseConfig() config.Database { return h.pgCfg }
 
-// RedisConfig returns a config.Redis wired to the live Redis container, ready
-// for redis.New.
+// RedisConfig возвращает config.Redis, настроенный для подключения
+// к работающему контейнеру Redis и готовый для передачи в redis.New.
 func (h *Harness) RedisConfig() config.Redis { return h.rdCfg }
 
-// Reset gives a single test a clean slate: it deletes every user (which
-// cascades through all user-owned tables via FK ON DELETE rules) and flushes
-// Redis (refresh tokens, rate-limit counters).
+// Reset подготавливает чистое состояние для одного теста:
+// удаляет всех пользователей (что благодаря правилам FK ON DELETE
+// автоматически очищает все принадлежащие им данные)
+// и полностью очищает Redis (refresh-токены, счётчики rate limiting и т.п.).
 //
-// We use DELETE FROM users rather than TRUNCATE users ... CASCADE on purpose.
-// CASCADE-truncating users ignores ON DELETE actions and would also truncate
-// problems (created_by_user_id -> users) and cards (user_id -> users),
-// destroying seed/reference data. DELETE fires ON DELETE rules instead: seed
-// problems are kept (created_by_user_id SET NULL), only user-owned cards are
-// dropped (CASCADE), and global cards survive (user_id NULL). The users
-// IDENTITY sequence is intentionally not reset; tests must use returned IDs,
-// not assume id=1.
+// Мы намеренно используем DELETE FROM users, а не
+// TRUNCATE users ... CASCADE.
+//
+// TRUNCATE ... CASCADE игнорирует правила ON DELETE и также очистит
+// таблицы problems (created_by_user_id → users) и
+// cards (user_id → users), уничтожив сидовые и справочные данные.
+//
+// DELETE, напротив, запускает обработку правил ON DELETE:
+//   - сидовые задачи сохраняются благодаря SET NULL для
+//     created_by_user_id;
+//   - удаляются только карточки, принадлежащие пользователям (CASCADE);
+//   - глобальные карточки (user_id IS NULL) остаются.
+//
+// Последовательность IDENTITY для users намеренно не сбрасывается.
+// Тесты должны использовать идентификаторы, возвращённые системой,
+// а не предполагать, что первый пользователь всегда имеет id = 1.
 func (h *Harness) Reset(t testing.TB) {
 	t.Helper()
 	ctx := context.Background()

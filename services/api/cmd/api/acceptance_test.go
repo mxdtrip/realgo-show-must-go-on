@@ -12,17 +12,20 @@ import (
 	"github.com/mxdtrip/freeburger/services/api/internal/testutil"
 )
 
-// harness is the shared testcontainer pair, booted once in TestMain and reused
-// across every acceptance test in this package. Per-test isolation comes from
-// harness.Reset, not from fresh containers (too slow for the inner loop).
+// harness — общая пара контейнеров testcontainers, которая запускается
+// один раз в TestMain и переиспользуется всеми acceptance-тестами пакета.
+// Изоляция между тестами обеспечивается вызовом harness.Reset,
+// а не созданием новых контейнеров (это слишком медленно для обычного
+// цикла разработки).
 var harness *testutil.Harness
 
-// TestMain boots the Postgres+Redis harness once for the package. Under -short
-// it skips the boot entirely so the fast unit loop (go test -short ./...) needs
-// no Docker.
+// TestMain один раз запускает Harness с Postgres и Redis для всего пакета.
+// При запуске с флагом -short контейнеры не поднимаются, поэтому быстрый
+// цикл unit-тестов (go test -short ./...) не требует Docker.
 func TestMain(m *testing.M) {
-	// When TestMain is called, flag.Parse has not been run, and testing.Short
-	// panics until it has (see Go testing docs). Parse explicitly.
+	// К моменту вызова TestMain flag.Parse ещё не выполнен, а вызов
+	// testing.Short до разбора флагов приводит к panic
+	// Поэтому разбираем флаги явно.
 	flag.Parse()
 
 	if testing.Short() {
@@ -41,10 +44,15 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-// TestAcceptance_HarnessWalkingSkeleton is the Plan 0 deliverable: prove the
-// whole pipeline lives. testcontainers PG16+Redis7 -> real server.New under
-// httptest -> real POST /auth/register yields a JWT -> GET /me with Bearer
-// returns the registered email. Nothing is stubbed.
+// TestAcceptance_HarnessWalkingSkeleton — цель
+// доказать, что весь конвейер работает.
+//
+// testcontainers с Postgres 16 и Redis 7 → настоящий server.New,
+// запущенный через httptest → реальный POST /auth/register,
+// возвращающий JWT → GET /me с Bearer-токеном,
+// возвращающий email зарегистрированного пользователя.
+//
+// Здесь нет заглушек — используются только реальные компоненты системы.
 func TestAcceptance_HarnessWalkingSkeleton(t *testing.T) {
 	if testing.Short() {
 		t.Skip("acceptance test requires Docker")
