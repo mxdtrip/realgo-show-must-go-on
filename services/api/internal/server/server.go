@@ -67,8 +67,8 @@ func New(deps Deps) http.Handler {
 	companiesHandler := companies.NewHandler()
 	dashboardHandler := dashboard.NewHandler(dashboard.NewService(dashboard.NewRepository(deps.Postgres.Pool), patterns.NewRepository(deps.Postgres.Pool)))
 	cardsHandler := cards.NewHandler(cards.NewService(cards.NewRepository(deps.Postgres.Pool), reviewService))
-	quizHandler := quiz.NewHandler(deps.Postgres.Pool)
-	aiHandler := ai.NewHandler(deps.Postgres.Pool)
+	quizHandler := quiz.NewHandler(quiz.NewRepository(deps.Postgres.Pool))
+	aiHandler := ai.NewHandler(ai.NewRepository(deps.Postgres.Pool))
 
 	// Browser-extension ingest: simple fixed-interval scheduler (issue #17)
 	// behind the Scheduler interface, swappable for FSRS later.
@@ -135,14 +135,14 @@ func New(deps Deps) http.Handler {
 		r.Route("/me/cards", func(r chi.Router) {
 			r.With(requireAuth(deps.Auth)).Group(func(r chi.Router) {
 				cards.RegisterRoutes(r, cardsHandler)
-				r.Post("/generate", aiHandler.GenerateCard)
+				ai.RegisterCardRoutes(r, aiHandler)
 			})
 		})
 
 		r.Route("/me/quiz", func(r chi.Router) {
 			r.With(requireAuth(deps.Auth)).Group(func(r chi.Router) {
 				quiz.RegisterRoutes(r, quizHandler)
-				r.Post("/generate", aiHandler.GenerateQuiz)
+				ai.RegisterQuizRoutes(r, aiHandler)
 			})
 		})
 

@@ -8,37 +8,30 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/go-chi/chi/v5"
 
 	"github.com/mxdtrip/freeburger/services/api/internal/auth"
 	"github.com/mxdtrip/freeburger/services/api/internal/server/response"
-	"github.com/mxdtrip/freeburger/services/api/internal/storage/postgres/db"
 )
 
 type repository interface {
 	CreateAIRequestLog(ctx context.Context, userID int64, feature string) (int64, error)
 }
 
-type pgRepository struct{ q *db.Queries }
-
-func (r *pgRepository) CreateAIRequestLog(ctx context.Context, userID int64, feature string) (int64, error) {
-	row, err := r.q.CreateAIRequestLog(ctx, db.CreateAIRequestLogParams{
-		UserID:  userID,
-		Feature: pgtype.Text{String: feature, Valid: true},
-	})
-	if err != nil {
-		return 0, err
-	}
-	return row.ID, nil
-}
-
 type Handler struct {
 	repo repository
 }
 
-func NewHandler(pool *pgxpool.Pool) *Handler {
-	return &Handler{repo: &pgRepository{q: db.New(pool)}}
+func NewHandler(repo repository) *Handler {
+	return &Handler{repo: repo}
+}
+
+func RegisterCardRoutes(r chi.Router, h *Handler) {
+	r.Post("/generate", h.GenerateCard)
+}
+
+func RegisterQuizRoutes(r chi.Router, h *Handler) {
+	r.Post("/generate", h.GenerateQuiz)
 }
 
 // validateTarget returns a non-empty message when the problem/pattern XOR rule is violated.

@@ -8,12 +8,9 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/mxdtrip/freeburger/services/api/internal/auth"
 	"github.com/mxdtrip/freeburger/services/api/internal/server/response"
-	"github.com/mxdtrip/freeburger/services/api/internal/storage/postgres/db"
 )
 
 const (
@@ -22,41 +19,16 @@ const (
 )
 
 type Handler struct {
-	q *db.Queries
+	repo repository
 }
 
-func NewHandler(pool *pgxpool.Pool) *Handler {
-	return &Handler{q: db.New(pool)}
+func NewHandler(repo repository) *Handler {
+	return &Handler{repo: repo}
 }
 
 func RegisterRoutes(r chi.Router, h *Handler) {
 	r.Get("/session", h.session)
 	r.Post("/{questionId}/answer", h.answer)
-}
-
-// --- response types ---
-
-type questionItem struct {
-	ID           int64    `json:"id"`
-	Question     string   `json:"question"`
-	Options      []string `json:"options"`
-	Difficulty   *string  `json:"difficulty"`
-	CreatedByAI  bool     `json:"created_by_ai"`
-	CreatedAt    string   `json:"created_at"`
-	ProblemID    *int64   `json:"problem_id"`
-	ProblemTitle *string  `json:"problem_title"`
-	PatternID    *int64   `json:"pattern_id"`
-	PatternName  *string  `json:"pattern_name"`
-}
-
-type answerRequest struct {
-	Option int `json:"option"`
-}
-
-type answerResult struct {
-	Correct       bool    `json:"correct"`
-	CorrectOption int     `json:"correct_option"`
-	Explanation   *string `json:"explanation"`
 }
 
 // GET /me/quiz/session
@@ -67,45 +39,28 @@ func (h *Handler) session(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	limit := sessionLimit(r)
-	rows, err := h.q.ListQuizSession(r.Context(), db.ListQuizSessionParams{
-		UserID:       userID,
-		SessionLimit: limit,
-	})
+	rows, err := h.repo.ListQuizSession(r.Context(), userID, sessionLimit(r))
 	if err != nil {
 		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", "could not load quiz session")
 		return
 	}
 
 	items := make([]questionItem, 0, len(rows))
-	for _, row := range rows {
+	for _, q := range rows {
 		item := questionItem{
-			ID:          row.ID,
-			Question:    row.Question,
-			CreatedByAI: row.CreatedByAi.Bool,
+			ID:           q.ID,
+			Question:     q.Question,
+			CreatedByAI:  q.CreatedByAI,
+			Difficulty:   q.Difficulty,
+			ProblemID:    q.ProblemID,
+			ProblemTitle: q.ProblemTitle,
+			PatternID:    q.PatternID,
+			PatternName:  q.PatternName,
 		}
-		if row.CreatedAt.Valid {
-			item.CreatedAt = row.CreatedAt.Time.UTC().Format(time.RFC3339)
+		if q.CreatedAt != nil {
+			item.CreatedAt = q.CreatedAt.UTC().Format(time.RFC3339)
 		}
-		if row.Difficulty.Valid {
-			item.Difficulty = &row.Difficulty.String
-		}
-		if row.ProblemID.Valid {
-			v := row.ProblemID.Int64
-			item.ProblemID = &v
-		}
-		if row.ProblemTitle.Valid {
-			item.ProblemTitle = &row.ProblemTitle.String
-		}
-		if row.PatternID.Valid {
-			v := row.PatternID.Int64
-			item.PatternID = &v
-		}
-		if row.PatternName.Valid {
-			item.PatternName = &row.PatternName.String
-		}
-		// Unmarshal JSONB options without exposing correct_option.
-		_ = json.Unmarshal(row.Options, &item.Options)
+		_ = json.Unmarshal(q.Options, &item.Options)
 		if item.Options == nil {
 			item.Options = []string{}
 		}
@@ -138,11 +93,8 @@ func (h *Handler) answer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	row, err := h.q.GetQuizQuestion(r.Context(), db.GetQuizQuestionParams{
-		QuestionID: questionID,
-		UserID:     userID,
-	})
-	if errors.Is(err, pgx.ErrNoRows) {
+	detail, err := h.repo.GetQuizQuestion(r.Context(), questionID, userID)
+	if errors.Is(err, errNotFound) {
 		response.Fail(w, http.StatusNotFound, "NOT_FOUND", "question not found")
 		return
 	}
@@ -151,15 +103,11 @@ func (h *Handler) answer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result := answerResult{
-		Correct:       req.Option == int(row.CorrectOption),
-		CorrectOption: int(row.CorrectOption),
-	}
-	if row.Explanation.Valid {
-		result.Explanation = &row.Explanation.String
-	}
-
-	response.JSON(w, http.StatusOK, result)
+	response.JSON(w, http.StatusOK, answerResult{
+		Correct:       req.Option == detail.CorrectOption,
+		CorrectOption: detail.CorrectOption,
+		Explanation:   detail.Explanation,
+	})
 }
 
 func sessionLimit(r *http.Request) int32 {
