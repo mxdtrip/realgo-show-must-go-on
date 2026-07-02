@@ -11,6 +11,132 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const createCard = `-- name: CreateCard :one
+INSERT INTO cards (user_id, problem_id, pattern_id, type, question, answer, explanation, source, created_by_ai)
+VALUES (
+    $1::bigint,
+    $2,
+    $3,
+    $4,
+    $5,
+    $6,
+    $7,
+    $8,
+    $9
+)
+RETURNING id, user_id, problem_id, pattern_id, type, question, answer, explanation, source, created_by_ai, created_at
+`
+
+type CreateCardParams struct {
+	UserID      int64
+	ProblemID   pgtype.Int8
+	PatternID   pgtype.Int8
+	CardType    string
+	Question    string
+	Answer      string
+	Explanation pgtype.Text
+	Source      pgtype.Text
+	CreatedByAi pgtype.Bool
+}
+
+func (q *Queries) CreateCard(ctx context.Context, arg CreateCardParams) (Card, error) {
+	row := q.db.QueryRow(ctx, createCard,
+		arg.UserID,
+		arg.ProblemID,
+		arg.PatternID,
+		arg.CardType,
+		arg.Question,
+		arg.Answer,
+		arg.Explanation,
+		arg.Source,
+		arg.CreatedByAi,
+	)
+	var i Card
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.ProblemID,
+		&i.PatternID,
+		&i.Type,
+		&i.Question,
+		&i.Answer,
+		&i.Explanation,
+		&i.Source,
+		&i.CreatedByAi,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const deleteCard = `-- name: DeleteCard :exec
+DELETE FROM cards
+WHERE id = $1::bigint AND user_id = $2::bigint
+`
+
+type DeleteCardParams struct {
+	CardID int64
+	UserID int64
+}
+
+func (q *Queries) DeleteCard(ctx context.Context, arg DeleteCardParams) error {
+	_, err := q.db.Exec(ctx, deleteCard, arg.CardID, arg.UserID)
+	return err
+}
+
+const getCardByID = `-- name: GetCardByID :one
+SELECT c.id, c.user_id, c.problem_id, c.pattern_id, c.type, c.question, c.answer,
+       c.explanation, c.source, c.created_by_ai, c.created_at,
+       p.title AS problem_title, p.url AS problem_url, pat.name AS pattern_name
+FROM cards c
+LEFT JOIN problems p   ON p.id   = c.problem_id
+LEFT JOIN patterns pat ON pat.id = c.pattern_id
+WHERE c.id = $1::bigint AND c.user_id = $2::bigint
+`
+
+type GetCardByIDParams struct {
+	CardID int64
+	UserID int64
+}
+
+type GetCardByIDRow struct {
+	ID           int64
+	UserID       pgtype.Int8
+	ProblemID    pgtype.Int8
+	PatternID    pgtype.Int8
+	Type         string
+	Question     string
+	Answer       string
+	Explanation  pgtype.Text
+	Source       pgtype.Text
+	CreatedByAi  pgtype.Bool
+	CreatedAt    pgtype.Timestamptz
+	ProblemTitle pgtype.Text
+	ProblemUrl   pgtype.Text
+	PatternName  pgtype.Text
+}
+
+func (q *Queries) GetCardByID(ctx context.Context, arg GetCardByIDParams) (GetCardByIDRow, error) {
+	row := q.db.QueryRow(ctx, getCardByID, arg.CardID, arg.UserID)
+	var i GetCardByIDRow
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.ProblemID,
+		&i.PatternID,
+		&i.Type,
+		&i.Question,
+		&i.Answer,
+		&i.Explanation,
+		&i.Source,
+		&i.CreatedByAi,
+		&i.CreatedAt,
+		&i.ProblemTitle,
+		&i.ProblemUrl,
+		&i.PatternName,
+	)
+	return i, err
+}
+
 const getCardScheduleForUser = `-- name: GetCardScheduleForUser :one
 SELECT rs.id
 FROM review_schedules rs
@@ -200,4 +326,53 @@ func (q *Queries) ListUserCards(ctx context.Context, arg ListUserCardsParams) ([
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateCard = `-- name: UpdateCard :one
+UPDATE cards
+SET
+    type        = COALESCE($1, type),
+    question    = COALESCE($2, question),
+    answer      = COALESCE($3, answer),
+    explanation = COALESCE($4, explanation),
+    source      = COALESCE($5, source)
+WHERE id = $6::bigint AND user_id = $7::bigint
+RETURNING id, user_id, problem_id, pattern_id, type, question, answer, explanation, source, created_by_ai, created_at
+`
+
+type UpdateCardParams struct {
+	CardType    pgtype.Text
+	Question    pgtype.Text
+	Answer      pgtype.Text
+	Explanation pgtype.Text
+	Source      pgtype.Text
+	CardID      int64
+	UserID      int64
+}
+
+func (q *Queries) UpdateCard(ctx context.Context, arg UpdateCardParams) (Card, error) {
+	row := q.db.QueryRow(ctx, updateCard,
+		arg.CardType,
+		arg.Question,
+		arg.Answer,
+		arg.Explanation,
+		arg.Source,
+		arg.CardID,
+		arg.UserID,
+	)
+	var i Card
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.ProblemID,
+		&i.PatternID,
+		&i.Type,
+		&i.Question,
+		&i.Answer,
+		&i.Explanation,
+		&i.Source,
+		&i.CreatedByAi,
+		&i.CreatedAt,
+	)
+	return i, err
 }

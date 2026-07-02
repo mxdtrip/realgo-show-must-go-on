@@ -10,6 +10,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/mxdtrip/freeburger/services/api/internal/auth"
@@ -41,7 +42,11 @@ func NewHandler(pool *pgxpool.Pool, reviewSvc service.ReviewService) *Handler {
 
 func RegisterRoutes(r chi.Router, h *Handler) {
 	r.Get("/", h.list)
+	r.Post("/", h.create)
 	r.Get("/session", h.session)
+	r.Get("/{cardId}", h.get)
+	r.Patch("/{cardId}", h.update)
+	r.Delete("/{cardId}", h.delete)
 	r.Post("/{cardId}/rate", h.rate)
 }
 
@@ -89,6 +94,39 @@ type sessionCard struct {
 type rateRequest struct {
 	Rating     string `json:"rating"`
 	ReviewedAt string `json:"reviewed_at"`
+}
+
+type createCardRequest struct {
+	Type        string  `json:"type"`
+	Question    string  `json:"question"`
+	Answer      string  `json:"answer"`
+	Explanation *string `json:"explanation"`
+	Source      *string `json:"source"`
+	ProblemID   *int64  `json:"problem_id"`
+	PatternID   *int64  `json:"pattern_id"`
+}
+
+type updateCardRequest struct {
+	Type        *string `json:"type"`
+	Question    *string `json:"question"`
+	Answer      *string `json:"answer"`
+	Explanation *string `json:"explanation"`
+	Source      *string `json:"source"`
+}
+
+// cardDetail is returned by GET /me/cards/{id} and mutating operations.
+type cardDetail struct {
+	ID           int64   `json:"id"`
+	Type         string  `json:"type"`
+	Question     string  `json:"question"`
+	Answer       string  `json:"answer"`
+	Explanation  *string `json:"explanation"`
+	Source       *string `json:"source"`
+	CreatedByAI  bool    `json:"created_by_ai"`
+	CreatedAt    string  `json:"created_at"`
+	ProblemTitle *string `json:"problem_title"`
+	ProblemURL   *string `json:"problem_url"`
+	PatternName  *string `json:"pattern_name"`
 }
 
 // --- handlers ---
@@ -268,6 +306,190 @@ func (h *Handler) rate(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, data)
 }
 
+// POST /me/cards
+func (h *Handler) create(w http.ResponseWriter, r *http.Request) {
+	userID, ok := auth.UserIDFromContext(r.Context())
+	if !ok {
+		response.Fail(w, http.StatusUnauthorized, "UNAUTHORIZED", "user not authenticated")
+		return
+	}
+
+	var req createCardRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "invalid request body")
+		return
+	}
+	if !validCardType(req.Type) {
+		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "type must be pattern_recognition, algorithm_mechanics, or edge_case")
+		return
+	}
+	if req.Question == "" || req.Answer == "" {
+		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "question and answer are required")
+		return
+	}
+	if req.ProblemID != nil && req.PatternID != nil {
+		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "only one of problem_id or pattern_id may be set")
+		return
+	}
+
+	params := db.CreateCardParams{
+		UserID:      userID,
+		CardType:    req.Type,
+		Question:    req.Question,
+		Answer:      req.Answer,
+		CreatedByAi: pgBool(false),
+	}
+	if req.ProblemID != nil {
+		params.ProblemID = pgInt8(*req.ProblemID)
+	}
+	if req.PatternID != nil {
+		params.PatternID = pgInt8(*req.PatternID)
+	}
+	if req.Explanation != nil {
+		params.Explanation = pgText(*req.Explanation)
+	}
+	if req.Source != nil {
+		params.Source = pgText(*req.Source)
+	}
+
+	card, err := h.q.CreateCard(r.Context(), params)
+	if err != nil {
+		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", "could not create card")
+		return
+	}
+
+	response.JSON(w, http.StatusCreated, cardFromRecord(card, pgText(""), pgText(""), pgText("")))
+}
+
+// GET /me/cards/{cardId}
+func (h *Handler) get(w http.ResponseWriter, r *http.Request) {
+	userID, ok := auth.UserIDFromContext(r.Context())
+	if !ok {
+		response.Fail(w, http.StatusUnauthorized, "UNAUTHORIZED", "user not authenticated")
+		return
+	}
+
+	cardID, err := strconv.ParseInt(chi.URLParam(r, "cardId"), 10, 64)
+	if err != nil {
+		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "invalid cardId")
+		return
+	}
+
+	row, err := h.q.GetCardByID(r.Context(), db.GetCardByIDParams{CardID: cardID, UserID: userID})
+	if errors.Is(err, pgx.ErrNoRows) {
+		response.Fail(w, http.StatusNotFound, "NOT_FOUND", "card not found")
+		return
+	}
+	if err != nil {
+		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", "could not fetch card")
+		return
+	}
+
+	card := cardDetail{
+		ID:          row.ID,
+		Type:        row.Type,
+		Question:    row.Question,
+		Answer:      row.Answer,
+		CreatedByAI: row.CreatedByAi.Bool,
+	}
+	if row.CreatedAt.Valid {
+		card.CreatedAt = row.CreatedAt.Time.UTC().Format(time.RFC3339)
+	}
+	if row.Explanation.Valid {
+		card.Explanation = &row.Explanation.String
+	}
+	if row.Source.Valid {
+		card.Source = &row.Source.String
+	}
+	if row.ProblemTitle.Valid {
+		card.ProblemTitle = &row.ProblemTitle.String
+	}
+	if row.ProblemUrl.Valid {
+		card.ProblemURL = &row.ProblemUrl.String
+	}
+	if row.PatternName.Valid {
+		card.PatternName = &row.PatternName.String
+	}
+
+	response.JSON(w, http.StatusOK, card)
+}
+
+// PATCH /me/cards/{cardId}
+func (h *Handler) update(w http.ResponseWriter, r *http.Request) {
+	userID, ok := auth.UserIDFromContext(r.Context())
+	if !ok {
+		response.Fail(w, http.StatusUnauthorized, "UNAUTHORIZED", "user not authenticated")
+		return
+	}
+
+	cardID, err := strconv.ParseInt(chi.URLParam(r, "cardId"), 10, 64)
+	if err != nil {
+		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "invalid cardId")
+		return
+	}
+
+	var req updateCardRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "invalid request body")
+		return
+	}
+	if req.Type != nil && !validCardType(*req.Type) {
+		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "type must be pattern_recognition, algorithm_mechanics, or edge_case")
+		return
+	}
+
+	params := db.UpdateCardParams{CardID: cardID, UserID: userID}
+	if req.Type != nil {
+		params.CardType = pgText(*req.Type)
+	}
+	if req.Question != nil {
+		params.Question = pgText(*req.Question)
+	}
+	if req.Answer != nil {
+		params.Answer = pgText(*req.Answer)
+	}
+	if req.Explanation != nil {
+		params.Explanation = pgText(*req.Explanation)
+	}
+	if req.Source != nil {
+		params.Source = pgText(*req.Source)
+	}
+
+	card, err := h.q.UpdateCard(r.Context(), params)
+	if errors.Is(err, pgx.ErrNoRows) {
+		response.Fail(w, http.StatusNotFound, "NOT_FOUND", "card not found")
+		return
+	}
+	if err != nil {
+		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", "could not update card")
+		return
+	}
+
+	response.JSON(w, http.StatusOK, cardFromRecord(card, pgText(""), pgText(""), pgText("")))
+}
+
+// DELETE /me/cards/{cardId}
+func (h *Handler) delete(w http.ResponseWriter, r *http.Request) {
+	userID, ok := auth.UserIDFromContext(r.Context())
+	if !ok {
+		response.Fail(w, http.StatusUnauthorized, "UNAUTHORIZED", "user not authenticated")
+		return
+	}
+
+	cardID, err := strconv.ParseInt(chi.URLParam(r, "cardId"), 10, 64)
+	if err != nil {
+		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "invalid cardId")
+		return
+	}
+
+	if err := h.q.DeleteCard(r.Context(), db.DeleteCardParams{CardID: cardID, UserID: userID}); err != nil {
+		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", "could not delete card")
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
 // --- helpers ---
 
 func cardsLimit(r *http.Request) int32 {
@@ -284,6 +506,43 @@ func cardsLimit(r *http.Request) int32 {
 func validRating(r string) bool {
 	return r == "hard" || r == "normal" || r == "easy"
 }
+
+func validCardType(t string) bool {
+	return t == "pattern_recognition" || t == "algorithm_mechanics" || t == "edge_case"
+}
+
+func cardFromRecord(c db.Card, problemTitle, problemURL, patternName pgtype.Text) cardDetail {
+	d := cardDetail{
+		ID:          c.ID,
+		Type:        c.Type,
+		Question:    c.Question,
+		Answer:      c.Answer,
+		CreatedByAI: c.CreatedByAi.Bool,
+	}
+	if c.CreatedAt.Valid {
+		d.CreatedAt = c.CreatedAt.Time.UTC().Format(time.RFC3339)
+	}
+	if c.Explanation.Valid {
+		d.Explanation = &c.Explanation.String
+	}
+	if c.Source.Valid {
+		d.Source = &c.Source.String
+	}
+	if problemTitle.Valid {
+		d.ProblemTitle = &problemTitle.String
+	}
+	if problemURL.Valid {
+		d.ProblemURL = &problemURL.String
+	}
+	if patternName.Valid {
+		d.PatternName = &patternName.String
+	}
+	return d
+}
+
+func pgText(s string) pgtype.Text { return pgtype.Text{String: s, Valid: true} }
+func pgInt8(v int64) pgtype.Int8  { return pgtype.Int8{Int64: v, Valid: true} }
+func pgBool(v bool) pgtype.Bool   { return pgtype.Bool{Bool: v, Valid: true} }
 
 // fsrsState maps FSRS numeric state to a readable string.
 func fsrsState(state int) string {
