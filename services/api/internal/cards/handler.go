@@ -1,6 +1,7 @@
 package cards
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -27,11 +28,21 @@ var (
 	errInvalidLimit  = errors.New("limit must be a positive integer")
 )
 
-type Handler struct {
-	svc *Service
+type service interface {
+	List(ctx context.Context, userID int64, params ListParams) ([]Card, *string, error)
+	Session(ctx context.Context, userID int64, params SessionParams) (Session, error)
+	Rate(ctx context.Context, userID, cardID int64, req RateRequest) (RateResult, error)
+	Create(ctx context.Context, userID int64, p CreateCardInput) (CardDetail, error)
+	GetByID(ctx context.Context, userID, cardID int64) (CardDetail, error)
+	Update(ctx context.Context, userID, cardID int64, p UpdateCardInput) (CardDetail, error)
+	Delete(ctx context.Context, userID, cardID int64) error
 }
 
-func NewHandler(svc *Service) *Handler {
+type Handler struct {
+	svc service
+}
+
+func NewHandler(svc service) *Handler {
 	return &Handler{svc: svc}
 }
 

@@ -216,61 +216,35 @@ func (r *pgRepository) Delete(ctx context.Context, userID, cardID int64) error {
 	return nil
 }
 
-func cardDetailFromCard(c db.Card, problemTitle, problemURL, patternName pgtype.Text) CardDetail {
+func newCardDetail(id int64, cardType, question, answer string, createdByAI bool, createdAt pgtype.Timestamptz, explanation, source pgtype.Text) CardDetail {
 	d := CardDetail{
-		ID:          c.ID,
-		Type:        c.Type,
-		Question:    c.Question,
-		Answer:      c.Answer,
-		CreatedByAI: c.CreatedByAi.Bool,
+		ID:          id,
+		Type:        cardType,
+		Question:    question,
+		Answer:      answer,
+		CreatedByAI: createdByAI,
 	}
-	if c.CreatedAt.Valid {
-		d.CreatedAt = c.CreatedAt.Time.UTC()
+	if createdAt.Valid {
+		d.CreatedAt = createdAt.Time.UTC()
 	}
-	if c.Explanation.Valid {
-		d.Explanation = &c.Explanation.String
-	}
-	if c.Source.Valid {
-		d.Source = &c.Source.String
-	}
-	if problemTitle.Valid {
-		d.ProblemTitle = &problemTitle.String
-	}
-	if problemURL.Valid {
-		d.ProblemURL = &problemURL.String
-	}
-	if patternName.Valid {
-		d.PatternName = &patternName.String
-	}
+	d.Explanation = stringPtrFromPg(explanation)
+	d.Source = stringPtrFromPg(source)
+	return d
+}
+
+func cardDetailFromCard(c db.Card, problemTitle, problemURL, patternName pgtype.Text) CardDetail {
+	d := newCardDetail(c.ID, c.Type, c.Question, c.Answer, c.CreatedByAi.Bool, c.CreatedAt, c.Explanation, c.Source)
+	d.ProblemTitle = stringPtrFromPg(problemTitle)
+	d.ProblemURL = stringPtrFromPg(problemURL)
+	d.PatternName = stringPtrFromPg(patternName)
 	return d
 }
 
 func cardDetailFromGetRow(row db.GetCardByIDRow) CardDetail {
-	d := CardDetail{
-		ID:          row.ID,
-		Type:        row.Type,
-		Question:    row.Question,
-		Answer:      row.Answer,
-		CreatedByAI: row.CreatedByAi.Bool,
-	}
-	if row.CreatedAt.Valid {
-		d.CreatedAt = row.CreatedAt.Time.UTC()
-	}
-	if row.Explanation.Valid {
-		d.Explanation = &row.Explanation.String
-	}
-	if row.Source.Valid {
-		d.Source = &row.Source.String
-	}
-	if row.ProblemTitle.Valid {
-		d.ProblemTitle = &row.ProblemTitle.String
-	}
-	if row.ProblemUrl.Valid {
-		d.ProblemURL = &row.ProblemUrl.String
-	}
-	if row.PatternName.Valid {
-		d.PatternName = &row.PatternName.String
-	}
+	d := newCardDetail(row.ID, row.Type, row.Question, row.Answer, row.CreatedByAi.Bool, row.CreatedAt, row.Explanation, row.Source)
+	d.ProblemTitle = stringPtrFromPg(row.ProblemTitle)
+	d.ProblemURL = stringPtrFromPg(row.ProblemUrl)
+	d.PatternName = stringPtrFromPg(row.PatternName)
 	return d
 }
 
