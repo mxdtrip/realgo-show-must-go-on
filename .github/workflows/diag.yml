@@ -25,9 +25,13 @@ jobs:
           docker logs freeburger-api-1 --tail 20 2>&1 | tail -20 || echo "(no api container)"
       - name: Network probes
         run: |
-          echo "===== outbound 7844 to CF edge (from a docker container on appbox) ====="
-          docker run --rm alpine sh -c 'apk add --no-cache netcat-openbsd >/dev/null 2>&1; for ip in 198.41.192.227 198.41.200.113; do nc -vz -w5 $ip 7844 && echo "  OK $ip:7844" || echo "  FAIL $ip:7844"; done' 2>&1 || true
-          echo "===== caddy -> web:3000 reachable? ====="
-          docker exec freeburger-caddy-1 sh -c 'wget -qO- -T5 http://web:3000/ >/dev/null 2>&1 && echo "caddy CAN reach web:3000" || echo "caddy CANNOT reach web:3000"' 2>&1 || true
-          echo "===== web direct 200? (host -> web via caddy publish :8080) ====="
+          echo "===== cloudflared -> caddy:80 (the 502 suspect) ====="
+          docker exec freeburger-cloudflared-1 sh -c 'wget -qO- -T5 -S http://caddy:80/ 2>&1 | head -20' 2>&1 || echo "(cloudflared has no wget/shell)"
+          echo "===== which network is cloudflared vs caddy on ====="
+          docker inspect -f '{{.Name}} nets={{range $k,$v := .NetworkSettings.Networks}}{{$k}} {{end}}' freeburger-cloudflared-1 freeburger-caddy-1 freeburger-web-1 2>&1 || true
+          echo "===== can cloudflared even resolve caddy? ====="
+          docker exec freeburger-cloudflared-1 sh -c 'nslookup caddy 2>&1 || getent hosts caddy 2>&1 || echo no-resolver' 2>&1 || true
+          echo "===== host -> caddy publish :8080 ====="
           curl -sS -o /dev/null -w "localhost:8080/ -> %{http_code}\n" --max-time 8 http://localhost:8080/ 2>&1 || true
+          echo "===== recent cloudflared log (http2 registered?) ====="
+          docker logs freeburger-cloudflared-1 --tail 25 2>&1 | tail -25 || true
