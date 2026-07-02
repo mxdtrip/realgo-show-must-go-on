@@ -23,6 +23,18 @@ jobs:
           docker logs freeburger-caddy-1 --tail 25 2>&1 | tail -25 || echo "(no caddy container)"
           echo "===== api ====="
           docker logs freeburger-api-1 --tail 20 2>&1 | tail -20 || echo "(no api container)"
+      - name: Egress + provider filtering
+        run: |
+          echo "===== external IP of the server (CGNAT if 100.64-100.127.x) ====="
+          curl -sS --max-time 8 https://api.ipify.org 2>&1; echo
+          curl -sS --max-time 8 https://ifconfig.me 2>&1; echo
+          echo "===== does plain HTTPS to Cloudflare work (non-tunnel)? ====="
+          curl -sS -o /dev/null -w "https://cloudflare.com -> %{http_code} in %{time_total}s\n" --max-time 10 https://www.cloudflare.com/ 2>&1 || true
+          curl -sS -o /dev/null -w "https://1.1.1.1 -> %{http_code} in %{time_total}s\n" --max-time 10 https://1.1.1.1/ 2>&1 || true
+          echo "===== raw TCP to CF tunnel edge :7844 (control plane) ====="
+          docker run --rm alpine sh -c 'apk add --no-cache netcat-openbsd >/dev/null 2>&1; nc -vz -w6 198.41.192.67 7844 && echo OK || echo FAIL' 2>&1 || true
+          echo "===== a general control: TCP 443 to a non-CF host (github) ====="
+          docker run --rm alpine sh -c 'apk add --no-cache netcat-openbsd >/dev/null 2>&1; nc -vz -w6 140.82.121.3 443 && echo github443 OK || echo github443 FAIL' 2>&1 || true
       - name: MTU probe
         run: |
           echo "===== MTU of interfaces along the path ====="
