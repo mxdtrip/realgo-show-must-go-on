@@ -115,7 +115,7 @@ function Options() {
               id="realgo-base-url"
               className="realgo-input"
               value={baseUrl}
-              placeholder="http://localhost:8080"
+              placeholder="https://realgo.dev"
               onChange={(e) => {
                 setBaseUrl(e.target.value);
                 setConn("idle");
@@ -158,7 +158,7 @@ function Options() {
               id="realgo-web-url"
               className="realgo-input"
               value={webUrl}
-              placeholder="http://localhost:3000"
+              placeholder="https://realgo.dev"
               onChange={(e) => setWebUrl(e.target.value)}
             />
             <button
