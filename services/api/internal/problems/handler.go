@@ -33,6 +33,8 @@ type Handler struct {
 
 type repository interface {
 	List(ctx context.Context, userID int64, params ListParams) ([]Problem, error)
+	GetByID(ctx context.Context, userID, problemID int64) (ProblemDetail, error)
+	Save(ctx context.Context, userID, problemID int64) (string, error)
 }
 
 func NewHandler(repo repository) *Handler {
@@ -41,6 +43,8 @@ func NewHandler(repo repository) *Handler {
 
 func RegisterRoutes(r chi.Router, h *Handler) {
 	r.Get("/", h.List)
+	r.Get("/{problemId}", h.Get)
+	r.Post("/{problemId}/save", h.Save)
 }
 
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
@@ -64,6 +68,60 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 
 	body := buildListResponse(items, pageLimit)
 	response.JSON(w, http.StatusOK, body)
+}
+
+// GET /me/problems/{problemId}
+func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
+	userID, ok := auth.UserIDFromContext(r.Context())
+	if !ok {
+		response.Fail(w, http.StatusUnauthorized, "UNAUTHORIZED", "user not authenticated")
+		return
+	}
+
+	problemID, err := strconv.ParseInt(chi.URLParam(r, "problemId"), 10, 64)
+	if err != nil {
+		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "invalid problemId")
+		return
+	}
+
+	problem, err := h.repo.GetByID(r.Context(), userID, problemID)
+	if errors.Is(err, errNotFound) {
+		response.Fail(w, http.StatusNotFound, "NOT_FOUND", "problem not found")
+		return
+	}
+	if err != nil {
+		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", err.Error())
+		return
+	}
+
+	response.JSON(w, http.StatusOK, problem)
+}
+
+// POST /me/problems/{problemId}/save
+func (h *Handler) Save(w http.ResponseWriter, r *http.Request) {
+	userID, ok := auth.UserIDFromContext(r.Context())
+	if !ok {
+		response.Fail(w, http.StatusUnauthorized, "UNAUTHORIZED", "user not authenticated")
+		return
+	}
+
+	problemID, err := strconv.ParseInt(chi.URLParam(r, "problemId"), 10, 64)
+	if err != nil {
+		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "invalid problemId")
+		return
+	}
+
+	status, err := h.repo.Save(r.Context(), userID, problemID)
+	if errors.Is(err, errNotFound) {
+		response.Fail(w, http.StatusNotFound, "NOT_FOUND", "problem not found")
+		return
+	}
+	if err != nil {
+		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", err.Error())
+		return
+	}
+
+	response.JSON(w, http.StatusOK, map[string]string{"status": status})
 }
 
 func parseListParams(r *http.Request) (ListParams, int, error) {

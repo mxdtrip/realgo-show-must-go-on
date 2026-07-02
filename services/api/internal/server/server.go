@@ -120,7 +120,11 @@ func New(deps Deps) http.Handler {
 		r.With(requireAuth(deps.Auth)).Get("/me/extension/status", extensionStatusHandler.GetStatus) // codex/s3-ext-status
 
 		// S2 problems.
-		r.With(requireAuth(deps.Auth)).Get("/me/problems", problemsHandler.List)
+		r.Route("/me/problems", func(r chi.Router) {
+			r.With(requireAuth(deps.Auth)).Group(func(r chi.Router) {
+				problems.RegisterRoutes(r, problemsHandler)
+			})
+		})
 
 		r.With(requireAuth(deps.Auth)).Get("/me/dashboard", dashboardHandler.Get) // codex/s1-dashboard
 

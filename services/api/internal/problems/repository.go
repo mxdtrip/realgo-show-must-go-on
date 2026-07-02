@@ -2,9 +2,11 @@ package problems
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 
@@ -17,6 +19,60 @@ type pgRepository struct {
 
 func NewRepository(pool *pgxpool.Pool) *pgRepository {
 	return &pgRepository{q: db.New(pool)}
+}
+
+func (r *pgRepository) GetByID(ctx context.Context, userID, problemID int64) (ProblemDetail, error) {
+	row, err := r.q.GetUserProblem(ctx, db.GetUserProblemParams{UserID: userID, ProblemID: problemID})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return ProblemDetail{}, errNotFound
+	}
+	if err != nil {
+		return ProblemDetail{}, fmt.Errorf("problems: get by id: %w", err)
+	}
+
+	d := ProblemDetail{
+		ID:         row.ID,
+		ExternalID: row.ExternalID,
+		Title:      row.Title,
+		URL:        row.Url,
+		Platform:   row.Platform,
+		Difficulty: row.Difficulty,
+		Status:     row.Status,
+		CreatedAt:  timeFromPg(row.CreatedAt),
+	}
+	if row.PatternID.Valid && row.PatternName.Valid {
+		d.Pattern = &ProblemPattern{ID: row.PatternID.String, Name: row.PatternName.String}
+	}
+	if row.NextReviewAt.Valid {
+		t := row.NextReviewAt.Time.UTC()
+		d.NextReviewAt = &t
+	}
+	if row.LastRating.Valid {
+		d.LastRating = &row.LastRating.String
+	}
+	if row.SolvedAt.Valid {
+		t := row.SolvedAt.Time.UTC()
+		d.SolvedAt = &t
+	}
+	if row.Note.Valid {
+		d.Note = &row.Note.String
+	}
+	return d, nil
+}
+
+func (r *pgRepository) Save(ctx context.Context, userID, problemID int64) (string, error) {
+	row, err := r.q.UpsertProblemProgress(ctx, db.UpsertProblemProgressParams{UserID: userID, ProblemID: problemID})
+	if err != nil {
+		return "", fmt.Errorf("problems: save: %w", err)
+	}
+	// Also create a review schedule if none exists yet (so the problem shows up in queue).
+	_, _ = r.q.CreateProblemScheduleIfAbsent(ctx, db.CreateProblemScheduleIfAbsentParams{UserID: userID, ProblemID: problemID})
+
+	status := "saved"
+	if row.Status.Valid {
+		status = row.Status.String
+	}
+	return status, nil
 }
 
 func (r *pgRepository) List(ctx context.Context, userID int64, params ListParams) ([]Problem, error) {
