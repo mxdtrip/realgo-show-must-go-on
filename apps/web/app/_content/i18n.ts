@@ -6,7 +6,7 @@ export const defaultLocale: Locale = "ru";
 
 const ru = {
   common: {
-    brand: "realgo",
+    brand: "ReAlgo",
     metadata: {
       title: "realgo — Memory layer for interview prep",
       description:
