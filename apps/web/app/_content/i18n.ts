@@ -357,6 +357,18 @@ const ru = {
         panelEyebrow: "today",
         panelTitle: "Review queue",
         empty: "С таким фильтром на сегодня пусто.",
+        loading: "Загружаем очередь повторений…",
+        errorTitle: "Не удалось загрузить очередь",
+        retry: "повторить",
+        today: "сегодня",
+        tomorrow: "завтра",
+        dueFallback: "без даты",
+        noRating: "new",
+        attemptUnits: {
+          one: "попытка",
+          few: "попытки",
+          many: "попыток",
+        },
       },
       problems: {
         eyebrow: "/problems",

@@ -21,8 +21,12 @@ export type RequestOptions = {
   signal?: AbortSignal;
 };
 
-/** Low-level request that parses the envelope and throws ApiError on failure. */
-async function rawRequest<T>(path: string, options: RequestOptions, token: string | null): Promise<T> {
+/** Low-level request that parses the complete envelope and throws ApiError on failure. */
+async function rawEnvelopeRequest<T, M = unknown>(
+  path: string,
+  options: RequestOptions,
+  token: string | null,
+): Promise<ApiEnvelope<T, M>> {
   const headers: Record<string, string> = { Accept: "application/json" };
   if (options.body !== undefined) headers["Content-Type"] = "application/json";
   if (token) headers.Authorization = `Bearer ${token}`;
@@ -46,7 +50,13 @@ async function rawRequest<T>(path: string, options: RequestOptions, token: strin
     throw new ApiError(err?.message ?? `Ошибка сервера (${res.status})`, res.status, err?.code ?? "error");
   }
 
-  return (payload as ApiEnvelope<T>).data;
+  return payload as ApiEnvelope<T, M>;
+}
+
+/** Low-level request that unwraps data and throws ApiError on failure. */
+async function rawRequest<T>(path: string, options: RequestOptions, token: string | null): Promise<T> {
+  const envelope = await rawEnvelopeRequest<T>(path, options, token);
+  return envelope.data;
 }
 
 /** Exchanges the stored refresh token for a new access token, or throws. */
@@ -87,5 +97,27 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
     }
     const fresh = await refreshAccessToken();
     return rawRequest<T>(path, options, fresh);
+  }
+}
+
+/**
+ * Authenticated request that returns the complete success envelope. Use this
+ * when top-level response metadata is part of the UI contract.
+ */
+export async function apiFetchEnvelope<T, M = unknown>(
+  path: string,
+  options: RequestOptions = {},
+): Promise<ApiEnvelope<T, M>> {
+  const withAuth = options.auth ?? true;
+  const token = withAuth ? getAccessToken() : null;
+
+  try {
+    return await rawEnvelopeRequest<T, M>(path, options, token);
+  } catch (e) {
+    if (!(e instanceof ApiError) || e.status !== 401 || !withAuth || !getRefreshToken()) {
+      throw e;
+    }
+    const fresh = await refreshAccessToken();
+    return rawEnvelopeRequest<T, M>(path, options, fresh);
   }
 }

@@ -9,6 +9,7 @@ import {
   writeProfileSettings,
   type ProfileSettings,
 } from "../../../_profile/profileSettings";
+import { useToast } from "../../../_toast";
 import { StatusPill } from "../../_components";
 
 const suggestedTimezones = [
@@ -44,6 +45,7 @@ type ProfileSettingsPanelProps = {
 };
 
 export function ProfileSettingsPanel({ copy }: Readonly<ProfileSettingsPanelProps>) {
+  const toast = useToast();
   const defaults = useMemo(
     () => ({ timezone: copy.timezone, interviewDate: copy.interviewDate }),
     [copy.interviewDate, copy.timezone],
@@ -71,6 +73,7 @@ export function ProfileSettingsPanel({ copy }: Readonly<ProfileSettingsPanelProp
 
     setProfile(nextProfile);
     setDidSave(true);
+    toast.success(copy.saved);
   };
 
   return (
