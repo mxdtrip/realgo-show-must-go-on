@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
+	"github.com/mxdtrip/freeburger/services/api/internal/ai"
 	"github.com/mxdtrip/freeburger/services/api/internal/auth"
 	"github.com/mxdtrip/freeburger/services/api/internal/cards"
 	"github.com/mxdtrip/freeburger/services/api/internal/companies"
@@ -67,6 +68,7 @@ func New(deps Deps) http.Handler {
 	dashboardHandler := dashboard.NewHandler(dashboard.NewService(dashboard.NewRepository(deps.Postgres.Pool), patterns.NewRepository(deps.Postgres.Pool)))
 	cardsHandler := cards.NewHandler(deps.Postgres.Pool, reviewService)
 	quizHandler := quiz.NewHandler(deps.Postgres.Pool)
+	aiHandler := ai.NewHandler(deps.Postgres.Pool)
 
 	// Browser-extension ingest: simple fixed-interval scheduler (issue #17)
 	// behind the Scheduler interface, swappable for FSRS later.
@@ -139,6 +141,12 @@ func New(deps Deps) http.Handler {
 		r.Route("/me/quiz", func(r chi.Router) {
 			r.With(requireAuth(deps.Auth)).Group(func(r chi.Router) {
 				quiz.RegisterRoutes(r, quizHandler)
+			})
+		})
+
+		r.Route("/me", func(r chi.Router) {
+			r.With(requireAuth(deps.Auth)).Group(func(r chi.Router) {
+				ai.RegisterRoutes(r, aiHandler)
 			})
 		})
 
