@@ -30,3 +30,4 @@ jobs:
           docker exec freeburger-vpngw-1 sh -c 'curl -sS --max-time 10 https://api.ipify.org 2>&1; echo " <- exit IP (should be VLESS server, not RU)"' || true
           echo "===== iptables nat as installed ====="
           docker exec freeburger-vpngw-1 sh -c 'iptables -t nat -S' 2>&1 | tail -20 || true
+
