@@ -28,7 +28,7 @@ export default function CabinetLayout({
       <div className="cabinet-shell">
         <aside className="cabinet-sidebar">
           <div className="cabinet-brand-block">
-            <Link className="site-brand" href="/">
+            <Link className="site-brand" href="/dashboard">
               {dictionary.common.brand}
             </Link>
             <CabinetInterviewCountdown
