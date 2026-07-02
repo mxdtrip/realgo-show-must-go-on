@@ -34,6 +34,12 @@ export function ScrollVideoBackground() {
     // While the page settles after (re)load, we lock the frame straight onto
     // the live scroll position instead of easing toward it (see `tick`).
     let settleUntil = 0;
+    // True between issuing `video.currentTime = …` and the resulting `seeked`.
+    // A high-res clip can't decode a new frame every animation frame, so firing
+    // a fresh seek each tick just queues work the decoder drops — the video then
+    // visibly lags behind the scroll. We instead hold off until the in-flight
+    // seek finishes, always seeking to the *latest* target when it does.
+    let seeking = false;
 
     const computeTarget = () => {
       // Scroll distance over which the clip should play: from the top of the page
@@ -53,7 +59,10 @@ export function ScrollVideoBackground() {
     };
 
     const seek = (time: number) => {
-      if (!ready || !Number.isFinite(time)) return;
+      // Skip while a previous seek is still in flight; the next tick re-issues
+      // with the newest target once `seeked` clears the flag. This throttles
+      // seeks to the decoder's real rate instead of flooding it every frame.
+      if (!ready || seeking || !Number.isFinite(time)) return;
       // Compare against the video's ACTUAL position, not the last requested
       // value. A seek issued while the element is still (re)loading — e.g. right
       // after a reload that restored the scroll deep down the page, where the
@@ -63,9 +72,11 @@ export function ScrollVideoBackground() {
       // the target self-heals once it becomes seekable.
       if (Math.abs(time - video.currentTime) < 0.005) return;
       try {
+        seeking = true;
         video.currentTime = time;
       } catch {
         // ignore seeks while metadata is still settling
+        seeking = false;
       }
     };
 
@@ -101,6 +112,12 @@ export function ScrollVideoBackground() {
       settleUntil = performance.now() + 1200;
     };
 
+    // Clear the in-flight flag once the decoder has produced the target frame
+    // (or bailed), so the next tick can seek to the newest scroll position.
+    const onSeeked = () => {
+      seeking = false;
+    };
+
     // Some browsers (notably iOS Safari) won't paint a paused video until it has
     // played once; a muted play/pause primes the decoder so seeking shows frames.
     const prime = () => {
@@ -110,6 +127,8 @@ export function ScrollVideoBackground() {
     if (video.readyState >= 1) onLoaded();
     else video.addEventListener("loadedmetadata", onLoaded);
     video.addEventListener("loadeddata", prime, { once: true });
+    video.addEventListener("seeked", onSeeked);
+    video.addEventListener("error", onSeeked);
     video.load();
 
     if (reduceMotion) {
@@ -130,6 +149,8 @@ export function ScrollVideoBackground() {
       return () => {
         cancelAnimationFrame(settleRaf);
         video.removeEventListener("loadedmetadata", onLoaded);
+        video.removeEventListener("seeked", onSeeked);
+        video.removeEventListener("error", onSeeked);
       };
     }
 
@@ -143,6 +164,8 @@ export function ScrollVideoBackground() {
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onScroll);
       video.removeEventListener("loadedmetadata", onLoaded);
+      video.removeEventListener("seeked", onSeeked);
+      video.removeEventListener("error", onSeeked);
     };
   }, [isLanding]);
 
