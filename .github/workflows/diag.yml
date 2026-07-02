@@ -11,45 +11,16 @@ jobs:
   diag:
     runs-on: [self-hosted, linux, appbox]
     steps:
-      - name: Inspect stack
+      - name: TUN + NET_ADMIN availability (for VPN wrap)
         run: |
-          echo "===== containers ====="
-          docker ps -a --format '{{.Names}}\t{{.Status}}'
-          echo "===== cloudflared (edge) ====="
-          docker logs freeburger-cloudflared-1 --tail 60 2>&1 | tail -60 || echo "(no cloudflared container)"
-          echo "===== web (next start) ====="
-          docker logs freeburger-web-1 --tail 25 2>&1 | tail -25 || echo "(no web container)"
-          echo "===== caddy ====="
-          docker logs freeburger-caddy-1 --tail 25 2>&1 | tail -25 || echo "(no caddy container)"
-          echo "===== api ====="
-          docker logs freeburger-api-1 --tail 20 2>&1 | tail -20 || echo "(no api container)"
-      - name: Egress + provider filtering
-        run: |
-          echo "===== external IP of the server (CGNAT if 100.64-100.127.x) ====="
-          curl -sS --max-time 8 https://api.ipify.org 2>&1; echo
-          curl -sS --max-time 8 https://ifconfig.me 2>&1; echo
-          echo "===== does plain HTTPS to Cloudflare work (non-tunnel)? ====="
-          curl -sS -o /dev/null -w "https://cloudflare.com -> %{http_code} in %{time_total}s\n" --max-time 10 https://www.cloudflare.com/ 2>&1 || true
-          curl -sS -o /dev/null -w "https://1.1.1.1 -> %{http_code} in %{time_total}s\n" --max-time 10 https://1.1.1.1/ 2>&1 || true
-          echo "===== raw TCP to CF tunnel edge :7844 (control plane) ====="
-          docker run --rm alpine sh -c 'apk add --no-cache netcat-openbsd >/dev/null 2>&1; nc -vz -w6 198.41.192.67 7844 && echo OK || echo FAIL' 2>&1 || true
-          echo "===== a general control: TCP 443 to a non-CF host (github) ====="
-          docker run --rm alpine sh -c 'apk add --no-cache netcat-openbsd >/dev/null 2>&1; nc -vz -w6 140.82.121.3 443 && echo github443 OK || echo github443 FAIL' 2>&1 || true
-      - name: MTU probe
-        run: |
-          echo "===== MTU of interfaces along the path ====="
-          echo "-- host --"; ip -o link show | awk -F': ' '{print $2}' | while read i; do echo "$i mtu=$(cat /sys/class/net/$i/mtu 2>/dev/null)"; done
-          echo "-- inside a docker container on freeburger_default --"
-          docker run --rm --network freeburger_default alpine sh -c 'cat /sys/class/net/eth0/mtu' 2>&1 | sed 's/^/container eth0 mtu=/'
-          echo "===== path-MTU discovery to CF (1.1.1.1) from a container: find largest DF packet ====="
-          docker run --rm --network freeburger_default alpine sh -c '
-            for sz in 1472 1440 1400 1372 1300 1200; do
-              if ping -c1 -W2 -M do -s $sz 1.1.1.1 >/dev/null 2>&1; then echo "  DF payload $sz OK (=> path MTU >= $((sz+28)))"; break; else echo "  DF payload $sz FRAG-NEEDED/fail"; fi
-            done' 2>&1 || true
-          echo "===== same to a CF edge IP on the tunnel (198.41.192.67) ====="
-          docker run --rm --network freeburger_default alpine sh -c '
-            for sz in 1472 1400 1300 1200; do
-              if ping -c1 -W2 -M do -s $sz 198.41.192.67 >/dev/null 2>&1; then echo "  edge DF payload $sz OK"; break; else echo "  edge DF payload $sz fail"; fi
-            done' 2>&1 || true
-          echo "===== fresh cloudflared tail ====="
-          docker logs freeburger-cloudflared-1 --since 2m 2>&1 | tail -20 || true
+          echo "===== /dev/net/tun present on the appbox host? ====="
+          ls -l /dev/net/tun 2>&1 || echo "NO /dev/net/tun on host"
+          echo "===== can a docker container get a TUN device? ====="
+          docker run --rm --cap-add=NET_ADMIN --device /dev/net/tun:/dev/net/tun alpine sh -c '
+            ls -l /dev/net/tun 2>&1 || echo "no /dev/net/tun in container";
+            ip tuntap add mode tun dev tuntest 2>&1 && echo "TUN CREATE OK" && ip link del tuntest || echo "TUN CREATE FAILED"
+          ' 2>&1 || echo "(container could not start with NET_ADMIN/tun)"
+          echo "===== does the LXD container allow tun char device at all? ====="
+          cat /proc/sys/net/ipv4/ip_forward 2>&1 | sed 's/^/ip_forward=/'
+          echo "===== outbound TCP 443 to a VLESS endpoint host (maxonelove.com) works? ====="
+          docker run --rm alpine sh -c 'apk add --no-cache netcat-openbsd bind-tools >/dev/null 2>&1; ip=$(nslookup afawc124.maxonelove.com 2>/dev/null | awk "/^Address: /{print \$2; exit}"); echo "resolved=$ip"; nc -vz -w6 afawc124.maxonelove.com 443 && echo VLESS443 OK || echo VLESS443 FAIL' 2>&1 || true
