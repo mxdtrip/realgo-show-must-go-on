@@ -11,9 +11,6 @@ import {
 } from "../_profile/profileSettings";
 
 type InterviewCopy = {
-  dayFew: string;
-  dayMany: string;
-  dayOne: string;
   missing: string;
   past: string;
   prefix: string;
@@ -70,10 +67,7 @@ function interviewMeta(dateValue: string, timezone: string, copy: InterviewCopy)
   if (days === null) return `${copy.prefix} · ${copy.missing}`;
   if (days < 0) return `${copy.prefix} · ${copy.past}`;
   if (days === 0) return `${copy.prefix} · ${copy.today}`;
-
-  const plural = new Intl.PluralRules("ru-RU").select(days);
-  const unit = plural === "one" ? copy.dayOne : plural === "few" ? copy.dayFew : copy.dayMany;
-  return `${copy.prefix} · через ${days} ${unit}`;
+  return `${copy.prefix} · T−${days}d`;
 }
 
 export function CabinetInterviewCountdown({

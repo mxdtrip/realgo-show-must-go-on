@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 
 // Background clip @ 120fps. At the top of the page the video sits at START_TIME;
 // scrolling scrubs it forward (down) / backward (up). The scrub range is mapped
@@ -17,34 +17,9 @@ export function ScrollVideoBackground() {
   const pathname = usePathname();
   const isLanding = pathname === "/";
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const [shouldLoadVideo, setShouldLoadVideo] = useState(false);
 
   useEffect(() => {
-    if (!isLanding || shouldLoadVideo) return undefined;
-
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduceMotion) return undefined;
-
-    const loadVideo = () => setShouldLoadVideo(true);
-    const timerId = window.setTimeout(loadVideo, 1400);
-    const listenerOptions = { passive: true };
-
-    window.addEventListener("scroll", loadVideo, listenerOptions);
-    window.addEventListener("pointerdown", loadVideo, listenerOptions);
-    window.addEventListener("keydown", loadVideo);
-    window.addEventListener("touchstart", loadVideo, listenerOptions);
-
-    return () => {
-      window.clearTimeout(timerId);
-      window.removeEventListener("scroll", loadVideo);
-      window.removeEventListener("pointerdown", loadVideo);
-      window.removeEventListener("keydown", loadVideo);
-      window.removeEventListener("touchstart", loadVideo);
-    };
-  }, [isLanding, shouldLoadVideo]);
-
-  useEffect(() => {
-    if (!isLanding || !shouldLoadVideo) return undefined;
+    if (!isLanding) return undefined;
 
     const video = videoRef.current;
     if (!video) return undefined;
@@ -54,9 +29,11 @@ export function ScrollVideoBackground() {
     let duration = 0;
     let target = START_TIME;
     let current = START_TIME;
-    let lastSet = -1;
     let ready = false;
     let rafId = 0;
+    // While the page settles after (re)load, we lock the frame straight onto
+    // the live scroll position instead of easing toward it (see `tick`).
+    let settleUntil = 0;
 
     const computeTarget = () => {
       // Scroll distance over which the clip should play: from the top of the page
@@ -77,8 +54,14 @@ export function ScrollVideoBackground() {
 
     const seek = (time: number) => {
       if (!ready || !Number.isFinite(time)) return;
-      if (Math.abs(time - lastSet) < 0.0005) return;
-      lastSet = time;
+      // Compare against the video's ACTUAL position, not the last requested
+      // value. A seek issued while the element is still (re)loading — e.g. right
+      // after a reload that restored the scroll deep down the page, where the
+      // effect's `video.load()` resets currentTime back to 0 — is silently
+      // dropped. Guarding on the last requested value would then never retry and
+      // the clip freezes on frame 0; re-issuing until the element truly reaches
+      // the target self-heals once it becomes seekable.
+      if (Math.abs(time - video.currentTime) < 0.005) return;
       try {
         video.currentTime = time;
       } catch {
@@ -87,9 +70,23 @@ export function ScrollVideoBackground() {
     };
 
     const tick = () => {
-      current += (target - current) * SMOOTHING;
-      if (Math.abs(target - current) < 0.001) current = target;
-      seek(current);
+      if (ready) {
+        // Recompute the target from the live scroll position every frame. The
+        // browser restores the scroll offset a beat AFTER the video metadata
+        // loads, and that restoration doesn't reliably fire a scroll event —
+        // tracking scroll here (rather than only on scroll events) means a deep
+        // reload always lands on the matching frame instead of freezing on
+        // frame 0. Right after (re)load we snap straight to it; once the page
+        // has settled we ease toward it for smooth scrubbing.
+        computeTarget();
+        if (performance.now() < settleUntil) {
+          current = target;
+        } else {
+          current += (target - current) * SMOOTHING;
+          if (Math.abs(target - current) < 0.001) current = target;
+        }
+        seek(current);
+      }
       rafId = requestAnimationFrame(tick);
     };
 
@@ -99,6 +96,9 @@ export function ScrollVideoBackground() {
       computeTarget();
       current = target;
       seek(current);
+      // Keep snapping to the restored scroll position for a short beat, so a
+      // deep reload lands on the matching frame instead of freezing on frame 0.
+      settleUntil = performance.now() + 1200;
     };
 
     // Some browsers (notably iOS Safari) won't paint a paused video until it has
@@ -113,7 +113,22 @@ export function ScrollVideoBackground() {
     video.load();
 
     if (reduceMotion) {
+      // No scrubbing loop under reduced motion, but still lock onto the
+      // restored scroll position for a short beat after load (same race as in
+      // `tick`), so a deep reload lands on the matching frame, not frame 0.
+      const settleEnd = performance.now() + 2000;
+      let settleRaf = 0;
+      const settle = () => {
+        if (ready) {
+          computeTarget();
+          current = target;
+          seek(current);
+        }
+        if (performance.now() < settleEnd) settleRaf = requestAnimationFrame(settle);
+      };
+      settleRaf = requestAnimationFrame(settle);
       return () => {
+        cancelAnimationFrame(settleRaf);
         video.removeEventListener("loadedmetadata", onLoaded);
       };
     }
@@ -129,7 +144,7 @@ export function ScrollVideoBackground() {
       window.removeEventListener("resize", onScroll);
       video.removeEventListener("loadedmetadata", onLoaded);
     };
-  }, [isLanding, shouldLoadVideo]);
+  }, [isLanding]);
 
   if (!isLanding) {
     return null;
@@ -137,9 +152,7 @@ export function ScrollVideoBackground() {
 
   return (
     <div className="scroll-video-bg" aria-hidden="true">
-      {shouldLoadVideo ? (
-        <video ref={videoRef} src="/engram-hero.mp4" muted playsInline preload="none" tabIndex={-1} />
-      ) : null}
+      <video ref={videoRef} src="/realgo-hero.mp4" muted playsInline preload="auto" tabIndex={-1} />
       <div className="scroll-video-bg__overlay" />
     </div>
   );

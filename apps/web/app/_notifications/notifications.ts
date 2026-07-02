@@ -71,8 +71,8 @@ export async function showRealgoNotification(title: string, options?: Notificati
   if (!("Notification" in window) || Notification.permission !== "granted") return false;
 
   const notificationOptions: NotificationOptions = {
-    badge: "/icons/icon.svg",
-    icon: "/icons/icon.svg",
+    badge: "/icons/realgo-logo.png",
+    icon: "/icons/realgo-logo.png",
     ...options,
   };
 

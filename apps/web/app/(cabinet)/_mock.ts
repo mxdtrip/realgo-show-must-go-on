@@ -38,3 +38,33 @@ export const cards = cardRecords.map((card) => ({
   back: card.back,
 }));
 export const extensionEvents = cabinet.mock.extensionEvents;
+
+// Deterministic PRNG so the mock heatmap is identical on server and client
+// (Math.random here would break hydration).
+function mulberry32(seed: number) {
+  let state = seed;
+  return () => {
+    state |= 0;
+    state = (state + 0x6d2b79f5) | 0;
+    let t = Math.imul(state ^ (state >>> 15), 1 | state);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+const heatRand = mulberry32(20260702);
+
+/** 26 weeks × 7 days of review-activity levels (0–4), newest week last. */
+export const activityWeeks: readonly (readonly number[])[] = Array.from({ length: 26 }, () =>
+  Array.from({ length: 7 }, () => {
+    const r = heatRand();
+    if (r < 0.34) return 0;
+    if (r < 0.56) return 1;
+    if (r < 0.75) return 2;
+    if (r < 0.9) return 3;
+    return 4;
+  }),
+);
+
+export const activityActiveDays = activityWeeks.flat().filter((level) => level > 0).length;
+export const activityTotalReviews = activityWeeks.flat().reduce((sum, level) => sum + level * 2, 0);
