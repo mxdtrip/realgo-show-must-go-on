@@ -18,5 +18,6 @@
 		}
 	}
 
-	reverse_proxy api:8080
+	# Everything that isn't /api/* is the Next.js app.
+	reverse_proxy web:3000
 }
