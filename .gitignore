@@ -1,6 +1,7 @@
 # Environment and local secrets
 .env
 .env.*
+config.yaml
 !.env.example
 !**/.env.example
 *.local
@@ -74,3 +75,6 @@ temp/
 __pycache__/
 
 .serena/*
+
+# AI
+CLAUDE.md
