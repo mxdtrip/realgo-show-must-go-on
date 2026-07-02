@@ -1,3 +1,25 @@
+-- name: ListPatterns :many
+-- All patterns with per-user progress counts for problems in neetcode_150.
+SELECT
+    pt.id,
+    pt.code,
+    pt.name,
+    COALESCE(pt.description, '')::text AS description,
+    pt.parent_id,
+    COUNT(DISTINCT ri.problem_id)::integer AS problem_count,
+    COUNT(DISTINCT upp.problem_id) FILTER (
+        WHERE upp.status IN ('solving', 'solved', 'reviewing')
+    )::integer AS solved_count,
+    COUNT(DISTINCT rs.id) FILTER (
+        WHERE rs.next_review_at <= NOW()
+    )::integer AS due_count
+FROM patterns pt
+LEFT JOIN roadmap_items ri ON ri.pattern_id = pt.id AND ri.roadmap_code = 'neetcode_150'
+LEFT JOIN user_problem_progress upp ON upp.problem_id = ri.problem_id AND upp.user_id = $1::bigint
+LEFT JOIN review_schedules rs ON rs.pattern_id = pt.id AND rs.user_id = $1::bigint
+GROUP BY pt.id, pt.code, pt.name, pt.description, pt.parent_id
+ORDER BY pt.name ASC;
+
 -- name: ListWeakPatterns :many
 SELECT
     pt.code AS pattern_code,
