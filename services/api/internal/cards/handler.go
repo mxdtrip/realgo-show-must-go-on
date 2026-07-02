@@ -1,233 +1,95 @@
 package cards
 
 import (
-	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"math"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/mxdtrip/freeburger/services/api/internal/auth"
-	v1response "github.com/mxdtrip/freeburger/services/api/internal/controller/v1/response"
 	"github.com/mxdtrip/freeburger/services/api/internal/server/response"
-	"github.com/mxdtrip/freeburger/services/api/internal/service"
-	"github.com/mxdtrip/freeburger/services/api/internal/storage/postgres/db"
 )
-
-type repository interface {
-	CreateCard(ctx context.Context, arg db.CreateCardParams) (db.Card, error)
-	GetCardByID(ctx context.Context, arg db.GetCardByIDParams) (db.GetCardByIDRow, error)
-	UpdateCard(ctx context.Context, arg db.UpdateCardParams) (db.Card, error)
-	DeleteCard(ctx context.Context, arg db.DeleteCardParams) error
-	ListUserCards(ctx context.Context, arg db.ListUserCardsParams) ([]db.ListUserCardsRow, error)
-	ListDueCardSessions(ctx context.Context, arg db.ListDueCardSessionsParams) ([]db.ListDueCardSessionsRow, error)
-	GetCardScheduleForUser(ctx context.Context, arg db.GetCardScheduleForUserParams) (int64, error)
-}
 
 const (
-	defaultCardsLimit  = 20
-	maxCardsLimit      = 50
+	defaultListLimit    = 50
 	defaultSessionLimit = 20
+	maxLimit            = 100
 )
 
-// reviewRater is the narrow slice of service.ReviewService this handler needs.
-type reviewRater interface {
-	RateReview(ctx context.Context, reviewID, userID int64, rating string, reviewedAt time.Time) (v1response.RateReviewData, error)
-}
+var (
+	errInvalidCursor = errors.New("invalid cursor")
+	errInvalidLimit  = errors.New("limit must be a positive integer")
+)
 
 type Handler struct {
-	repo      repository
-	reviewSvc reviewRater
+	svc *Service
 }
 
-func NewHandler(pool *pgxpool.Pool, reviewSvc service.ReviewService) *Handler {
-	return &Handler{repo: db.New(pool), reviewSvc: reviewSvc}
+func NewHandler(svc *Service) *Handler {
+	return &Handler{svc: svc}
 }
 
 func RegisterRoutes(r chi.Router, h *Handler) {
-	r.Get("/", h.list)
-	r.Post("/", h.create)
-	r.Get("/session", h.session)
-	r.Get("/{cardId}", h.get)
-	r.Patch("/{cardId}", h.update)
-	r.Delete("/{cardId}", h.delete)
-	r.Post("/{cardId}/rate", h.rate)
+	r.Get("/", h.List)
+	r.Post("/", h.Create)
+	r.Get("/session", h.Session)
+	r.Get("/{cardId}", h.Get)
+	r.Patch("/{cardId}", h.Update)
+	r.Delete("/{cardId}", h.Delete)
+	r.Post("/{cardId}/rate", h.Rate)
 }
 
-// --- response types ---
-
-type scheduleInfo struct {
-	ScheduleID   int64   `json:"schedule_id"`
-	NextReviewAt *string `json:"next_review_at"`
-	LastRating   *string `json:"last_rating"`
-	ReviewCount  int     `json:"review_count"`
-	State        string  `json:"state"`
-}
-
-type cardItem struct {
-	ID           int64         `json:"id"`
-	Type         string        `json:"type"`
-	Question     string        `json:"question"`
-	Answer       string        `json:"answer"`
-	Explanation  *string       `json:"explanation"`
-	Source       *string       `json:"source"`
-	CreatedByAI  bool          `json:"created_by_ai"`
-	CreatedAt    string        `json:"created_at"`
-	ProblemTitle *string       `json:"problem_title"`
-	ProblemURL   *string       `json:"problem_url"`
-	PatternName  *string       `json:"pattern_name"`
-	Schedule     *scheduleInfo `json:"schedule"`
-}
-
-type sessionCard struct {
-	ScheduleID   int64   `json:"schedule_id"`
-	CardID       int64   `json:"card_id"`
-	Type         string  `json:"type"`
-	Question     string  `json:"question"`
-	Answer       string  `json:"answer"`
-	Explanation  *string `json:"explanation"`
-	ProblemTitle *string `json:"problem_title"`
-	ProblemURL   *string `json:"problem_url"`
-	PatternName  *string `json:"pattern_name"`
-	NextReviewAt string  `json:"next_review_at"`
-	LastRating   *string `json:"last_rating"`
-	ReviewCount  int     `json:"review_count"`
-	State        string  `json:"state"`
-}
-
-type rateRequest struct {
-	Rating     string `json:"rating"`
-	ReviewedAt string `json:"reviewed_at"`
-}
-
-// --- handlers ---
-
-// GET /me/cards
-func (h *Handler) list(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.UserIDFromContext(r.Context())
 	if !ok {
 		response.Fail(w, http.StatusUnauthorized, "UNAUTHORIZED", "user not authenticated")
 		return
 	}
 
-	limit := cardsLimit(r)
-	rows, err := h.repo.ListUserCards(r.Context(), db.ListUserCardsParams{Column1: userID, Column2: limit})
+	params, err := parseListParams(r)
+	if err != nil {
+		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", err.Error())
+		return
+	}
+
+	items, nextCursor, err := h.svc.List(r.Context(), userID, params)
 	if err != nil {
 		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", "could not load cards")
 		return
 	}
 
-	items := make([]cardItem, 0, len(rows))
-	for _, row := range rows {
-		item := cardItem{
-			ID:          row.ID,
-			Type:        row.Type,
-			Question:    row.Question,
-			Answer:      row.Answer,
-			CreatedByAI: row.CreatedByAi.Bool,
-		}
-		if row.CreatedAt.Valid {
-			item.CreatedAt = row.CreatedAt.Time.UTC().Format(time.RFC3339)
-		}
-		if row.Explanation.Valid {
-			item.Explanation = &row.Explanation.String
-		}
-		if row.Source.Valid {
-			item.Source = &row.Source.String
-		}
-		if row.ProblemTitle.Valid {
-			item.ProblemTitle = &row.ProblemTitle.String
-		}
-		if row.ProblemUrl.Valid {
-			item.ProblemURL = &row.ProblemUrl.String
-		}
-		if row.PatternName.Valid {
-			item.PatternName = &row.PatternName.String
-		}
-		if row.ScheduleID.Valid {
-			sched := &scheduleInfo{
-				ScheduleID:  row.ScheduleID.Int64,
-				ReviewCount: int(row.ReviewCount),
-				State:       fsrsState(int(row.State.Int16)),
-			}
-			if row.NextReviewAt.Valid {
-				t := row.NextReviewAt.Time.UTC().Format(time.RFC3339)
-				sched.NextReviewAt = &t
-			}
-			if row.LastRating.Valid {
-				sched.LastRating = &row.LastRating.String
-			}
-			item.Schedule = sched
-		}
-		items = append(items, item)
-	}
-
-	response.JSON(w, http.StatusOK, map[string][]cardItem{"cards": items})
+	response.JSONWithMeta(w, http.StatusOK, items, ListMeta{NextCursor: nextCursor})
 }
 
-// GET /me/cards/session
-func (h *Handler) session(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) Session(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.UserIDFromContext(r.Context())
 	if !ok {
 		response.Fail(w, http.StatusUnauthorized, "UNAUTHORIZED", "user not authenticated")
 		return
 	}
 
-	rows, err := h.repo.ListDueCardSessions(r.Context(), db.ListDueCardSessionsParams{
-		Column1: userID,
-		Column2: defaultSessionLimit,
-	})
+	params, err := parseSessionParams(r)
+	if err != nil {
+		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", err.Error())
+		return
+	}
+
+	session, err := h.svc.Session(r.Context(), userID, params)
 	if err != nil {
 		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", "could not load card session")
 		return
 	}
 
-	items := make([]sessionCard, 0, len(rows))
-	for _, row := range rows {
-		item := sessionCard{
-			ScheduleID:  row.ScheduleID,
-			CardID:      row.CardID,
-			Type:        row.Type,
-			Question:    row.Question,
-			Answer:      row.Answer,
-			ReviewCount: int(row.ReviewCount),
-			State:       fsrsState(int(row.State)),
-		}
-		if row.NextReviewAt.Valid {
-			item.NextReviewAt = row.NextReviewAt.Time.UTC().Format(time.RFC3339)
-		}
-		if row.Explanation.Valid {
-			item.Explanation = &row.Explanation.String
-		}
-		if row.ProblemTitle.Valid {
-			item.ProblemTitle = &row.ProblemTitle.String
-		}
-		if row.ProblemUrl.Valid {
-			item.ProblemURL = &row.ProblemUrl.String
-		}
-		if row.PatternName.Valid {
-			item.PatternName = &row.PatternName.String
-		}
-		if row.LastRating.Valid {
-			item.LastRating = &row.LastRating.String
-		}
-		items = append(items, item)
-	}
-
-	response.JSON(w, http.StatusOK, map[string]any{
-		"cards": items,
-		"total": len(items),
-	})
+	response.JSON(w, http.StatusOK, session)
 }
 
-// POST /me/cards/{cardId}/rate
-func (h *Handler) rate(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) Rate(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.UserIDFromContext(r.Context())
 	if !ok {
 		response.Fail(w, http.StatusUnauthorized, "UNAUTHORIZED", "user not authenticated")
@@ -235,56 +97,36 @@ func (h *Handler) rate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cardID, err := strconv.ParseInt(chi.URLParam(r, "cardId"), 10, 64)
-	if err != nil {
+	if err != nil || cardID <= 0 {
 		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "invalid cardId")
 		return
 	}
 
-	var req rateRequest
+	var req RateRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "invalid request body")
 		return
 	}
-	if !validRating(req.Rating) {
-		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "rating must be hard, normal, or easy")
-		return
-	}
-	reviewedAt, err := time.Parse(time.RFC3339, req.ReviewedAt)
+
+	result, err := h.svc.Rate(r.Context(), userID, cardID, req)
 	if err != nil {
-		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "reviewed_at must be RFC3339")
+		switch {
+		case errors.Is(err, ErrCardNotFound):
+			response.Fail(w, http.StatusNotFound, "NOT_FOUND", err.Error())
+		case errors.Is(err, ErrInvalidRating):
+			response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", err.Error())
+		case strings.HasPrefix(err.Error(), "invalid reviewedAt"):
+			response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", err.Error())
+		default:
+			response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", "could not rate card")
+		}
 		return
 	}
 
-	// Look up the review schedule for this card.
-	scheduleID, err := h.repo.GetCardScheduleForUser(r.Context(), db.GetCardScheduleForUserParams{
-		Column1: cardID,
-		Column2: userID,
-	})
-	if errors.Is(err, pgx.ErrNoRows) {
-		response.Fail(w, http.StatusNotFound, "NOT_FOUND", "card or schedule not found")
-		return
-	}
-	if err != nil {
-		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", "could not find card schedule")
-		return
-	}
-
-	// Advance the review schedule using existing FSRS logic.
-	data, err := h.reviewSvc.RateReview(r.Context(), scheduleID, userID, req.Rating, reviewedAt)
-	if errors.Is(err, service.ErrReviewNotFound) {
-		response.Fail(w, http.StatusNotFound, "NOT_FOUND", "review schedule not found")
-		return
-	}
-	if err != nil {
-		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", "could not rate card")
-		return
-	}
-
-	response.JSON(w, http.StatusOK, data)
+	response.JSON(w, http.StatusOK, result)
 }
 
-// POST /me/cards
-func (h *Handler) create(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.UserIDFromContext(r.Context())
 	if !ok {
 		response.Fail(w, http.StatusUnauthorized, "UNAUTHORIZED", "user not authenticated")
@@ -309,37 +151,24 @@ func (h *Handler) create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	params := db.CreateCardParams{
-		UserID:      userID,
-		CardType:    req.Type,
+	card, err := h.svc.Create(r.Context(), userID, CreateCardInput{
+		Type:        req.Type,
 		Question:    req.Question,
 		Answer:      req.Answer,
-		CreatedByAi: pgBool(false),
-	}
-	if req.ProblemID != nil {
-		params.ProblemID = pgInt8(*req.ProblemID)
-	}
-	if req.PatternID != nil {
-		params.PatternID = pgInt8(*req.PatternID)
-	}
-	if req.Explanation != nil {
-		params.Explanation = pgText(*req.Explanation)
-	}
-	if req.Source != nil {
-		params.Source = pgText(*req.Source)
-	}
-
-	card, err := h.repo.CreateCard(r.Context(), params)
+		Explanation: req.Explanation,
+		Source:      req.Source,
+		ProblemID:   req.ProblemID,
+		PatternID:   req.PatternID,
+	})
 	if err != nil {
 		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", "could not create card")
 		return
 	}
 
-	response.JSON(w, http.StatusCreated, cardFromRecord(card, pgtype.Text{}, pgtype.Text{}, pgtype.Text{}))
+	response.JSON(w, http.StatusCreated, card)
 }
 
-// GET /me/cards/{cardId}
-func (h *Handler) get(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.UserIDFromContext(r.Context())
 	if !ok {
 		response.Fail(w, http.StatusUnauthorized, "UNAUTHORIZED", "user not authenticated")
@@ -347,13 +176,13 @@ func (h *Handler) get(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cardID, err := strconv.ParseInt(chi.URLParam(r, "cardId"), 10, 64)
-	if err != nil {
+	if err != nil || cardID <= 0 {
 		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "invalid cardId")
 		return
 	}
 
-	row, err := h.repo.GetCardByID(r.Context(), db.GetCardByIDParams{CardID: cardID, UserID: userID})
-	if errors.Is(err, pgx.ErrNoRows) {
+	card, err := h.svc.GetByID(r.Context(), userID, cardID)
+	if errors.Is(err, ErrCardNotFound) {
 		response.Fail(w, http.StatusNotFound, "NOT_FOUND", "card not found")
 		return
 	}
@@ -362,37 +191,10 @@ func (h *Handler) get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	card := cardDetail{
-		ID:          row.ID,
-		Type:        row.Type,
-		Question:    row.Question,
-		Answer:      row.Answer,
-		CreatedByAI: row.CreatedByAi.Bool,
-	}
-	if row.CreatedAt.Valid {
-		card.CreatedAt = row.CreatedAt.Time.UTC().Format(time.RFC3339)
-	}
-	if row.Explanation.Valid {
-		card.Explanation = &row.Explanation.String
-	}
-	if row.Source.Valid {
-		card.Source = &row.Source.String
-	}
-	if row.ProblemTitle.Valid {
-		card.ProblemTitle = &row.ProblemTitle.String
-	}
-	if row.ProblemUrl.Valid {
-		card.ProblemURL = &row.ProblemUrl.String
-	}
-	if row.PatternName.Valid {
-		card.PatternName = &row.PatternName.String
-	}
-
 	response.JSON(w, http.StatusOK, card)
 }
 
-// PATCH /me/cards/{cardId}
-func (h *Handler) update(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.UserIDFromContext(r.Context())
 	if !ok {
 		response.Fail(w, http.StatusUnauthorized, "UNAUTHORIZED", "user not authenticated")
@@ -400,7 +202,7 @@ func (h *Handler) update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cardID, err := strconv.ParseInt(chi.URLParam(r, "cardId"), 10, 64)
-	if err != nil {
+	if err != nil || cardID <= 0 {
 		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "invalid cardId")
 		return
 	}
@@ -415,25 +217,14 @@ func (h *Handler) update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	params := db.UpdateCardParams{CardID: cardID, UserID: userID}
-	if req.Type != nil {
-		params.CardType = pgText(*req.Type)
-	}
-	if req.Question != nil {
-		params.Question = pgText(*req.Question)
-	}
-	if req.Answer != nil {
-		params.Answer = pgText(*req.Answer)
-	}
-	if req.Explanation != nil {
-		params.Explanation = pgText(*req.Explanation)
-	}
-	if req.Source != nil {
-		params.Source = pgText(*req.Source)
-	}
-
-	card, err := h.repo.UpdateCard(r.Context(), params)
-	if errors.Is(err, pgx.ErrNoRows) {
+	card, err := h.svc.Update(r.Context(), userID, cardID, UpdateCardInput{
+		Type:        req.Type,
+		Question:    req.Question,
+		Answer:      req.Answer,
+		Explanation: req.Explanation,
+		Source:      req.Source,
+	})
+	if errors.Is(err, ErrCardNotFound) {
 		response.Fail(w, http.StatusNotFound, "NOT_FOUND", "card not found")
 		return
 	}
@@ -442,11 +233,10 @@ func (h *Handler) update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response.JSON(w, http.StatusOK, cardFromRecord(card, pgtype.Text{}, pgtype.Text{}, pgtype.Text{}))
+	response.JSON(w, http.StatusOK, card)
 }
 
-// DELETE /me/cards/{cardId}
-func (h *Handler) delete(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.UserIDFromContext(r.Context())
 	if !ok {
 		response.Fail(w, http.StatusUnauthorized, "UNAUTHORIZED", "user not authenticated")
@@ -454,12 +244,12 @@ func (h *Handler) delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cardID, err := strconv.ParseInt(chi.URLParam(r, "cardId"), 10, 64)
-	if err != nil {
+	if err != nil || cardID <= 0 {
 		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "invalid cardId")
 		return
 	}
 
-	if err := h.repo.DeleteCard(r.Context(), db.DeleteCardParams{CardID: cardID, UserID: userID}); err != nil {
+	if err := h.svc.Delete(r.Context(), userID, cardID); err != nil {
 		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", "could not delete card")
 		return
 	}
@@ -467,70 +257,120 @@ func (h *Handler) delete(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// --- helpers ---
+func parseListParams(r *http.Request) (ListParams, error) {
+	limit, err := parseLimit(r.URL.Query().Get("limit"), defaultListLimit)
+	if err != nil {
+		return ListParams{}, err
+	}
 
-func cardsLimit(r *http.Request) int32 {
-	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
+	cardType := strings.TrimSpace(r.URL.Query().Get("type"))
+	if cardType != "" && !validCardType(cardType) {
+		return ListParams{}, errors.New("type must be one of pattern_recognition, algorithm_mechanics, edge_case")
+	}
+
+	cursor := initialCursor()
+	if raw := strings.TrimSpace(r.URL.Query().Get("cursor")); raw != "" {
+		cursor, err = decodeCursor(raw)
+		if err != nil {
+			return ListParams{}, err
+		}
+	}
+
+	return ListParams{
+		Limit:    int32(limit + 1),
+		Type:     cardType,
+		Cursor:   cursor,
+		PageSize: limit,
+	}, nil
+}
+
+func parseSessionParams(r *http.Request) (SessionParams, error) {
+	limit, err := parseLimit(r.URL.Query().Get("limit"), defaultSessionLimit)
+	if err != nil {
+		return SessionParams{}, err
+	}
+
+	scope := strings.TrimSpace(r.URL.Query().Get("scope"))
+	if scope == "" {
+		scope = SessionScopeDue
+	}
+	if !validScope(scope) {
+		return SessionParams{}, errors.New("scope must be due, hard_normal, or all")
+	}
+
+	return SessionParams{Scope: scope, Limit: int32(limit)}, nil
+}
+
+func parseLimit(raw string, defaultValue int) (int, error) {
+	if strings.TrimSpace(raw) == "" {
+		return defaultValue, nil
+	}
+	limit, err := strconv.Atoi(raw)
 	if err != nil || limit <= 0 {
-		return defaultCardsLimit
+		return 0, errInvalidLimit
 	}
-	if limit > maxCardsLimit {
-		return maxCardsLimit
+	if limit > maxLimit {
+		return maxLimit, nil
 	}
-	return int32(limit)
+	return limit, nil
 }
 
-func validRating(r string) bool {
-	return r == "hard" || r == "normal" || r == "easy"
-}
-
-func validCardType(t string) bool {
-	return t == "pattern_recognition" || t == "algorithm_mechanics" || t == "edge_case"
-}
-
-func cardFromRecord(c db.Card, problemTitle, problemURL, patternName pgtype.Text) cardDetail {
-	d := cardDetail{
-		ID:          c.ID,
-		Type:        c.Type,
-		Question:    c.Question,
-		Answer:      c.Answer,
-		CreatedByAI: c.CreatedByAi.Bool,
-	}
-	if c.CreatedAt.Valid {
-		d.CreatedAt = c.CreatedAt.Time.UTC().Format(time.RFC3339)
-	}
-	if c.Explanation.Valid {
-		d.Explanation = &c.Explanation.String
-	}
-	if c.Source.Valid {
-		d.Source = &c.Source.String
-	}
-	if problemTitle.Valid {
-		d.ProblemTitle = &problemTitle.String
-	}
-	if problemURL.Valid {
-		d.ProblemURL = &problemURL.String
-	}
-	if patternName.Valid {
-		d.PatternName = &patternName.String
-	}
-	return d
-}
-
-func pgText(s string) pgtype.Text { return pgtype.Text{String: s, Valid: true} }
-func pgInt8(v int64) pgtype.Int8  { return pgtype.Int8{Int64: v, Valid: true} }
-func pgBool(v bool) pgtype.Bool   { return pgtype.Bool{Bool: v, Valid: true} }
-
-// fsrsState maps FSRS numeric state to a readable string.
-func fsrsState(state int) string {
-	switch state {
-	case 1:
-		return "learning"
-	case 2:
-		return "review"
-	case 3:
-		return "relearning"
+func validCardType(value string) bool {
+	switch value {
+	case CardTypePatternRecognition, CardTypeAlgorithmMechanics, CardTypeEdgeCase:
+		return true
 	default:
-		return "new"
+		return false
 	}
+}
+
+func validScope(value string) bool {
+	switch value {
+	case SessionScopeDue, SessionScopeHardNormal, SessionScopeAll:
+		return true
+	default:
+		return false
+	}
+}
+
+type cursorPayload struct {
+	CreatedAt string `json:"createdAt"`
+	ID        int64  `json:"id"`
+}
+
+func initialCursor() Cursor {
+	return Cursor{
+		CreatedAt: time.Date(9999, 12, 31, 23, 59, 59, int(time.Second-time.Nanosecond), time.UTC),
+		ID:        math.MaxInt64,
+	}
+}
+
+func encodeCursor(cursor Cursor) string {
+	payload := cursorPayload{
+		CreatedAt: cursor.CreatedAt.UTC().Format(time.RFC3339Nano),
+		ID:        cursor.ID,
+	}
+	raw, _ := json.Marshal(payload)
+	return base64.RawURLEncoding.EncodeToString(raw)
+}
+
+func decodeCursor(raw string) (Cursor, error) {
+	data, err := base64.RawURLEncoding.DecodeString(raw)
+	if err != nil {
+		return Cursor{}, errInvalidCursor
+	}
+
+	var payload cursorPayload
+	if err := json.Unmarshal(data, &payload); err != nil {
+		return Cursor{}, errInvalidCursor
+	}
+	if payload.ID <= 0 || strings.TrimSpace(payload.CreatedAt) == "" {
+		return Cursor{}, errInvalidCursor
+	}
+
+	createdAt, err := time.Parse(time.RFC3339Nano, payload.CreatedAt)
+	if err != nil {
+		return Cursor{}, errInvalidCursor
+	}
+	return Cursor{CreatedAt: createdAt, ID: payload.ID}, nil
 }

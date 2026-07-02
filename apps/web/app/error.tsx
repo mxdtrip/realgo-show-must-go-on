@@ -11,7 +11,7 @@ export default function AppError({ error, reset }: AppErrorProps) {
   const retryRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    console.error("Engram root route error", error);
+    console.error("realgo root route error", error);
   }, [error]);
 
   useEffect(() => {
@@ -31,7 +31,7 @@ export default function AppError({ error, reset }: AppErrorProps) {
         <p className="error-screen-kicker">runtime boundary</p>
         <h1 id="root-error-title">Что-то сломалось в интерфейсе</h1>
         <p className="error-screen-copy">
-          Engram не смог дорендерить этот экран. Попробуйте повторить рендер без перезагрузки
+          realgo не смог дорендерить этот экран. Попробуйте повторить рендер без перезагрузки
           страницы.
         </p>
         {error.digest ? (

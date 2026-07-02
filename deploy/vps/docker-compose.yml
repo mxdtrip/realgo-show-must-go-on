@@ -1,0 +1,41 @@
+# Edge stack for the VPS: the public entry point for realgo.dev.
+#
+# The VPS has a white IPv4 and a clean network (no provider DPI on Cloudflare,
+# because Cloudflare isn't in the path anymore). It runs:
+#   - frps: accepts the reverse tunnel dialed OUT from home (frpc) and exposes the
+#     home caddy internally as frps:8080.
+#   - caddy: terminates TLS for realgo.dev (auto Let's Encrypt) and reverse-proxies
+#     everything into the tunnel. Home does the /api-vs-web routing.
+#
+# Deploy: copy this dir to the VPS, set FRP_TOKEN in .env, `docker compose up -d`.
+name: realgo-edge
+
+services:
+  frps:
+    image: snowdreamtech/frps:0.61.1
+    restart: unless-stopped
+    volumes:
+      - ./frps.toml:/etc/frp/frps.toml:ro
+    environment:
+      FRP_TOKEN: ${FRP_TOKEN:?FRP_TOKEN must be set}
+    # Only the control port is public, so home can dial in. The tunnelled app
+    # port (8080) stays on the internal docker network for caddy.
+    ports:
+      - "7000:7000"
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - frps
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:

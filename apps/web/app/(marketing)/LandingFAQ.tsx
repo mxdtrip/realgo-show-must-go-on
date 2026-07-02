@@ -48,13 +48,15 @@ export function LandingFAQ({ section }: { section: FAQSectionCopy }) {
                   </button>
                 </h3>
                 <div
+                  aria-hidden={!isOpen}
                   aria-labelledby={buttonId}
                   className="faq-answer"
-                  hidden={!isOpen}
                   id={panelId}
                   role="region"
                 >
-                  <p>{item.answer}</p>
+                  <div className="faq-answer__inner">
+                    <p>{item.answer}</p>
+                  </div>
                 </div>
               </article>
             );

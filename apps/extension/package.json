@@ -2,11 +2,12 @@
   "name": "@freeburger/extension",
   "version": "0.1.0",
   "private": true,
-  "description": "Engram browser extension — fixes a coding-problem result after submit and feeds it into the spaced-repetition queue.",
+  "description": "realgo browser extension — fixes a coding-problem result after submit and feeds it into the spaced-repetition queue.",
   "scripts": {
     "dev": "plasmo dev",
     "build": "plasmo build",
     "package": "plasmo package",
+    "package:crx:mac": "npm run build && \"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome\" --pack-extension=build/chrome-mv3-prod --pack-extension-key=${REALGO_EXTENSION_KEY:-$HOME/.realgo/extension/realgo-extension.pem}",
     "preview": "vite --config preview/vite.config.ts",
     "preview:build": "vite --config preview/vite.config.ts build",
     "preview:serve": "vite --config preview/vite.config.ts preview --host 0.0.0.0 --port 5174",
@@ -28,7 +29,8 @@
     "vite": "6.0.7"
   },
   "manifest": {
-    "name": "Engram",
+    "name": "realgo",
+    "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArTOGmcuIoJ7wKOG0+lIViCUfyL7e+OBpUNFHqbIeh3lZ/Db6X0GQtbxshjzJHzeLI3EVnxu5ezF4dGnb14HbX+27l/1WGLY1SlEovQOd6jYzDJNXeboICE0DmEgiHlQF3Go7CYazN7bGNB2TA2zBJ/1d/a+NCmRYMDfcV69UhJyGXCsw6vGBLdsCqbHQpWkTpri8KktHCBNSnpBEG1x26lJcdxRpaWHLg+HV/V14z0kAI2pmHWIdpI8UhnKBW5oxn05hk1IMznmZsYdxNeSaKuf3ih8sLXZalajDXkMTq4FSDX7QyqAKSpzQydfbKJq/kO8AtEv6TSPyFuaOHFCdwwIDAQAB",
     "permissions": [
       "storage",
       "activeTab",
@@ -43,6 +45,7 @@
       "https://neetcode.io/*",
       "https://*.neetcode.io/*",
       "https://leetcode.com/*",
+      "https://realgo.dev/*",
       "http://localhost:8080/*"
     ]
   }

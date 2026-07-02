@@ -10,7 +10,7 @@ import { PopupApp } from "./popup/PopupApp";
 
 /**
  * Toolbar popup entry. Shows the most recently detected submission (stored by
- * the background worker), so clicking the Engram icon after a submit always
+ * the background worker), so clicking the realgo icon after a submit always
  * works even when the popup could not be opened programmatically.
  */
 function IndexPopup() {
@@ -28,7 +28,7 @@ function IndexPopup() {
     // Route the save through the background worker (same path as the in-page
     // overlay) so transport/business logic lives in one place (#35, #38).
     const res: SaveResponse | undefined = await chrome.runtime.sendMessage({
-      type: "ENGRAM_SAVE_SUBMISSION",
+      type: "REALGO_SAVE_SUBMISSION",
       payload,
     });
     if (!res?.ok) {

@@ -1,6 +1,6 @@
 # Web
 
-Веб-приложение Engram на Next.js, React и TypeScript.
+Веб-приложение realgo на Next.js, React и TypeScript.
 
 Текущая реализация состоит из маркетингового лендинга и мокового каркаса личного кабинета.
 Оформление пока построено на общем `app/globals.css` без подключения Tailwind/shadcn/ui, чтобы

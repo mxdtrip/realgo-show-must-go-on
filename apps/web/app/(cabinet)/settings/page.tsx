@@ -10,9 +10,11 @@ export default function SettingsPage() {
   return (
     <main className="cabinet-page">
       <section className="cabinet-page-head">
-        <span className="cabinet-eyebrow">{page.eyebrow}</span>
-        <h1>{page.title}</h1>
-        <p>{page.description}</p>
+        <div>
+          <span className="cabinet-eyebrow">{page.eyebrow}</span>
+          <h1>{page.title}</h1>
+          <p>{page.description}</p>
+        </div>
       </section>
 
       <div className="cabinet-grid">

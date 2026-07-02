@@ -41,15 +41,13 @@ export default function OpenGraphImage() {
             letterSpacing: 1,
           }}
         >
-          <div
-            style={{
-              width: 20,
-              height: 20,
-              borderRadius: 6,
-              background: "#2f81f7",
-              boxShadow: "0 0 34px rgba(56, 139, 253, 0.55)",
-            }}
-          />
+          <svg width="54" height="54" viewBox="0 0 1254 1254" fill="none">
+            <path d="M525 230 282 400l243 169" stroke="#f6f8fa" strokeWidth="72" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M729 233 972 400 729 568" stroke="#f6f8fa" strokeWidth="72" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M660 329 588 472" stroke="#f6f8fa" strokeWidth="60" strokeLinecap="round" />
+            <path d="M274 598 628 824 982 596" stroke="#f6f8fa" strokeWidth="72" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M268 769 628 1011 988 767" stroke="#f6f8fa" strokeWidth="72" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
           {metadata.applicationName}
         </div>
 

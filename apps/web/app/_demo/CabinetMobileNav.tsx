@@ -7,9 +7,6 @@ import { CabinetInterviewCountdown } from "../(cabinet)/CabinetInterviewCountdow
 import { CabinetNav, type CabinetNavGroup } from "../(cabinet)/CabinetNav";
 
 type InterviewCopy = {
-  dayFew: string;
-  dayMany: string;
-  dayOne: string;
   missing: string;
   past: string;
   prefix: string;

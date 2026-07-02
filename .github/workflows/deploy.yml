@@ -15,6 +15,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build & start
+        env:
+          AUTH_JWT_SECRET: ${{ secrets.AUTH_JWT_SECRET }}
+          FRP_VPS_HOST: ${{ secrets.FRP_VPS_HOST }}
+          FRP_TOKEN: ${{ secrets.FRP_TOKEN }}
         run: |
           docker compose pull --ignore-buildable || true
           docker compose up -d --build --remove-orphans

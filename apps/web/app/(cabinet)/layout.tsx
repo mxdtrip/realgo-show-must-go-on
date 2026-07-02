@@ -6,7 +6,10 @@ import { getDictionary } from "../_content/i18n";
 import { CabinetGuard } from "./CabinetGuard";
 import { CabinetInterviewCountdown } from "./CabinetInterviewCountdown";
 import { CabinetNav } from "./CabinetNav";
+import { CabinetPath } from "./CabinetPath";
+import { CabinetUserMenu } from "./CabinetUserMenu";
 import { LogoutButton } from "./LogoutButton";
+import { reviewQueue } from "./_mock";
 
 export default function CabinetLayout({
   children,
@@ -36,10 +39,11 @@ export default function CabinetLayout({
           </div>
 
           <CabinetNav groups={copy.navGroups} ariaLabel={copy.navAria} />
+
+          <CabinetUserMenu copy={copy.account} />
         </aside>
 
         <div className="cabinet-main">
-          <DemoBanner />
           <header className="cabinet-topbar">
             <CabinetMobileNav
               ariaLabel={copy.navAria}
@@ -49,12 +53,16 @@ export default function CabinetLayout({
               groups={copy.navGroups}
               interviewCopy={copy.profile.interview}
             />
-            <span className="cabinet-topbar__eyebrow">{copy.eyebrow}</span>
+            <CabinetPath prefix={copy.pathPrefix} />
             <div className="cabinet-topbar__actions">
-              <Link className="cabinet-topbar__link" href="/">
+              <DemoBanner label={copy.demoBadge} title={copy.demoTitle} />
+              <Link className="cabinet-due-chip" href="/reviews">
+                {reviewQueue.length} {copy.dueChip}
+              </Link>
+              <Link className="cabinet-topbar__link cabinet-topbar__back" href="/">
                 {copy.backToMarketing}
               </Link>
-              <LogoutButton label="Выйти" />
+              <LogoutButton label={copy.logout} />
             </div>
           </header>
           <div className="cabinet-content" id="cabinet-content" tabIndex={-1}>

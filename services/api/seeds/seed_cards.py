@@ -223,7 +223,7 @@ def upsert(cur, manifest_code, rows):
 
 
 def parse_args(argv):
-    parser = argparse.ArgumentParser(description="Seed Engram card content into Postgres.")
+    parser = argparse.ArgumentParser(description="Seed realgo card content into Postgres.")
     parser.add_argument("manifest", help="cards manifest YAML")
     parser.add_argument(
         "--roadmap",

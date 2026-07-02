@@ -8,6 +8,7 @@ import {
   subscribeToInstallPrompt,
   type BeforeInstallPromptEvent,
 } from "../../../_pwa/installPrompt";
+import { useToast } from "../../../_toast";
 
 type InstallAppPanelProps = {
   copy: {
@@ -21,6 +22,7 @@ type InstallAppPanelProps = {
 };
 
 export function InstallAppPanel({ copy }: Readonly<InstallAppPanelProps>) {
+  const toast = useToast();
   const [promptEvent, setPromptEvent] = useState<BeforeInstallPromptEvent | null>(null);
   const [isStandalone, setIsStandalone] = useState(false);
   const [isReady, setIsReady] = useState(false);
@@ -51,7 +53,10 @@ export function InstallAppPanel({ copy }: Readonly<InstallAppPanelProps>) {
     try {
       await promptEvent.prompt();
       const choice = await promptEvent.userChoice;
-      if (choice.outcome === "accepted") setIsStandalone(true);
+      if (choice.outcome === "accepted") {
+        setIsStandalone(true);
+        toast.success(copy.installed);
+      }
     } finally {
       clearInstallPrompt();
     }

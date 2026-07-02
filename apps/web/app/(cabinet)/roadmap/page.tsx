@@ -18,22 +18,30 @@ export default function RoadmapPage() {
   return (
     <main className="cabinet-page">
       <section className="cabinet-page-head">
-        <span className="cabinet-eyebrow">{page.eyebrow}</span>
-        <h1>{page.title}</h1>
-        <p>{page.description}</p>
+        <div>
+          <span className="cabinet-eyebrow">{page.eyebrow}</span>
+          <h1>{page.title}</h1>
+          <p>{page.description}</p>
+        </div>
+        <div className="cabinet-page-head__actions">
+          <span className="cabinet-next-hint">
+            {page.interviewHint} · <em>{page.dayHint}</em>
+          </span>
+          <span className="cabinet-next-hint">
+            <em>{overall}%</em> {page.overallLabel}
+          </span>
+        </div>
       </section>
 
-      <div className="cabinet-summary">
-        <div className="cabinet-summary__total">
-          <strong>{overall}%</strong>
-          <span>{page.overallLabel}</span>
-        </div>
-        <div className="cabinet-summary__bar">
-          <ProgressBar value={overall} label={page.overallLabel} />
-        </div>
-      </div>
-
-      <CabinetPanel eyebrow={page.panelEyebrow} title={page.panelTitle}>
+      <CabinetPanel
+        eyebrow={page.panelEyebrow}
+        title={page.panelTitle}
+        meta={
+          <span className="cabinet-panel__meta">
+            {overall}% {page.overallLabel}
+          </span>
+        }
+      >
         <ol className="roadmap-track">
           {roadmapWeeks.map((week, index) => {
             const state = stateOf(week.progress);
@@ -46,6 +54,9 @@ export default function RoadmapPage() {
                   <div className="roadmap-step__head">
                     <span className="roadmap-step__week">{week.week}</span>
                     <span className="roadmap-step__state">{state.label}</span>
+                    {state.name === "active" ? (
+                      <span className="roadmap-step__now">{page.nowLabel}</span>
+                    ) : null}
                   </div>
                   <h2>{week.title}</h2>
                   <p>{week.focus}</p>

@@ -1,0 +1,23 @@
+# frp client (home side). Dials out to the VPS running frps and exposes the local
+# caddy:80 back through the tunnel. Values come from the environment (see the frpc
+# service in docker-compose.yml). No inbound ports are opened at home.
+serverAddr = "{{ .Envs.FRP_VPS_HOST }}"
+serverPort = 7000
+loginFailExit = false
+
+auth.method = "token"
+auth.token = "{{ .Envs.FRP_TOKEN }}"
+
+transport.tls.enable = true
+# Reconnect keepalive so the tunnel survives NAT/idle drops.
+transport.heartbeatInterval = 20
+transport.heartbeatTimeout = 60
+
+# Expose the home caddy (which splits /api -> api and everything else -> web) as a
+# TCP proxy the VPS binds on 127.0.0.1:8080 and reverse-proxies realgo.dev into.
+[[proxies]]
+name = "realgo-web"
+type = "tcp"
+localIP = "caddy"
+localPort = 80
+remotePort = 8080

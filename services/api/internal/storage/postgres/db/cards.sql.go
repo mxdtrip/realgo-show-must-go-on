@@ -11,6 +11,26 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const countCardSessionAttempts = `-- name: CountCardSessionAttempts :one
+SELECT COUNT(*)::integer
+FROM review_attempts
+WHERE user_id = $1
+  AND card_id IS NOT NULL
+  AND created_at >= $2
+`
+
+type CountCardSessionAttemptsParams struct {
+	UserID    int64
+	CreatedAt pgtype.Timestamptz
+}
+
+func (q *Queries) CountCardSessionAttempts(ctx context.Context, arg CountCardSessionAttemptsParams) (int32, error) {
+	row := q.db.QueryRow(ctx, countCardSessionAttempts, arg.UserID, arg.CreatedAt)
+	var column_1 int32
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
 const createCard = `-- name: CreateCard :one
 INSERT INTO cards (user_id, problem_id, pattern_id, type, question, answer, explanation, source, created_by_ai)
 VALUES (
@@ -68,6 +88,28 @@ func (q *Queries) CreateCard(ctx context.Context, arg CreateCardParams) (Card, e
 	return i, err
 }
 
+const createCardReviewSchedule = `-- name: CreateCardReviewSchedule :one
+INSERT INTO review_schedules (
+    user_id, card_id, next_review_at, interval_days,
+    ease, stability, difficulty, review_count, algorithm
+)
+VALUES ($1, $2, $3, 0, 2.5, 0.1, 5.0, 0, 'fsrs')
+RETURNING id
+`
+
+type CreateCardReviewScheduleParams struct {
+	UserID       int64
+	CardID       pgtype.Int8
+	NextReviewAt pgtype.Timestamptz
+}
+
+func (q *Queries) CreateCardReviewSchedule(ctx context.Context, arg CreateCardReviewScheduleParams) (int64, error) {
+	row := q.db.QueryRow(ctx, createCardReviewSchedule, arg.UserID, arg.CardID, arg.NextReviewAt)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
 const deleteCard = `-- name: DeleteCard :exec
 DELETE FROM cards
 WHERE id = $1::bigint AND user_id = $2::bigint
@@ -81,6 +123,33 @@ type DeleteCardParams struct {
 func (q *Queries) DeleteCard(ctx context.Context, arg DeleteCardParams) error {
 	_, err := q.db.Exec(ctx, deleteCard, arg.CardID, arg.UserID)
 	return err
+}
+
+const getAccessibleCard = `-- name: GetAccessibleCard :one
+SELECT c.id
+FROM cards c
+WHERE c.id = $1::bigint
+  AND (
+    c.user_id = $2::bigint
+    OR c.user_id IS NULL
+    OR EXISTS (
+        SELECT 1
+        FROM review_schedules rs
+        WHERE rs.user_id = $2::bigint AND rs.card_id = c.id
+    )
+  )
+`
+
+type GetAccessibleCardParams struct {
+	CardID int64
+	UserID int64
+}
+
+func (q *Queries) GetAccessibleCard(ctx context.Context, arg GetAccessibleCardParams) (int64, error) {
+	row := q.db.QueryRow(ctx, getAccessibleCard, arg.CardID, arg.UserID)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
 }
 
 const getCardByID = `-- name: GetCardByID :one
@@ -137,97 +206,125 @@ func (q *Queries) GetCardByID(ctx context.Context, arg GetCardByIDParams) (GetCa
 	return i, err
 }
 
-const getCardScheduleForUser = `-- name: GetCardScheduleForUser :one
-SELECT rs.id
-FROM review_schedules rs
-WHERE rs.card_id  = $1::bigint
-  AND rs.user_id  = $2::bigint
+const getCardReviewSchedule = `-- name: GetCardReviewSchedule :one
+SELECT id
+FROM review_schedules
+WHERE user_id = $1 AND card_id = $2
+ORDER BY id ASC
+LIMIT 1
 `
 
-type GetCardScheduleForUserParams struct {
-	Column1 int64
-	Column2 int64
+type GetCardReviewScheduleParams struct {
+	UserID int64
+	CardID pgtype.Int8
 }
 
-// Resolve review_schedule.id for a (card_id, user_id) pair.
-func (q *Queries) GetCardScheduleForUser(ctx context.Context, arg GetCardScheduleForUserParams) (int64, error) {
-	row := q.db.QueryRow(ctx, getCardScheduleForUser, arg.Column1, arg.Column2)
+func (q *Queries) GetCardReviewSchedule(ctx context.Context, arg GetCardReviewScheduleParams) (int64, error) {
+	row := q.db.QueryRow(ctx, getCardReviewSchedule, arg.UserID, arg.CardID)
 	var id int64
 	err := row.Scan(&id)
 	return id, err
 }
 
-const listDueCardSessions = `-- name: ListDueCardSessions :many
+const listCardSession = `-- name: ListCardSession :many
 SELECT
-    rs.id            AS schedule_id,
-    c.id             AS card_id,
+    c.id,
     c.type,
     c.question,
     c.answer,
-    c.explanation,
-    p.title          AS problem_title,
-    p.url            AS problem_url,
-    pat.name         AS pattern_name,
+    c.created_at,
+    CASE
+        WHEN c.problem_id IS NOT NULL THEN 'problem'
+        WHEN c.pattern_id IS NOT NULL THEN 'pattern'
+        ELSE 'custom'
+    END::text AS source_entity_type,
+    COALESCE(c.problem_id, c.pattern_id) AS source_entity_id,
+    COALESCE(
+        NULLIF(concat_ws(' · ', NULLIF(p.title, ''), NULLIF(COALESCE(cpt.name, rpt.name), '')), ''),
+        NULLIF(cpt.name, ''),
+        NULLIF(c.source, ''),
+        'custom card'
+    )::text AS source_label,
+    COALESCE(rs.id, 0)::bigint AS schedule_id,
     rs.next_review_at,
     rs.last_rating,
-    COALESCE(rs.review_count, 0)::int AS review_count,
-    rs.state
-FROM review_schedules rs
-JOIN cards c           ON c.id   = rs.card_id
-LEFT JOIN problems p   ON p.id   = c.problem_id
-LEFT JOIN patterns pat ON pat.id = c.pattern_id
-WHERE rs.user_id     = $1::bigint
-  AND rs.card_id     IS NOT NULL
-  AND rs.next_review_at <= NOW()
-ORDER BY rs.next_review_at ASC
-LIMIT $2::int
+    COALESCE(rs.review_count, 0)::integer AS review_count,
+    COALESCE(rs.state, 0)::integer AS review_state
+FROM cards c
+LEFT JOIN LATERAL (
+    SELECT id, next_review_at, last_rating, review_count, state
+    FROM review_schedules
+    WHERE user_id = $1::bigint AND card_id = c.id
+    ORDER BY next_review_at ASC, id ASC
+    LIMIT 1
+) rs ON true
+LEFT JOIN problems p ON p.id = c.problem_id
+LEFT JOIN patterns cpt ON cpt.id = c.pattern_id
+LEFT JOIN roadmap_items ri ON ri.problem_id = c.problem_id AND ri.roadmap_code = 'neetcode_150'
+LEFT JOIN patterns rpt ON rpt.id = ri.pattern_id
+WHERE (c.user_id = $1::bigint OR c.user_id IS NULL OR rs.id IS NOT NULL)
+  AND (
+    ($2::text = 'due' AND rs.next_review_at <= NOW())
+    OR ($2::text = 'hard_normal' AND rs.last_rating IN ('hard', 'normal'))
+    OR ($2::text = 'all')
+  )
+ORDER BY
+    CASE
+        WHEN rs.next_review_at <= NOW() THEN 0
+        WHEN rs.id IS NULL THEN 1
+        ELSE 2
+    END,
+    rs.next_review_at ASC NULLS LAST,
+    c.created_at DESC,
+    c.id DESC
+LIMIT $3::integer
 `
 
-type ListDueCardSessionsParams struct {
-	Column1 int64
-	Column2 int32
+type ListCardSessionParams struct {
+	UserID    int64
+	Scope     string
+	CardLimit int32
 }
 
-type ListDueCardSessionsRow struct {
-	ScheduleID   int64
-	CardID       int64
-	Type         string
-	Question     string
-	Answer       string
-	Explanation  pgtype.Text
-	ProblemTitle pgtype.Text
-	ProblemUrl   pgtype.Text
-	PatternName  pgtype.Text
-	NextReviewAt pgtype.Timestamptz
-	LastRating   pgtype.Text
-	ReviewCount  int32
-	State        int16
+type ListCardSessionRow struct {
+	ID               int64
+	Type             string
+	Question         string
+	Answer           string
+	CreatedAt        pgtype.Timestamptz
+	SourceEntityType string
+	SourceEntityID   pgtype.Int8
+	SourceLabel      string
+	ScheduleID       int64
+	NextReviewAt     pgtype.Timestamptz
+	LastRating       pgtype.Text
+	ReviewCount      int32
+	ReviewState      int32
 }
 
-// Cards due for review (next_review_at <= NOW()), with full card content.
-func (q *Queries) ListDueCardSessions(ctx context.Context, arg ListDueCardSessionsParams) ([]ListDueCardSessionsRow, error) {
-	rows, err := q.db.Query(ctx, listDueCardSessions, arg.Column1, arg.Column2)
+func (q *Queries) ListCardSession(ctx context.Context, arg ListCardSessionParams) ([]ListCardSessionRow, error) {
+	rows, err := q.db.Query(ctx, listCardSession, arg.UserID, arg.Scope, arg.CardLimit)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []ListDueCardSessionsRow
+	var items []ListCardSessionRow
 	for rows.Next() {
-		var i ListDueCardSessionsRow
+		var i ListCardSessionRow
 		if err := rows.Scan(
-			&i.ScheduleID,
-			&i.CardID,
+			&i.ID,
 			&i.Type,
 			&i.Question,
 			&i.Answer,
-			&i.Explanation,
-			&i.ProblemTitle,
-			&i.ProblemUrl,
-			&i.PatternName,
+			&i.CreatedAt,
+			&i.SourceEntityType,
+			&i.SourceEntityID,
+			&i.SourceLabel,
+			&i.ScheduleID,
 			&i.NextReviewAt,
 			&i.LastRating,
 			&i.ReviewCount,
-			&i.State,
+			&i.ReviewState,
 		); err != nil {
 			return nil, err
 		}
@@ -245,54 +342,75 @@ SELECT
     c.type,
     c.question,
     c.answer,
-    c.explanation,
-    c.source,
-    c.created_by_ai,
     c.created_at,
-    p.title          AS problem_title,
-    p.url            AS problem_url,
-    pat.name         AS pattern_name,
-    rs.id            AS schedule_id,
+    CASE
+        WHEN c.problem_id IS NOT NULL THEN 'problem'
+        WHEN c.pattern_id IS NOT NULL THEN 'pattern'
+        ELSE 'custom'
+    END::text AS source_entity_type,
+    COALESCE(c.problem_id, c.pattern_id) AS source_entity_id,
+    COALESCE(
+        NULLIF(concat_ws(' · ', NULLIF(p.title, ''), NULLIF(COALESCE(cpt.name, rpt.name), '')), ''),
+        NULLIF(cpt.name, ''),
+        NULLIF(c.source, ''),
+        'custom card'
+    )::text AS source_label,
+    COALESCE(rs.id, 0)::bigint AS schedule_id,
     rs.next_review_at,
     rs.last_rating,
-    COALESCE(rs.review_count, 0)::int AS review_count,
-    rs.state
+    COALESCE(rs.review_count, 0)::integer AS review_count,
+    COALESCE(rs.state, 0)::integer AS review_state
 FROM cards c
-LEFT JOIN problems p   ON p.id   = c.problem_id
-LEFT JOIN patterns pat ON pat.id = c.pattern_id
-LEFT JOIN review_schedules rs ON rs.card_id = c.id AND rs.user_id = c.user_id
-WHERE c.user_id = $1::bigint
-ORDER BY c.created_at DESC
-LIMIT $2::int
+LEFT JOIN LATERAL (
+    SELECT id, next_review_at, last_rating, review_count, state
+    FROM review_schedules
+    WHERE user_id = $1::bigint AND card_id = c.id
+    ORDER BY next_review_at ASC, id ASC
+    LIMIT 1
+) rs ON true
+LEFT JOIN problems p ON p.id = c.problem_id
+LEFT JOIN patterns cpt ON cpt.id = c.pattern_id
+LEFT JOIN roadmap_items ri ON ri.problem_id = c.problem_id AND ri.roadmap_code = 'neetcode_150'
+LEFT JOIN patterns rpt ON rpt.id = ri.pattern_id
+WHERE (c.user_id = $1::bigint OR c.user_id IS NULL OR rs.id IS NOT NULL)
+  AND ($2::text = '' OR c.type = $2::text)
+  AND (c.created_at, c.id) < ($3::timestamptz, $4::bigint)
+ORDER BY c.created_at DESC, c.id DESC
+LIMIT $5::integer
 `
 
 type ListUserCardsParams struct {
-	Column1 int64
-	Column2 int32
+	UserID          int64
+	CardType        string
+	CursorCreatedAt pgtype.Timestamptz
+	CursorID        int64
+	LimitRows       int32
 }
 
 type ListUserCardsRow struct {
-	ID           int64
-	Type         string
-	Question     string
-	Answer       string
-	Explanation  pgtype.Text
-	Source       pgtype.Text
-	CreatedByAi  pgtype.Bool
-	CreatedAt    pgtype.Timestamptz
-	ProblemTitle pgtype.Text
-	ProblemUrl   pgtype.Text
-	PatternName  pgtype.Text
-	ScheduleID   pgtype.Int8
-	NextReviewAt pgtype.Timestamptz
-	LastRating   pgtype.Text
-	ReviewCount  int32
-	State        pgtype.Int2
+	ID               int64
+	Type             string
+	Question         string
+	Answer           string
+	CreatedAt        pgtype.Timestamptz
+	SourceEntityType string
+	SourceEntityID   pgtype.Int8
+	SourceLabel      string
+	ScheduleID       int64
+	NextReviewAt     pgtype.Timestamptz
+	LastRating       pgtype.Text
+	ReviewCount      int32
+	ReviewState      int32
 }
 
-// All cards owned by the user, newest first, with schedule status.
 func (q *Queries) ListUserCards(ctx context.Context, arg ListUserCardsParams) ([]ListUserCardsRow, error) {
-	rows, err := q.db.Query(ctx, listUserCards, arg.Column1, arg.Column2)
+	rows, err := q.db.Query(ctx, listUserCards,
+		arg.UserID,
+		arg.CardType,
+		arg.CursorCreatedAt,
+		arg.CursorID,
+		arg.LimitRows,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -305,18 +423,15 @@ func (q *Queries) ListUserCards(ctx context.Context, arg ListUserCardsParams) ([
 			&i.Type,
 			&i.Question,
 			&i.Answer,
-			&i.Explanation,
-			&i.Source,
-			&i.CreatedByAi,
 			&i.CreatedAt,
-			&i.ProblemTitle,
-			&i.ProblemUrl,
-			&i.PatternName,
+			&i.SourceEntityType,
+			&i.SourceEntityID,
+			&i.SourceLabel,
 			&i.ScheduleID,
 			&i.NextReviewAt,
 			&i.LastRating,
 			&i.ReviewCount,
-			&i.State,
+			&i.ReviewState,
 		); err != nil {
 			return nil, err
 		}

@@ -10,6 +10,7 @@ name: freeburger
 services:
   postgres:
     image: postgres:16-alpine
+    restart: unless-stopped
     environment:
       POSTGRES_USER: ${DB_USER:-postgres}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
@@ -26,6 +27,7 @@ services:
 
   redis:
     image: redis:7-alpine
+    restart: unless-stopped
     ports:
       - "${REDIS_PORT:-6379}:6379"
     healthcheck:
@@ -72,7 +74,7 @@ services:
       - ./services/api/seeds:/seeds:ro
     environment:
       DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-freeburger}?sslmode=disable
-    command: sh -c "pip install --no-cache-dir -r requirements.txt && python seed_cards.py engram_demo_cards.yaml"
+    command: sh -c "pip install --no-cache-dir -r requirements.txt && python seed_cards.py realgo_demo_cards.yaml"
     restart: "no"
 
   seed-users:
@@ -88,20 +90,55 @@ services:
     command: sh -c "pip install --no-cache-dir -r requirements.txt && python seed_users.py"
     restart: "no"
 
+  # Production build of the realgo Next.js landing + cabinet. Served internally
+  # on :3000; Caddy fronts it and routes /api/* to the Go api instead.
+  web:
+    build:
+      context: ./apps/web
+      args:
+        # Empty = relative same-origin API calls (/api/v1/...). The browser hits
+        # realgo.dev and Caddy proxies /api/* to the api container, so no CORS.
+        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-}
+    restart: unless-stopped
+    expose:
+      - "3000"
+
   caddy:
     image: caddy:2-alpine
+    restart: unless-stopped
     depends_on:
       - api
+      - web
     environment:
-      ENGRAM_EXTENSION_ORIGIN: ${ENGRAM_EXTENSION_ORIGIN:-chrome-extension://invalidextensionidorigin}
+      REALGO_EXTENSION_ORIGIN: ${REALGO_EXTENSION_ORIGIN:-chrome-extension://kclglopmphebagjjimjhdpnmoddmbgea}
     ports:
       - "${API_PORT:-8080}:80"
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # The local/home stack is reached through the VPS edge Caddy, so it must
+      # listen plainly on :80 and not try to issue a public cert itself.
+      - ./Caddyfile.internal:/etc/caddy/Caddyfile:ro
+
+  # Reverse tunnel to the VPS. The home connection is CGNAT'd (no inbound public
+  # IP) and the provider's DPI blocks Cloudflare, so instead of exposing anything
+  # here we dial OUT to a cheap VPS running frps (see deploy/vps/). frpc registers
+  # the local caddy:80 as a proxy that the VPS reaches back through this tunnel;
+  # the VPS terminates TLS for realgo.dev and reverse-proxies into it. Pure
+  # userspace TCP — no TUN/kernel modules (which the LXD host doesn't allow).
+  frpc:
+    image: snowdreamtech/frpc:0.61.1
+    restart: unless-stopped
+    depends_on:
+      - caddy
+    volumes:
+      - ./frpc.toml:/etc/frp/frpc.toml:ro
+    environment:
+      FRP_VPS_HOST: ${FRP_VPS_HOST:?FRP_VPS_HOST must be set}
+      FRP_TOKEN: ${FRP_TOKEN:?FRP_TOKEN must be set}
 
   api:
     build:
       context: ./services/api
+    restart: unless-stopped
     depends_on:
       postgres:
         condition: service_healthy

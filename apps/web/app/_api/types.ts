@@ -1,10 +1,10 @@
 // Shared API types mirroring the Go backend's response envelope.
 //
-// Success: { "data": <T> }
+// Success: { "data": <T>, "meta"?: <M> }
 // Failure: { "error": { "code": string, "message": string } }
 
 /** Successful response envelope. */
-export type ApiEnvelope<T> = { data: T };
+export type ApiEnvelope<T, M = unknown> = { data: T; meta?: M };
 
 /** Error body returned under "error" on failures. */
 export type ApiErrorBody = { code: string; message: string };

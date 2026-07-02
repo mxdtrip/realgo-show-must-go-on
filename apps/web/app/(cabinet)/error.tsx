@@ -11,7 +11,7 @@ export default function CabinetError({ error, reset }: CabinetErrorProps) {
   const retryRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    console.error("Engram cabinet route error", error);
+    console.error("realgo cabinet route error", error);
   }, [error]);
 
   useEffect(() => {

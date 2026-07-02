@@ -5,23 +5,38 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { getDictionary } from "../_content/i18n";
 
-const WORD = "engram";
+const WORD = "realgo";
 const LETTER_COUNT = WORD.length;
 
-// Per-glyph advance widths (relative to the font size) so the letters lay out
-// with even gaps instead of equal-width slots. Bootstrapped from Inter 700
-// metrics for a deterministic first paint, then refined from the real loaded
-// font via canvas (see the measure effect below).
-const FALLBACK_RATIOS = [0.57, 0.62, 0.62, 0.4, 0.57, 0.91]; // e n g r a m
-let glyphRatios: number[] | null = null;
+// The animated word uses the same monospaced brand font as the top-bar logo.
+// Keep one identical advance slot per letter so every inter-letter interval is
+// equal. The fallback is close to JetBrains Mono 700; the measured value is read
+// from an actual .word-letter probe after fonts load.
+const FALLBACK_MONO_ADVANCE_RATIO = 0.62;
+let monoAdvanceRatio: number | null = null;
 
-function measureGlyphRatios(): number[] | null {
+function measureMonoAdvanceRatio(): number | null {
   if (typeof document === "undefined") return null;
-  const ctx = document.createElement("canvas").getContext("2d");
-  if (!ctx) return null;
-  const family = getComputedStyle(document.body).fontFamily || "Inter, system-ui, sans-serif";
-  ctx.font = `700 1000px ${family}`;
-  return [...WORD].map((char) => ctx.measureText(char).width / 1000);
+  const probe = document.createElement("span");
+  probe.className = "word-letter";
+  probe.textContent = WORD;
+  probe.style.position = "fixed";
+  probe.style.left = "-10000px";
+  probe.style.top = "-10000px";
+  probe.style.display = "inline-block";
+  probe.style.width = "auto";
+  probe.style.height = "auto";
+  probe.style.fontSize = "1000px";
+  probe.style.lineHeight = "1";
+  probe.style.transform = "none";
+  probe.style.filter = "none";
+  probe.style.textShadow = "none";
+  probe.style.visibility = "hidden";
+
+  document.body.appendChild(probe);
+  const ratio = probe.getBoundingClientRect().width / LETTER_COUNT / 1000;
+  probe.remove();
+  return Number.isFinite(ratio) && ratio > 0 ? ratio : null;
 }
 const GATHER_MS = 980;
 const COMPARE_MS = 90;
@@ -90,10 +105,9 @@ function shuffle(order: number[]) {
 
 function geometry(size: SceneSize) {
   const font = clamp(Math.floor(size.width / 8.2), 54, 132);
-  // Even gap between glyphs; widths come from real per-letter metrics.
-  const gap = clamp(font * 0.1, 7, 14);
-  const ratios = glyphRatios ?? FALLBACK_RATIOS;
-  const widths = ratios.map((ratio) => ratio * font);
+  const gap = 0;
+  const advance = (monoAdvanceRatio ?? FALLBACK_MONO_ADVANCE_RATIO) * font;
+  const widths = Array.from({ length: LETTER_COUNT }, () => advance);
   const total = widths.reduce((sum, w) => sum + w, 0) + (LETTER_COUNT - 1) * gap;
 
   return {
@@ -110,8 +124,8 @@ function rowPoses(size: SceneSize, order: number[]) {
   const g = geometry(size);
   let x = g.startX;
 
-  // Advance by each letter's own width, so the visible gap between every pair
-  // of glyphs is exactly `gap` — no more wide voids around narrow letters.
+  // Advance by one measured monospaced slot per glyph, so every letter interval
+  // is identical and matches the brand wordmark rhythm.
   return order.map((key) => {
     const pose = { key, x, y: g.y, rotate: 0, visible: true };
     x += g.widths[key] + g.gap;
@@ -187,7 +201,7 @@ self.onmessage = (event) => {
       "compare",
       "swap",
       '"use strict";\\n' +
-        'const window = undefined; const document = undefined; const localStorage = undefined; const sessionStorage = undefined; const fetch = undefined; const importScripts = undefined; const eval = undefined;\\n' +
+        'const window = undefined; const document = undefined; const localStorage = undefined; const sessionStorage = undefined; const fetch = undefined; const importScripts = undefined;\\n' +
         code +
         '\\nreturn typeof bubbleSort === "function" ? bubbleSort : typeof sort === "function" ? sort : null;'
     );
@@ -450,13 +464,13 @@ export function SortingMemoryHero() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [size.width, size.height]);
 
-  // Measure real glyph widths once the font is loaded, then bump the version so
-  // the gathered word re-lays out with accurate, even spacing.
+  // Measure the real mono advance once the font is loaded, then bump the
+  // version so the gathered word re-lays out with equal brand-font spacing.
   useEffect(() => {
     const apply = () => {
-      const ratios = measureGlyphRatios();
-      if (ratios && ratios.every((value) => value > 0)) {
-        glyphRatios = ratios;
+      const ratio = measureMonoAdvanceRatio();
+      if (ratio) {
+        monoAdvanceRatio = ratio;
         setMetricsVersion((value) => value + 1);
       }
     };

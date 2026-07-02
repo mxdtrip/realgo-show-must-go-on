@@ -9,6 +9,7 @@ import {
   writeProfileSettings,
   type ProfileSettings,
 } from "../../../_profile/profileSettings";
+import { useToast } from "../../../_toast";
 import { StatusPill } from "../../_components";
 
 const suggestedTimezones = [
@@ -44,6 +45,7 @@ type ProfileSettingsPanelProps = {
 };
 
 export function ProfileSettingsPanel({ copy }: Readonly<ProfileSettingsPanelProps>) {
+  const toast = useToast();
   const defaults = useMemo(
     () => ({ timezone: copy.timezone, interviewDate: copy.interviewDate }),
     [copy.interviewDate, copy.timezone],
@@ -71,6 +73,7 @@ export function ProfileSettingsPanel({ copy }: Readonly<ProfileSettingsPanelProp
 
     setProfile(nextProfile);
     setDidSave(true);
+    toast.success(copy.saved);
   };
 
   return (
@@ -82,13 +85,13 @@ export function ProfileSettingsPanel({ copy }: Readonly<ProfileSettingsPanelProp
       <label className="settings-profile-field">
         <span>{copy.timezoneLabel}</span>
         <input
-          list="engram-timezones"
+          list="realgo-timezones"
           name="timezone"
           placeholder={copy.timezonePlaceholder}
           value={profile.timezone}
           onChange={(event) => update({ timezone: event.target.value })}
         />
-        <datalist id="engram-timezones">
+        <datalist id="realgo-timezones">
           {suggestedTimezones.map((timezone) => (
             <option key={timezone} value={timezone} />
           ))}

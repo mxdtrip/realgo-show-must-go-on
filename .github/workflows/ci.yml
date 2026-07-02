@@ -42,6 +42,9 @@ jobs:
         with:
           go-version-file: services/api/go.mod
           cache-dependency-path: services/api/go.sum
+      
+      - name: Verify dependencies
+        run: go mod verify
 
       - name: Generate sqlc
         run: go tool sqlc generate
@@ -82,6 +85,10 @@ jobs:
         working-directory: .
         env:
           AUTH_JWT_SECRET: ci-secret-with-more-than-32-random-looking-characters
+          # frpc declares these as required (${VAR:?}); supply dummies so the
+          # config parses. Real values come from GitHub Secrets at deploy time.
+          FRP_VPS_HOST: ci.example.invalid
+          FRP_TOKEN: ci-frp-token
         run: docker compose config --quiet
 
   web:

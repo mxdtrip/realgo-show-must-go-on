@@ -25,7 +25,7 @@ function Preview() {
   async function onSave(_payload: SubmissionPayload) {
     await delay(700);
     if (failNext) {
-      throw new Error("Ошибка сервера (500). Это эмуляция для предпросмотра.");
+      throw new Error("Ошибка сервера 500");
     }
   }
 
@@ -42,7 +42,7 @@ function Preview() {
         key={`${choice}-${failNext}`}
         submission={submission}
         onSave={onSave}
-        onClose={() => alert("Скрыть (в расширении — прячет оверлей до след. задачи)")}
+        onClose={() => alert("Свернуть (в расширении — прячет оверлей до след. задачи)")}
         onReview={() => alert("К повторению (в расширении — открывает /cards)")}
       />
     </div>

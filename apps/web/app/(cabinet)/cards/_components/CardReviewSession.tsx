@@ -5,7 +5,7 @@ import { useMemo } from "react";
 import {
   getNotificationPermission,
   readNotificationSettings,
-  showEngramNotification,
+  showRealgoNotification,
 } from "../../../_notifications/notifications";
 import { ProgressBar, StatusPill } from "../../_components";
 import { CardRatingControls } from "./CardRatingControls";
@@ -49,10 +49,10 @@ export function CardReviewSession({ cards, copy, ratingLabels }: Readonly<CardRe
   const session = useCardReviewSession(cards, copy.nextReview, () => {
     const settings = readNotificationSettings();
     if (!settings.enabled || !settings.cardReviewReminder || getNotificationPermission() !== "granted") return;
-    void showEngramNotification(copy.sessionCompleteTitle, {
+    void showRealgoNotification(copy.sessionCompleteTitle, {
       body: copy.sessionCompleteBody,
       data: { url: "/cards" },
-      tag: "engram-card-session-complete",
+      tag: "realgo-card-session-complete",
     });
   });
   const cardsById = useMemo(() => new Map(cards.map((card) => [card.id, card])), [cards]);
