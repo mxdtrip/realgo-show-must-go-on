@@ -6,7 +6,7 @@ import { useCallback, useEffect } from "react";
 import {
   getNotificationPermission,
   readNotificationSettings,
-  showEngramNotification,
+  showRealgoNotification,
 } from "../../../_notifications/notifications";
 import {
   type ReviewCard,
@@ -61,10 +61,10 @@ export function FocusCardReviewSession({ brand, cards, copy }: Readonly<FocusCar
   const notifyComplete = useCallback(() => {
     const settings = readNotificationSettings();
     if (!settings.enabled || !settings.cardReviewReminder || getNotificationPermission() !== "granted") return;
-    void showEngramNotification(copy.sessionCompleteTitle, {
+    void showRealgoNotification(copy.sessionCompleteTitle, {
       body: copy.sessionCompleteBody,
       data: { url: "/cards" },
-      tag: "engram-card-session-complete",
+      tag: "realgo-card-session-complete",
     });
   }, [copy.sessionCompleteBody, copy.sessionCompleteTitle]);
 

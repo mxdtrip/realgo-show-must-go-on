@@ -53,7 +53,7 @@ type CalendarDay = {
 type OnboardingStep = "company" | "date" | "topics" | "welcome";
 
 const steps: OnboardingStep[] = ["company", "date", "topics"];
-const onboardingStorageKey = "engram:onboarding-profile:v1";
+const onboardingStorageKey = "realgo:onboarding-profile:v1";
 
 function toDateInputValue(date: Date) {
   const year = date.getFullYear();
@@ -326,13 +326,13 @@ export default function OnboardingProfilePage() {
                 {copy.company.label}
                 <input
                   autoComplete="organization"
-                  list="engram-company-suggestions"
+                  list="realgo-company-suggestions"
                   placeholder={copy.company.placeholder}
                   value={companyInput}
                   onChange={(event) => setCompanyInput(event.target.value)}
                 />
               </label>
-              <datalist id="engram-company-suggestions">
+              <datalist id="realgo-company-suggestions">
                 {suggestions.map((item) => (
                   <option key={item} value={item} />
                 ))}

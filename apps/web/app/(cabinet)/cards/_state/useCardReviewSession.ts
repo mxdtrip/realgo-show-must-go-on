@@ -25,7 +25,7 @@ type StoredSession = {
   sessionCardIds: string[];
 };
 
-const storageKey = "engram:card-review-session:v1";
+const storageKey = "realgo:card-review-session:v1";
 const replayableRatings = new Set<ReviewRating>(["hard", "normal"]);
 const replayRatingPriority: Record<ReviewRating, number> = {
   hard: 0,

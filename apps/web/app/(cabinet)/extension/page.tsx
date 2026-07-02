@@ -11,44 +11,70 @@ export default function ExtensionPage() {
   return (
     <main className="cabinet-page">
       <section className="cabinet-page-head">
-        <span className="cabinet-eyebrow">{page.eyebrow}</span>
-        <h1>{page.title}</h1>
-        <p>{page.description}</p>
+        <div>
+          <span className="cabinet-eyebrow">{page.eyebrow}</span>
+          <h1>{page.title}</h1>
+          <p>{page.description}</p>
+        </div>
       </section>
 
       <div className="cabinet-grid">
-        <CabinetPanel eyebrow={page.statusEyebrow} title={page.statusTitle}>
+        <CabinetPanel
+          eyebrow={page.statusEyebrow}
+          title={page.statusTitle}
+          meta={<span className="cabinet-panel__meta">{page.statusMeta}</span>}
+        >
           <div className="extension-status">
-            <div className="extension-status__head">
-              <span className="live-dot" aria-hidden="true" />
-              <strong>{page.platform}</strong>
-              <StatusPill tone="success">{page.liveLabel}</StatusPill>
+            {page.platforms.map((platform) => (
+              <div className="ext-platform" key={platform.name}>
+                <span
+                  className={platform.live ? "live-dot" : "live-dot live-dot--idle"}
+                  aria-hidden="true"
+                />
+                <strong>{platform.name}</strong>
+                <StatusPill tone={platform.tone as Tone}>{platform.state}</StatusPill>
+              </div>
+            ))}
+            <div className="extension-meta">
+              {page.meta.map(([label, value]) => (
+                <div key={label}>
+                  <span>{label}</span>
+                  <strong>{value}</strong>
+                </div>
+              ))}
             </div>
-            <p>{page.statusDescription}</p>
-            <button className="btn-ghost" type="button">
-              {page.disableSync}
-            </button>
+            <p className="extension-status__note">{page.statusDescription}</p>
+            <div className="extension-status__actions">
+              <button className="btn-ghost" type="button">
+                {page.disableSync}
+              </button>
+            </div>
           </div>
         </CabinetPanel>
 
-        <CabinetPanel eyebrow={page.eventsEyebrow} title={page.eventsTitle}>
-          <div className="event-list">
+        <CabinetPanel
+          eyebrow={page.eventsEyebrow}
+          title={page.eventsTitle}
+          meta={<span className="cabinet-panel__meta">{page.eventsMeta}</span>}
+        >
+          <div className="term-log">
             {extensionEvents.map((event) => {
               const meta = eventMeta.get(event.event);
               return (
-                <article key={`${event.event}-${event.title}`}>
-                  <div className="event-list__body">
-                    <strong>{event.title}</strong>
-                    <p>
-                      {event.source} · {event.time}
-                    </p>
-                  </div>
-                  <StatusPill tone={(meta?.tone ?? "default") as Tone}>
+                <div className="term-log__row" key={`${event.at}-${event.title}`}>
+                  <span className="term-log__time">{event.at}</span>
+                  <span className="term-log__source">{event.source}</span>
+                  <span className="term-log__title">{event.title}</span>
+                  <span className={`term-log__event term-log__event--${meta?.tone ?? "default"}`}>
                     {meta?.label ?? event.event}
-                  </StatusPill>
-                </article>
+                  </span>
+                </div>
               );
             })}
+            <div className="term-log__listen">
+              <i aria-hidden="true" />
+              {page.listening}
+            </div>
           </div>
         </CabinetPanel>
       </div>

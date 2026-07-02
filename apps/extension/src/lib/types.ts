@@ -1,5 +1,5 @@
 /**
- * Shared types for the Engram extension.
+ * Shared types for the realgo extension.
  *
  * TODO: promote the cross-cutting payload/DTO types (SubmissionPayload,
  * UserDifficulty, CanSolveAgain) into `packages/shared` once that package is
@@ -43,8 +43,8 @@ export interface SubmissionPayload extends DetectedSubmission {
 
 /** Messages exchanged between content script, background and popup. */
 export type RuntimeMessage =
-  | { type: "ENGRAM_SUBMISSION_DETECTED"; submission: DetectedSubmission }
-  | { type: "ENGRAM_SAVE_SUBMISSION"; payload: SubmissionPayload };
+  | { type: "REALGO_SUBMISSION_DETECTED"; submission: DetectedSubmission }
+  | { type: "REALGO_SAVE_SUBMISSION"; payload: SubmissionPayload };
 
 /**
  * Parsed result of a successful `POST /api/v1/extension/events` (the backend
@@ -59,7 +59,7 @@ export interface ExtensionEventResult {
   nextReviewAt: string | null;
 }
 
-/** Reply shape for ENGRAM_SAVE_SUBMISSION (background → UI). */
+/** Reply shape for REALGO_SAVE_SUBMISSION (background → UI). */
 export interface SaveResponse {
   ok: boolean;
   /** Present when `ok`: the backend's idempotent result. */
@@ -85,17 +85,17 @@ export interface AuthUser {
 }
 
 export const STORAGE_KEYS = {
-  lastSubmission: "engram:lastSubmission",
-  apiBaseUrl: "engram:apiBaseUrl",
-  webBaseUrl: "engram:webBaseUrl",
-  accessToken: "engram:accessToken",
-  refreshToken: "engram:refreshToken",
-  userEmail: "engram:userEmail",
+  lastSubmission: "realgo:lastSubmission",
+  apiBaseUrl: "realgo:apiBaseUrl",
+  webBaseUrl: "realgo:webBaseUrl",
+  accessToken: "realgo:accessToken",
+  refreshToken: "realgo:refreshToken",
+  userEmail: "realgo:userEmail",
 } as const;
 
 export const DEFAULT_API_BASE_URL = "http://localhost:8080";
 
-/** Engram web app (the cabinet). "К повторению" opens its review cards here. */
+/** realgo web app (the cabinet). "К повторению" opens its review cards here. */
 export const DEFAULT_WEB_BASE_URL = "http://localhost:3000";
 
 /** Path of the spaced-repetition cards section inside the web app. */

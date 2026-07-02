@@ -1,4 +1,4 @@
-# Standalone dev stack for the Engram landing (apps/web).
+# Standalone dev stack for the realgo landing (apps/web).
 #
 # Lets you run the Next.js dev server on any machine that has Docker, while
 # editing the source on the host and getting hot-reload inside the container.
@@ -14,7 +14,7 @@
 # First start installs Linux-native deps into the `web_node_modules` volume,
 # so it takes a minute; later starts are fast.
 
-name: engram-web
+name: realgo-web
 
 services:
   web:

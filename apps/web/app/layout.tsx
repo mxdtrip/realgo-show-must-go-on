@@ -70,8 +70,8 @@ export const metadata: Metadata = {
     images: ["/opengraph-image"],
   },
   icons: {
-    icon: "/icon",
-    apple: "/icon",
+    icon: [{ url: "/icons/realgo-logo.png", sizes: "512x512", type: "image/png" }],
+    apple: [{ url: "/icons/realgo-logo.png", sizes: "512x512", type: "image/png" }],
   },
   appleWebApp: {
     capable: true,

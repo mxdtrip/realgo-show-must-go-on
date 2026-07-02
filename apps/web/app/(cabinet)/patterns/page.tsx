@@ -1,9 +1,13 @@
-import { CabinetPanel, ProgressBar, StatusPill } from "../_components";
+import Link from "next/link";
+
+import { CabinetPanel, ProgressBar } from "../_components";
+import { CabinetIcon } from "../_icons";
 import { getDictionary } from "../../_content/i18n";
 import { weakPatterns } from "../_mock";
 
 export default function PatternsPage() {
-  const page = getDictionary().cabinet.pages.patterns;
+  const copy = getDictionary().cabinet;
+  const page = copy.pages.patterns;
 
   const ranked = [...weakPatterns].sort((a, b) => a.confidence - b.confidence);
   const needAttention = ranked.filter((pattern) => pattern.confidence < 60).length;
@@ -11,28 +15,33 @@ export default function PatternsPage() {
   return (
     <main className="cabinet-page">
       <section className="cabinet-page-head">
-        <span className="cabinet-eyebrow">{page.eyebrow}</span>
-        <h1>{page.title}</h1>
-        <p>{page.description}</p>
-      </section>
-
-      <div className="cabinet-summary">
-        <div className="cabinet-summary__total">
-          <strong>{needAttention}</strong>
-          <span>{page.summaryUnit}</span>
+        <div>
+          <span className="cabinet-eyebrow">{page.eyebrow}</span>
+          <h1>{page.title}</h1>
+          <p>{page.description}</p>
         </div>
-        <div className="cabinet-summary__split">
-          <span className="review-type review-type--warning">
-            {ranked[0]?.name}
-            <em>{ranked[0]?.confidence}%</em>
+        <div className="cabinet-page-head__actions">
+          <div>
+            <Link className="cabinet-cta" href="/cards/session">
+              {copy.common.startSession}
+              <CabinetIcon name="arrow" />
+            </Link>
+          </div>
+          <span className="cabinet-next-hint">
+            <em>{needAttention}</em> {page.summaryUnit}
           </span>
         </div>
-      </div>
+      </section>
 
-      <CabinetPanel eyebrow={page.panelEyebrow} title={page.panelTitle}>
+      <CabinetPanel
+        eyebrow={page.panelEyebrow}
+        title={page.panelTitle}
+        meta={<span className="cabinet-panel__meta">{ranked.length} patterns</span>}
+      >
         <div className="pattern-grid">
           {ranked.map((pattern) => {
             const severe = pattern.confidence < 45;
+            const trendUp = pattern.trend > 0;
             return (
               <article className="pattern-card" key={pattern.name}>
                 <div className="pattern-card__head">
@@ -42,17 +51,24 @@ export default function PatternsPage() {
                       {severe ? page.priorityHigh : page.priorityMed}
                     </span>
                   </div>
-                  <StatusPill tone={severe ? "danger" : "warning"}>{pattern.confidence}%</StatusPill>
+                  <div className="pattern-card__score">
+                    <strong className={severe ? "confidence--danger" : "confidence--warning"}>
+                      {pattern.confidence}%
+                    </strong>
+                    <em className={trendUp ? "is-up" : "is-down"}>
+                      {trendUp ? `+${pattern.trend}` : `−${-pattern.trend}`} {page.weeklyLabel}
+                    </em>
+                  </div>
                 </div>
-                <div className="pattern-card__meter">
-                  <span>{page.confidenceLabel}</span>
-                  <ProgressBar
-                    value={pattern.confidence}
-                    tone={severe ? "danger" : "warning"}
-                    label={`${pattern.name} confidence`}
-                  />
-                </div>
+                <ProgressBar
+                  value={pattern.confidence}
+                  tone={severe ? "danger" : "warning"}
+                  label={`${pattern.name} confidence`}
+                />
                 <p>{pattern.signal}</p>
+                <div className="pattern-card__foot">
+                  <Link href="/cards/session">{page.trainLink}</Link>
+                </div>
               </article>
             );
           })}

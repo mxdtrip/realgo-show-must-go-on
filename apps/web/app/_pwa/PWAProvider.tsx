@@ -9,7 +9,7 @@ export function PWAProvider() {
     const registerServiceWorker = () => {
       if (!("serviceWorker" in navigator)) return;
       navigator.serviceWorker.register("/sw.js").catch((error) => {
-        console.error("Failed to register Engram service worker", error);
+        console.error("Failed to register realgo service worker", error);
       });
     };
 

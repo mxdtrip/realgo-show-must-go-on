@@ -7,6 +7,8 @@ import type {
 } from "../lib/types";
 import { POPUP_CSS } from "./popup.styles";
 
+const BRAND_LOGO_URL = new URL("../../assets/icon.png", import.meta.url).href;
+
 export interface PopupAppProps {
   /**
    * undefined → still detecting (loading);
@@ -60,9 +62,9 @@ export function PopupApp({ submission, onSave, onClose, onReview, onReport }: Po
   if (submission === undefined) {
     return (
       <Shell>
-        <div className="engram-state">
-          <div className="engram-spinner" aria-label="Загрузка" />
-          <span className="engram-muted">Определяем задачу…</span>
+        <div className="realgo-state">
+          <div className="realgo-spinner" aria-label="Загрузка" />
+          <span className="realgo-muted">Определяем задачу…</span>
         </div>
       </Shell>
     );
@@ -71,15 +73,15 @@ export function PopupApp({ submission, onSave, onClose, onReview, onReport }: Po
   if (submission === null) {
     return (
       <Shell>
-        <div className="engram-state">
-          <div className="engram-state__icon engram-state__icon--muted" aria-hidden="true">
+        <div className="realgo-state">
+          <div className="realgo-state__icon realgo-state__icon--muted" aria-hidden="true">
             <IconExternal />
           </div>
-          <p className="engram-state__text">
-            Откройте задачу на NeetCode и отправьте решение — Engram подхватит её
+          <p className="realgo-state__text">
+            Откройте задачу на NeetCode и отправьте решение — realgo подхватит её
             автоматически.
           </p>
-          <button type="button" className="engram-link" onClick={handleReport}>
+          <button type="button" className="realgo-link" onClick={handleReport}>
             Сообщить об ошибке
           </button>
         </div>
@@ -90,23 +92,23 @@ export function PopupApp({ submission, onSave, onClose, onReview, onReport }: Po
   if (status === "success") {
     return (
       <Shell>
-        <div className="engram-state">
-          <div className="engram-state__icon engram-state__icon--success" aria-hidden="true">
+        <div className="realgo-state">
+          <div className="realgo-state__icon realgo-state__icon--success" aria-hidden="true">
             <IconCheck />
           </div>
           <div>
-            <p className="engram-state__title engram-state__title--success">
+            <p className="realgo-state__title realgo-state__title--success">
               Успешно!
             </p>
-            <p className="engram-muted" style={{ marginTop: 4 }}>
+            <p className="realgo-muted" style={{ marginTop: 4 }}>
               Продолжите решать или займемся повторением?
             </p>
           </div>
           {(onClose || onReview) && (
-            <div className="engram-row" style={{ width: "100%" }}>
+            <div className="realgo-row" style={{ width: "100%" }}>
               {onClose && (
                 <button
-                  className="engram-btn engram-btn--ghost"
+                  className="realgo-btn realgo-btn--ghost"
                   style={{ flex: 1 }}
                   onClick={onClose}
                 >
@@ -115,7 +117,7 @@ export function PopupApp({ submission, onSave, onClose, onReview, onReport }: Po
               )}
               {onReview && (
                 <button
-                  className="engram-btn engram-btn--primary"
+                  className="realgo-btn realgo-btn--primary"
                   style={{ flex: 1 }}
                   onClick={onReview}
                 >
@@ -151,7 +153,7 @@ export function PopupApp({ submission, onSave, onClose, onReview, onReport }: Po
 
   return (
     <Shell task={submission}>
-      <div className="engram-body">
+      <div className="realgo-body">
         <ChoiceGroup
           label="Как далась задача?"
           options={DIFFICULTY_OPTIONS}
@@ -161,22 +163,22 @@ export function PopupApp({ submission, onSave, onClose, onReview, onReport }: Po
         />
 
         {status === "error" ? (
-          <div className="engram-error" role="alert">
-            <span className="engram-error__icon" aria-hidden="true">
+          <div className="realgo-error" role="alert">
+            <span className="realgo-error__icon" aria-hidden="true">
               <IconAlert />
             </span>
-            <span className="engram-error__text">{errorMsg}</span>
-            <button className="engram-error__retry" onClick={handleSave}>
+            <span className="realgo-error__text">{errorMsg}</span>
+            <button className="realgo-error__retry" onClick={handleSave}>
               Повторить
             </button>
           </div>
         ) : (
           <button
-            className="engram-btn engram-btn--primary engram-btn--block"
+            className="realgo-btn realgo-btn--primary realgo-btn--block"
             disabled={!canSave}
             onClick={handleSave}
           >
-            {saving ? <span className="engram-spinner" style={{ width: 14, height: 14, borderWidth: 2 }} /> : null}
+            {saving ? <span className="realgo-spinner" style={{ width: 14, height: 14, borderWidth: 2 }} /> : null}
             {saving ? "Сохраняю…" : "Сохранить"}
           </button>
         )}
@@ -193,25 +195,25 @@ function Shell({
   task?: DetectedSubmission;
 }) {
   return (
-    <div className="engram-popup">
+    <div className="realgo-popup">
       <style>{POPUP_CSS}</style>
-      <div className="engram-header">
-        <span className="engram-brand">
+      <div className="realgo-header">
+        <span className="realgo-brand">
           <BrandMark />
-          Engram
+          realgo
         </span>
         {task && (
-          <span className="engram-chip engram-chip--accent">
+          <span className="realgo-chip realgo-chip--accent">
             Вы справились с заданием!
           </span>
         )}
       </div>
       {task && (
-        <div className="engram-task">
-          <p className="engram-task__title">{task.taskTitle}</p>
-          <div className="engram-task__meta">
-            <span className="engram-task__platform">{task.platform}</span>
-            <span className="engram-chip engram-chip--accent">submitted ✓</span>
+        <div className="realgo-task">
+          <p className="realgo-task__title">{task.taskTitle}</p>
+          <div className="realgo-task__meta">
+            <span className="realgo-task__platform">{task.platform}</span>
+            <span className="realgo-chip realgo-chip--accent">submitted ✓</span>
           </div>
         </div>
       )}
@@ -236,14 +238,14 @@ function ChoiceGroup<T extends string>({
   disabled,
 }: ChoiceGroupProps<T>) {
   return (
-    <div className="engram-question">
-      <p className="engram-question__label">{label}</p>
-      <div className="engram-choices" role="group" aria-label={label}>
+    <div className="realgo-question">
+      <p className="realgo-question__label">{label}</p>
+      <div className="realgo-choices" role="group" aria-label={label}>
         {options.map((opt) => (
           <button
             key={opt.value}
             type="button"
-            className="engram-choice"
+            className="realgo-choice"
             aria-pressed={value === opt.value}
             disabled={disabled}
             onClick={() => onChange(opt.value)}
@@ -259,19 +261,15 @@ function ChoiceGroup<T extends string>({
 // ── Inline icons (no icon dependency; matches our inline-SVG convention) ──────
 function BrandMark({ size = 16 }: { size?: number }) {
   return (
-    <svg
-      className="engram-brand__mark"
-      width={size}
-      height={size}
-      viewBox="0 0 16 16"
-      fill="none"
+    <img
+      alt=""
       aria-hidden="true"
-    >
-      <rect width="16" height="16" rx="3" fill="#2f81f7" />
-      <rect x="3" y="4" width="6" height="1.5" rx="0.75" fill="#fff" />
-      <rect x="3" y="7.25" width="10" height="1.5" rx="0.75" fill="#fff" />
-      <rect x="3" y="10.5" width="4" height="1.5" rx="0.75" fill="#fff" />
-    </svg>
+      className="realgo-brand__mark"
+      decoding="async"
+      height={size}
+      src={BRAND_LOGO_URL}
+      width={size}
+    />
   );
 }
 

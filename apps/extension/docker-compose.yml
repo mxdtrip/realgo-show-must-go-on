@@ -1,4 +1,4 @@
-name: engram-extension
+name: realgo-extension
 
 # Popup preview only. The Chrome extension itself is built with Plasmo and
 # loaded into the browser via chrome://extensions (Load unpacked) — it is not

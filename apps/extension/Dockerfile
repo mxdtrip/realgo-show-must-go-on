@@ -1,9 +1,9 @@
-# Builds the Engram browser extension (Plasmo, Chrome MV3) and the popup preview
+# Builds the realgo browser extension (Plasmo, Chrome MV3) and the popup preview
 # as static artifacts. The live preview server runs via docker-compose.yml using
 # a plain node image (see that file); this Dockerfile is the reproducible build.
 #
-#   docker build -t engram-extension apps/extension
-#   docker create --name x engram-extension && docker cp x:/app/build ./build && docker rm x
+#   docker build -t realgo-extension apps/extension
+#   docker create --name x realgo-extension && docker cp x:/app/build ./build && docker rm x
 #
 # Artifacts inside the image:
 #   /app/build/chrome-mv3-prod   → unpacked Chrome extension (Load unpacked)

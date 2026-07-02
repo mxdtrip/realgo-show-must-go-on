@@ -130,9 +130,9 @@ func ListRoadmapProblems(ctx context.Context, pool *pgxpool.Pool, roadmapCode st
 
 Для дорожной карты NeetCode 150 передавай `roadmapCode = "neetcode_150"`.
 
-## Engram Demo Cards
+## realgo Demo Cards
 
-`engram_demo_cards.yaml` - демо-набор Anki-style карточек для задач и
+`realgo_demo_cards.yaml` - демо-набор Anki-style карточек для задач и
 паттернов из `neetcode_150`. Ответы короткие, без кода, на русском с
 английскими терминами из интервью-практики.
 
@@ -153,21 +153,21 @@ make seed-cards
 cd services/api/seeds
 python -m pip install -r requirements.txt
 DATABASE_URL='postgres://postgres:postgres@localhost:5432/freeburger?sslmode=disable' \
-  python seed_cards.py engram_demo_cards.yaml
+  python seed_cards.py realgo_demo_cards.yaml
 ```
 
 Локальная проверка YAML без подключения к Postgres:
 
 ```sh
 cd services/api/seeds
-python seed_cards.py engram_demo_cards.yaml --validate-only
+python seed_cards.py realgo_demo_cards.yaml --validate-only
 ```
 
 Формат карточек:
 
 ```yaml
-code: engram_demo_cards
-title: Engram Demo Cards
+code: realgo_demo_cards
+title: realgo Demo Cards
 cards:
   - key: two-sum-complement
     type: pattern_recognition
@@ -185,7 +185,7 @@ cards:
 `pattern_recognition`, `algorithm_mechanics`, `edge_case`.
 
 Seed идемпотентный: перед вставкой он удаляет только карточки своего source
-`engram_demo_cards:*`, затем заново вставляет manifest. Если база ещё содержит
+`realgo_demo_cards:*`, затем заново вставляет manifest. Если база ещё содержит
 legacy constraint `cards.card_type_target_check` со старыми типами
 `problem|pattern|concept`, загрузчик остановится с понятной ошибкой: этот
 constraint должен быть исправлен миграцией вне seed-скриптов.

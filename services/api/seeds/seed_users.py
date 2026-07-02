@@ -7,7 +7,7 @@ import bcrypt
 
 
 PASSWORD = "Password123!"
-CARD_SOURCE_CODE = "engram_demo_cards"
+CARD_SOURCE_CODE = "realgo_demo_cards"
 
 USERS = [
     {

@@ -42,7 +42,7 @@ async function postJson(url: string, body: unknown): Promise<any> {
       body: JSON.stringify(body),
     });
   } catch {
-    throw new AuthError("Не удалось связаться с Engram. Бэкенд запущен?", 0, "network");
+    throw new AuthError("Не удалось связаться с realgo. Бэкенд запущен?", 0, "network");
   }
 
   const data = await res.json().catch(() => null);

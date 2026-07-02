@@ -1,8 +1,8 @@
 "use client";
 
-export const profileSettingsStorageKey = "engram:profile-settings:v1";
-export const onboardingProfileStorageKey = "engram:onboarding-profile:v1";
-export const profileSettingsChangedEvent = "engram:profile-settings-changed";
+export const profileSettingsStorageKey = "realgo:profile-settings:v1";
+export const onboardingProfileStorageKey = "realgo:onboarding-profile:v1";
+export const profileSettingsChangedEvent = "realgo:profile-settings-changed";
 
 export type ProfileSettings = {
   timezone: string;
