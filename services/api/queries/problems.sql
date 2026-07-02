@@ -47,15 +47,14 @@ ON CONFLICT (user_id, problem_id) DO UPDATE
     first_seen_at = COALESCE(user_problem_progress.first_seen_at, EXCLUDED.first_seen_at)
 RETURNING user_id, problem_id, status;
 
--- name: CreateProblemScheduleIfAbsent :one
+-- name: CreateProblemScheduleIfAbsent :exec
 -- Create review schedule only when none exists yet.
 INSERT INTO review_schedules (user_id, problem_id, next_review_at, interval_days, ease, stability, difficulty, review_count, algorithm, state)
 SELECT sqlc.arg(user_id)::bigint, sqlc.arg(problem_id)::bigint, NOW(), 1, 2.5, 1.0, 5.0, 0, 'fsrs', 0
 WHERE NOT EXISTS (
     SELECT 1 FROM review_schedules
     WHERE user_id = sqlc.arg(user_id)::bigint AND problem_id = sqlc.arg(problem_id)::bigint
-)
-RETURNING id;
+);
 
 -- name: ListUserProblems :many
 WITH scoped_problems AS (

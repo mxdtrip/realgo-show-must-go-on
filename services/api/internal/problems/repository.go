@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 
@@ -63,12 +64,17 @@ func (r *pgRepository) GetByID(ctx context.Context, userID, problemID int64) (Pr
 func (r *pgRepository) Save(ctx context.Context, userID, problemID int64) (string, error) {
 	row, err := r.q.UpsertProblemProgress(ctx, db.UpsertProblemProgressParams{UserID: userID, ProblemID: problemID})
 	if err != nil {
+		var pgErr *pgconn.PgError
+		// 23503 = foreign_key_violation: problem does not exist.
+		if errors.As(err, &pgErr) && pgErr.Code == "23503" {
+			return "", errNotFound
+		}
 		return "", fmt.Errorf("problems: save: %w", err)
 	}
-	// Also create a review schedule if none exists yet (so the problem shows up in queue).
-	_, _ = r.q.CreateProblemScheduleIfAbsent(ctx, db.CreateProblemScheduleIfAbsentParams{UserID: userID, ProblemID: problemID})
-
-	status := "saved"
+	if err := r.q.CreateProblemScheduleIfAbsent(ctx, db.CreateProblemScheduleIfAbsentParams{UserID: userID, ProblemID: problemID}); err != nil {
+		return "", fmt.Errorf("problems: create schedule: %w", err)
+	}
+	status := "not_started"
 	if row.Status.Valid {
 		status = row.Status.String
 	}

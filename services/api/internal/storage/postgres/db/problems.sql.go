@@ -11,14 +11,13 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const createProblemScheduleIfAbsent = `-- name: CreateProblemScheduleIfAbsent :one
+const createProblemScheduleIfAbsent = `-- name: CreateProblemScheduleIfAbsent :exec
 INSERT INTO review_schedules (user_id, problem_id, next_review_at, interval_days, ease, stability, difficulty, review_count, algorithm, state)
 SELECT $1::bigint, $2::bigint, NOW(), 1, 2.5, 1.0, 5.0, 0, 'fsrs', 0
 WHERE NOT EXISTS (
     SELECT 1 FROM review_schedules
     WHERE user_id = $1::bigint AND problem_id = $2::bigint
 )
-RETURNING id
 `
 
 type CreateProblemScheduleIfAbsentParams struct {
@@ -27,11 +26,9 @@ type CreateProblemScheduleIfAbsentParams struct {
 }
 
 // Create review schedule only when none exists yet.
-func (q *Queries) CreateProblemScheduleIfAbsent(ctx context.Context, arg CreateProblemScheduleIfAbsentParams) (int64, error) {
-	row := q.db.QueryRow(ctx, createProblemScheduleIfAbsent, arg.UserID, arg.ProblemID)
-	var id int64
-	err := row.Scan(&id)
-	return id, err
+func (q *Queries) CreateProblemScheduleIfAbsent(ctx context.Context, arg CreateProblemScheduleIfAbsentParams) error {
+	_, err := q.db.Exec(ctx, createProblemScheduleIfAbsent, arg.UserID, arg.ProblemID)
+	return err
 }
 
 const getUserProblem = `-- name: GetUserProblem :one
