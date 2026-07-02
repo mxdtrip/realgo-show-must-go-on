@@ -13,9 +13,10 @@ REDIR_PORT=12345
 MARK=255
 
 echo "[vpngw] installing iptables transparent redirect..."
-iptables -t nat -F 2>/dev/null || true
-iptables -t nat -X SBOX 2>/dev/null || true
-iptables -t nat -N SBOX
+# Manage ONLY our own chain. Never `iptables -t nat -F`: that flushes Docker's
+# embedded-DNS NAT (127.0.0.11 -> DOCKER_OUTPUT) and breaks name resolution, so
+# cloudflared can't resolve caddy (origin 502).
+iptables -t nat -N SBOX 2>/dev/null || iptables -t nat -F SBOX
 
 # Never redirect traffic bound for local / private / internal Docker networks:
 # that's how cloudflared reaches caddy:80 and how DNS to 127.0.0.11 works.
@@ -28,9 +29,13 @@ done
 # Everything else (public destinations, i.e. the CF edge) goes to sing-box.
 iptables -t nat -A SBOX -p tcp -j REDIRECT --to-ports "$REDIR_PORT"
 
-# sing-box's own upstream packets are marked; let them out untouched (no loop).
-iptables -t nat -A OUTPUT -p tcp -m mark --mark "$MARK" -j RETURN
-iptables -t nat -A OUTPUT -p tcp -j SBOX
+# Hook OUTPUT idempotently (appended after Docker's own rules, so the DNS rule
+# for 127.0.0.11 still runs first). sing-box's own upstream packets are marked;
+# let them out untouched to avoid a redirect loop.
+iptables -t nat -C OUTPUT -p tcp -m mark --mark "$MARK" -j RETURN 2>/dev/null \
+  || iptables -t nat -A OUTPUT -p tcp -m mark --mark "$MARK" -j RETURN
+iptables -t nat -C OUTPUT -p tcp -j SBOX 2>/dev/null \
+  || iptables -t nat -A OUTPUT -p tcp -j SBOX
 
 echo "[vpngw] starting sing-box..."
 exec sing-box run -c /etc/sing-box/config.json
