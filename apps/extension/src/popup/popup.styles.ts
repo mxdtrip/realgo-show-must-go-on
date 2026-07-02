@@ -243,14 +243,16 @@ export const POPUP_CSS = `
   text-overflow: ellipsis;
 }
 
-/* Body / question groups */
+/* Body / question groups.
+   Pinned toward the bottom (align-content:end) so the difficulty block sits
+   lower in the card, closer to where the cursor lands after a submit. */
 .realgo-body {
   flex: 1;
   min-height: 0;
   display: grid;
-  align-content: center;
+  align-content: end;
   gap: 16px;
-  padding: 18px 20px 20px;
+  padding: 18px 20px 22px;
 }
 
 /* Save hint / saving indicator — sits where the button used to be. */
