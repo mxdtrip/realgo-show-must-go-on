@@ -7,6 +7,8 @@ import type {
 } from "../lib/types";
 import { POPUP_CSS } from "./popup.styles";
 
+const BRAND_LOGO_URL = new URL("../../assets/icon.png", import.meta.url).href;
+
 export interface PopupAppProps {
   /**
    * undefined → still detecting (loading);
@@ -88,10 +90,10 @@ export function PopupApp({
 
   if (submission === undefined) {
     return (
-      <Shell onClose={onClose} compact>
+      <Shell onClose={onClose}>
         <div className="realgo-state realgo-state--loading-scene">
           <div className="realgo-spinner" aria-label="Загрузка" />
-          <span className="realgo-muted">Определяем задачу…</span>
+          <span className="realgo-muted">определяем задачу…</span>
         </div>
       </Shell>
     );
@@ -99,7 +101,7 @@ export function PopupApp({
 
   if (submission === null) {
     return (
-      <Shell onClose={onClose} compact>
+      <Shell onClose={onClose}>
         <div className="realgo-state realgo-state--no-task-scene">
           <div className="realgo-state__icon realgo-state__icon--muted" aria-hidden="true">
             <IconExternal />
@@ -118,7 +120,7 @@ export function PopupApp({
 
   if (status === "success") {
     return (
-      <Shell onClose={onClose} compact scene="success">
+      <Shell onClose={onClose} scene="success">
         <div className="realgo-state realgo-state--success-scene">
           <div className="realgo-state__icon realgo-state__icon--success" aria-hidden="true">
             <IconCheck />
@@ -152,16 +154,55 @@ export function PopupApp({
     );
   }
 
-  const saving = status === "saving";
-  const canSave = difficulty !== null && !saving;
+  // A dedicated screen (like success) keeps the popup size fixed: an inline
+  // banner would not fit into the fixed-height form layout.
+  if (status === "error") {
+    return (
+      <Shell onClose={onClose}>
+        <div className="realgo-state realgo-state--error-scene">
+          <div className="realgo-state__icon realgo-state__icon--danger" aria-hidden="true">
+            <IconAlert size={20} />
+          </div>
+          <div>
+            <p className="realgo-state__title realgo-state__title--danger">
+              Не удалось сохранить
+            </p>
+            <p className="realgo-muted" style={{ marginTop: 4 }}>
+              {errorMsg}
+            </p>
+          </div>
+          <div className="realgo-state__actions">
+            <button
+              type="button"
+              className="realgo-btn realgo-btn--ghost realgo-btn--state"
+              onClick={() => setStatus("form")}
+            >
+              Назад
+            </button>
+            <button
+              type="button"
+              className="realgo-btn realgo-btn--primary realgo-btn--state"
+              onClick={() => difficulty && handlePick(difficulty)}
+            >
+              Повторить
+            </button>
+          </div>
+        </div>
+      </Shell>
+    );
+  }
 
-  async function handleSave() {
-    if (difficulty === null || submission == null) return;
+  const saving = status === "saving";
+
+  // Picking a difficulty is the save action — there is no separate button.
+  async function handlePick(value: UserDifficulty) {
+    if (saving || submission == null) return;
+    setDifficulty(value);
     setStatus("saving");
     setErrorMsg("");
     const payload: SubmissionPayload = {
       ...submission,
-      userDifficulty: difficulty,
+      userDifficulty: value,
     };
     try {
       await onSave(payload);
@@ -173,43 +214,28 @@ export function PopupApp({
   }
 
   return (
-    <Shell task={submission} onClose={onClose} compact>
+    <Shell task={submission} onClose={onClose}>
       <div className="realgo-body">
         <ChoiceGroup
           title="Как далась задача?"
           options={DIFFICULTY_OPTIONS}
           value={difficulty}
-          onChange={setDifficulty}
+          onPick={handlePick}
           disabled={saving}
         />
-      </div>
-
-      <div className="realgo-foot">
-        {status === "error" && (
-          <div className="realgo-error" role="alert">
-            <span className="realgo-error__icon" aria-hidden="true">
-              <IconAlert />
-            </span>
-            <span className="realgo-error__text">{errorMsg}</span>
-            <button className="realgo-error__retry" onClick={handleSave}>
-              Повторить
-            </button>
-          </div>
-        )}
-
-        <button
-          className="realgo-btn realgo-btn--primary realgo-btn--block realgo-btn--lg"
-          disabled={!canSave}
-          onClick={handleSave}
-        >
+        <p className="realgo-hint" role="status">
           {saving ? (
-            <span
-              className="realgo-spinner"
-              style={{ width: 15, height: 15, borderWidth: 2 }}
-            />
-          ) : null}
-          {saving ? "Сохраняю…" : "Сохранить"}
-        </button>
+            <>
+              <span
+                className="realgo-spinner"
+                style={{ width: 13, height: 13, borderWidth: 2 }}
+              />
+              сохраняю…
+            </>
+          ) : (
+            "Выберите сложность — realgo сохранит результат"
+          )}
+        </p>
       </div>
     </Shell>
   );
@@ -219,18 +245,15 @@ function Shell({
   children,
   task,
   onClose,
-  compact,
   scene,
 }: {
   children: React.ReactNode;
   task?: DetectedSubmission;
   onClose?: () => void;
-  compact?: boolean;
   scene?: "success";
 }) {
   const className = [
     "realgo-popup",
-    compact ? "realgo-popup--compact" : "",
     scene === "success" ? "realgo-popup--success" : "",
   ]
     .filter(Boolean)
@@ -240,19 +263,21 @@ function Shell({
     <div className={className}>
       <style>{POPUP_CSS}</style>
       <div className="realgo-header">
-        <span className="realgo-brand realgo-brand--md">
-          <BrandMark size={32} />
-          realgo
+        <span className="realgo-brand">
+          <BrandMark size={20} />
+          ReAlgo
+          <span className="realgo-path">~/ext</span>
         </span>
         <div className="realgo-header__right">
           {task && (
-            <span className="realgo-status">
-              <span className="realgo-status__icon" aria-hidden="true">
-                <IconCheckSm />
-              </span>
-              {task.submitResult === "accepted"
-                ? "Вы справились с заданием!"
-                : "Результат отправлен"}
+            <span
+              className={
+                task.submitResult === "accepted"
+                  ? "realgo-status realgo-status--ok"
+                  : "realgo-status"
+              }
+            >
+              {task.submitResult === "accepted" ? "accepted" : "результат отправлен"}
             </span>
           )}
           {onClose && (
@@ -269,6 +294,7 @@ function Shell({
       </div>
       {task && (
         <div className="realgo-task">
+          <span className="realgo-eyebrow">задача обнаружена</span>
           <p className="realgo-task__title">{task.taskTitle}</p>
           <div className="realgo-task__meta">
             <span className="realgo-tag">{task.platform}</span>
@@ -289,7 +315,7 @@ interface ChoiceGroupProps<T extends string> {
   title: string;
   options: { value: T; label: string; icon: "easy" | "normal" | "hard" }[];
   value: T | null;
-  onChange: (value: T) => void;
+  onPick: (value: T) => void;
   disabled?: boolean;
 }
 
@@ -297,7 +323,7 @@ function ChoiceGroup<T extends string>({
   title,
   options,
   value,
-  onChange,
+  onPick,
   disabled,
 }: ChoiceGroupProps<T>) {
   return (
@@ -316,12 +342,8 @@ function ChoiceGroup<T extends string>({
               data-difficulty={opt.icon}
               aria-pressed={active}
               disabled={disabled}
-              // Hover selects immediately; moving to another option switches the
-              // selection, and leaving the group keeps the last-hovered choice.
-              onMouseEnter={() => {
-                if (!disabled) onChange(opt.value);
-              }}
-              onClick={() => onChange(opt.value)}
+              // Clicking a difficulty is the save action (no separate button).
+              onClick={() => onPick(opt.value)}
             >
               <span className="realgo-choice__icon" aria-hidden="true">
                 <IconDifficulty kind={opt.icon} />
@@ -338,19 +360,15 @@ function ChoiceGroup<T extends string>({
 // ── Inline icons (no icon dependency; matches our inline-SVG convention) ──────
 function BrandMark({ size = 16 }: { size?: number }) {
   return (
-    <svg
-      className="realgo-brand__mark"
-      width={size}
-      height={size}
-      viewBox="0 0 16 16"
-      fill="none"
+    <img
+      alt=""
       aria-hidden="true"
-    >
-      <rect width="16" height="16" rx="3" fill="#2f81f7" />
-      <rect x="3" y="4" width="6" height="1.5" rx="0.75" fill="#fff" />
-      <rect x="3" y="7.25" width="10" height="1.5" rx="0.75" fill="#fff" />
-      <rect x="3" y="10.5" width="4" height="1.5" rx="0.75" fill="#fff" />
-    </svg>
+      className="realgo-brand__mark"
+      decoding="async"
+      height={size}
+      src={BRAND_LOGO_URL}
+      width={size}
+    />
   );
 }
 
@@ -358,16 +376,6 @@ function IconCheck() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
       strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M20 6 9 17l-5-5" />
-    </svg>
-  );
-}
-
-/** Small check used inside the "submitted" chip and the selected-choice badge. */
-function IconCheckSm() {
-  return (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M20 6 9 17l-5-5" />
     </svg>
   );
@@ -407,9 +415,9 @@ function IconExternal() {
   );
 }
 
-function IconAlert() {
+function IconAlert({ size = 13 }: { size?: number }) {
   return (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
       strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <circle cx="12" cy="12" r="10" />
       <path d="M12 8v4" />
