@@ -64,7 +64,7 @@ func New(deps Deps) http.Handler {
 	roadmapsHandler := roadmaps.NewHandler(roadmaps.NewRepository(deps.Postgres.Pool))
 	companiesHandler := companies.NewHandler()
 	dashboardHandler := dashboard.NewHandler(dashboard.NewService(dashboard.NewRepository(deps.Postgres.Pool), patterns.NewRepository(deps.Postgres.Pool)))
-	cardsHandler := cards.NewHandler(deps.Postgres.Pool, reviewService)
+	cardsHandler := cards.NewHandler(cards.NewService(cards.NewRepository(deps.Postgres.Pool), reviewService))
 
 	// Browser-extension ingest: simple fixed-interval scheduler (issue #17)
 	// behind the Scheduler interface, swappable for FSRS later.
