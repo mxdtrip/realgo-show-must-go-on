@@ -56,6 +56,11 @@ tasks:
     cmds:
       - "{{.COMPOSE}} up -d --build"
 
+  up-api:
+    desc: Build and start only API, Postgres, Redis, migrations, and Caddy
+    cmds:
+      - "{{.COMPOSE}} up -d --build postgres redis migrate api caddy"
+
   prod-demo-up:
     desc: Build and start the stack with the VPS reverse tunnel
     cmds:

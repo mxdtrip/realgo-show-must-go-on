@@ -25,7 +25,7 @@ cp .env.example .env
 # ОБЯЗАТЕЛЬНО: задать случайный AUTH_JWT_SECRET в .env (без него api не стартует)
 
 cd services/api
-make up            # dev stack без frpc: postgres + redis + migrate + api + web + caddy
+make up-api        # backend-only: postgres + redis + migrate + api + caddy
 make migrate       # применить миграции (000001..000007)
 make seed-roadmap  # загрузить NeetCode 150 (seeds/neetcode_150.yaml)
 make seed-cards    # загрузить demo-карточки (seeds/realgo_demo_cards.yaml)

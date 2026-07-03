@@ -108,7 +108,6 @@ services:
     restart: unless-stopped
     depends_on:
       - api
-      - web
     environment:
       REALGO_EXTENSION_ORIGIN: ${REALGO_EXTENSION_ORIGIN:-chrome-extension://kclglopmphebagjjimjhdpnmoddmbgea}
     ports:
