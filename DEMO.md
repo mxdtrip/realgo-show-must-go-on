@@ -24,7 +24,7 @@ cp .env.example .env
 
 cd services/api
 make up            # docker compose up -d --build (postgres + redis + migrate + api + caddy)
-make migrate       # применить миграции (000001..000023)
+make migrate       # применить миграции (000001..000007)
 make seed-roadmap  # загрузить NeetCode 150 (seeds/neetcode_150.yaml)
 make seed-cards    # загрузить demo-карточки (seeds/realgo_demo_cards.yaml)
 make seed-users    # загрузить demo-пользователей и расписания повторений
@@ -118,7 +118,7 @@ docker compose exec postgres psql -U postgres -d freeburger \
   никаких `html`/`description`/`conditions`/`editorial`.
 - `extension_events`: `url, external_slug, title, event_type, rating,
   extension_version, event_time, idempotency_key, raw_payload` — без HTML.
-- `idempotency_key` уникален (наш `eventId`); повтор того же сабмита не плодит строк.
+- `idempotency_key` уникален в рамках пользователя (наш `eventId`); повтор того же сабмита не плодит строк.
 - `raw_payload` — компактный JSON контракта (`eventId/source/event/occurredAt/rating/problem{externalId,title,url}`),
   **без** тела задачи, условий и разборов.
 

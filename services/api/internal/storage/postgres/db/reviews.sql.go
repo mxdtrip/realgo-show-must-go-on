@@ -28,20 +28,7 @@ type CreateReviewAttemptParams struct {
 	WasCorrect  pgtype.Bool
 }
 
-type CreateReviewAttemptRow struct {
-	ID          int64
-	UserID      int64
-	ProblemID   pgtype.Int8
-	PatternID   pgtype.Int8
-	CardID      pgtype.Int8
-	Rating      string
-	ReviewType  string
-	DurationSec pgtype.Int4
-	WasCorrect  pgtype.Bool
-	CreatedAt   pgtype.Timestamptz
-}
-
-func (q *Queries) CreateReviewAttempt(ctx context.Context, arg CreateReviewAttemptParams) (CreateReviewAttemptRow, error) {
+func (q *Queries) CreateReviewAttempt(ctx context.Context, arg CreateReviewAttemptParams) (ReviewAttempt, error) {
 	row := q.db.QueryRow(ctx, createReviewAttempt,
 		arg.UserID,
 		arg.ProblemID,
@@ -52,7 +39,7 @@ func (q *Queries) CreateReviewAttempt(ctx context.Context, arg CreateReviewAttem
 		arg.DurationSec,
 		arg.WasCorrect,
 	)
-	var i CreateReviewAttemptRow
+	var i ReviewAttempt
 	err := row.Scan(
 		&i.ID,
 		&i.UserID,

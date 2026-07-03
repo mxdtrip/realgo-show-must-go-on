@@ -216,6 +216,63 @@ func TestContractExtensionEventsAreIdempotent(t *testing.T) {
 	require.Equal(t, 1, reviewCount)
 }
 
+func TestContractExtensionEventIdempotencyIsScopedPerUser(t *testing.T) {
+	h := newContractHarness(t)
+	suffix := uniqueSuffix("idempotency-scope")
+	emailA := "contract-a-" + suffix + "@example.test"
+	emailB := "contract-b-" + suffix + "@example.test"
+	eventID := "evt-" + suffix
+	slug := "contract-idempotency-scope-" + suffix
+	t.Cleanup(func() {
+		_, _ = h.pg.Pool.Exec(h.ctx, `DELETE FROM extension_events WHERE idempotency_key = $1`, eventID)
+		h.cleanupUser(emailA)
+		h.cleanupUser(emailB)
+		_, _ = h.pg.Pool.Exec(h.ctx, `DELETE FROM problems WHERE external_slug = $1`, slug)
+	})
+
+	tokensA := h.register(t, emailA, "Password123!")
+	tokensB := h.register(t, emailB, "Password123!")
+	t.Cleanup(func() { h.deleteRefreshTokens(tokensA.refresh, tokensB.refresh) })
+
+	payload := eventPayloadFor(eventID, slug, "Contract Idempotency Scope", time.Now().UTC().Add(-48*time.Hour), "normal")
+	firstA := h.request(t, http.MethodPost, "/api/v1/extension/events", tokensA.access, payload)
+	firstAData := requireSuccessEnvelope(t, firstA, http.StatusOK)
+	require.Equal(t, false, boolField(t, firstAData, "duplicate"))
+
+	firstB := h.request(t, http.MethodPost, "/api/v1/extension/events", tokensB.access, payload)
+	firstBData := requireSuccessEnvelope(t, firstB, http.StatusOK)
+	require.Equal(t, false, boolField(t, firstBData, "duplicate"))
+
+	replayA := h.request(t, http.MethodPost, "/api/v1/extension/events", tokensA.access, payload)
+	replayAData := requireSuccessEnvelope(t, replayA, http.StatusOK)
+	require.Equal(t, true, boolField(t, replayAData, "duplicate"))
+
+	var eventCount int
+	err := h.pg.Pool.QueryRow(h.ctx, `SELECT COUNT(*) FROM extension_events WHERE idempotency_key = $1`, eventID).Scan(&eventCount)
+	require.NoError(t, err)
+	require.Equal(t, 2, eventCount)
+
+	var progressCount int
+	err = h.pg.Pool.QueryRow(h.ctx, `
+		SELECT COUNT(*)
+		FROM user_problem_progress upp
+		JOIN problems p ON p.id = upp.problem_id
+		WHERE p.external_slug = $1 AND upp.user_id IN ($2, $3)
+	`, slug, tokensA.userID, tokensB.userID).Scan(&progressCount)
+	require.NoError(t, err)
+	require.Equal(t, 2, progressCount)
+
+	var scheduleCount int
+	err = h.pg.Pool.QueryRow(h.ctx, `
+		SELECT COUNT(*)
+		FROM review_schedules rs
+		JOIN problems p ON p.id = rs.problem_id
+		WHERE p.external_slug = $1 AND rs.user_id IN ($2, $3)
+	`, slug, tokensA.userID, tokensB.userID).Scan(&scheduleCount)
+	require.NoError(t, err)
+	require.Equal(t, 2, scheduleCount)
+}
+
 func TestCoreLoopRegisterLoginSolveQueueAndRateMovesDue(t *testing.T) {
 	h := newContractHarness(t)
 	suffix := uniqueSuffix("core-loop")

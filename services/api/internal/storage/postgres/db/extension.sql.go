@@ -145,7 +145,7 @@ INSERT INTO extension_events (
     event_type, rating, extension_version, event_time, idempotency_key, raw_payload
 )
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-ON CONFLICT (idempotency_key) DO NOTHING
+ON CONFLICT (user_id, idempotency_key) WHERE idempotency_key IS NOT NULL AND idempotency_key <> '' DO NOTHING
 RETURNING id
 `
 
@@ -163,7 +163,7 @@ type InsertExtensionEventParams struct {
 	RawPayload       []byte
 }
 
-// Idempotent on idempotency_key: a replayed event inserts nothing and the
+// Idempotent on user_id + idempotency_key: a replayed event inserts nothing and the
 // caller detects the no-row result as a duplicate.
 func (q *Queries) InsertExtensionEvent(ctx context.Context, arg InsertExtensionEventParams) (int64, error) {
 	row := q.db.QueryRow(ctx, insertExtensionEvent,

@@ -1,4 +1,6 @@
-CREATE TABLE IF NOT EXISTS quiz_questions (
+BEGIN;
+
+CREATE TABLE quiz_questions (
     id BIGSERIAL PRIMARY KEY,
     user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
     problem_id BIGINT REFERENCES problems(id) ON DELETE CASCADE,
@@ -9,5 +11,8 @@ CREATE TABLE IF NOT EXISTS quiz_questions (
     explanation TEXT,
     difficulty VARCHAR(20) CHECK (difficulty IN ('easy', 'medium', 'hard')),
     created_by_ai BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT exactly_one_quiz_target_check CHECK ((problem_id IS NULL) <> (pattern_id IS NULL))
 );
+
+COMMIT;
