@@ -28,7 +28,7 @@ export default function CabinetLayout({
         <aside className="cabinet-sidebar">
           <div className="cabinet-brand-block">
             <Link className="site-brand" href="/dashboard">
-              {dictionary.common.brand}
+              {copy.brand}
             </Link>
             <CabinetInterviewCountdown
               copy={copy.profile.interview}
@@ -46,7 +46,7 @@ export default function CabinetLayout({
           <header className="cabinet-topbar">
             <CabinetMobileNav
               ariaLabel={copy.navAria}
-              brand={dictionary.common.brand}
+              brand={copy.brand}
               defaultInterviewDate={profileCopy.interviewDate}
               defaultTimezone={profileCopy.timezone}
               groups={copy.navGroups}
