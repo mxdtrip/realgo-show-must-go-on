@@ -6,16 +6,16 @@ export const defaultLocale: Locale = "ru";
 
 const ru = {
   common: {
-    brand: "ReAlgo",
+    brand: "realgo",
     metadata: {
       title: "realgo — Memory layer for interview prep",
       description:
-        "realgo helps you remember solved interview tasks, review them at the right time, and prepare with a clearer plan.",
+        "realgo помогает не забывать решённые задачи, вовремя возвращает их к повторению и складывает понятный план подготовки к интервью.",
       applicationName: "realgo",
       siteUrl: "https://realgo.dev",
       ogImageAlt: "realgo interview prep memory layer preview",
       ogEyebrow: "/memory /roadmap /reviews",
-      ogHeadline: "Memory layer for interview prep",
+      ogHeadline: "«Solved» ещё не значит «запомнил»",
       ogFooter: "LeetCode solved tasks -> spaced repetition -> interview roadmap",
       keywords: [
         "interview prep",
@@ -24,6 +24,8 @@ const ru = {
         "NeetCode",
         "algorithm practice",
         "technical interviews",
+        "подготовка к собеседованиям",
+        "алгоритмические задачи",
       ],
     },
   },
@@ -31,7 +33,7 @@ const ru = {
     name: "realgo — Memory layer for interview prep",
     shortName: "realgo",
     description:
-      "realgo helps you remember solved interview tasks, review them at the right time, and prepare with a clearer plan.",
+      "realgo помогает не забывать решённые задачи, вовремя возвращает их к повторению и складывает понятный план подготовки к интервью.",
   },
   marketing: {
     hero: {
@@ -54,9 +56,9 @@ const ru = {
         error: "Something went wrong. Try again.",
       },
       sortingCodeAria: "Sorting code",
-      eyebrow: "// spaced-repetition for interview prep",
+      eyebrow: "// spaced repetition for technical interviews",
       tagline:
-        "Реши задачу один раз — realgo пересоберёт её в памяти к нужному дню. Перепиши код сортировки слева и запусти: алгоритм наводит порядок прямо в названии.",
+        "«Solved» ещё не значит «запомнил». realgo возвращает решённую задачу ровно в тот момент, когда ты готов её забыть. Перепиши код сортировки слева и кликни где угодно на экране — алгоритм наведёт порядок прямо в собственном названии.",
       sortingControlsAria: "Sorting controls",
       wordAria: "realgo",
       chaos: "Chaos",
@@ -100,6 +102,7 @@ const ru = {
           "Авто-расписание повторений (spaced repetition)",
           "Базовая статистика прогресса",
         ],
+        "Начать бесплатно",
       ],
       [
         "Pro",
@@ -112,6 +115,7 @@ const ru = {
           "Экспорт в Anki",
           "Приоритетные напоминания",
         ],
+        "Оформить Pro",
       ],
     ],
     sections: {
@@ -119,7 +123,7 @@ const ru = {
         kicker: "Memory",
         title: "Решай задачи где удобно. realgo запомнит, что важно повторить.",
         description:
-          "После практики ты отмечаешь уровень уверенности. realgo превращает это в понятное расписание повторений и возвращает к темам, которые нужно закрепить перед интервью.",
+          "Один клик после решения — и realgo превращает твою честную оценку в расписание повторений, возвращая точно те темы, которые иначе всплывут забытыми на самом интервью.",
         demoUrl: "leetcode.com/problems/two-sum-ii",
         demoStatus: "Saved",
         ratingAria: "Difficulty rating",
@@ -129,26 +133,25 @@ const ru = {
         kicker: "Roadmap",
         head: "Backend SWE · 21 день",
         readiness: "68% готовность",
-        title: "План подготовки под твою цель и дату интервью.",
+        title: "План подготовки под твою цель и дату собеседования — без гадания, что учить дальше.",
         description:
-          "Укажи роль, компанию и сколько времени осталось. realgo соберёт маршрут по темам, задачам и повторениям, чтобы каждый день подготовки имел понятный следующий шаг.",
+          "Укажи роль, компанию и сколько времени осталось. realgo соберёт маршрут по темам, задачам и повторениям — так у каждого дня подготовки один понятный шаг, а не список из сотен нерассортированных задач.",
       },
       reviews: {
         kicker: "Reviews",
         title: "Повторяй паттерны так, чтобы вспомнить их на интервью.",
         description:
-          "realgo создаёт короткие карточки по подходу, шагам решения и граничным случаям. Вместо длинных конспектов ты получаешь вопросы, которые тренируют воспроизведение.",
+          "realgo создаёт короткие карточки по подходу, механике решения и граничным случаям. Вместо длинных конспектов, которые никто не перечитывает, — вопросы, которые тренируют вспомнить, а не просто узнать при взгляде на старый код.",
       },
       pricing: {
         kicker: "Pricing",
-        title: "Начни бесплатно. Подключи Pro, когда нужна подготовка под конкретное интервью.",
+        title: "Начни бесплатно. Переходи на Pro, когда нужна максимальная польза и контроль.",
         description:
           "Бесплатный план помогает собрать личную базу решённых задач. Pro добавляет маршрут под цель, больше повторений, тесты и экспорт в Anki.",
-        cta: "Оформить",
       },
       faq: {
         kicker: "FAQ",
-        title: "Коротко о том, как realgo вписывается в подготовку.",
+        title: "Коротко о том, как realgo встраивается в подготовку — без лишних обещаний.",
         description:
           "FAQ закрывает практические вопросы: что сохраняет расширение, как работают повторения и можно ли начать без полного перехода на новый инструмент.",
         items: [
@@ -165,7 +168,7 @@ const ru = {
           {
             question: "Чем это отличается от обычного списка решённых задач?",
             answer:
-              "Список показывает, что уже было сделано. realgo планирует, когда к этому вернуться, превращает решение в короткие карточки и подсвечивает паттерны, которые чаще всего забываются.",
+              "Список показывает, что уже было сделано. realgo планирует, когда к этому вернуться, превращает решение в короткие карточки и подсвечивает паттерны, которые чаще всего забываются — как правило, ровно перед интервью.",
           },
           {
             question: "Можно пользоваться бесплатно?",
@@ -208,7 +211,7 @@ const ru = {
         },
       ],
       copyright: "© 2026 realgo. All rights reserved.",
-      tagline: "built for people who interview",
+      tagline: "built by devs who bombed a few interviews first",
       poweredBy: "powered by",
     },
   },

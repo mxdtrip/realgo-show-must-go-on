@@ -53,7 +53,7 @@ export function MemoryExtensionDemo() {
       <div className="realgo-header">
         <span className="realgo-brand">
           <BrandMark />
-          ReAlgo
+          realgo
           <span className="realgo-path">~/ext</span>
         </span>
       </div>

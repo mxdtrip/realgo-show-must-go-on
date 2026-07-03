@@ -110,7 +110,7 @@ export default function Home() {
             <p>{copy.sections.pricing.description}</p>
           </div>
           <div className="pricing-grid">
-            {copy.pricing.map(([name, price, features]) => (
+            {copy.pricing.map(([name, price, features, cta]) => (
               <article className="price-card" key={name}>
                 <span>{name}</span>
                 <strong>{price}</strong>
@@ -123,7 +123,7 @@ export default function Home() {
                   className="price-cta"
                   href={`/checkout?plan=${name.toLowerCase()}`}
                 >
-                  {copy.sections.pricing.cta}
+                  {cta}
                 </a>
               </article>
             ))}
