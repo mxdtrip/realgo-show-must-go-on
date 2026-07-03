@@ -277,6 +277,11 @@ function Shell({
           <p className="realgo-task__title">{task.taskTitle}</p>
           <div className="realgo-task__meta">
             <span className="realgo-tag">{task.platform}</span>
+            {task.tags?.map((tag) => (
+              <span className="realgo-tag" key={tag}>
+                {tag}
+              </span>
+            ))}
           </div>
         </div>
       )}

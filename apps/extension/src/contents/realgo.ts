@@ -116,6 +116,7 @@ function finalize(adapter: PlatformAdapter, submitResult: SubmitResult) {
     taskTitle: info.taskTitle,
     taskUrl: info.taskUrl,
     platformTaskSlug: info.platformTaskSlug,
+    tags: info.tags,
     submitResult,
     submittedAt: new Date().toISOString(),
   };
