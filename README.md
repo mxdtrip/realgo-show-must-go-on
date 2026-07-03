@@ -46,11 +46,17 @@ curl -fsS http://localhost:8080/readyz
 
 ```sh
 cd services/api
-make up
+make up-api
 # или go-task:
-task up
+task up-api
 task health
 ```
+
+`make up-api` / `task up-api` поднимают только backend, БД, Redis, миграции и
+Caddy. Полный стек с web: `make up` / `task up`.
+
+Если Docker пишет `permission denied` к сокету, это не ошибка проекта: запустите
+Docker Desktop или добавьте пользователя в docker group и перелогиньтесь.
 
 Prod-demo с reverse tunnel запускается отдельным profile:
 

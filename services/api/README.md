@@ -21,7 +21,7 @@ go run ./cmd/api
 
 ```sh
 cp ../../.env.example ../../.env
-docker compose -f ../../docker-compose.yml up -d --build
+make up-api
 curl -fsS http://localhost:8080/healthz
 curl -fsS http://localhost:8080/readyz
 ```
@@ -35,13 +35,19 @@ curl -fsS http://localhost:8080/readyz
 
 ```sh
 task test
-task up
+task up-api
 task prod-demo-up
 task health
 ```
 
-`task up` — обычный dev stack. `task prod-demo-up` — тот же stack плюс `frpc`
-через compose profile `prod-demo`; для него нужны `FRP_VPS_HOST` и `FRP_TOKEN`.
+`make up-api` / `task up-api` — backend-only dev stack: API, Postgres, Redis,
+миграции и Caddy. `make up` / `task up` — полный dev stack с web.
+`task prod-demo-up` — полный stack плюс `frpc` через compose profile
+`prod-demo`; для него нужны `FRP_VPS_HOST` и `FRP_TOKEN`.
+
+Если Docker пишет `permission denied`, проверьте доступ к Docker socket:
+запущен ли Docker Desktop, состоит ли пользователь в `docker`, и был ли новый
+терминал открыт после изменения прав.
 
 ## Runbooks
 
