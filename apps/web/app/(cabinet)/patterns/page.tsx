@@ -7,6 +7,7 @@ import { strongPatterns, weakPatterns } from "../_mock";
 
 type Pattern = {
   name: string;
+  code: string;
   confidence: number;
   trend: number;
   signal: string;
@@ -85,7 +86,9 @@ function WeakCard({
   return (
     <article>
       <div>
-        <strong>{pattern.name}</strong>
+        <strong>
+          <Link href={`/patterns/${pattern.code}`}>{pattern.name}</Link>
+        </strong>
         <span className={severe ? "confidence--danger" : "confidence--warning"}>
           {pattern.confidence}%
         </span>
@@ -111,7 +114,9 @@ function StrongCard({
   return (
     <article>
       <div>
-        <strong>{pattern.name}</strong>
+        <strong>
+          <Link href={`/patterns/${pattern.code}`}>{pattern.name}</Link>
+        </strong>
         <span className="confidence--accent">{pattern.confidence}%</span>
       </div>
       <ProgressBar value={pattern.confidence} label={`${pattern.name} confidence`} />
