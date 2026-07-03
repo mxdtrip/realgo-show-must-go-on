@@ -75,6 +75,11 @@ LEFT JOIN roadmap_items ri ON ri.problem_id = c.problem_id AND ri.roadmap_code =
 LEFT JOIN patterns rpt ON rpt.id = ri.pattern_id
 WHERE (c.user_id = sqlc.arg(user_id)::bigint OR c.user_id IS NULL OR rs.id IS NOT NULL)
   AND (sqlc.arg(card_type)::text = '' OR c.type = sqlc.arg(card_type)::text)
+  AND (
+    sqlc.arg(pattern_code)::text = ''
+    OR cpt.code = sqlc.arg(pattern_code)::text
+    OR rpt.code = sqlc.arg(pattern_code)::text
+  )
   AND (c.created_at, c.id) < (sqlc.arg(cursor_created_at)::timestamptz, sqlc.arg(cursor_id)::bigint)
 ORDER BY c.created_at DESC, c.id DESC
 LIMIT sqlc.arg(limit_rows)::integer;
@@ -116,6 +121,11 @@ LEFT JOIN patterns cpt ON cpt.id = c.pattern_id
 LEFT JOIN roadmap_items ri ON ri.problem_id = c.problem_id AND ri.roadmap_code = 'neetcode_150'
 LEFT JOIN patterns rpt ON rpt.id = ri.pattern_id
 WHERE (c.user_id = sqlc.arg(user_id)::bigint OR c.user_id IS NULL OR rs.id IS NOT NULL)
+  AND (
+    sqlc.arg(pattern_code)::text = ''
+    OR cpt.code = sqlc.arg(pattern_code)::text
+    OR rpt.code = sqlc.arg(pattern_code)::text
+  )
   AND (
     (sqlc.arg(scope)::text = 'due' AND rs.next_review_at <= NOW())
     OR (sqlc.arg(scope)::text = 'hard_normal' AND rs.last_rating IN ('hard', 'normal'))

@@ -40,10 +40,11 @@ type ListMeta struct {
 }
 
 type ListParams struct {
-	Limit    int32
-	Type     string
-	Cursor   Cursor
-	PageSize int
+	Limit       int32
+	Type        string
+	PatternCode string
+	Cursor      Cursor
+	PageSize    int
 }
 
 type Cursor struct {
@@ -68,8 +69,9 @@ type CardRecord struct {
 }
 
 type SessionParams struct {
-	Scope string
-	Limit int32
+	Scope       string
+	PatternCode string
+	Limit       int32
 }
 
 type Session struct {

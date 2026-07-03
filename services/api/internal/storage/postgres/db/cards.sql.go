@@ -269,9 +269,14 @@ LEFT JOIN roadmap_items ri ON ri.problem_id = c.problem_id AND ri.roadmap_code =
 LEFT JOIN patterns rpt ON rpt.id = ri.pattern_id
 WHERE (c.user_id = $1::bigint OR c.user_id IS NULL OR rs.id IS NOT NULL)
   AND (
-    ($2::text = 'due' AND rs.next_review_at <= NOW())
-    OR ($2::text = 'hard_normal' AND rs.last_rating IN ('hard', 'normal'))
-    OR ($2::text = 'all')
+    $2::text = ''
+    OR cpt.code = $2::text
+    OR rpt.code = $2::text
+  )
+  AND (
+    ($3::text = 'due' AND rs.next_review_at <= NOW())
+    OR ($3::text = 'hard_normal' AND rs.last_rating IN ('hard', 'normal'))
+    OR ($3::text = 'all')
   )
 ORDER BY
     CASE
@@ -282,13 +287,14 @@ ORDER BY
     rs.next_review_at ASC NULLS LAST,
     c.created_at DESC,
     c.id DESC
-LIMIT $3::integer
+LIMIT $4::integer
 `
 
 type ListCardSessionParams struct {
-	UserID    int64
-	Scope     string
-	CardLimit int32
+	UserID      int64
+	PatternCode string
+	Scope       string
+	CardLimit   int32
 }
 
 type ListCardSessionRow struct {
@@ -308,7 +314,12 @@ type ListCardSessionRow struct {
 }
 
 func (q *Queries) ListCardSession(ctx context.Context, arg ListCardSessionParams) ([]ListCardSessionRow, error) {
-	rows, err := q.db.Query(ctx, listCardSession, arg.UserID, arg.Scope, arg.CardLimit)
+	rows, err := q.db.Query(ctx, listCardSession,
+		arg.UserID,
+		arg.PatternCode,
+		arg.Scope,
+		arg.CardLimit,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -379,14 +390,20 @@ LEFT JOIN roadmap_items ri ON ri.problem_id = c.problem_id AND ri.roadmap_code =
 LEFT JOIN patterns rpt ON rpt.id = ri.pattern_id
 WHERE (c.user_id = $1::bigint OR c.user_id IS NULL OR rs.id IS NOT NULL)
   AND ($2::text = '' OR c.type = $2::text)
-  AND (c.created_at, c.id) < ($3::timestamptz, $4::bigint)
+  AND (
+    $3::text = ''
+    OR cpt.code = $3::text
+    OR rpt.code = $3::text
+  )
+  AND (c.created_at, c.id) < ($4::timestamptz, $5::bigint)
 ORDER BY c.created_at DESC, c.id DESC
-LIMIT $5::integer
+LIMIT $6::integer
 `
 
 type ListUserCardsParams struct {
 	UserID          int64
 	CardType        string
+	PatternCode     string
 	CursorCreatedAt pgtype.Timestamptz
 	CursorID        int64
 	LimitRows       int32
@@ -412,6 +429,7 @@ func (q *Queries) ListUserCards(ctx context.Context, arg ListUserCardsParams) ([
 	rows, err := q.db.Query(ctx, listUserCards,
 		arg.UserID,
 		arg.CardType,
+		arg.PatternCode,
 		arg.CursorCreatedAt,
 		arg.CursorID,
 		arg.LimitRows,
