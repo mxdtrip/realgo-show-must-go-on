@@ -251,6 +251,8 @@ WHERE rs.user_id = $1
     ($2::text = 'due' AND rs.next_review_at <= NOW())
     OR ($2::text = 'upcoming' AND rs.next_review_at > NOW())
   )
+  -- Keyset pagination: row-wise comparison seeks strictly past the last item
+  -- of the previous page on the (next_review_at, id) tiebreak.
   AND (rs.next_review_at, rs.id) > ($3::timestamptz, $4::bigint)
 ORDER BY rs.next_review_at ASC, rs.id ASC
 LIMIT $5

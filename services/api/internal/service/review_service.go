@@ -43,6 +43,8 @@ func NewReviewService(repo repo.ReviewRepository, logger *slog.Logger) ReviewSer
 }
 
 func (s *reviewService) GetQueue(ctx context.Context, userID int64, status string, cursor entity.ReviewQueueCursor, limit int32) (response.QueueResponse, error) {
+	// Запрашиваем на одну запись больше limit — если она пришла, значит есть
+	// следующая страница, и её же используем как источник nextCursor.
 	items, err := s.repo.QueueReviews(ctx, userID, status, cursor, limit+1)
 	if err != nil {
 		return response.QueueResponse{}, fmt.Errorf("reviews: GetQueue: %w", err)
