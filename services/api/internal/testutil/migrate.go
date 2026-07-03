@@ -1,6 +1,7 @@
 package testutil
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/golang-migrate/migrate/v4"
@@ -19,7 +20,7 @@ import (
 //
 // Ошибка ErrNoChange (база уже полностью мигрирована) считается успешным
 // результатом.
-func ApplyMigrations(connStr string) error {
+func ApplyMigrations(connStr string) (err error) {
 	src, err := iofs.New(migrations.FS, ".")
 	if err != nil {
 		return fmt.Errorf("build migrate source: %w", err)
@@ -28,7 +29,15 @@ func ApplyMigrations(connStr string) error {
 	if err != nil {
 		return fmt.Errorf("init migrate: %w", err)
 	}
-	defer m.Close()
+	defer func() {
+		sourceErr, databaseErr := m.Close()
+		if sourceErr != nil {
+			err = errors.Join(err, fmt.Errorf("close migration source: %w", sourceErr))
+		}
+		if databaseErr != nil {
+			err = errors.Join(err, fmt.Errorf("close migration database: %w", databaseErr))
+		}
+	}()
 
 	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
 		return fmt.Errorf("apply migrations: %w", err)

@@ -20,8 +20,6 @@ var (
 	ErrInvalidRating  = errors.New("invalid rating: must be hard, normal, or easy")
 )
 
-const todayReviewsLimit = 100
-
 // ReviewService — бизнес-логика для повторений.
 // Обёрнут в data согласно контракту
 type ReviewService interface {

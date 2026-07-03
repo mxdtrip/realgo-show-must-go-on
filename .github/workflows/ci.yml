@@ -52,6 +52,15 @@ jobs:
       - name: Check generated files
         run: git diff --exit-code
 
+      - name: Check gofmt
+        run: test -z "$(gofmt -l .)"
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v9
+        with:
+          version: v2.12
+          working-directory: services/api
+
       - name: Vet
         run: go vet ./...
 
