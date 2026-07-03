@@ -1,7 +1,7 @@
 name: Deploy
 on:
   push:
-    branches: [main, master]
+    branches: [dev, main, master]
   workflow_dispatch:
 concurrency:
   group: deploy

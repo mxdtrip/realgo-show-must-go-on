@@ -128,6 +128,11 @@ function finalize(adapter: PlatformAdapter, submitResult: SubmitResult) {
   lastKey = key;
   lastKeyAt = now;
 
+  // The popup is a spaced-repetition rating flow and must only appear after a
+  // confirmed accepted verdict. Wrong answers, runtime errors and verdict
+  // timeouts are not solved tasks and must never create review schedules.
+  if (submitResult !== "accepted") return;
+
   try {
     chrome.runtime.sendMessage({ type: "REALGO_SUBMISSION_DETECTED", submission });
   } catch {

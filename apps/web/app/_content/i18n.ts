@@ -564,7 +564,12 @@ const ru = {
         privacyDescription:
           "Не вставляй NDA-материалы, premium/editorial-контент, скриншоты интервью или чужие закрытые материалы в заметки и AI-поля.",
         exportProgress: "export data",
+        exportRequested: "export request accepted",
         deleteAccount: "delete account",
+        deleteConfirm: "Удалить аккаунт realgo? Это действие нельзя отменить.",
+        deletePasswordPrompt: "Введите пароль, чтобы удалить аккаунт",
+        deleteDone: "account deleted",
+        actionFailed: "action failed",
         profile: {
           emailLabel: "email",
           email: "demo@realgo.dev",
@@ -576,7 +581,8 @@ const ru = {
           planLabel: "plan",
           plan: "Free mock",
           save: "save changes",
-          saved: "saved locally",
+          saved: "saved",
+          saveFailed: "profile save failed",
           quickSetup: "quick setup →",
         },
         install: {
@@ -590,7 +596,7 @@ const ru = {
         },
         notifications: {
           description:
-            "Уведомления работают локально через браузер/PWA. Push-сервер и backend-синхронизация подключатся отдельно.",
+            "Базовые флаги напоминаний синхронизируются с аккаунтом; показ уведомлений остаётся локальным через браузер/PWA.",
           enable: "enable",
           enabled: "notifications enabled",
           disabled: "permission required",
@@ -602,6 +608,7 @@ const ru = {
           streakReminder: "Защита серии (streak)",
           reminderTime: "reminder time",
           sendTest: "send test",
+          syncFailed: "notification settings sync failed",
           testTitle: "realgo review reminder",
           testBody: "Карточки ждут короткого повторения.",
           testSent: "test notification sent",

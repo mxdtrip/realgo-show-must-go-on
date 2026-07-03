@@ -25,10 +25,17 @@ export const HEALTH_PATH = "/healthz";
 interface EventRequest {
   eventId: string;
   source: Exclude<Platform, "unknown">;
-  event: "problem_solved";
+  event: "problem_solved" | "problem_submitted";
   occurredAt: string;
-  rating: SubmissionPayload["userDifficulty"];
+  rating?: SubmissionPayload["userDifficulty"];
   extensionVersion?: string;
+  platform?: Exclude<Platform, "unknown">;
+  taskTitle?: string;
+  taskUrl?: string;
+  platformTaskSlug?: string;
+  submitResult?: SubmissionPayload["submitResult"];
+  submittedAt?: string;
+  userDifficulty?: SubmissionPayload["userDifficulty"];
   problem: {
     externalId: string;
     title: string;
@@ -90,8 +97,8 @@ export async function saveSubmission(
 
 /**
  * Maps the extension's internal payload onto the `/extension/events` contract.
- * The MVP collects a single difficulty rating; the backend consumes nothing
- * else (confirmed in services/api .../extension/models.go).
+ * Accepted verdicts become solved events; every other verdict is only a submit
+ * event and must not create review schedules.
  */
 function buildEventRequest(payload: SubmissionPayload): EventRequest {
   if (payload.platform === "unknown") {
@@ -108,13 +115,23 @@ function buildEventRequest(payload: SubmissionPayload): EventRequest {
     throw new ApiError("Отсутствует идентификатор события.", 0, "invalid_event");
   }
 
+  const submitResult = payload.submitResult ?? "accepted";
+  const solved = submitResult === "accepted";
+
   return {
     eventId: payload.eventId,
     source: payload.platform,
-    event: "problem_solved",
+    event: solved ? "problem_solved" : "problem_submitted",
     occurredAt: payload.submittedAt,
-    rating: payload.userDifficulty,
+    rating: solved ? payload.userDifficulty : undefined,
     extensionVersion: manifestVersion(),
+    platform: payload.platform,
+    taskTitle: payload.taskTitle,
+    taskUrl: payload.taskUrl,
+    platformTaskSlug: externalId,
+    submitResult,
+    submittedAt: payload.submittedAt,
+    userDifficulty: solved ? payload.userDifficulty : undefined,
     problem: {
       externalId,
       title: payload.taskTitle,

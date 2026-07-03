@@ -37,4 +37,16 @@ export type AuthUser = {
   plan: string;
   interview_date: string | null;
   created_at: string;
+  onboarding_completed?: boolean;
+  profile?: {
+    prep_goal?: string | null;
+    grade?: string | null;
+    target_company?: string | null;
+    target_position?: string | null;
+  };
+  notification_settings?: {
+    review_reminder: boolean;
+    weekly_digest: boolean;
+    email_enabled: boolean;
+  };
 };

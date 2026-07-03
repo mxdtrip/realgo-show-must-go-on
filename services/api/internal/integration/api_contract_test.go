@@ -271,8 +271,6 @@ func TestContractProtectedRoutesShouldUseUppercaseUnauthorizedCodes(t *testing.T
 }
 
 func TestContractProtectedBodiesShouldRejectUnknownFields(t *testing.T) {
-	t.Skip("TODO(#79): protected handlers extension/reviews используют json.Decoder без DisallowUnknownFields и принимают лишние поля")
-
 	h := newContractHarness(t)
 	email := uniqueEmail("unknown-fields")
 	t.Cleanup(func() { h.cleanupUser(email) })
@@ -282,6 +280,14 @@ func TestContractProtectedBodiesShouldRejectUnknownFields(t *testing.T) {
 	payload := eventPayload("unknown-fields", time.Now().UTC())
 	payload["unexpected"] = true
 	resp := h.request(t, http.MethodPost, "/api/v1/extension/events", tokens.access, payload)
+	requireErrorEnvelope(t, resp, http.StatusBadRequest, "VALIDATION_ERROR")
+
+	reviewRate := map[string]any{
+		"rating":     "normal",
+		"reviewedAt": time.Now().UTC().Format(time.RFC3339),
+		"unexpected": true,
+	}
+	resp = h.request(t, http.MethodPost, "/api/v1/me/reviews/1/rate", tokens.access, reviewRate)
 	requireErrorEnvelope(t, resp, http.StatusBadRequest, "VALIDATION_ERROR")
 }
 
