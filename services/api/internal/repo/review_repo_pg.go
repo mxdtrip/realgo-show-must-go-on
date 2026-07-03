@@ -79,6 +79,7 @@ func (r *pgReviewRepository) SaveReview(ctx context.Context, schedule entity.Rev
 	q := r.q.WithTx(tx)
 	updated, err := q.UpdateReviewSchedule(ctx, db.UpdateReviewScheduleParams{
 		ID:             schedule.ID,
+		UserID:         schedule.UserID,
 		NextReviewAt:   toPgTimestamptz(schedule.NextReviewAt),
 		IntervalDays:   schedule.IntervalDays,
 		Stability:      schedule.Stability,

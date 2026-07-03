@@ -13,11 +13,8 @@ import (
 
 const createProblemScheduleIfAbsent = `-- name: CreateProblemScheduleIfAbsent :exec
 INSERT INTO review_schedules (user_id, problem_id, next_review_at, interval_days, ease, stability, difficulty, review_count, algorithm, state)
-SELECT $1::bigint, $2::bigint, NOW(), 1, 2.5, 1.0, 5.0, 0, 'fsrs', 0
-WHERE NOT EXISTS (
-    SELECT 1 FROM review_schedules
-    WHERE user_id = $1::bigint AND problem_id = $2::bigint
-)
+VALUES ($1::bigint, $2::bigint, NOW(), 1, 2.5, 1.0, 5.0, 0, 'fsrs', 0)
+ON CONFLICT (user_id, problem_id) WHERE problem_id IS NOT NULL DO NOTHING
 `
 
 type CreateProblemScheduleIfAbsentParams struct {
