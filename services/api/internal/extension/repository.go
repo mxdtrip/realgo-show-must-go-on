@@ -82,12 +82,20 @@ func (r *pgRepository) PlatformIDByCode(ctx context.Context, code string) (int64
 // Ingest runs the whole save as one transaction: upsert the catalog problem,
 // record the event idempotently, and (for a solved event that is not a replay)
 // update progress and create/advance the review schedule.
-func (r *pgRepository) Ingest(ctx context.Context, in IngestInput) (IngestOutput, error) {
+func (r *pgRepository) Ingest(ctx context.Context, in IngestInput) (out IngestOutput, err error) {
 	tx, err := r.pool.Begin(ctx)
 	if err != nil {
 		return IngestOutput{}, fmt.Errorf("extension: begin tx: %w", err)
 	}
-	defer tx.Rollback(ctx)
+	committed := false
+	defer func() {
+		if committed {
+			return
+		}
+		if rollbackErr := tx.Rollback(ctx); rollbackErr != nil {
+			err = errors.Join(err, fmt.Errorf("extension: rollback tx: %w", rollbackErr))
+		}
+	}()
 
 	q := r.q.WithTx(tx)
 
@@ -102,7 +110,7 @@ func (r *pgRepository) Ingest(ctx context.Context, in IngestInput) (IngestOutput
 	if err != nil {
 		return IngestOutput{}, fmt.Errorf("extension: upsert problem: %w", err)
 	}
-	out := IngestOutput{ProblemID: problemID}
+	out = IngestOutput{ProblemID: problemID}
 
 	_, err = q.InsertExtensionEvent(ctx, db.InsertExtensionEventParams{
 		UserID:           toInt8(in.UserID),
@@ -135,6 +143,7 @@ func (r *pgRepository) Ingest(ctx context.Context, in IngestInput) (IngestOutput
 		if err := tx.Commit(ctx); err != nil {
 			return IngestOutput{}, fmt.Errorf("extension: commit tx: %w", err)
 		}
+		committed = true
 		return out, nil
 	}
 
@@ -144,6 +153,7 @@ func (r *pgRepository) Ingest(ctx context.Context, in IngestInput) (IngestOutput
 		if err := tx.Commit(ctx); err != nil {
 			return IngestOutput{}, fmt.Errorf("extension: commit tx: %w", err)
 		}
+		committed = true
 		return out, nil
 	}
 
@@ -167,6 +177,7 @@ func (r *pgRepository) Ingest(ctx context.Context, in IngestInput) (IngestOutput
 	if err := tx.Commit(ctx); err != nil {
 		return IngestOutput{}, fmt.Errorf("extension: commit tx: %w", err)
 	}
+	committed = true
 	return out, nil
 }
 

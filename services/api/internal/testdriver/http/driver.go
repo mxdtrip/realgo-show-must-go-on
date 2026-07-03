@@ -63,7 +63,11 @@ func New(t *testing.T, h *testutil.Harness) *Driver {
 	if err != nil {
 		t.Fatalf("driver: connect redis: %v", err)
 	}
-	t.Cleanup(func() { _ = rd.Close() })
+	t.Cleanup(func() {
+		if err := rd.Close(); err != nil {
+			t.Fatalf("driver: close redis: %v", err)
+		}
+	})
 
 	authSvc := auth.NewService(db.New(pg.Pool), rd.Client, auth.Config{
 		JWTSecret:  []byte(testJWTSecret),
@@ -168,9 +172,16 @@ func (d *Driver) do(t *testing.T, method, path string, body any, token string) *
 // чтобы причина сбоя была сразу видна.
 func (d *Driver) decode(t *testing.T, resp *http.Response, dst any) {
 	t.Helper()
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			t.Fatalf("driver: close response body: %v", err)
+		}
+	}()
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		raw, _ := io.ReadAll(resp.Body)
+		raw, err := io.ReadAll(resp.Body)
+		if err != nil {
+			t.Fatalf("driver: read error response body: %v", err)
+		}
 		t.Fatalf("driver: %s %s: status %d, body %s",
 			resp.Request.Method, resp.Request.URL.Path, resp.StatusCode, string(raw))
 	}

@@ -64,7 +64,7 @@ func (r *pgReviewRepository) ScheduleByID(ctx context.Context, scheduleID, userI
 	return scheduleFromRow(row), nil
 }
 
-func (r *pgReviewRepository) SaveReview(ctx context.Context, schedule entity.ReviewSchedule, attempt entity.ReviewAttempt) (entity.ReviewSchedule, error) {
+func (r *pgReviewRepository) SaveReview(ctx context.Context, schedule entity.ReviewSchedule, attempt entity.ReviewAttempt) (saved entity.ReviewSchedule, err error) {
 	kind, err := reviewType(attempt)
 	if err != nil {
 		return entity.ReviewSchedule{}, err
@@ -74,7 +74,15 @@ func (r *pgReviewRepository) SaveReview(ctx context.Context, schedule entity.Rev
 	if err != nil {
 		return entity.ReviewSchedule{}, fmt.Errorf("reviews: begin tx: %w", err)
 	}
-	defer tx.Rollback(ctx)
+	committed := false
+	defer func() {
+		if committed {
+			return
+		}
+		if rollbackErr := tx.Rollback(ctx); rollbackErr != nil {
+			err = errors.Join(err, fmt.Errorf("reviews: rollback tx: %w", rollbackErr))
+		}
+	}()
 
 	q := r.q.WithTx(tx)
 	updated, err := q.UpdateReviewSchedule(ctx, db.UpdateReviewScheduleParams{
@@ -111,6 +119,7 @@ func (r *pgReviewRepository) SaveReview(ctx context.Context, schedule entity.Rev
 	if err := tx.Commit(ctx); err != nil {
 		return entity.ReviewSchedule{}, fmt.Errorf("reviews: commit tx: %w", err)
 	}
+	committed = true
 	return scheduleFromUpdate(updated), nil
 }
 

@@ -59,12 +59,20 @@ func (r *pgRepository) ListSession(ctx context.Context, userID int64, params Ses
 	return items, nil
 }
 
-func (r *pgRepository) EnsureReviewSchedule(ctx context.Context, userID, cardID int64, reviewedAt time.Time) (int64, error) {
+func (r *pgRepository) EnsureReviewSchedule(ctx context.Context, userID, cardID int64, reviewedAt time.Time) (scheduleID int64, err error) {
 	tx, err := r.pool.Begin(ctx)
 	if err != nil {
 		return 0, fmt.Errorf("cards: begin tx: %w", err)
 	}
-	defer tx.Rollback(ctx)
+	committed := false
+	defer func() {
+		if committed {
+			return
+		}
+		if rollbackErr := tx.Rollback(ctx); rollbackErr != nil {
+			err = errors.Join(err, fmt.Errorf("cards: rollback tx: %w", rollbackErr))
+		}
+	}()
 
 	q := r.q.WithTx(tx)
 	id, err := q.GetCardReviewSchedule(ctx, db.GetCardReviewScheduleParams{UserID: userID, CardID: toInt8(cardID)})
@@ -73,6 +81,7 @@ func (r *pgRepository) EnsureReviewSchedule(ctx context.Context, userID, cardID 
 		if err := tx.Commit(ctx); err != nil {
 			return 0, fmt.Errorf("cards: commit tx: %w", err)
 		}
+		committed = true
 		return id, nil
 	case errors.Is(err, pgx.ErrNoRows):
 		if _, err := q.GetAccessibleCard(ctx, db.GetAccessibleCardParams{CardID: cardID, UserID: userID}); err != nil {
@@ -92,6 +101,7 @@ func (r *pgRepository) EnsureReviewSchedule(ctx context.Context, userID, cardID 
 		if err := tx.Commit(ctx); err != nil {
 			return 0, fmt.Errorf("cards: commit tx: %w", err)
 		}
+		committed = true
 		return createdID, nil
 	default:
 		return 0, fmt.Errorf("cards: lookup schedule: %w", err)
@@ -260,14 +270,6 @@ func newCardDetail(id int64, cardType, question, answer string, createdByAI bool
 	}
 	d.Explanation = stringPtrFromPg(explanation)
 	d.Source = stringPtrFromPg(source)
-	return d
-}
-
-func cardDetailFromCard(c db.Card, problemTitle, problemURL, patternName pgtype.Text) CardDetail {
-	d := newCardDetail(c.ID, c.Type, c.Question, c.Answer, c.CreatedByAi.Bool, c.CreatedAt, c.Explanation, c.Source)
-	d.ProblemTitle = stringPtrFromPg(problemTitle)
-	d.ProblemURL = stringPtrFromPg(problemURL)
-	d.PatternName = stringPtrFromPg(patternName)
 	return d
 }
 

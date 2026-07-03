@@ -161,15 +161,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	card, err := h.svc.Create(r.Context(), userID, CreateCardInput{
-		Type:        req.Type,
-		Question:    req.Question,
-		Answer:      req.Answer,
-		Explanation: req.Explanation,
-		Source:      req.Source,
-		ProblemID:   req.ProblemID,
-		PatternID:   req.PatternID,
-	})
+	card, err := h.svc.Create(r.Context(), userID, CreateCardInput(req))
 	if err != nil {
 		if errors.Is(err, ErrCardTargetNotFound) {
 			response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "problem_id or pattern_id does not exist")
@@ -230,13 +222,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	card, err := h.svc.Update(r.Context(), userID, cardID, UpdateCardInput{
-		Type:        req.Type,
-		Question:    req.Question,
-		Answer:      req.Answer,
-		Explanation: req.Explanation,
-		Source:      req.Source,
-	})
+	card, err := h.svc.Update(r.Context(), userID, cardID, UpdateCardInput(req))
 	if errors.Is(err, ErrCardNotFound) {
 		response.Fail(w, http.StatusNotFound, "NOT_FOUND", "card not found")
 		return
@@ -367,7 +353,10 @@ func encodeCursor(cursor Cursor) string {
 		CreatedAt: cursor.CreatedAt.UTC().Format(time.RFC3339Nano),
 		ID:        cursor.ID,
 	}
-	raw, _ := json.Marshal(payload)
+	raw, err := json.Marshal(payload)
+	if err != nil {
+		return ""
+	}
 	return base64.RawURLEncoding.EncodeToString(raw)
 }
 
