@@ -160,7 +160,7 @@ func cardFromRecord(record CardRecord, now time.Time) Card {
 			Label:      record.SourceLabel,
 		},
 		Front:        record.Front,
-			Back:         record.Back,
+		Back:         record.Back,
 		Status:       status(record, now),
 		NextReviewAt: record.NextReviewAt,
 		LastRating:   record.LastRating,
@@ -174,7 +174,7 @@ func sessionCardFromRecord(record CardRecord) SessionCard {
 		Type:        record.Type,
 		SourceLabel: record.SourceLabel,
 		Front:       record.Front,
-			Back:        record.Back,
+		Back:        record.Back,
 		ReviewState: ReviewState{
 			Attempts:     record.ReviewCount,
 			LastRating:   record.LastRating,

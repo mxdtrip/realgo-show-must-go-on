@@ -53,10 +53,10 @@ func TestListReturnsTopLevelDataAndMeta(t *testing.T) {
 	created2 := created1.Add(-time.Minute)
 	created3 := created2.Add(-time.Minute)
 	repo := &fakeRepository{list: []CardRecord{
-			{ID: 3, Type: CardTypePatternRecognition, Front: "front 3", Back: "back 3", CreatedAt: created1, SourceEntityType: "custom", SourceLabel: "custom card"},
-			{ID: 2, Type: CardTypeEdgeCase, Front: "front 2", Back: "back 2", CreatedAt: created2, SourceEntityType: "custom", SourceLabel: "custom card"},
-			{ID: 1, Type: CardTypeAlgorithmMechanics, Front: "front 1", Back: "back 1", CreatedAt: created3, SourceEntityType: "custom", SourceLabel: "custom card"},
-		}}
+		{ID: 3, Type: CardTypePatternRecognition, Front: "front 3", Back: "back 3", CreatedAt: created1, SourceEntityType: "custom", SourceLabel: "custom card"},
+		{ID: 2, Type: CardTypeEdgeCase, Front: "front 2", Back: "back 2", CreatedAt: created2, SourceEntityType: "custom", SourceLabel: "custom card"},
+		{ID: 1, Type: CardTypeAlgorithmMechanics, Front: "front 1", Back: "back 1", CreatedAt: created3, SourceEntityType: "custom", SourceLabel: "custom card"},
+	}}
 	h := testHandler(repo, &fakeRater{})
 	req := authenticatedRequest(http.MethodGet, "/me/cards?limit=2&type=edge_case", nil, 42)
 	w := httptest.NewRecorder()

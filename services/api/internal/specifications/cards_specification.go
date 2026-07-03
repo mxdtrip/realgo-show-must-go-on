@@ -123,9 +123,9 @@ func ListCardsSpecification(t *testing.T, p CardsProvider) {
 }
 
 // StartSessionSpecification проверяет, что:
-// - при запуске сессии с scope "due" карточка без расписания не попадает
-//   (она new, не due) — ожидаем пустую сессию
-// - сессия возвращает корректный sessionId
+//   - при запуске сессии с scope "due" карточка без расписания не попадает
+//     (она new, не due) — ожидаем пустую сессию
+//   - сессия возвращает корректный sessionId
 func StartSessionSpecification(t *testing.T, p CardsProvider) {
 	t.Helper()
 

@@ -236,8 +236,8 @@ func (u *cardsUser) StartSession(t *testing.T, scope string) specifications.Sess
 func (u *cardsUser) RateCard(t *testing.T, sessionID string, cardID int64, rating string) specifications.RateInfo {
 	t.Helper()
 	body := map[string]string{
-		"sessionId": sessionID,
-		"rating":    rating,
+		"sessionId":  sessionID,
+		"rating":     rating,
 		"reviewedAt": time.Now().UTC().Format(time.RFC3339),
 	}
 	path := fmt.Sprintf("/api/v1/me/cards/%d/rate", cardID)

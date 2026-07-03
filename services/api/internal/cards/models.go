@@ -147,7 +147,7 @@ type CardDetail struct {
 	Front        string    `json:"front"`
 	Back         string    `json:"back"`
 	Explanation  *string   `json:"explanation"`
-	Source       Source     `json:"source"`
+	Source       Source    `json:"source"`
 	CreatedByAI  bool      `json:"createdByAi"`
 	CreatedAt    time.Time `json:"createdAt"`
 	ProblemTitle *string   `json:"problemTitle"`
@@ -157,13 +157,13 @@ type CardDetail struct {
 
 // HTTP request types used by CRUD handlers only.
 type createCardRequest struct {
-	Type       string  `json:"type"`
-	Front      string  `json:"front"`
-	Back       string  `json:"back"`
+	Type        string  `json:"type"`
+	Front       string  `json:"front"`
+	Back        string  `json:"back"`
 	Explanation *string `json:"explanation"`
-	SourceText *string `json:"sourceText"`
-	ProblemID  *int64  `json:"problemId"`
-	PatternID  *int64  `json:"patternId"`
+	SourceText  *string `json:"sourceText"`
+	ProblemID   *int64  `json:"problemId"`
+	PatternID   *int64  `json:"patternId"`
 }
 
 type updateCardRequest struct {
