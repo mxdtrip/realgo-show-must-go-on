@@ -143,6 +143,38 @@ func TestSessionReturnsPayload(t *testing.T) {
 	}
 }
 
+func TestListCapturesPatternCode(t *testing.T) {
+	repo := &fakeRepository{}
+	h := testHandler(repo, &fakeRater{})
+	req := authenticatedRequest(http.MethodGet, "/me/cards?patternCode=two_pointers", nil, 42)
+	w := httptest.NewRecorder()
+
+	h.List(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", w.Code, w.Body.String())
+	}
+	if repo.listParams.PatternCode != "two_pointers" {
+		t.Fatalf("patternCode = %q, want two_pointers", repo.listParams.PatternCode)
+	}
+}
+
+func TestSessionCapturesPatternCode(t *testing.T) {
+	repo := &fakeRepository{}
+	h := testHandler(repo, &fakeRater{})
+	req := authenticatedRequest(http.MethodGet, "/me/cards/session?scope=all&patternCode=sliding_window", nil, 42)
+	w := httptest.NewRecorder()
+
+	h.Session(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", w.Code, w.Body.String())
+	}
+	if repo.sessionParams.PatternCode != "sliding_window" {
+		t.Fatalf("patternCode = %q, want sliding_window", repo.sessionParams.PatternCode)
+	}
+}
+
 func TestRateValidatesRequest(t *testing.T) {
 	tests := []struct {
 		name string

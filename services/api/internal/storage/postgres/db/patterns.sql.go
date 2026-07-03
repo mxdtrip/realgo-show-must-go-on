@@ -11,6 +11,95 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const getPatternByCode = `-- name: GetPatternByCode :one
+SELECT
+    id,
+    code,
+    name,
+    description,
+    techniques,
+    recognition_symptoms,
+    checklist
+FROM patterns
+WHERE code = $1
+`
+
+type GetPatternByCodeRow struct {
+	ID                  int64
+	Code                string
+	Name                string
+	Description         pgtype.Text
+	Techniques          []string
+	RecognitionSymptoms []string
+	Checklist           []string
+}
+
+func (q *Queries) GetPatternByCode(ctx context.Context, code string) (GetPatternByCodeRow, error) {
+	row := q.db.QueryRow(ctx, getPatternByCode, code)
+	var i GetPatternByCodeRow
+	err := row.Scan(
+		&i.ID,
+		&i.Code,
+		&i.Name,
+		&i.Description,
+		&i.Techniques,
+		&i.RecognitionSymptoms,
+		&i.Checklist,
+	)
+	return i, err
+}
+
+const listPatternExampleProblems = `-- name: ListPatternExampleProblems :many
+SELECT
+    p.id,
+    p.title,
+    p.difficulty,
+    p.url
+FROM roadmap_items ri
+JOIN problems p ON p.id = ri.problem_id
+WHERE ri.pattern_id = $1
+  AND ri.roadmap_code = 'neetcode_150'
+ORDER BY ri.position
+LIMIT $2
+`
+
+type ListPatternExampleProblemsParams struct {
+	PatternID int64
+	Limit     int32
+}
+
+type ListPatternExampleProblemsRow struct {
+	ID         int64
+	Title      string
+	Difficulty pgtype.Text
+	Url        string
+}
+
+func (q *Queries) ListPatternExampleProblems(ctx context.Context, arg ListPatternExampleProblemsParams) ([]ListPatternExampleProblemsRow, error) {
+	rows, err := q.db.Query(ctx, listPatternExampleProblems, arg.PatternID, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListPatternExampleProblemsRow
+	for rows.Next() {
+		var i ListPatternExampleProblemsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Title,
+			&i.Difficulty,
+			&i.Url,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listPatterns = `-- name: ListPatterns :many
 SELECT
     pt.id,

@@ -20,6 +20,31 @@ LEFT JOIN review_schedules rs ON rs.pattern_id = pt.id AND rs.user_id = $1::bigi
 GROUP BY pt.id, pt.code, pt.name, pt.description, pt.parent_id
 ORDER BY pt.name ASC;
 
+-- name: GetPatternByCode :one
+SELECT
+    id,
+    code,
+    name,
+    description,
+    techniques,
+    recognition_symptoms,
+    checklist
+FROM patterns
+WHERE code = $1;
+
+-- name: ListPatternExampleProblems :many
+SELECT
+    p.id,
+    p.title,
+    p.difficulty,
+    p.url
+FROM roadmap_items ri
+JOIN problems p ON p.id = ri.problem_id
+WHERE ri.pattern_id = $1
+  AND ri.roadmap_code = 'neetcode_150'
+ORDER BY ri.position
+LIMIT $2;
+
 -- name: ListWeakPatterns :many
 SELECT
     pt.code AS pattern_code,

@@ -271,6 +271,8 @@ func parseListParams(r *http.Request) (ListParams, error) {
 		return ListParams{}, errors.New("type must be one of pattern_recognition, algorithm_mechanics, edge_case")
 	}
 
+	patternCode := strings.TrimSpace(r.URL.Query().Get("patternCode"))
+
 	cursor := initialCursor()
 	if raw := strings.TrimSpace(r.URL.Query().Get("cursor")); raw != "" {
 		cursor, err = decodeCursor(raw)
@@ -280,10 +282,11 @@ func parseListParams(r *http.Request) (ListParams, error) {
 	}
 
 	return ListParams{
-		Limit:    int32(limit + 1),
-		Type:     cardType,
-		Cursor:   cursor,
-		PageSize: limit,
+		Limit:       int32(limit + 1),
+		Type:        cardType,
+		PatternCode: patternCode,
+		Cursor:      cursor,
+		PageSize:    limit,
 	}, nil
 }
 
@@ -301,7 +304,9 @@ func parseSessionParams(r *http.Request) (SessionParams, error) {
 		return SessionParams{}, errors.New("scope must be due, hard_normal, or all")
 	}
 
-	return SessionParams{Scope: scope, Limit: int32(limit)}, nil
+	patternCode := strings.TrimSpace(r.URL.Query().Get("patternCode"))
+
+	return SessionParams{Scope: scope, PatternCode: patternCode, Limit: int32(limit)}, nil
 }
 
 func parseLimit(raw string, defaultValue int) (int, error) {

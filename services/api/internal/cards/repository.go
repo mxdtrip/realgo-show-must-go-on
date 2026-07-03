@@ -27,6 +27,7 @@ func (r *pgRepository) List(ctx context.Context, userID int64, params ListParams
 	rows, err := r.q.ListUserCards(ctx, db.ListUserCardsParams{
 		UserID:          userID,
 		CardType:        params.Type,
+		PatternCode:     params.PatternCode,
 		CursorCreatedAt: toTimestamptz(params.Cursor.CreatedAt),
 		CursorID:        params.Cursor.ID,
 		LimitRows:       params.Limit,
@@ -44,9 +45,10 @@ func (r *pgRepository) List(ctx context.Context, userID int64, params ListParams
 
 func (r *pgRepository) ListSession(ctx context.Context, userID int64, params SessionParams) ([]CardRecord, error) {
 	rows, err := r.q.ListCardSession(ctx, db.ListCardSessionParams{
-		UserID:    userID,
-		Scope:     params.Scope,
-		CardLimit: params.Limit,
+		UserID:      userID,
+		PatternCode: params.PatternCode,
+		Scope:       params.Scope,
+		CardLimit:   params.Limit,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("cards: list session: %w", err)
