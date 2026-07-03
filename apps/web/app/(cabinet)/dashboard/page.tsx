@@ -6,6 +6,7 @@ import { getDictionary } from "../../_content/i18n";
 import {
   activityActiveDays,
   activityTotalReviews,
+  activityCounts,
   activityWeeks,
   overviewStats,
   reviewQueue,
@@ -33,11 +34,13 @@ export default function DashboardPage() {
         </div>
       </section>
 
-      <CabinetPanel eyebrow={page.heatmap.eyebrow} title={page.heatmap.title}>
+      <CabinetPanel title={page.heatmap.title}>
         <div className="heatmap-layout">
           <div>
             <ActivityHeatmap
               weeks={activityWeeks}
+              counts={activityCounts}
+              tooltip={page.heatmap.tooltip}
               ariaLabel={page.heatmap.aria}
               footLeft={page.heatmap.foot}
               scaleLess={page.heatmap.scaleLess}
@@ -85,7 +88,6 @@ export default function DashboardPage() {
 
       <div className="cabinet-grid">
         <CabinetPanel
-          eyebrow={page.queueEyebrow}
           title={page.queueTitle}
           meta={
             <Link className="cabinet-panel__meta" href="/reviews">
@@ -119,7 +121,6 @@ export default function DashboardPage() {
         </CabinetPanel>
 
         <CabinetPanel
-          eyebrow={page.patternsEyebrow}
           title={page.patternsTitle}
           meta={
             <Link className="cabinet-panel__meta" href="/patterns">

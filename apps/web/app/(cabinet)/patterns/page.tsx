@@ -43,7 +43,6 @@ export default function PatternsPage() {
 
       <div className="cabinet-grid">
         <CabinetPanel
-          eyebrow={page.weakColumnEyebrow}
           title={page.weakColumnTitle}
           meta={<span className="cabinet-panel__meta">{weak.length} patterns</span>}
         >
@@ -55,7 +54,6 @@ export default function PatternsPage() {
         </CabinetPanel>
 
         <CabinetPanel
-          eyebrow={page.strongColumnEyebrow}
           title={page.strongColumnTitle}
           meta={<span className="cabinet-panel__meta">{strong.length} patterns</span>}
         >

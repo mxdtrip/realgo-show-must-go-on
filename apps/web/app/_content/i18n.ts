@@ -262,6 +262,7 @@ const ru = {
   },
   cabinet: {
     layout: {
+      brand: "ReAlgo",
       navAria: "Personal cabinet",
       navGroups: [
         {
@@ -336,17 +337,32 @@ const ru = {
         nextTitle: "Longest Substring",
         nextMeta: "hard · 09:30",
         openQueue: "open queue",
-        queueEyebrow: "queue",
         queueTitle: "Ближайшие повторения",
-        patternsEyebrow: "patterns",
         patternsTitle: "Слабые зоны",
         heatmap: {
-          eyebrow: "activity",
           title: "Активность повторений",
           aria: "Активность повторений за последние 28 дней",
           foot: "последние 28 дней",
           scaleLess: "less",
           scaleMore: "more",
+          tooltip: {
+            empty: "без повторений",
+            months: [
+              "января",
+              "февраля",
+              "марта",
+              "апреля",
+              "мая",
+              "июня",
+              "июля",
+              "августа",
+              "сентября",
+              "октября",
+              "ноября",
+              "декабря",
+            ],
+            unitForms: ["повторение", "повторения", "повторений"],
+          },
           statDays: "активных дней",
           statReviews: "повторений за период",
           statStreak: "текущий streak",
@@ -433,9 +449,7 @@ const ru = {
         priorityMed: "review soon",
         trainLink: "review now →",
         weeklyLabel: "за неделю",
-        weakColumnEyebrow: "weak spots",
         weakColumnTitle: "Слабые паттерны",
-        strongColumnEyebrow: "strong spots",
         strongColumnTitle: "Сильные паттерны",
         strongPriority: "закреплено",
         strongEmpty: "Пока нет закреплённых паттернов — повторяй регулярно.",

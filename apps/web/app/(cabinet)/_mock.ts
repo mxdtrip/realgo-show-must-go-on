@@ -67,5 +67,24 @@ export const activityWeeks: readonly (readonly number[])[] = Array.from({ length
   }),
 );
 
+// Per-day review counts behind the levels (for the hover tooltip). A separate
+// PRNG stream jitters counts inside each level's bracket without touching the
+// level pattern above.
+const countRand = mulberry32(20260703);
+const countBrackets: readonly (readonly [number, number])[] = [
+  [0, 0], // level 0
+  [1, 2], // level 1
+  [3, 4], // level 2
+  [5, 7], // level 3
+  [8, 11], // level 4
+];
+
+export const activityCounts: readonly (readonly number[])[] = activityWeeks.map((week) =>
+  week.map((level) => {
+    const [min, max] = countBrackets[level];
+    return min + Math.floor(countRand() * (max - min + 1));
+  }),
+);
+
 export const activityActiveDays = activityWeeks.flat().filter((level) => level > 0).length;
-export const activityTotalReviews = activityWeeks.flat().reduce((sum, level) => sum + level * 2, 0);
+export const activityTotalReviews = activityCounts.flat().reduce((sum, count) => sum + count, 0);

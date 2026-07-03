@@ -2198,21 +2198,53 @@ a.cabinet-panel__meta:hover {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 6px;
+  gap: 7px;
   padding: 14px 16px 12px;
 }
 
 .heatmap__week {
   display: grid;
   grid-template-columns: repeat(7, auto);
-  gap: 6px;
+  gap: 7px;
 }
 
 .heatmap__cell {
-  width: 16px;
-  height: 16px;
-  border-radius: 3.5px;
+  position: relative;
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
   background: rgba(255, 255, 255, 0.045);
+}
+
+/* Pure-CSS hover tip: date + review count from the data-tip attribute. */
+.heatmap__cell[data-tip]::after {
+  content: attr(data-tip);
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 9px);
+  transform: translate(-50%, 3px);
+  z-index: 40;
+  white-space: nowrap;
+  padding: 6px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  background: var(--panel-strong);
+  box-shadow: 0 16px 36px -18px rgba(1, 4, 9, 0.95);
+  color: var(--text-dim);
+  font-family: var(--font-stack-mono);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
+}
+
+.heatmap__cell[data-tip]:hover::after {
+  opacity: 1;
+  transform: translate(-50%, 0);
 }
 
 .heatmap__cell--1 {
