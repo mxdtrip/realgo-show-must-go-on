@@ -38,7 +38,7 @@ func (h *StatusHandler) GetStatus(w http.ResponseWriter, r *http.Request) {
 
 	status, err := h.svc.Get(r.Context(), userID, recentEventsLimit(r))
 	if err != nil {
-		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", err.Error())
+		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", "could not load extension status")
 		return
 	}
 

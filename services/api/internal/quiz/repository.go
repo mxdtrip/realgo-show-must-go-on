@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -12,11 +13,6 @@ import (
 )
 
 var errNotFound = errors.New("question not found")
-
-type repository interface {
-	ListQuizSession(ctx context.Context, userID int64, limit int32) ([]sessionQuestion, error)
-	GetQuizQuestion(ctx context.Context, questionID, userID int64) (questionDetail, error)
-}
 
 type pgRepository struct{ q *db.Queries }
 
@@ -30,13 +26,15 @@ func (r *pgRepository) ListQuizSession(ctx context.Context, userID int64, limit 
 		SessionLimit: limit,
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("quiz: list session: %w", err)
 	}
 
 	items := make([]sessionQuestion, 0, len(rows))
 	for _, row := range rows {
 		var opts []string
-		_ = json.Unmarshal(row.Options, &opts)
+		if err := json.Unmarshal(row.Options, &opts); err != nil {
+			return nil, fmt.Errorf("quiz: decode options: %w", err)
+		}
 		if opts == nil {
 			opts = []string{}
 		}
@@ -81,7 +79,7 @@ func (r *pgRepository) GetQuizQuestion(ctx context.Context, questionID, userID i
 		return questionDetail{}, errNotFound
 	}
 	if err != nil {
-		return questionDetail{}, err
+		return questionDetail{}, fmt.Errorf("quiz: get question: %w", err)
 	}
 
 	d := questionDetail{CorrectOption: int(row.CorrectOption)}

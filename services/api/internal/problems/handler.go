@@ -62,7 +62,7 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 
 	items, err := h.repo.List(r.Context(), userID, params)
 	if err != nil {
-		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", err.Error())
+		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", "could not list problems")
 		return
 	}
 
@@ -90,7 +90,7 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err != nil {
-		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", err.Error())
+		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", "could not fetch problem")
 		return
 	}
 
@@ -117,7 +117,7 @@ func (h *Handler) Save(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err != nil {
-		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", err.Error())
+		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", "could not save problem")
 		return
 	}
 

@@ -2,6 +2,7 @@ package ai
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -21,7 +22,7 @@ func (r *pgRepository) CreateAIRequestLog(ctx context.Context, userID int64, fea
 		Feature: pgtype.Text{String: feature, Valid: true},
 	})
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("ai: create request log: %w", err)
 	}
 	return row.ID, nil
 }
