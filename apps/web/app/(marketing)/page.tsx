@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { getDictionary } from "../_content/i18n";
 import { MemoryExtensionDemo } from "../components/MemoryExtensionDemo";
+import { ScrollReveal } from "../components/ScrollReveal";
 import { ScrollVideoBackground } from "../components/ScrollVideoBackground";
 import { SortingMemoryHero } from "../components/SortingMemoryHero";
 import { LandingFAQ } from "./LandingFAQ";
@@ -47,25 +48,30 @@ export default function Home() {
   return (
     <>
       <ScrollVideoBackground />
+      <ScrollReveal />
       <SortingMemoryHero />
 
       <section className="landing-section" id="memory">
-        <div className="section-kicker">{copy.sections.memory.kicker}</div>
+        <div className="section-kicker" data-reveal="blur">
+          {copy.sections.memory.kicker}
+        </div>
         <div className="section-grid">
-          <div className="section-copy">
+          <div className="section-copy" data-reveal="left">
             <h2>{copy.sections.memory.title}</h2>
             <p>{copy.sections.memory.description}</p>
           </div>
-          <div className="memory-ext-demo">
+          <div className="memory-ext-demo" data-reveal="right">
             <MemoryExtensionDemo />
           </div>
         </div>
       </section>
 
       <section className="landing-section" id="roadmap">
-        <div className="section-kicker">{copy.sections.roadmap.kicker}</div>
+        <div className="section-kicker" data-reveal="blur">
+          {copy.sections.roadmap.kicker}
+        </div>
         <div className="section-grid reverse">
-          <div className="product-demo roadmap-demo">
+          <div className="product-demo roadmap-demo" data-reveal="left">
             <div className="roadmap-head">
               <span>{copy.sections.roadmap.head}</span>
               <strong>{copy.sections.roadmap.readiness}</strong>
@@ -78,7 +84,7 @@ export default function Home() {
               </article>
             ))}
           </div>
-          <div className="section-copy">
+          <div className="section-copy" data-reveal="right">
             <h2>{copy.sections.roadmap.title}</h2>
             <p>{copy.sections.roadmap.description}</p>
           </div>
@@ -86,14 +92,21 @@ export default function Home() {
       </section>
 
       <section className="landing-section" id="reviews">
-        <div className="section-kicker">{copy.sections.reviews.kicker}</div>
-        <div className="section-copy wide">
+        <div className="section-kicker" data-reveal="blur">
+          {copy.sections.reviews.kicker}
+        </div>
+        <div className="section-copy wide" data-reveal="up">
           <h2>{copy.sections.reviews.title}</h2>
           <p>{copy.sections.reviews.description}</p>
         </div>
         <div className="review-grid">
-          {copy.reviewCards.map(([type, front, back]) => (
-            <article className="review-card" key={type}>
+          {copy.reviewCards.map(([type, front, back], index) => (
+            <article
+              className="review-card"
+              data-reveal="tilt"
+              data-reveal-delay={index * 100}
+              key={type}
+            >
               <span>{type}</span>
               <h3>{front}</h3>
               <p>{back}</p>
@@ -103,15 +116,22 @@ export default function Home() {
       </section>
 
       <section className="landing-section" id="pricing">
-        <div className="section-kicker">{copy.sections.pricing.kicker}</div>
+        <div className="section-kicker" data-reveal="blur">
+          {copy.sections.pricing.kicker}
+        </div>
         <div className="section-grid">
-          <div className="section-copy">
+          <div className="section-copy" data-reveal="left">
             <h2>{copy.sections.pricing.title}</h2>
             <p>{copy.sections.pricing.description}</p>
           </div>
           <div className="pricing-grid">
-            {copy.pricing.map(([name, price, features, cta]) => (
-              <article className="price-card" key={name}>
+            {copy.pricing.map(([name, price, features, cta], index) => (
+              <article
+                className="price-card"
+                data-reveal="zoom"
+                data-reveal-delay={index * 110}
+                key={name}
+              >
                 <span>{name}</span>
                 <strong>{price}</strong>
                 <ul className="price-features">
@@ -134,7 +154,7 @@ export default function Home() {
       <LandingFAQ section={copy.sections.faq} />
 
       <footer className="site-footer">
-        <div className="site-footer__inner">
+        <div className="site-footer__inner" data-reveal="fade">
           <div className="site-footer__brand">
             <a className="site-brand" href="/">
               {dictionary.common.brand}

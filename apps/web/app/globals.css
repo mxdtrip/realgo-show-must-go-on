@@ -6287,3 +6287,72 @@ a.cabinet-panel__meta:hover {
     justify-content: space-between;
   }
 }
+
+/* ---------- landing scroll reveal ---------- */
+/* Hidden state applies only after ScrollReveal.tsx puts `reveal-ready` on <html>,
+   so the landing stays visible without JS. Durations sync with ScrollReveal.tsx. */
+
+@media (prefers-reduced-motion: no-preference) {
+  .reveal-ready body {
+    overflow-x: clip;
+  }
+
+  /* Hidden state is applied instantly (no transition here), otherwise elements
+     visibly animate INTO hiding right after hydration. The transition lives on
+     `.is-revealed` below, so only the entrance is animated. */
+  .reveal-ready [data-reveal] {
+    opacity: 0;
+    will-change: opacity, transform;
+  }
+
+  .reveal-ready [data-reveal="left"] {
+    transform: translateX(-48px);
+  }
+
+  .reveal-ready [data-reveal="right"] {
+    transform: translateX(48px);
+  }
+
+  .reveal-ready [data-reveal="up"] {
+    transform: translateY(32px);
+  }
+
+  .reveal-ready [data-reveal="zoom"] {
+    transform: translateY(20px) scale(0.93);
+  }
+
+  .reveal-ready [data-reveal="tilt"] {
+    transform: perspective(900px) translateY(30px) rotateX(14deg);
+    transform-origin: 50% 100%;
+  }
+
+  .reveal-ready [data-reveal="blur"] {
+    transform: translateY(10px);
+    filter: blur(7px);
+  }
+
+  .reveal-ready [data-reveal].is-revealed {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+
+  /* Transition lives only here, added by JS right before each toggle and
+     removed once it finishes — so it never fights a card's own hover
+     transition outside of the brief in/out crossing itself. */
+  .reveal-ready [data-reveal].is-animating {
+    transition:
+      opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1),
+      transform 0.75s cubic-bezier(0.16, 1, 0.3, 1),
+      filter 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @media (max-width: 920px) {
+    /* Stacked single-column layout: side slides read poorly and can
+       overflow the viewport, fall back to a vertical rise. */
+    .reveal-ready [data-reveal="left"],
+    .reveal-ready [data-reveal="right"] {
+      transform: translateY(28px);
+    }
+  }
+}
