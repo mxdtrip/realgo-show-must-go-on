@@ -2742,6 +2742,71 @@ a.cabinet-panel__meta:hover {
   font-size: 12px;
 }
 
+.pattern-technique-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pattern-detail-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pattern-detail-list li {
+  position: relative;
+  padding-left: 16px;
+  color: var(--text-dim);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.pattern-detail-list li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 8px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent-bright);
+}
+
+.pattern-detail-examples {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pattern-detail-examples li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.pattern-detail-examples li:last-child {
+  border-bottom: 0;
+}
+
+.pattern-detail-examples a {
+  font-size: 13px;
+}
+
+.pattern-detail-examples li span {
+  font-family: var(--font-stack-mono);
+  font-size: 11px;
+  color: var(--text-faint);
+  text-transform: uppercase;
+}
+
 .confidence--danger {
   color: var(--danger-bright);
 }
