@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 )
@@ -31,13 +32,16 @@ type reviewQueueCursorPayload struct {
 }
 
 // EncodeReviewQueueCursor serializes a cursor to an opaque base64 string.
-func EncodeReviewQueueCursor(cursor ReviewQueueCursor) string {
+func EncodeReviewQueueCursor(cursor ReviewQueueCursor) (string, error) {
 	payload := reviewQueueCursorPayload{
 		NextReviewAt: cursor.NextReviewAt.UTC().Format(time.RFC3339Nano),
 		ID:           cursor.ID,
 	}
-	raw, _ := json.Marshal(payload)
-	return base64.RawURLEncoding.EncodeToString(raw)
+	raw, err := json.Marshal(payload)
+	if err != nil {
+		return "", fmt.Errorf("entity: encode review queue cursor: %w", err)
+	}
+	return base64.RawURLEncoding.EncodeToString(raw), nil
 }
 
 // DecodeReviewQueueCursor parses a cursor produced by EncodeReviewQueueCursor.
@@ -47,17 +51,17 @@ func DecodeReviewQueueCursor(raw string) (ReviewQueueCursor, error) {
 		return ReviewQueueCursor{}, ErrInvalidReviewQueueCursor
 	}
 
-	var payload reviewQueueCursorPayload
-	if err := json.Unmarshal(data, &payload); err != nil {
+	var decoded reviewQueueCursorPayload
+	if err := json.Unmarshal(data, &decoded); err != nil {
 		return ReviewQueueCursor{}, ErrInvalidReviewQueueCursor
 	}
-	if payload.ID <= 0 || strings.TrimSpace(payload.NextReviewAt) == "" {
+	if decoded.ID <= 0 || strings.TrimSpace(decoded.NextReviewAt) == "" {
 		return ReviewQueueCursor{}, ErrInvalidReviewQueueCursor
 	}
 
-	nextReviewAt, err := time.Parse(time.RFC3339Nano, payload.NextReviewAt)
+	nextReviewAt, err := time.Parse(time.RFC3339Nano, decoded.NextReviewAt)
 	if err != nil {
 		return ReviewQueueCursor{}, ErrInvalidReviewQueueCursor
 	}
-	return ReviewQueueCursor{NextReviewAt: nextReviewAt, ID: payload.ID}, nil
+	return ReviewQueueCursor{NextReviewAt: nextReviewAt, ID: decoded.ID}, nil
 }

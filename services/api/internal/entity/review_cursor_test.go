@@ -13,7 +13,10 @@ func TestReviewQueueCursor_RoundTrip(t *testing.T) {
 		ID:           42,
 	}
 
-	encoded := entity.EncodeReviewQueueCursor(want)
+	encoded, err := entity.EncodeReviewQueueCursor(want)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 	if encoded == "" {
 		t.Fatal("expected non-empty encoded cursor")
 	}
@@ -45,7 +48,10 @@ func TestDecodeReviewQueueCursor_InvalidJSON(t *testing.T) {
 }
 
 func TestDecodeReviewQueueCursor_NonPositiveID(t *testing.T) {
-	encoded := entity.EncodeReviewQueueCursor(entity.ReviewQueueCursor{NextReviewAt: time.Now(), ID: 0})
+	encoded, err := entity.EncodeReviewQueueCursor(entity.ReviewQueueCursor{NextReviewAt: time.Now(), ID: 0})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 	if _, err := entity.DecodeReviewQueueCursor(encoded); err != entity.ErrInvalidReviewQueueCursor {
 		t.Errorf("expected ErrInvalidReviewQueueCursor, got %v", err)
 	}

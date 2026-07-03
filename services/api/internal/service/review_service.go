@@ -75,7 +75,10 @@ func (s *reviewService) GetQueue(ctx context.Context, userID int64, status strin
 	var nextCursor *string
 	if hasMore && len(items) > 0 {
 		last := items[len(items)-1]
-		encoded := entity.EncodeReviewQueueCursor(entity.ReviewQueueCursor{NextReviewAt: last.DueAt, ID: last.ID})
+		encoded, err := entity.EncodeReviewQueueCursor(entity.ReviewQueueCursor{NextReviewAt: last.DueAt, ID: last.ID})
+		if err != nil {
+			return response.QueueResponse{}, fmt.Errorf("reviews: GetQueue: %w", err)
+		}
 		nextCursor = &encoded
 	}
 
