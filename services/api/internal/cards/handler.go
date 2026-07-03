@@ -152,14 +152,14 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "type must be pattern_recognition, algorithm_mechanics, or edge_case")
 		return
 	}
-	if req.Question == "" || req.Answer == "" {
-		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "question and answer are required")
-		return
-	}
-	if req.ProblemID != nil && req.PatternID != nil {
-		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "only one of problem_id or pattern_id may be set")
-		return
-	}
+	if req.Front == "" || req.Back == "" {
+			response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "front and back are required")
+			return
+		}
+		if req.ProblemID != nil && req.PatternID != nil {
+			response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "only one of problemId or patternId may be set")
+			return
+		}
 
 	card, err := h.svc.Create(r.Context(), userID, CreateCardInput(req))
 	if err != nil {

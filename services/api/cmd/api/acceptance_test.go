@@ -65,3 +65,25 @@ func TestAcceptance_HarnessWalkingSkeleton(t *testing.T) {
 
 	specifications.HarnessSpecification(t, d)
 }
+
+// TestAcceptance_Cards — north-star acceptance-тесты для cards-модуля.
+//
+// Проверяет три ключевых user-journey:
+//   - List: ученик видит свои карточки; непроходённая показана как "new"
+//   - Session: ученик стартует сессию "due" и получает due-карточки
+//   - Rate: после оценки карточка уходит в будущее; при "hard" возвращается в сессию
+//
+// Карточки создаются через POST /me/cards (CRUD), а не через SQL-seeds,
+// что сохраняет black-box свойство теста.
+func TestAcceptance_Cards(t *testing.T) {
+	if testing.Short() {
+		t.Skip("acceptance test requires Docker")
+	}
+
+	harness.Reset(t)
+
+	d := httpdriver.New(t, harness)
+	defer d.Close()
+
+	specifications.CardsSpecification(t, d)
+}

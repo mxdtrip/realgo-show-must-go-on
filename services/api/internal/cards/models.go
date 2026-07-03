@@ -54,8 +54,8 @@ type Cursor struct {
 type CardRecord struct {
 	ID               int64
 	Type             string
-	Question         string
-	Answer           string
+	Front            string
+	Back             string
 	CreatedAt        time.Time
 	SourceEntityType string
 	SourceEntityID   *int64
@@ -123,10 +123,10 @@ type SessionProgress struct {
 // CreateCardInput is the input for creating a new card.
 type CreateCardInput struct {
 	Type        string
-	Question    string
-	Answer      string
+	Front       string
+	Back        string
 	Explanation *string
-	Source      *string
+	SourceText  *string
 	ProblemID   *int64
 	PatternID   *int64
 }
@@ -134,42 +134,42 @@ type CreateCardInput struct {
 // UpdateCardInput contains the fields that may be patched on a card.
 type UpdateCardInput struct {
 	Type        *string
-	Question    *string
-	Answer      *string
+	Front       *string
+	Back        *string
 	Explanation *string
-	Source      *string
+	SourceText  *string
 }
 
 // CardDetail is returned by CRUD endpoints and includes join fields.
 type CardDetail struct {
 	ID           int64     `json:"id"`
 	Type         string    `json:"type"`
-	Question     string    `json:"question"`
-	Answer       string    `json:"answer"`
+	Front        string    `json:"front"`
+	Back         string    `json:"back"`
 	Explanation  *string   `json:"explanation"`
-	Source       *string   `json:"source"`
-	CreatedByAI  bool      `json:"created_by_ai"`
-	CreatedAt    time.Time `json:"created_at"`
-	ProblemTitle *string   `json:"problem_title"`
-	ProblemURL   *string   `json:"problem_url"`
-	PatternName  *string   `json:"pattern_name"`
+	Source       Source     `json:"source"`
+	CreatedByAI  bool      `json:"createdByAi"`
+	CreatedAt    time.Time `json:"createdAt"`
+	ProblemTitle *string   `json:"problemTitle"`
+	ProblemURL   *string   `json:"problemUrl"`
+	PatternName  *string   `json:"patternName"`
 }
 
 // HTTP request types used by CRUD handlers only.
 type createCardRequest struct {
-	Type        string  `json:"type"`
-	Question    string  `json:"question"`
-	Answer      string  `json:"answer"`
+	Type       string  `json:"type"`
+	Front      string  `json:"front"`
+	Back       string  `json:"back"`
 	Explanation *string `json:"explanation"`
-	Source      *string `json:"source"`
-	ProblemID   *int64  `json:"problem_id"`
-	PatternID   *int64  `json:"pattern_id"`
+	SourceText *string `json:"sourceText"`
+	ProblemID  *int64  `json:"problemId"`
+	PatternID  *int64  `json:"patternId"`
 }
 
 type updateCardRequest struct {
 	Type        *string `json:"type"`
-	Question    *string `json:"question"`
-	Answer      *string `json:"answer"`
+	Front       *string `json:"front"`
+	Back        *string `json:"back"`
 	Explanation *string `json:"explanation"`
-	Source      *string `json:"source"`
+	SourceText  *string `json:"sourceText"`
 }

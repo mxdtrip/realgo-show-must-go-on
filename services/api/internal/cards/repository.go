@@ -119,12 +119,12 @@ func (r *pgRepository) CountSessionAttempts(ctx context.Context, userID int64, s
 	return int(count), nil
 }
 
-func newCardRecord(id int64, cardType, question, answer string, createdAt pgtype.Timestamptz, sourceEntityType string, sourceEntityID pgtype.Int8, sourceLabel string, scheduleID int64, nextReviewAt pgtype.Timestamptz, lastRating pgtype.Text, reviewCount, reviewState int32) CardRecord {
+func newCardRecord(id int64, cardType, front, back string, createdAt pgtype.Timestamptz, sourceEntityType string, sourceEntityID pgtype.Int8, sourceLabel string, scheduleID int64, nextReviewAt pgtype.Timestamptz, lastRating pgtype.Text, reviewCount, reviewState int32) CardRecord {
 	return CardRecord{
 		ID:               id,
 		Type:             cardType,
-		Question:         question,
-		Answer:           answer,
+		Front:            front,
+		Back:             back,
 		CreatedAt:        timeFromPg(createdAt),
 		SourceEntityType: sourceEntityType,
 		SourceEntityID:   int64PtrFromPg(sourceEntityID),
@@ -141,8 +141,8 @@ func recordFromListRow(row db.ListUserCardsRow) CardRecord {
 	return newCardRecord(
 		row.ID,
 		row.Type,
-		row.Question,
-		row.Answer,
+		row.Question, // sqlc still returns DB column name "question" (rename in migration 000008)
+		row.Answer,   // sqlc still returns DB column name "answer" (rename in migration 000008)
 		row.CreatedAt,
 		row.SourceEntityType,
 		row.SourceEntityID,
@@ -159,8 +159,8 @@ func recordFromSessionRow(row db.ListCardSessionRow) CardRecord {
 	return newCardRecord(
 		row.ID,
 		row.Type,
-		row.Question,
-		row.Answer,
+		row.Question, // sqlc still returns DB column name "question" (rename in migration 000008)
+		row.Answer,   // sqlc still returns DB column name "answer" (rename in migration 000008)
 		row.CreatedAt,
 		row.SourceEntityType,
 		row.SourceEntityID,
@@ -177,8 +177,8 @@ func (r *pgRepository) Create(ctx context.Context, userID int64, p CreateCardInp
 	params := db.CreateCardParams{
 		UserID:      userID,
 		CardType:    p.Type,
-		Question:    p.Question,
-		Answer:      p.Answer,
+		Question:    p.Front,
+		Answer:      p.Back,
 		CreatedByAi: pgtype.Bool{Bool: false, Valid: true},
 	}
 	if p.ProblemID != nil {
@@ -190,8 +190,8 @@ func (r *pgRepository) Create(ctx context.Context, userID int64, p CreateCardInp
 	if p.Explanation != nil {
 		params.Explanation = pgtype.Text{String: *p.Explanation, Valid: true}
 	}
-	if p.Source != nil {
-		params.Source = pgtype.Text{String: *p.Source, Valid: true}
+	if p.SourceText != nil {
+		params.Source = pgtype.Text{String: *p.SourceText, Valid: true}
 	}
 	card, err := r.q.CreateCard(ctx, params)
 	if err != nil {
@@ -219,17 +219,17 @@ func (r *pgRepository) Update(ctx context.Context, userID, cardID int64, p Updat
 	if p.Type != nil {
 		params.CardType = pgtype.Text{String: *p.Type, Valid: true}
 	}
-	if p.Question != nil {
-		params.Question = pgtype.Text{String: *p.Question, Valid: true}
+	if p.Front != nil {
+		params.Question = pgtype.Text{String: *p.Front, Valid: true}
 	}
-	if p.Answer != nil {
-		params.Answer = pgtype.Text{String: *p.Answer, Valid: true}
+	if p.Back != nil {
+		params.Answer = pgtype.Text{String: *p.Back, Valid: true}
 	}
 	if p.Explanation != nil {
 		params.Explanation = pgtype.Text{String: *p.Explanation, Valid: true}
 	}
-	if p.Source != nil {
-		params.Source = pgtype.Text{String: *p.Source, Valid: true}
+	if p.SourceText != nil {
+		params.Source = pgtype.Text{String: *p.SourceText, Valid: true}
 	}
 	card, err := r.q.UpdateCard(ctx, params)
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -257,28 +257,58 @@ func isForeignKeyViolation(err error) bool {
 	return errors.As(err, &pgErr) && pgErr.Code == "23503"
 }
 
-func newCardDetail(id int64, cardType, question, answer string, createdByAI bool, createdAt pgtype.Timestamptz, explanation, source pgtype.Text) CardDetail {
+func newCardDetail(id int64, cardType, front, back string, createdByAI bool, createdAt pgtype.Timestamptz, explanation, source pgtype.Text, src Source) CardDetail {
 	d := CardDetail{
 		ID:          id,
 		Type:        cardType,
-		Question:    question,
-		Answer:      answer,
+		Front:       front,
+		Back:        back,
 		CreatedByAI: createdByAI,
+		Source:      src,
 	}
 	if createdAt.Valid {
 		d.CreatedAt = createdAt.Time.UTC()
 	}
 	d.Explanation = stringPtrFromPg(explanation)
-	d.Source = stringPtrFromPg(source)
 	return d
 }
 
 func cardDetailFromGetRow(row db.GetCardByIDRow) CardDetail {
-	d := newCardDetail(row.ID, row.Type, row.Question, row.Answer, row.CreatedByAi.Bool, row.CreatedAt, row.Explanation, row.Source)
-	d.ProblemTitle = stringPtrFromPg(row.ProblemTitle)
-	d.ProblemURL = stringPtrFromPg(row.ProblemUrl)
-	d.PatternName = stringPtrFromPg(row.PatternName)
-	return d
+	src := buildSourceFromGetRow(row)
+	return newCardDetail(row.ID, row.Type, row.Question, row.Answer, row.CreatedByAi.Bool, row.CreatedAt, row.Explanation, row.Source, src)
+}
+
+// buildSourceFromGetRow constructs the Source object from a GetCardByID row.
+// The DB column is still "question" (rename planned in migration 000008).
+func buildSourceFromGetRow(row db.GetCardByIDRow) Source {
+	var entityType string
+	var entityID *int64
+	var label string
+
+	if row.ProblemID.Valid {
+		entityType = "problem"
+		entityID = &row.ProblemID.Int64
+		if row.ProblemTitle.Valid {
+			label = row.ProblemTitle.String
+		}
+	} else if row.PatternID.Valid {
+		entityType = "pattern"
+		entityID = &row.PatternID.Int64
+		if row.PatternName.Valid {
+			label = row.PatternName.String
+		}
+	} else {
+		entityType = "custom"
+		if row.Source.Valid {
+			label = row.Source.String
+		}
+	}
+
+	return Source{
+		EntityType: entityType,
+		EntityID:   entityID,
+		Label:      label,
+	}
 }
 
 func int64PtrFromPg(value pgtype.Int8) *int64 {
