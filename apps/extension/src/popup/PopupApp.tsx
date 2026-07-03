@@ -248,17 +248,6 @@ function Shell({
           <span className="realgo-path">~/ext</span>
         </span>
         <div className="realgo-header__right">
-          {task && (
-            <span
-              className={
-                task.submitResult === "accepted"
-                  ? "realgo-status realgo-status--ok"
-                  : "realgo-status"
-              }
-            >
-              {task.submitResult === "accepted" ? "accepted" : "результат отправлен"}
-            </span>
-          )}
           {onClose && (
             <button
               type="button"
@@ -273,7 +262,7 @@ function Shell({
       </div>
       {task && (
         <div className="realgo-task">
-          <span className="realgo-eyebrow">задача обнаружена</span>
+          <span className="realgo-eyebrow">Задача выполнена успешно!</span>
           <p className="realgo-task__title">{task.taskTitle}</p>
           <div className="realgo-task__meta">
             <span className="realgo-tag">{task.platform}</span>
