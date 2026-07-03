@@ -13,11 +13,12 @@ import (
 	"github.com/mxdtrip/freeburger/services/api/internal/auth"
 	"github.com/mxdtrip/freeburger/services/api/internal/controller/v1/request"
 	v1response "github.com/mxdtrip/freeburger/services/api/internal/controller/v1/response"
+	"github.com/mxdtrip/freeburger/services/api/internal/entity"
 )
 
 type stubReviewService struct{}
 
-func (s *stubReviewService) GetQueue(ctx context.Context, userID int64, status string, limit int32) (v1response.QueueResponse, error) {
+func (s *stubReviewService) GetQueue(ctx context.Context, userID int64, status string, cursor entity.ReviewQueueCursor, limit int32) (v1response.QueueResponse, error) {
 	return v1response.QueueResponse{}, nil
 }
 

@@ -29,8 +29,14 @@ func NewReviewRepository(pool *pgxpool.Pool) ReviewRepository {
 	return &pgReviewRepository{pool: pool, q: db.New(pool)}
 }
 
-func (r *pgReviewRepository) QueueReviews(ctx context.Context, userID int64, status string, limit int32) ([]entity.ReviewItem, error) {
-	rows, err := r.q.ListReviewQueue(ctx, db.ListReviewQueueParams{UserID: userID, Status: status, QueueLimit: limit})
+func (r *pgReviewRepository) QueueReviews(ctx context.Context, userID int64, status string, cursor entity.ReviewQueueCursor, limit int32) ([]entity.ReviewItem, error) {
+	rows, err := r.q.ListReviewQueue(ctx, db.ListReviewQueueParams{
+		UserID:             userID,
+		Status:             status,
+		CursorNextReviewAt: toPgTimestamptz(cursor.NextReviewAt),
+		CursorID:           cursor.ID,
+		QueueLimit:         limit,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("reviews: query review queue: %w", err)
 	}

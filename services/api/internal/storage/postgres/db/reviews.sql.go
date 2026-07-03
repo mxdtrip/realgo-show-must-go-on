@@ -251,14 +251,17 @@ WHERE rs.user_id = $1
     ($2::text = 'due' AND rs.next_review_at <= NOW())
     OR ($2::text = 'upcoming' AND rs.next_review_at > NOW())
   )
-ORDER BY rs.next_review_at ASC
-LIMIT $3
+  AND (rs.next_review_at, rs.id) > ($3::timestamptz, $4::bigint)
+ORDER BY rs.next_review_at ASC, rs.id ASC
+LIMIT $5
 `
 
 type ListReviewQueueParams struct {
-	UserID     int64
-	Status     string
-	QueueLimit int32
+	UserID             int64
+	Status             string
+	CursorNextReviewAt pgtype.Timestamptz
+	CursorID           int64
+	QueueLimit         int32
 }
 
 type ListReviewQueueRow struct {
@@ -286,7 +289,13 @@ type ListReviewQueueRow struct {
 }
 
 func (q *Queries) ListReviewQueue(ctx context.Context, arg ListReviewQueueParams) ([]ListReviewQueueRow, error) {
-	rows, err := q.db.Query(ctx, listReviewQueue, arg.UserID, arg.Status, arg.QueueLimit)
+	rows, err := q.db.Query(ctx, listReviewQueue,
+		arg.UserID,
+		arg.Status,
+		arg.CursorNextReviewAt,
+		arg.CursorID,
+		arg.QueueLimit,
+	)
 	if err != nil {
 		return nil, err
 	}
