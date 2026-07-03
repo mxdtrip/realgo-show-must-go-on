@@ -1,9 +1,13 @@
 import { AuthForm } from "../_auth/AuthForm";
+import { AuthPageHeader } from "../_auth/AuthPageHeader";
 
 export default function LoginPage() {
   return (
-    <div className="auth-layer auth-layer--page">
-      <AuthForm mode="login" />
-    </div>
+    <>
+      <AuthPageHeader />
+      <div className="auth-layer auth-layer--page">
+        <AuthForm mode="login" />
+      </div>
+    </>
   );
 }

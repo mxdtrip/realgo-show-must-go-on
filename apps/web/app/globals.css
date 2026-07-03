@@ -5132,7 +5132,13 @@ a.cabinet-panel__meta:hover {
    render full-page instead of as a fixed overlay over the landing. */
 .auth-layer--page {
   position: relative;
+  z-index: 1;
   min-height: 100vh;
+  padding-top: calc(24px + 64px);
+  background:
+    radial-gradient(900px 520px at 82% -10%, rgba(56, 139, 253, 0.16), transparent 66%),
+    radial-gradient(760px 460px at 6% 108%, rgba(46, 160, 67, 0.1), transparent 70%),
+    var(--bg);
 }
 
 /* Tabs are <Link>s on the standalone pages (buttons in the landing modal). */
