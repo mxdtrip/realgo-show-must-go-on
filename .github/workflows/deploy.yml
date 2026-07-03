@@ -21,6 +21,6 @@ jobs:
           FRP_TOKEN: ${{ secrets.FRP_TOKEN }}
         run: |
           docker compose pull --ignore-buildable || true
-          docker compose up -d --build --remove-orphans
+          docker compose --profile prod-demo up -d --build --remove-orphans
       - name: Prune old images
         run: docker image prune -f

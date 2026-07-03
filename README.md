@@ -30,6 +30,37 @@
 
 Node-приложения пока хранят собственные `package-lock.json`; общего Node workspace в корне нет. Lock-файлы package manager должны храниться в Git.
 
+## Быстрый запуск
+
+Локальный dev stack не требует VPS/FRP-переменных:
+
+```sh
+cp .env.example .env
+# заменить AUTH_JWT_SECRET на случайную строку 32+ символа
+docker compose up -d --build
+curl -fsS http://localhost:8080/healthz
+curl -fsS http://localhost:8080/readyz
+```
+
+То же из backend-директории:
+
+```sh
+cd services/api
+make up
+# или go-task:
+task up
+task health
+```
+
+Prod-demo с reverse tunnel запускается отдельным profile:
+
+```sh
+docker compose --profile prod-demo up -d --build
+```
+
+Для prod-demo нужны `FRP_VPS_HOST` и `FRP_TOKEN`; для обычной локальной разработки
+они не нужны. Детали: [prod-demo runbook](docs/prod-demo-deploy-runbook.md).
+
 ## Приложения и сервисы
 
 - [Web](apps/web/README.md)

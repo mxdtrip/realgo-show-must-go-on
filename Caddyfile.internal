@@ -1,7 +1,7 @@
 # Internal home-stack router. It intentionally has no public domain: the VPS
 # edge Caddy terminates TLS for realgo.dev and reaches this listener through frp.
 :80 {
-	@api path /api/*
+	@api path /api/* /healthz /readyz
 	@allowed_origin header_regexp Origin ^(https?://(localhost|127[.]0[.]0[.]1):(5173|3000)|{$REALGO_EXTENSION_ORIGIN:chrome-extension://kclglopmphebagjjimjhdpnmoddmbgea})$
 
 	handle @api {
