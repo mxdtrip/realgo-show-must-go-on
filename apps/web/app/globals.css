@@ -1617,29 +1617,6 @@ h3 {
   color: var(--text-dim);
 }
 
-.cabinet-path__caret {
-  display: inline-block;
-  flex: none;
-  width: 7px;
-  height: 13px;
-  margin-left: 7px;
-  vertical-align: -2px;
-  background: var(--accent);
-  opacity: 0.9;
-  animation: cabinet-caret 1.15s steps(1) infinite;
-}
-
-@keyframes cabinet-caret {
-  0%,
-  49% {
-    opacity: 0.9;
-  }
-  50%,
-  100% {
-    opacity: 0;
-  }
-}
-
 .cabinet-topbar__actions {
   display: flex;
   align-items: center;
@@ -1653,6 +1630,11 @@ h3 {
   color: var(--text-dim);
   text-transform: lowercase;
   transition: color 0.16s ease;
+}
+
+/* "на сайт" is the last action — pin it to the right edge of the topbar. */
+.cabinet-topbar__back {
+  margin-left: auto;
 }
 
 .cabinet-topbar__link::after {
@@ -2214,24 +2196,22 @@ a.cabinet-panel__meta:hover {
 
 .heatmap {
   display: flex;
+  flex-direction: column;
   align-items: flex-start;
-  gap: 3px;
+  gap: 6px;
   padding: 14px 16px 12px;
-  overflow-x: auto;
-  scrollbar-width: thin;
 }
 
 .heatmap__week {
   display: grid;
-  grid-template-rows: repeat(7, auto);
-  gap: 3px;
-  flex: none;
+  grid-template-columns: repeat(7, auto);
+  gap: 6px;
 }
 
 .heatmap__cell {
-  width: 11px;
-  height: 11px;
-  border-radius: 2.5px;
+  width: 16px;
+  height: 16px;
+  border-radius: 3.5px;
   background: rgba(255, 255, 255, 0.045);
 }
 
@@ -2842,6 +2822,22 @@ a.cabinet-panel__meta:hover {
   color: var(--danger-bright);
 }
 
+/* Trend chip inside the compact pattern-stack cards (patterns page columns). */
+.pattern-card__trend {
+  font-family: var(--font-stack-mono);
+  font-size: 11px;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.pattern-card__trend.is-up {
+  color: var(--success-fg);
+}
+
+.pattern-card__trend.is-down {
+  color: var(--danger-bright);
+}
+
 .pattern-card p {
   margin: 0;
   color: var(--text-dim);
@@ -3156,9 +3152,9 @@ a.cabinet-panel__meta:hover {
 
 .term-log__listen i {
   width: 7px;
-  height: 13px;
+  height: 7px;
+  border-radius: 50%;
   background: var(--accent);
-  animation: cabinet-caret 1.15s steps(1) infinite;
 }
 
 /* ---------- cards page: session launcher ---------- */
@@ -5086,8 +5082,6 @@ a.cabinet-panel__meta:hover {
     transition: none;
   }
 
-  .cabinet-path__caret,
-  .term-log__listen i,
   .user-menu {
     animation: none;
   }

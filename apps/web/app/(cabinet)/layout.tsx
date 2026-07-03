@@ -8,7 +8,6 @@ import { CabinetInterviewCountdown } from "./CabinetInterviewCountdown";
 import { CabinetNav } from "./CabinetNav";
 import { CabinetPath } from "./CabinetPath";
 import { CabinetUserMenu } from "./CabinetUserMenu";
-import { LogoutButton } from "./LogoutButton";
 import { reviewQueue } from "./_mock";
 
 export default function CabinetLayout({
@@ -62,7 +61,6 @@ export default function CabinetLayout({
               <Link className="cabinet-topbar__link cabinet-topbar__back" href="/">
                 {copy.backToMarketing}
               </Link>
-              <LogoutButton label={copy.logout} />
             </div>
           </header>
           <div className="cabinet-content" id="cabinet-content" tabIndex={-1}>

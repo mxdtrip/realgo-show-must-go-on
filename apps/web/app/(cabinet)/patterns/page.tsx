@@ -3,14 +3,22 @@ import Link from "next/link";
 import { CabinetPanel, ProgressBar } from "../_components";
 import { CabinetIcon } from "../_icons";
 import { getDictionary } from "../../_content/i18n";
-import { weakPatterns } from "../_mock";
+import { strongPatterns, weakPatterns } from "../_mock";
+
+type Pattern = {
+  name: string;
+  confidence: number;
+  trend: number;
+  signal: string;
+};
 
 export default function PatternsPage() {
   const copy = getDictionary().cabinet;
   const page = copy.pages.patterns;
 
-  const ranked = [...weakPatterns].sort((a, b) => a.confidence - b.confidence);
-  const needAttention = ranked.filter((pattern) => pattern.confidence < 60).length;
+  const weak = [...weakPatterns].sort((a, b) => a.confidence - b.confidence);
+  const strong = [...strongPatterns].sort((a, b) => b.confidence - a.confidence);
+  const needAttention = weak.filter((pattern) => pattern.confidence < 60).length;
 
   return (
     <main className="cabinet-page">
@@ -33,47 +41,84 @@ export default function PatternsPage() {
         </div>
       </section>
 
-      <CabinetPanel
-        eyebrow={page.panelEyebrow}
-        title={page.panelTitle}
-        meta={<span className="cabinet-panel__meta">{ranked.length} patterns</span>}
-      >
-        <div className="pattern-grid">
-          {ranked.map((pattern) => {
-            const severe = pattern.confidence < 45;
-            const trendUp = pattern.trend > 0;
-            return (
-              <article className="pattern-card" key={pattern.name}>
-                <div className="pattern-card__head">
-                  <div>
-                    <strong>{pattern.name}</strong>
-                    <span className="pattern-card__priority">
-                      {severe ? page.priorityHigh : page.priorityMed}
-                    </span>
-                  </div>
-                  <div className="pattern-card__score">
-                    <strong className={severe ? "confidence--danger" : "confidence--warning"}>
-                      {pattern.confidence}%
-                    </strong>
-                    <em className={trendUp ? "is-up" : "is-down"}>
-                      {trendUp ? `+${pattern.trend}` : `−${-pattern.trend}`} {page.weeklyLabel}
-                    </em>
-                  </div>
-                </div>
-                <ProgressBar
-                  value={pattern.confidence}
-                  tone={severe ? "danger" : "warning"}
-                  label={`${pattern.name} confidence`}
-                />
-                <p>{pattern.signal}</p>
-                <div className="pattern-card__foot">
-                  <Link href="/cards/session">{page.trainLink}</Link>
-                </div>
+      <div className="cabinet-grid">
+        <CabinetPanel
+          eyebrow={page.weakColumnEyebrow}
+          title={page.weakColumnTitle}
+          meta={<span className="cabinet-panel__meta">{weak.length} patterns</span>}
+        >
+          <div className="pattern-stack">
+            {weak.map((pattern) => (
+              <WeakCard key={pattern.name} pattern={pattern} page={page} />
+            ))}
+          </div>
+        </CabinetPanel>
+
+        <CabinetPanel
+          eyebrow={page.strongColumnEyebrow}
+          title={page.strongColumnTitle}
+          meta={<span className="cabinet-panel__meta">{strong.length} patterns</span>}
+        >
+          <div className="pattern-stack">
+            {strong.length === 0 ? (
+              <article>
+                <p>{page.strongEmpty}</p>
               </article>
-            );
-          })}
-        </div>
-      </CabinetPanel>
+            ) : (
+              strong.map((pattern) => (
+                <StrongCard key={pattern.name} pattern={pattern} page={page} />
+              ))
+            )}
+          </div>
+        </CabinetPanel>
+      </div>
     </main>
+  );
+}
+
+function WeakCard({
+  pattern,
+  page,
+}: Readonly<{ pattern: Pattern; page: ReturnType<typeof getDictionary>["cabinet"]["pages"]["patterns"] }>) {
+  const severe = pattern.confidence < 45;
+  const trendUp = pattern.trend > 0;
+  return (
+    <article>
+      <div>
+        <strong>{pattern.name}</strong>
+        <span className={severe ? "confidence--danger" : "confidence--warning"}>
+          {pattern.confidence}%
+        </span>
+      </div>
+      <ProgressBar
+        value={pattern.confidence}
+        tone={severe ? "danger" : "warning"}
+        label={`${pattern.name} confidence`}
+      />
+      <p>{pattern.signal}</p>
+      <span className={`pattern-card__trend ${trendUp ? "is-up" : "is-down"}`}>
+        {trendUp ? `+${pattern.trend}` : `−${-pattern.trend}`} {page.weeklyLabel}
+      </span>
+    </article>
+  );
+}
+
+function StrongCard({
+  pattern,
+  page,
+}: Readonly<{ pattern: Pattern; page: ReturnType<typeof getDictionary>["cabinet"]["pages"]["patterns"] }>) {
+  const trendUp = pattern.trend >= 0;
+  return (
+    <article>
+      <div>
+        <strong>{pattern.name}</strong>
+        <span className="confidence--accent">{pattern.confidence}%</span>
+      </div>
+      <ProgressBar value={pattern.confidence} label={`${pattern.name} confidence`} />
+      <p>{pattern.signal}</p>
+      <span className={`pattern-card__trend ${trendUp ? "is-up" : "is-down"}`}>
+        {trendUp ? `+${pattern.trend}` : `−${-pattern.trend}`} {page.weeklyLabel}
+      </span>
+    </article>
   );
 }

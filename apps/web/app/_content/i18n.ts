@@ -287,7 +287,7 @@ const ru = {
       ],
       pathPrefix: "~/realgo",
       dueChip: "due today",
-      backToMarketing: "marketing",
+      backToMarketing: "на сайт",
       logout: "logout",
       demoBadge: "demo",
       demoTitle: "Демо-режим: авторизация отключена, кабинет работает на моковых данных.",
@@ -340,8 +340,8 @@ const ru = {
         heatmap: {
           eyebrow: "activity",
           title: "Активность повторений",
-          aria: "Активность повторений за последние 26 недель",
-          foot: "последние 26 недель",
+          aria: "Активность повторений за последние 28 дней",
+          foot: "последние 28 дней",
           scaleLess: "less",
           scaleMore: "more",
           statDays: "активных дней",
@@ -430,6 +430,12 @@ const ru = {
         priorityMed: "review soon",
         trainLink: "review now →",
         weeklyLabel: "за неделю",
+        weakColumnEyebrow: "weak spots",
+        weakColumnTitle: "Слабые паттерны",
+        strongColumnEyebrow: "strong spots",
+        strongColumnTitle: "Сильные паттерны",
+        strongPriority: "закреплено",
+        strongEmpty: "Пока нет закреплённых паттернов — повторяй регулярно.",
       },
       cards: {
         eyebrow: "/cards",
@@ -759,6 +765,12 @@ const ru = {
           trend: -8,
           signal: "нужны карточки по состояниям",
         },
+      ],
+      strongPatterns: [
+        { name: "Two Pointers", confidence: 92, trend: 3, signal: "стабильно easy последние 5 повторений" },
+        { name: "Hashing", confidence: 88, trend: 2, signal: "быстрый recall, ошибок нет" },
+        { name: "Stack", confidence: 84, trend: 5, signal: "уверенно на скобках и монотонных" },
+        { name: "BFS / DFS", confidence: 79, trend: 1, signal: "обход графа закреплён" },
       ],
       problems: [
         {
