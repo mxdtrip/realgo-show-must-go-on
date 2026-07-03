@@ -7,7 +7,72 @@ package db
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
+
+const listPatterns = `-- name: ListPatterns :many
+SELECT
+    pt.id,
+    pt.code,
+    pt.name,
+    COALESCE(pt.description, '')::text AS description,
+    pt.parent_id,
+    COUNT(DISTINCT ri.problem_id)::integer AS problem_count,
+    COUNT(DISTINCT upp.problem_id) FILTER (
+        WHERE upp.status IN ('solving', 'solved', 'reviewing')
+    )::integer AS solved_count,
+    COUNT(DISTINCT rs.id) FILTER (
+        WHERE rs.next_review_at <= NOW()
+    )::integer AS due_count
+FROM patterns pt
+LEFT JOIN roadmap_items ri ON ri.pattern_id = pt.id AND ri.roadmap_code = 'neetcode_150'
+LEFT JOIN user_problem_progress upp ON upp.problem_id = ri.problem_id AND upp.user_id = $1::bigint
+LEFT JOIN review_schedules rs ON rs.pattern_id = pt.id AND rs.user_id = $1::bigint
+GROUP BY pt.id, pt.code, pt.name, pt.description, pt.parent_id
+ORDER BY pt.name ASC
+`
+
+type ListPatternsRow struct {
+	ID           int64
+	Code         string
+	Name         string
+	Description  string
+	ParentID     pgtype.Int8
+	ProblemCount int32
+	SolvedCount  int32
+	DueCount     int32
+}
+
+// All patterns with per-user progress counts for problems in neetcode_150.
+func (q *Queries) ListPatterns(ctx context.Context, dollar_1 int64) ([]ListPatternsRow, error) {
+	rows, err := q.db.Query(ctx, listPatterns, dollar_1)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListPatternsRow
+	for rows.Next() {
+		var i ListPatternsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Code,
+			&i.Name,
+			&i.Description,
+			&i.ParentID,
+			&i.ProblemCount,
+			&i.SolvedCount,
+			&i.DueCount,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
 
 const listWeakPatterns = `-- name: ListWeakPatterns :many
 SELECT

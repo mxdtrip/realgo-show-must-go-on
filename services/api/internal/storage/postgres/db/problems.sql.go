@@ -11,6 +11,105 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const createProblemScheduleIfAbsent = `-- name: CreateProblemScheduleIfAbsent :exec
+INSERT INTO review_schedules (user_id, problem_id, next_review_at, interval_days, ease, stability, difficulty, review_count, algorithm, state)
+VALUES ($1::bigint, $2::bigint, NOW(), 1, 2.5, 1.0, 5.0, 0, 'fsrs', 0)
+ON CONFLICT (user_id, problem_id) WHERE problem_id IS NOT NULL DO NOTHING
+`
+
+type CreateProblemScheduleIfAbsentParams struct {
+	UserID    int64
+	ProblemID int64
+}
+
+// Create review schedule only when none exists yet.
+func (q *Queries) CreateProblemScheduleIfAbsent(ctx context.Context, arg CreateProblemScheduleIfAbsentParams) error {
+	_, err := q.db.Exec(ctx, createProblemScheduleIfAbsent, arg.UserID, arg.ProblemID)
+	return err
+}
+
+const getUserProblem = `-- name: GetUserProblem :one
+SELECT
+    p.id,
+    COALESCE(p.external_id, p.external_slug)::text AS external_id,
+    p.title,
+    p.url,
+    CASE WHEN pl.code IN ('leetcode','neetcode','codeforces') THEN pl.code ELSE 'custom' END AS platform,
+    COALESCE(p.difficulty, 'unknown')::text AS difficulty,
+    pt.code                                AS pattern_id,
+    pt.name                                AS pattern_name,
+    CASE
+        WHEN upp.status = 'reviewing'   THEN 'reviewing'
+        WHEN upp.status = 'solved'      THEN 'solved'
+        WHEN upp.status = 'in_progress' THEN 'in_progress'
+        WHEN upp.status = 'skipped'     THEN 'skipped'
+        WHEN upp.status = 'not_started' THEN 'not_started'
+        ELSE 'unsaved'
+    END::text                              AS status,
+    rs.next_review_at,
+    COALESCE(rs.last_rating, upp.rating)   AS last_rating,
+    upp.solved_at,
+    upp.note,
+    COALESCE(p.created_at,'1970-01-01 00:00:00+00'::timestamptz) AS created_at
+FROM problems p
+JOIN platforms pl ON pl.id = p.platform_id
+LEFT JOIN user_problem_progress upp ON upp.user_id = $1::bigint AND upp.problem_id = p.id
+LEFT JOIN LATERAL (
+    SELECT next_review_at, last_rating
+    FROM review_schedules
+    WHERE user_id = $1::bigint AND problem_id = p.id
+    ORDER BY next_review_at ASC LIMIT 1
+) rs ON TRUE
+LEFT JOIN roadmap_items ri ON ri.problem_id = p.id AND ri.roadmap_code = 'neetcode_150'
+LEFT JOIN patterns pt ON pt.id = ri.pattern_id
+WHERE p.id = $2::bigint
+`
+
+type GetUserProblemParams struct {
+	UserID    int64
+	ProblemID int64
+}
+
+type GetUserProblemRow struct {
+	ID           int64
+	ExternalID   string
+	Title        string
+	Url          string
+	Platform     string
+	Difficulty   string
+	PatternID    pgtype.Text
+	PatternName  pgtype.Text
+	Status       string
+	NextReviewAt pgtype.Timestamptz
+	LastRating   pgtype.Text
+	SolvedAt     pgtype.Timestamptz
+	Note         pgtype.Text
+	CreatedAt    pgtype.Timestamptz
+}
+
+// Single problem with user progress and review schedule.
+func (q *Queries) GetUserProblem(ctx context.Context, arg GetUserProblemParams) (GetUserProblemRow, error) {
+	row := q.db.QueryRow(ctx, getUserProblem, arg.UserID, arg.ProblemID)
+	var i GetUserProblemRow
+	err := row.Scan(
+		&i.ID,
+		&i.ExternalID,
+		&i.Title,
+		&i.Url,
+		&i.Platform,
+		&i.Difficulty,
+		&i.PatternID,
+		&i.PatternName,
+		&i.Status,
+		&i.NextReviewAt,
+		&i.LastRating,
+		&i.SolvedAt,
+		&i.Note,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const listUserProblems = `-- name: ListUserProblems :many
 WITH scoped_problems AS (
     SELECT
@@ -149,4 +248,35 @@ func (q *Queries) ListUserProblems(ctx context.Context, arg ListUserProblemsPara
 		return nil, err
 	}
 	return items, nil
+}
+
+const upsertProblemProgress = `-- name: UpsertProblemProgress :one
+INSERT INTO user_problem_progress (user_id, problem_id, status, first_seen_at)
+VALUES ($1::bigint, $2::bigint, 'not_started', NOW())
+ON CONFLICT (user_id, problem_id) DO UPDATE
+    SET status = CASE
+        WHEN user_problem_progress.status IN ('reviewing','solved','in_progress') THEN user_problem_progress.status
+        ELSE 'not_started'
+    END,
+    first_seen_at = COALESCE(user_problem_progress.first_seen_at, EXCLUDED.first_seen_at)
+RETURNING user_id, problem_id, status
+`
+
+type UpsertProblemProgressParams struct {
+	UserID    int64
+	ProblemID int64
+}
+
+type UpsertProblemProgressRow struct {
+	UserID    int64
+	ProblemID int64
+	Status    pgtype.Text
+}
+
+// Save a problem to the user's list (idempotent; won't downgrade reviewing/solved status).
+func (q *Queries) UpsertProblemProgress(ctx context.Context, arg UpsertProblemProgressParams) (UpsertProblemProgressRow, error) {
+	row := q.db.QueryRow(ctx, upsertProblemProgress, arg.UserID, arg.ProblemID)
+	var i UpsertProblemProgressRow
+	err := row.Scan(&i.UserID, &i.ProblemID, &i.Status)
+	return i, err
 }

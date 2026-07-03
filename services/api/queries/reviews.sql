@@ -54,7 +54,7 @@ UPDATE review_schedules
 SET next_review_at = $2, interval_days = $3, stability = $4, difficulty = $5,
     review_count = $6, last_rating = $7, state = $8, lapses = $9,
     last_review_at = $10, remaining_steps = $11, updated_at = NOW()
-WHERE id = $1
+WHERE id = $1 AND user_id = sqlc.arg(user_id)
 RETURNING id, user_id, problem_id, pattern_id, card_id, next_review_at,
           interval_days, stability, difficulty, review_count, last_rating,
           state, lapses, last_review_at, remaining_steps;

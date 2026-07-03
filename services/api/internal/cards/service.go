@@ -15,8 +15,9 @@ import (
 )
 
 var (
-	ErrCardNotFound  = errors.New("card not found")
-	ErrInvalidRating = errors.New("rating must be hard, normal, or easy")
+	ErrCardNotFound       = errors.New("card not found")
+	ErrCardTargetNotFound = errors.New("card target not found")
+	ErrInvalidRating      = errors.New("rating must be hard, normal, or easy")
 )
 
 type repository interface {
@@ -24,6 +25,10 @@ type repository interface {
 	ListSession(ctx context.Context, userID int64, params SessionParams) ([]CardRecord, error)
 	EnsureReviewSchedule(ctx context.Context, userID, cardID int64, reviewedAt time.Time) (int64, error)
 	CountSessionAttempts(ctx context.Context, userID int64, since time.Time) (int, error)
+	Create(ctx context.Context, userID int64, p CreateCardInput) (CardDetail, error)
+	GetByID(ctx context.Context, userID, cardID int64) (CardDetail, error)
+	Update(ctx context.Context, userID, cardID int64, p UpdateCardInput) (CardDetail, error)
+	Delete(ctx context.Context, userID, cardID int64) error
 }
 
 type reviewRater interface {
@@ -239,4 +244,32 @@ func decodeSessionID(value string) sessionToken {
 		return sessionToken{}
 	}
 	return token
+}
+
+func (s *Service) Create(ctx context.Context, userID int64, p CreateCardInput) (CardDetail, error) {
+	card, err := s.repo.Create(ctx, userID, p)
+	if err != nil {
+		return CardDetail{}, fmt.Errorf("cards: create: %w", err)
+	}
+	return card, nil
+}
+
+func (s *Service) GetByID(ctx context.Context, userID, cardID int64) (CardDetail, error) {
+	card, err := s.repo.GetByID(ctx, userID, cardID)
+	if err != nil {
+		return CardDetail{}, fmt.Errorf("cards: get by id: %w", err)
+	}
+	return card, nil
+}
+
+func (s *Service) Update(ctx context.Context, userID, cardID int64, p UpdateCardInput) (CardDetail, error) {
+	card, err := s.repo.Update(ctx, userID, cardID, p)
+	if err != nil {
+		return CardDetail{}, fmt.Errorf("cards: update: %w", err)
+	}
+	return card, nil
+}
+
+func (s *Service) Delete(ctx context.Context, userID, cardID int64) error {
+	return s.repo.Delete(ctx, userID, cardID)
 }

@@ -117,3 +117,59 @@ type SessionProgress struct {
 	Total     int `json:"total"`
 	Remaining int `json:"remaining"`
 }
+
+// --- CRUD types ---
+
+// CreateCardInput is the input for creating a new card.
+type CreateCardInput struct {
+	Type        string
+	Question    string
+	Answer      string
+	Explanation *string
+	Source      *string
+	ProblemID   *int64
+	PatternID   *int64
+}
+
+// UpdateCardInput contains the fields that may be patched on a card.
+type UpdateCardInput struct {
+	Type        *string
+	Question    *string
+	Answer      *string
+	Explanation *string
+	Source      *string
+}
+
+// CardDetail is returned by CRUD endpoints and includes join fields.
+type CardDetail struct {
+	ID           int64     `json:"id"`
+	Type         string    `json:"type"`
+	Question     string    `json:"question"`
+	Answer       string    `json:"answer"`
+	Explanation  *string   `json:"explanation"`
+	Source       *string   `json:"source"`
+	CreatedByAI  bool      `json:"created_by_ai"`
+	CreatedAt    time.Time `json:"created_at"`
+	ProblemTitle *string   `json:"problem_title"`
+	ProblemURL   *string   `json:"problem_url"`
+	PatternName  *string   `json:"pattern_name"`
+}
+
+// HTTP request types used by CRUD handlers only.
+type createCardRequest struct {
+	Type        string  `json:"type"`
+	Question    string  `json:"question"`
+	Answer      string  `json:"answer"`
+	Explanation *string `json:"explanation"`
+	Source      *string `json:"source"`
+	ProblemID   *int64  `json:"problem_id"`
+	PatternID   *int64  `json:"pattern_id"`
+}
+
+type updateCardRequest struct {
+	Type        *string `json:"type"`
+	Question    *string `json:"question"`
+	Answer      *string `json:"answer"`
+	Explanation *string `json:"explanation"`
+	Source      *string `json:"source"`
+}

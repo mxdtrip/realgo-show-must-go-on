@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 
@@ -108,40 +109,174 @@ func (r *pgRepository) CountSessionAttempts(ctx context.Context, userID int64, s
 	return int(count), nil
 }
 
-func recordFromListRow(row db.ListUserCardsRow) CardRecord {
+func newCardRecord(id int64, cardType, question, answer string, createdAt pgtype.Timestamptz, sourceEntityType string, sourceEntityID pgtype.Int8, sourceLabel string, scheduleID int64, nextReviewAt pgtype.Timestamptz, lastRating pgtype.Text, reviewCount, reviewState int32) CardRecord {
 	return CardRecord{
-		ID:               row.ID,
-		Type:             row.Type,
-		Question:         row.Question,
-		Answer:           row.Answer,
-		CreatedAt:        timeFromPg(row.CreatedAt),
-		SourceEntityType: row.SourceEntityType,
-		SourceEntityID:   int64PtrFromPg(row.SourceEntityID),
-		SourceLabel:      row.SourceLabel,
-		ScheduleID:       scheduleIDPtr(row.ScheduleID),
-		NextReviewAt:     timePtrFromPg(row.NextReviewAt),
-		LastRating:       stringPtrFromPg(row.LastRating),
-		ReviewCount:      int(row.ReviewCount),
-		ReviewState:      int(row.ReviewState),
+		ID:               id,
+		Type:             cardType,
+		Question:         question,
+		Answer:           answer,
+		CreatedAt:        timeFromPg(createdAt),
+		SourceEntityType: sourceEntityType,
+		SourceEntityID:   int64PtrFromPg(sourceEntityID),
+		SourceLabel:      sourceLabel,
+		ScheduleID:       scheduleIDPtr(scheduleID),
+		NextReviewAt:     timePtrFromPg(nextReviewAt),
+		LastRating:       stringPtrFromPg(lastRating),
+		ReviewCount:      int(reviewCount),
+		ReviewState:      int(reviewState),
 	}
 }
 
+func recordFromListRow(row db.ListUserCardsRow) CardRecord {
+	return newCardRecord(
+		row.ID,
+		row.Type,
+		row.Question,
+		row.Answer,
+		row.CreatedAt,
+		row.SourceEntityType,
+		row.SourceEntityID,
+		row.SourceLabel,
+		row.ScheduleID,
+		row.NextReviewAt,
+		row.LastRating,
+		row.ReviewCount,
+		row.ReviewState,
+	)
+}
+
 func recordFromSessionRow(row db.ListCardSessionRow) CardRecord {
-	return CardRecord{
-		ID:               row.ID,
-		Type:             row.Type,
-		Question:         row.Question,
-		Answer:           row.Answer,
-		CreatedAt:        timeFromPg(row.CreatedAt),
-		SourceEntityType: row.SourceEntityType,
-		SourceEntityID:   int64PtrFromPg(row.SourceEntityID),
-		SourceLabel:      row.SourceLabel,
-		ScheduleID:       scheduleIDPtr(row.ScheduleID),
-		NextReviewAt:     timePtrFromPg(row.NextReviewAt),
-		LastRating:       stringPtrFromPg(row.LastRating),
-		ReviewCount:      int(row.ReviewCount),
-		ReviewState:      int(row.ReviewState),
+	return newCardRecord(
+		row.ID,
+		row.Type,
+		row.Question,
+		row.Answer,
+		row.CreatedAt,
+		row.SourceEntityType,
+		row.SourceEntityID,
+		row.SourceLabel,
+		row.ScheduleID,
+		row.NextReviewAt,
+		row.LastRating,
+		row.ReviewCount,
+		row.ReviewState,
+	)
+}
+
+func (r *pgRepository) Create(ctx context.Context, userID int64, p CreateCardInput) (CardDetail, error) {
+	params := db.CreateCardParams{
+		UserID:      userID,
+		CardType:    p.Type,
+		Question:    p.Question,
+		Answer:      p.Answer,
+		CreatedByAi: pgtype.Bool{Bool: false, Valid: true},
 	}
+	if p.ProblemID != nil {
+		params.ProblemID = pgtype.Int8{Int64: *p.ProblemID, Valid: true}
+	}
+	if p.PatternID != nil {
+		params.PatternID = pgtype.Int8{Int64: *p.PatternID, Valid: true}
+	}
+	if p.Explanation != nil {
+		params.Explanation = pgtype.Text{String: *p.Explanation, Valid: true}
+	}
+	if p.Source != nil {
+		params.Source = pgtype.Text{String: *p.Source, Valid: true}
+	}
+	card, err := r.q.CreateCard(ctx, params)
+	if err != nil {
+		if isForeignKeyViolation(err) {
+			return CardDetail{}, ErrCardTargetNotFound
+		}
+		return CardDetail{}, fmt.Errorf("cards: create: %w", err)
+	}
+	return r.GetByID(ctx, userID, card.ID)
+}
+
+func (r *pgRepository) GetByID(ctx context.Context, userID, cardID int64) (CardDetail, error) {
+	row, err := r.q.GetCardByID(ctx, db.GetCardByIDParams{CardID: cardID, UserID: userID})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return CardDetail{}, ErrCardNotFound
+	}
+	if err != nil {
+		return CardDetail{}, fmt.Errorf("cards: get by id: %w", err)
+	}
+	return cardDetailFromGetRow(row), nil
+}
+
+func (r *pgRepository) Update(ctx context.Context, userID, cardID int64, p UpdateCardInput) (CardDetail, error) {
+	params := db.UpdateCardParams{CardID: cardID, UserID: userID}
+	if p.Type != nil {
+		params.CardType = pgtype.Text{String: *p.Type, Valid: true}
+	}
+	if p.Question != nil {
+		params.Question = pgtype.Text{String: *p.Question, Valid: true}
+	}
+	if p.Answer != nil {
+		params.Answer = pgtype.Text{String: *p.Answer, Valid: true}
+	}
+	if p.Explanation != nil {
+		params.Explanation = pgtype.Text{String: *p.Explanation, Valid: true}
+	}
+	if p.Source != nil {
+		params.Source = pgtype.Text{String: *p.Source, Valid: true}
+	}
+	card, err := r.q.UpdateCard(ctx, params)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return CardDetail{}, ErrCardNotFound
+	}
+	if err != nil {
+		return CardDetail{}, fmt.Errorf("cards: update: %w", err)
+	}
+	return r.GetByID(ctx, userID, card.ID)
+}
+
+func (r *pgRepository) Delete(ctx context.Context, userID, cardID int64) error {
+	rows, err := r.q.DeleteCard(ctx, db.DeleteCardParams{CardID: cardID, UserID: userID})
+	if err != nil {
+		return fmt.Errorf("cards: delete: %w", err)
+	}
+	if rows == 0 {
+		return ErrCardNotFound
+	}
+	return nil
+}
+
+func isForeignKeyViolation(err error) bool {
+	var pgErr *pgconn.PgError
+	return errors.As(err, &pgErr) && pgErr.Code == "23503"
+}
+
+func newCardDetail(id int64, cardType, question, answer string, createdByAI bool, createdAt pgtype.Timestamptz, explanation, source pgtype.Text) CardDetail {
+	d := CardDetail{
+		ID:          id,
+		Type:        cardType,
+		Question:    question,
+		Answer:      answer,
+		CreatedByAI: createdByAI,
+	}
+	if createdAt.Valid {
+		d.CreatedAt = createdAt.Time.UTC()
+	}
+	d.Explanation = stringPtrFromPg(explanation)
+	d.Source = stringPtrFromPg(source)
+	return d
+}
+
+func cardDetailFromCard(c db.Card, problemTitle, problemURL, patternName pgtype.Text) CardDetail {
+	d := newCardDetail(c.ID, c.Type, c.Question, c.Answer, c.CreatedByAi.Bool, c.CreatedAt, c.Explanation, c.Source)
+	d.ProblemTitle = stringPtrFromPg(problemTitle)
+	d.ProblemURL = stringPtrFromPg(problemURL)
+	d.PatternName = stringPtrFromPg(patternName)
+	return d
+}
+
+func cardDetailFromGetRow(row db.GetCardByIDRow) CardDetail {
+	d := newCardDetail(row.ID, row.Type, row.Question, row.Answer, row.CreatedByAi.Bool, row.CreatedAt, row.Explanation, row.Source)
+	d.ProblemTitle = stringPtrFromPg(row.ProblemTitle)
+	d.ProblemURL = stringPtrFromPg(row.ProblemUrl)
+	d.PatternName = stringPtrFromPg(row.PatternName)
+	return d
 }
 
 func int64PtrFromPg(value pgtype.Int8) *int64 {

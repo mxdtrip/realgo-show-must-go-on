@@ -52,6 +52,14 @@ INSERT INTO review_schedules (
     ease, stability, difficulty, review_count, last_rating, algorithm
 )
 VALUES ($1, $2, $3, $4, $5, $6, $7, 1, $8, $9)
+ON CONFLICT (user_id, problem_id) WHERE problem_id IS NOT NULL DO UPDATE
+SET next_review_at = EXCLUDED.next_review_at,
+    interval_days = EXCLUDED.interval_days,
+    stability = EXCLUDED.stability,
+    difficulty = EXCLUDED.difficulty,
+    review_count = review_schedules.review_count + 1,
+    last_rating = EXCLUDED.last_rating,
+    updated_at = NOW()
 RETURNING id, next_review_at
 `
 

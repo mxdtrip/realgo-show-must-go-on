@@ -1,3 +1,42 @@
+-- name: CreateCard :one
+INSERT INTO cards (user_id, problem_id, pattern_id, type, question, answer, explanation, source, created_by_ai)
+VALUES (
+    sqlc.arg(user_id)::bigint,
+    sqlc.narg(problem_id),
+    sqlc.narg(pattern_id),
+    sqlc.arg(card_type),
+    sqlc.arg(question),
+    sqlc.arg(answer),
+    sqlc.narg(explanation),
+    sqlc.narg(source),
+    sqlc.arg(created_by_ai)
+)
+RETURNING *;
+
+-- name: GetCardByID :one
+SELECT c.id, c.user_id, c.problem_id, c.pattern_id, c.type, c.question, c.answer,
+       c.explanation, c.source, c.created_by_ai, c.created_at,
+       p.title AS problem_title, p.url AS problem_url, pat.name AS pattern_name
+FROM cards c
+LEFT JOIN problems p   ON p.id   = c.problem_id
+LEFT JOIN patterns pat ON pat.id = c.pattern_id
+WHERE c.id = sqlc.arg(card_id)::bigint AND c.user_id = sqlc.arg(user_id)::bigint;
+
+-- name: UpdateCard :one
+UPDATE cards
+SET
+    type        = COALESCE(sqlc.narg(card_type), type),
+    question    = COALESCE(sqlc.narg(question), question),
+    answer      = COALESCE(sqlc.narg(answer), answer),
+    explanation = COALESCE(sqlc.narg(explanation), explanation),
+    source      = COALESCE(sqlc.narg(source), source)
+WHERE id = sqlc.arg(card_id)::bigint AND user_id = sqlc.arg(user_id)::bigint
+RETURNING *;
+
+-- name: DeleteCard :execrows
+DELETE FROM cards
+WHERE id = sqlc.arg(card_id)::bigint AND user_id = sqlc.arg(user_id)::bigint;
+
 -- name: ListUserCards :many
 SELECT
     c.id,
@@ -120,6 +159,8 @@ INSERT INTO review_schedules (
     ease, stability, difficulty, review_count, algorithm
 )
 VALUES ($1, $2, $3, 0, 2.5, 0.1, 5.0, 0, 'fsrs')
+ON CONFLICT (user_id, card_id) WHERE card_id IS NOT NULL DO UPDATE
+SET updated_at = review_schedules.updated_at
 RETURNING id;
 
 -- name: CountCardSessionAttempts :one
