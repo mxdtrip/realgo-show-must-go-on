@@ -77,6 +77,32 @@ services:
     command: sh -c "pip install --no-cache-dir -r requirements.txt && python seed_cards.py realgo_demo_cards.yaml"
     restart: "no"
 
+  seed-pattern-content:
+    image: python:3.12-slim
+    depends_on:
+      seed-roadmap:
+        condition: service_completed_successfully
+    working_dir: /seeds
+    volumes:
+      - ./services/api/seeds:/seeds:ro
+    environment:
+      DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-freeburger}?sslmode=disable
+    command: sh -c "pip install --no-cache-dir -r requirements.txt && python seed_pattern_content.py pattern_content.yaml"
+    restart: "no"
+
+  seed-pattern-cards:
+    image: python:3.12-slim
+    depends_on:
+      seed-pattern-content:
+        condition: service_completed_successfully
+    working_dir: /seeds
+    volumes:
+      - ./services/api/seeds:/seeds:ro
+    environment:
+      DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-freeburger}?sslmode=disable
+    command: sh -c "pip install --no-cache-dir -r requirements.txt && python seed_cards.py pattern_cards.yaml"
+    restart: "no"
+
   seed-users:
     image: python:3.12-slim
     depends_on:
