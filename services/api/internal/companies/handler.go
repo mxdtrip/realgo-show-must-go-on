@@ -7,8 +7,6 @@ import (
 	"github.com/mxdtrip/freeburger/services/api/internal/server/response"
 )
 
-// Handler has no dependencies (no repo/pool) because Search reads from the
-// static in-memory catalog — see repository.go.
 type Handler struct{}
 
 func NewHandler() *Handler {
