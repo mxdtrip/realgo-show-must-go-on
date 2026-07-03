@@ -1,9 +1,9 @@
 # Local dev stack and server deployment for the FreeBurger API.
 #
-# The deploy workflow on `main` runs `docker compose up -d --build` from the
-# repository root, so this file is the single source of truth for both the
-# local environment and the appbox server. Dev-friendly defaults are inlined;
-# on the server, override secrets via environment or a root .env file.
+# The deploy workflow runs `docker compose --profile prod-demo up -d --build`
+# from the repository root, so this file is the single source of truth for both
+# the local environment and the appbox server. Dev-friendly defaults are
+# inlined; on the server, override secrets via environment or a root .env file.
 
 name: freeburger
 
@@ -126,14 +126,15 @@ services:
   # userspace TCP — no TUN/kernel modules (which the LXD host doesn't allow).
   frpc:
     image: snowdreamtech/frpc:0.61.1
+    profiles: ["prod-demo"]
     restart: unless-stopped
     depends_on:
       - caddy
     volumes:
       - ./frpc.toml:/etc/frp/frpc.toml:ro
     environment:
-      FRP_VPS_HOST: ${FRP_VPS_HOST:?FRP_VPS_HOST must be set}
-      FRP_TOKEN: ${FRP_TOKEN:?FRP_TOKEN must be set}
+      FRP_VPS_HOST: ${FRP_VPS_HOST:-}
+      FRP_TOKEN: ${FRP_TOKEN:-}
 
   api:
     build:

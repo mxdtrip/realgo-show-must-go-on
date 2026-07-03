@@ -1,0 +1,108 @@
+version: "3"
+
+vars:
+  GO: '{{.GO | default "go"}}'
+  COMPOSE: '{{.COMPOSE | default "docker compose -f ../../docker-compose.yml"}}'
+  PROD_COMPOSE: '{{.PROD_COMPOSE | default "docker compose -f ../../docker-compose.yml --profile prod-demo"}}'
+
+tasks:
+  default:
+    desc: Show available tasks
+    cmds:
+      - task --list
+
+  build:
+    desc: Build the api binary into bin/
+    cmds:
+      - "{{.GO}} build -o bin/api ./cmd/api"
+
+  run:
+    desc: Run the api on the host
+    cmds:
+      - "{{.GO}} run ./cmd/api"
+
+  test:
+    desc: Run all tests
+    cmds:
+      - "{{.GO}} test ./..."
+
+  test-integration:
+    desc: Run integration tests against local Postgres and Redis
+    cmds:
+      - "{{.GO}} test -count=1 -tags=integration ./internal/integration"
+
+  vet:
+    desc: Run go vet
+    cmds:
+      - "{{.GO}} vet ./..."
+
+  fmt:
+    desc: Format Go sources
+    cmds:
+      - "{{.GO}} fmt ./..."
+
+  tidy:
+    desc: Sync go.mod and go.sum
+    cmds:
+      - "{{.GO}} mod tidy"
+
+  sqlc:
+    desc: Generate sqlc code from queries/
+    cmds:
+      - "{{.GO}} tool sqlc generate"
+
+  up:
+    desc: Build and start the full stack in the background
+    cmds:
+      - "{{.COMPOSE}} up -d --build"
+
+  prod-demo-up:
+    desc: Build and start the stack with the VPS reverse tunnel
+    cmds:
+      - "{{.PROD_COMPOSE}} up -d --build"
+
+  down:
+    desc: Stop the stack and remove its containers
+    cmds:
+      - "{{.COMPOSE}} down"
+
+  migrate:
+    desc: Apply database migrations inside the compose network
+    cmds:
+      - "{{.COMPOSE}} run --rm migrate"
+
+  seed-roadmap:
+    desc: Seed the NeetCode roadmap inside the compose network
+    cmds:
+      - "{{.COMPOSE}} run --rm seed-roadmap"
+
+  seed-cards:
+    desc: Seed demo Anki-style cards inside the compose network
+    cmds:
+      - "{{.COMPOSE}} run --rm seed-cards"
+
+  seed-users:
+    desc: Seed demo users and review data inside the compose network
+    cmds:
+      - "{{.COMPOSE}} run --rm seed-users"
+
+  reset-demo:
+    desc: Reset demo users to the seeded baseline
+    cmds:
+      - "{{.COMPOSE}} run --rm seed-users"
+
+  logs:
+    desc: Follow the api logs
+    cmds:
+      - "{{.COMPOSE}} logs -f api"
+
+  ps:
+    desc: Show compose service status
+    cmds:
+      - "{{.COMPOSE}} ps"
+
+  health:
+    desc: Check local API liveness and readiness
+    cmds:
+      - curl -fsS http://localhost:${API_PORT:-8080}/healthz
+      - curl -fsS http://localhost:${API_PORT:-8080}/readyz
