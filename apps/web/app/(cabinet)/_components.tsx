@@ -150,7 +150,8 @@ export function StatusPill({
   return <span className={`status-pill status-pill--${tone}`}>{children}</span>;
 }
 
-/** Contribution-style activity heatmap: columns are weeks, rows are weekdays. */
+/** Contribution-style activity heatmap: each outer entry is a row of 7 days
+    (last 28 days → 4 rows × 7 columns), newest cell bottom-right. */
 export function ActivityHeatmap({
   weeks,
   ariaLabel,

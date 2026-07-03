@@ -11,7 +11,7 @@ import (
 	"github.com/mxdtrip/freeburger/services/api/internal/auth"
 	"github.com/mxdtrip/freeburger/services/api/internal/controller/v1/request"
 	v1response "github.com/mxdtrip/freeburger/services/api/internal/controller/v1/response"
-	serverrequest "github.com/mxdtrip/freeburger/services/api/internal/server/request"
+	"github.com/mxdtrip/freeburger/services/api/internal/server/httpjson"
 	"github.com/mxdtrip/freeburger/services/api/internal/server/response"
 	"github.com/mxdtrip/freeburger/services/api/internal/service"
 )
@@ -78,7 +78,7 @@ func (h *ReviewHandler) RateReview(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req request.RateReviewRequest
-	if !serverrequest.DecodeJSON(w, r, &req) {
+	if !httpjson.DecodeStrict(w, r, &req, "VALIDATION_ERROR") {
 		return
 	}
 

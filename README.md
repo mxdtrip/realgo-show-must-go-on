@@ -7,7 +7,7 @@
 ```text
 .
 ├── apps/
-│   ├── web/                 # Next.js, React, TypeScript, Tailwind, shadcn/ui
+│   ├── web/                 # Next.js, React, TypeScript, кастомный CSS
 │   └── extension/           # Plasmo, TypeScript, Manifest V3
 ├── services/
 │   └── api/                 # Go API
@@ -15,9 +15,9 @@
 │       ├── internal/        # Закрытая бизнес-логика и адаптеры
 │       └── migrations/      # Миграции базы данных
 └── packages/
-    ├── ui/                  # Общие React-компоненты и дизайн-токены
-    ├── shared/              # Общие TypeScript-типы и чистая логика
-    └── config/              # Общие настройки TypeScript, ESLint, Tailwind
+    ├── ui/                  # Зарезервировано под общие React-компоненты
+    ├── shared/              # Зарезервировано под общие TypeScript-типы
+    └── config/              # Зарезервировано под общие настройки инструментов
 ```
 
 ## Архитектурные границы
@@ -28,7 +28,7 @@
 - `packages/shared` — платформонезависимые TypeScript-типы, схемы и утилиты без React, Next.js и Plasmo API.
 - `packages/config` — единые настройки инструментов без продуктового кода.
 
-В корне позже следует разместить Node workspace (`pnpm-workspace.yaml` или аналог выбранного package manager) и `go.work`, когда будут известны имена модулей. Lock-файл package manager должен храниться в Git.
+Node-приложения пока хранят собственные `package-lock.json`; общего Node workspace в корне нет. Lock-файлы package manager должны храниться в Git.
 
 ## Приложения и сервисы
 

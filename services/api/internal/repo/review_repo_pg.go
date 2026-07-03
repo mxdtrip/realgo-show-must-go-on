@@ -45,7 +45,7 @@ func (r *pgReviewRepository) QueueReviews(ctx context.Context, userID int64, sta
 			Meta:       buildMeta(row.CardID, row.PatternTitle, row.ProblemDifficulty, row.CardType),
 			TypeLabel:  typeLabel(row.ProblemID, row.PatternID, row.CardID),
 			DueAt:      row.NextReviewAt.Time,
-			Status:     statusFromState(int8(row.State)),
+			Status:     status,
 			LastRating: stringPtrFromPg(row.LastRating),
 			Attempts:   int(row.ReviewCount.Int32),
 		})
@@ -226,21 +226,6 @@ func typeLabel(problemID, patternID, cardID pgtype.Int8) string {
 		return "card review"
 	}
 	return ""
-}
-
-func statusFromState(state int8) string {
-	switch state {
-	case 0:
-		return "due"
-	case 1:
-		return "due"
-	case 2:
-		return "due"
-	case 3:
-		return "due"
-	default:
-		return "due"
-	}
 }
 
 func reviewType(attempt entity.ReviewAttempt) (string, error) {

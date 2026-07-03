@@ -1,10 +1,10 @@
 BEGIN;
 
-ALTER TABLE cards
-  ADD CONSTRAINT card_type_target_check CHECK (
-    (type = 'problem' AND problem_id IS NOT NULL AND pattern_id IS NULL)
-    OR (type = 'pattern' AND pattern_id IS NOT NULL AND problem_id IS NULL)
-    OR (type = 'concept' AND problem_id IS NULL AND pattern_id IS NULL)
-  );
+-- No-op by design. Migration 000023 only removes the stale legacy
+-- card_type_target_check after 000020 has already moved cards.type to contract
+-- values (pattern_recognition/algorithm_mechanics/edge_case). Re-adding that
+-- legacy constraint here makes a single-step rollback fail on valid current
+-- card rows. Migration 000020.down converts rows back to legacy type values
+-- and restores the old constraint during deeper rollbacks.
 
 COMMIT;

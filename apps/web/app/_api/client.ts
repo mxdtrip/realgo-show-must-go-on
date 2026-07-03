@@ -74,9 +74,11 @@ export async function refreshAccessToken(): Promise<string> {
     setTokens(data.tokens);
     return data.tokens.access_token;
   } catch (e) {
-    // A rejected refresh token means the session is dead — clear it so the guard
-    // sends the user back to login.
-    if (e instanceof ApiError && e.status !== 0) clearTokens();
+    // Only a genuine auth rejection (401) means the refresh token is dead — clear
+    // it so the guard sends the user back to login. Transient failures (5xx, 429,
+    // rate limit, network/status 0) must NOT wipe a still-valid session, otherwise
+    // a hiccup on a public page silently logs the user out.
+    if (e instanceof ApiError && e.status === 401) clearTokens();
     throw e;
   }
 }

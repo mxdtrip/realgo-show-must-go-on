@@ -14,7 +14,7 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/mxdtrip/freeburger/services/api/internal/auth"
-	"github.com/mxdtrip/freeburger/services/api/internal/server/request"
+	"github.com/mxdtrip/freeburger/services/api/internal/server/httpjson"
 	"github.com/mxdtrip/freeburger/services/api/internal/server/response"
 )
 
@@ -115,7 +115,7 @@ func (h *Handler) Rate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req RateRequest
-	if !request.DecodeJSON(w, r, &req) {
+	if !httpjson.DecodeStrict(w, r, &req, "VALIDATION_ERROR") {
 		return
 	}
 
@@ -145,7 +145,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req createCardRequest
-	if !request.DecodeJSON(w, r, &req) {
+	if !httpjson.DecodeStrict(w, r, &req, "VALIDATION_ERROR") {
 		return
 	}
 	if !validCardType(req.Type) {
@@ -222,7 +222,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req updateCardRequest
-	if !request.DecodeJSON(w, r, &req) {
+	if !httpjson.DecodeStrict(w, r, &req, "VALIDATION_ERROR") {
 		return
 	}
 	if req.Type != nil && !validCardType(*req.Type) {

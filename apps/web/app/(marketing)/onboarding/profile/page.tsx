@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 
 import { getDictionary } from "../../../_content/i18n";
@@ -22,21 +21,21 @@ const fallbackCompanies = [
 ] as const;
 
 const algorithmTopics = [
-  { id: "arrays", label: "Arrays & Hashing", x: 8, y: 16 },
-  { id: "two-pointers", label: "Two Pointers", x: 72, y: 12 },
-  { id: "sliding-window", label: "Sliding Window", x: 5, y: 42 },
-  { id: "stack", label: "Stack", x: 78, y: 38 },
-  { id: "binary-search", label: "Binary Search", x: 13, y: 72 },
-  { id: "linked-list", label: "Linked List", x: 70, y: 68 },
-  { id: "trees", label: "Trees", x: 23, y: 9 },
-  { id: "graphs", label: "Graphs", x: 82, y: 82 },
-  { id: "heap", label: "Heap / Priority Queue", x: 2, y: 88 },
-  { id: "backtracking", label: "Backtracking", x: 84, y: 58 },
-  { id: "dp", label: "Dynamic Programming", x: 16, y: 55 },
-  { id: "greedy", label: "Greedy", x: 75, y: 24 },
-  { id: "intervals", label: "Intervals", x: 27, y: 84 },
-  { id: "tries", label: "Tries", x: 63, y: 7 },
-  { id: "bit", label: "Bit Manipulation", x: 88, y: 6 },
+  { id: "arrays", label: "Arrays & Hashing" },
+  { id: "two-pointers", label: "Two Pointers" },
+  { id: "sliding-window", label: "Sliding Window" },
+  { id: "stack", label: "Stack" },
+  { id: "binary-search", label: "Binary Search" },
+  { id: "linked-list", label: "Linked List" },
+  { id: "trees", label: "Trees" },
+  { id: "graphs", label: "Graphs" },
+  { id: "heap", label: "Heap / Priority Queue" },
+  { id: "backtracking", label: "Backtracking" },
+  { id: "dp", label: "Dynamic Programming" },
+  { id: "greedy", label: "Greedy" },
+  { id: "intervals", label: "Intervals" },
+  { id: "tries", label: "Tries" },
+  { id: "bit", label: "Bit Manipulation" },
 ] as const;
 
 type CompanyApiItem = {
@@ -66,6 +65,12 @@ function monthLabel(date: Date, locale = "ru-RU") {
   return new Intl.DateTimeFormat(locale, { month: "long", year: "numeric" }).format(date);
 }
 
+function fullDateLabel(iso: string, locale = "ru-RU") {
+  const date = new Date(`${iso}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return iso;
+  return new Intl.DateTimeFormat(locale, { day: "numeric", month: "long", year: "numeric" }).format(date);
+}
+
 function buildCalendarMonth(monthDate: Date, weekdays: readonly string[]) {
   const firstDay = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
   const lastDay = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0);
@@ -84,21 +89,6 @@ function buildCalendarMonth(monthDate: Date, weekdays: readonly string[]) {
   }
 
   return days;
-}
-
-function getCenterPosition(index: number) {
-  const positions = [
-    [50, 47],
-    [37, 42],
-    [63, 42],
-    [42, 57],
-    [58, 57],
-    [50, 32],
-    [50, 66],
-    [31, 54],
-    [69, 54],
-  ];
-  return positions[index % positions.length] ?? [50, 50];
 }
 
 function splitCompanies(value: string) {
@@ -272,40 +262,65 @@ export default function OnboardingProfilePage() {
   );
 
   if (step === "welcome") {
+    const summary = copy.welcome.summary;
+    const topicLabels = algorithmTopics
+      .filter((topic) => selectedTopics.includes(topic.id))
+      .map((topic) => topic.label);
+
     return (
-      <main className="onboarding-page onboarding-page--welcome">
-        <div className="onboarding-glow" aria-hidden="true" />
-        <div className="onboarding-welcome-orbit" aria-hidden="true">
-          <span />
-          <span />
-          <span />
-        </div>
-        <section className="onboarding-welcome">
-          <a className="site-brand" href="/">
-            {dictionary.common.brand}
-          </a>
-          <span>{copy.welcome.eyebrow}</span>
-          <h1>{copy.welcome.title}</h1>
-          <p>{copy.welcome.description}</p>
-          <button type="button" onClick={() => router.push("/dashboard")}>
-            {copy.welcome.action}
-          </button>
+      <main className="onboarding-page">
+        <section className="onboarding-window onboarding-window--welcome">
+          <header className="onboarding-titlebar">
+            <a className="onboarding-path" href="/">
+              ~/realgo<em>/setup</em>
+            </a>
+            <span className="onboarding-status">
+              <i aria-hidden="true" />
+              {copy.welcome.eyebrow}
+            </span>
+          </header>
+          <div className="onboarding-welcome">
+            <h1>{copy.welcome.title}</h1>
+            <p>{copy.welcome.description}</p>
+            <dl className="onboarding-summary">
+              <div>
+                <dt>{summary.companies}</dt>
+                <dd>{selectedCompanies.length > 0 ? selectedCompanies.join(", ") : summary.empty}</dd>
+              </div>
+              <div>
+                <dt>{summary.date}</dt>
+                <dd>{selectedDate ? fullDateLabel(selectedDate) : summary.empty}</dd>
+              </div>
+              <div>
+                <dt>{summary.topics}</dt>
+                <dd>{topicLabels.length > 0 ? topicLabels.join(", ") : summary.empty}</dd>
+              </div>
+            </dl>
+            <button className="onboarding-primary" type="button" onClick={() => router.push("/dashboard")}>
+              {copy.welcome.action}
+            </button>
+          </div>
         </section>
       </main>
     );
   }
 
+  const stepTag = `${String(currentStepIndex + 1).padStart(2, "0")} / ${step}`;
+
   return (
     <main className="onboarding-page">
-      <div className="onboarding-glow" aria-hidden="true" />
-
-      <section className="onboarding-card" aria-live="polite">
-        <header className="onboarding-head">
+      <section className="onboarding-window" aria-live="polite">
+        <header className="onboarding-titlebar">
+          <a className="onboarding-path" href="/">
+            ~/realgo<em>/setup</em>
+          </a>
           <div
             className="onboarding-progress"
             aria-label={`${copy.stepLabel} ${currentStepIndex + 1} / ${steps.length}`}
           >
-            <span>{copy.stepLabel} {currentStepIndex + 1} / {steps.length}</span>
+            <span>
+              {copy.stepLabel} {String(currentStepIndex + 1).padStart(2, "0")} / {String(steps.length).padStart(2, "0")}
+            </span>
             <div>
               {steps.map((item, index) => (
                 <i className={index <= currentStepIndex ? "active" : ""} key={item} />
@@ -314,14 +329,15 @@ export default function OnboardingProfilePage() {
           </div>
         </header>
 
-        {step === "company" ? (
-          <section className="onboarding-section onboarding-section--active onboarding-company">
-            <div className="onboarding-section__copy">
-              <span>01</span>
-              <h2>{copy.company.title}</h2>
-              <p>{copy.company.description}</p>
-            </div>
-            <div className="onboarding-step-main">
+        <div className="onboarding-body" key={step}>
+          <aside className="onboarding-copy">
+            <span className="onboarding-eyebrow">{stepTag}</span>
+            <h2>{copy[step].title}</h2>
+            <p>{copy[step].description}</p>
+          </aside>
+
+          {step === "company" ? (
+            <div className="onboarding-main">
               <label className="onboarding-input">
                 {copy.company.label}
                 <input
@@ -361,17 +377,10 @@ export default function OnboardingProfilePage() {
                 </div>
               ) : null}
             </div>
-          </section>
-        ) : null}
+          ) : null}
 
-        {step === "date" ? (
-          <section className="onboarding-section onboarding-section--active onboarding-date">
-            <div className="onboarding-section__copy">
-              <span>02</span>
-              <h2>{copy.date.title}</h2>
-              <p>{copy.date.description}</p>
-            </div>
-            <div className="onboarding-step-main">
+          {step === "date" ? (
+            <div className="onboarding-main">
               <div className="onboarding-calendar" aria-label={copy.date.calendarLabel}>
                 <div className="onboarding-months">{months.map((month) => renderCalendarMonth(month))}</div>
               </div>
@@ -399,64 +408,55 @@ export default function OnboardingProfilePage() {
                 ) : null}
               </div>
             </div>
-          </section>
-        ) : null}
+          ) : null}
 
-        {step === "topics" ? (
-          <section className="onboarding-section onboarding-section--active onboarding-topics">
-            <div className="onboarding-section__copy">
-              <span>03</span>
-              <h2>{copy.topics.title}</h2>
-              <p>{copy.topics.description}</p>
-            </div>
+          {step === "topics" ? (
+            <div className="onboarding-main">
+              <div className="onboarding-topics-grid" role="group" aria-label={copy.topics.fieldLabel}>
+                {algorithmTopics.map((topic) => {
+                  const selected = selectedTopics.includes(topic.id);
 
-            <div className="onboarding-topic-field" aria-label={copy.topics.fieldLabel}>
-              <div className="onboarding-topic-center">
-                <span>{selectedTopics.length > 0 ? copy.topics.selected : copy.topics.empty}</span>
+                  return (
+                    <button
+                      aria-pressed={selected}
+                      className={selected ? "selected" : ""}
+                      key={topic.id}
+                      type="button"
+                      onClick={() => toggleTopic(topic.id)}
+                    >
+                      <i aria-hidden="true" />
+                      {topic.label}
+                    </button>
+                  );
+                })}
               </div>
-              {algorithmTopics.map((topic) => {
-                const selectedIndex = selectedTopics.indexOf(topic.id);
-                const selected = selectedIndex >= 0;
-                const [centerX, centerY] = selected ? getCenterPosition(selectedIndex) : [50, 50];
-
-                return (
-                  <button
-                    className={selected ? "selected" : ""}
-                    key={topic.id}
-                    style={
-                      {
-                        "--topic-x": `${topic.x}%`,
-                        "--topic-y": `${topic.y}%`,
-                        "--topic-center-x": `${centerX}%`,
-                        "--topic-center-y": `${centerY}%`,
-                      } as CSSProperties
-                    }
-                    type="button"
-                    onClick={() => toggleTopic(topic.id)}
-                  >
-                    {topic.label}
-                  </button>
-                );
-              })}
+              <p className="onboarding-topics-count">
+                {copy.topics.selectedCount}: <em>{String(selectedTopics.length).padStart(2, "0")}</em> /{" "}
+                {String(algorithmTopics.length).padStart(2, "0")}
+              </p>
             </div>
-          </section>
-        ) : null}
+          ) : null}
+        </div>
 
         <footer className="onboarding-actions">
           <div>
             {step !== "company" ? (
-              <button type="button" onClick={goBack}>
+              <button className="onboarding-ghost" type="button" onClick={goBack}>
                 {copy.back}
               </button>
             ) : null}
           </div>
           <div>
+            <button className="onboarding-ghost" type="button" onClick={skipCurrent}>
+              {copy.skip}
+            </button>
             <button
-              className="onboarding-actions__primary"
+              className="onboarding-primary"
+              disabled={!currentStepHasValue}
               type="button"
-              onClick={currentStepHasValue ? goNext : skipCurrent}
+              onClick={goNext}
             >
-              {currentStepHasValue ? copy.next : copy.skip}
+              {copy.next}
             </button>
           </div>
         </footer>

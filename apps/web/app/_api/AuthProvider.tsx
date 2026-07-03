@@ -8,6 +8,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 
 import * as authApi from "./auth";
 import { authChangedEvent, hasSession } from "./tokens";
+import { ApiError } from "./types";
 import type { AuthUser } from "./types";
 
 type AuthStatus = "loading" | "authenticated" | "anonymous";
@@ -37,9 +38,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const me = await authApi.getMe();
       setUser(me);
       setStatus("authenticated");
-    } catch {
-      setUser(null);
-      setStatus("anonymous");
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 401) {
+        setUser(null);
+        setStatus("anonymous");
+        return;
+      }
+      if (!hasSession()) {
+        setUser(null);
+        setStatus("anonymous");
+        return;
+      }
+      setStatus((current) => (current === "authenticated" ? "authenticated" : "loading"));
     }
   }, []);
 

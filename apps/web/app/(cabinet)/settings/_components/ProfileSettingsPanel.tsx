@@ -4,12 +4,15 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 
+import { updateProfile } from "../../../_api/account";
+import { ApiError } from "../../../_api/types";
 import {
   readProfileSettings,
   writeProfileSettings,
   type ProfileSettings,
 } from "../../../_profile/profileSettings";
 import { useToast } from "../../../_toast";
+import { useAuth } from "../../../_api/AuthProvider";
 import { StatusPill } from "../../_components";
 
 const suggestedTimezones = [
@@ -38,20 +41,38 @@ type ProfileSettingsPanelProps = {
     quickSetup: string;
     save: string;
     saved: string;
+    saveFailed: string;
     timezone: string;
     timezoneLabel: string;
     timezonePlaceholder: string;
   };
 };
 
+function inputDateFromISO(value: string | null | undefined, fallback: string) {
+  if (!value) return fallback;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return fallback;
+  return date.toISOString().slice(0, 10);
+}
+
+function rfc3339FromInputDate(value: string) {
+  if (!value) return undefined;
+  return `${value}T09:00:00Z`;
+}
+
 export function ProfileSettingsPanel({ copy }: Readonly<ProfileSettingsPanelProps>) {
   const toast = useToast();
+  const { user } = useAuth();
   const defaults = useMemo(
-    () => ({ timezone: copy.timezone, interviewDate: copy.interviewDate }),
-    [copy.interviewDate, copy.timezone],
+    () => ({
+      timezone: user?.timezone || copy.timezone,
+      interviewDate: inputDateFromISO(user?.interview_date, copy.interviewDate),
+    }),
+    [copy.interviewDate, copy.timezone, user?.interview_date, user?.timezone],
   );
   const [profile, setProfile] = useState<ProfileSettings>(defaults);
   const [didSave, setDidSave] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     setProfile(readProfileSettings(defaults));
@@ -62,25 +83,35 @@ export function ProfileSettingsPanel({ copy }: Readonly<ProfileSettingsPanelProp
     setProfile((current) => ({ ...current, ...patch }));
   };
 
-  const save = (event: FormEvent<HTMLFormElement>) => {
+  const save = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const nextProfile = {
       timezone: String(formData.get("timezone") ?? "").trim(),
       interviewDate: String(formData.get("interviewDate") ?? ""),
     };
-    writeProfileSettings(nextProfile);
-
-    setProfile(nextProfile);
-    setDidSave(true);
-    toast.success(copy.saved);
+    setSaving(true);
+    try {
+      await updateProfile({
+        timezone: nextProfile.timezone,
+        interview_date: rfc3339FromInputDate(nextProfile.interviewDate),
+      });
+      writeProfileSettings(nextProfile);
+      setProfile(nextProfile);
+      setDidSave(true);
+      toast.success(copy.saved);
+    } catch (e) {
+      toast.error(e instanceof ApiError ? e.message : copy.saveFailed);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
     <form className="settings-list profile-settings-list" onSubmit={save}>
       <div>
         <span>{copy.emailLabel}</span>
-        <strong>{copy.email}</strong>
+        <strong>{user?.email ?? copy.email}</strong>
       </div>
       <label className="settings-profile-field">
         <span>{copy.timezoneLabel}</span>
@@ -108,12 +139,12 @@ export function ProfileSettingsPanel({ copy }: Readonly<ProfileSettingsPanelProp
       </label>
       <div>
         <span>{copy.planLabel}</span>
-        <StatusPill tone="accent">{copy.plan}</StatusPill>
+        <StatusPill tone="accent">{user?.plan ?? copy.plan}</StatusPill>
       </div>
       <div className="profile-settings-actions">
         <div>
-          <button disabled={!profile.timezone.trim()} type="submit">
-            {copy.save}
+          <button disabled={!profile.timezone.trim() || saving} type="submit">
+            {saving ? "..." : copy.save}
           </button>
           <Link href="/onboarding/profile">{copy.quickSetup}</Link>
         </div>

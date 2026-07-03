@@ -10,7 +10,7 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/mxdtrip/freeburger/services/api/internal/auth"
-	"github.com/mxdtrip/freeburger/services/api/internal/server/request"
+	"github.com/mxdtrip/freeburger/services/api/internal/server/httpjson"
 	"github.com/mxdtrip/freeburger/services/api/internal/server/response"
 )
 
@@ -54,7 +54,7 @@ func (h *Handler) GenerateCard(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req GenerateCardRequest
-	if !request.DecodeJSON(w, r, &req) {
+	if !httpjson.DecodeStrict(w, r, &req, "VALIDATION_ERROR") {
 		return
 	}
 	if msg := validateTarget(req.ProblemID, req.PatternID); msg != "" {
@@ -84,7 +84,7 @@ func (h *Handler) GenerateQuiz(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req GenerateQuizRequest
-	if !request.DecodeJSON(w, r, &req) {
+	if !httpjson.DecodeStrict(w, r, &req, "VALIDATION_ERROR") {
 		return
 	}
 	if msg := validateTarget(req.ProblemID, req.PatternID); msg != "" {

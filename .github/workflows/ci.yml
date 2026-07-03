@@ -128,3 +128,28 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm run build
+
+  web-e2e:
+    name: Web e2e
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+
+      - run: npm ci
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      # Boots the zero-dep auth stub + a production build of the web app
+      # (see playwright.config.mjs) and drives the auth flow end to end.
+      - name: Run e2e
+        run: npm run e2e

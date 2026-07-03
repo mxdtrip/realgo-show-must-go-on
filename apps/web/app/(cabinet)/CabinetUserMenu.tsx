@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
@@ -70,9 +69,6 @@ export function CabinetUserMenu({ copy }: { copy: AccountCopy }) {
             ))}
           </dl>
           <div className="user-menu__actions">
-            <Link href="/settings" role="menuitem" onClick={() => setOpen(false)}>
-              {copy.menuSettings}
-            </Link>
             <button
               className="user-menu__logout"
               type="button"

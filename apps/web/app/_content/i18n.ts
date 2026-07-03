@@ -50,6 +50,8 @@ const ru = {
         interviewDate: "Interview date",
         loginAria: "Log in",
         signupAria: "Create account",
+        pending: "Please wait…",
+        error: "Something went wrong. Try again.",
       },
       sortingCodeAria: "Sorting code",
       eyebrow: "// spaced-repetition for interview prep",
@@ -236,10 +238,9 @@ const ru = {
       topics: {
         title: "Темы для повторения",
         description:
-          "Нажимай на темы по краям — выбранные карточки мягко переезжают в центр и собирают твой фокус подготовки.",
-        empty: "Выбранные темы появятся здесь",
-        selected: "Фокус подготовки",
+          "Отметь темы, которые хочешь держать в фокусе. Из них соберём стартовый план повторения — набор можно поменять в любой момент.",
         fieldLabel: "Выбор алгоритмических тем для повторения",
+        selectedCount: "выбрано",
       },
       welcome: {
         eyebrow: "setup complete",
@@ -247,6 +248,12 @@ const ru = {
         description:
           "Мы сохранили стартовые настройки локально. Теперь можно перейти в кабинет и начать повторение без лишнего шума.",
         action: "Перейти в Dashboard",
+        summary: {
+          companies: "компании",
+          date: "интервью",
+          topics: "темы",
+          empty: "—",
+        },
       },
     },
   },
@@ -280,7 +287,7 @@ const ru = {
       ],
       pathPrefix: "~/realgo",
       dueChip: "due today",
-      backToMarketing: "marketing",
+      backToMarketing: "на сайт",
       logout: "logout",
       demoBadge: "demo",
       demoTitle: "Демо-режим: авторизация отключена, кабинет работает на моковых данных.",
@@ -333,8 +340,8 @@ const ru = {
         heatmap: {
           eyebrow: "activity",
           title: "Активность повторений",
-          aria: "Активность повторений за последние 26 недель",
-          foot: "последние 26 недель",
+          aria: "Активность повторений за последние 28 дней",
+          foot: "последние 28 дней",
           scaleLess: "less",
           scaleMore: "more",
           statDays: "активных дней",
@@ -423,6 +430,12 @@ const ru = {
         priorityMed: "review soon",
         trainLink: "review now →",
         weeklyLabel: "за неделю",
+        weakColumnEyebrow: "weak spots",
+        weakColumnTitle: "Слабые паттерны",
+        strongColumnEyebrow: "strong spots",
+        strongColumnTitle: "Сильные паттерны",
+        strongPriority: "закреплено",
+        strongEmpty: "Пока нет закреплённых паттернов — повторяй регулярно.",
       },
       cards: {
         eyebrow: "/cards",
@@ -551,7 +564,12 @@ const ru = {
         privacyDescription:
           "Не вставляй NDA-материалы, premium/editorial-контент, скриншоты интервью или чужие закрытые материалы в заметки и AI-поля.",
         exportProgress: "export data",
+        exportRequested: "export request accepted",
         deleteAccount: "delete account",
+        deleteConfirm: "Удалить аккаунт realgo? Это действие нельзя отменить.",
+        deletePasswordPrompt: "Введите пароль, чтобы удалить аккаунт",
+        deleteDone: "account deleted",
+        actionFailed: "action failed",
         profile: {
           emailLabel: "email",
           email: "demo@realgo.dev",
@@ -563,7 +581,8 @@ const ru = {
           planLabel: "plan",
           plan: "Free mock",
           save: "save changes",
-          saved: "saved locally",
+          saved: "saved",
+          saveFailed: "profile save failed",
           quickSetup: "quick setup →",
         },
         install: {
@@ -577,7 +596,7 @@ const ru = {
         },
         notifications: {
           description:
-            "Уведомления работают локально через браузер/PWA. Push-сервер и backend-синхронизация подключатся отдельно.",
+            "Базовые флаги напоминаний синхронизируются с аккаунтом; показ уведомлений остаётся локальным через браузер/PWA.",
           enable: "enable",
           enabled: "notifications enabled",
           disabled: "permission required",
@@ -589,6 +608,7 @@ const ru = {
           streakReminder: "Защита серии (streak)",
           reminderTime: "reminder time",
           sendTest: "send test",
+          syncFailed: "notification settings sync failed",
           testTitle: "realgo review reminder",
           testBody: "Карточки ждут короткого повторения.",
           testSent: "test notification sent",
@@ -752,6 +772,12 @@ const ru = {
           trend: -8,
           signal: "нужны карточки по состояниям",
         },
+      ],
+      strongPatterns: [
+        { name: "Two Pointers", confidence: 92, trend: 3, signal: "стабильно easy последние 5 повторений" },
+        { name: "Hashing", confidence: 88, trend: 2, signal: "быстрый recall, ошибок нет" },
+        { name: "Stack", confidence: 84, trend: 5, signal: "уверенно на скобках и монотонных" },
+        { name: "BFS / DFS", confidence: 79, trend: 1, signal: "обход графа закреплён" },
       ],
       problems: [
         {
