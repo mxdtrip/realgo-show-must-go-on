@@ -142,17 +142,17 @@ type UpdateCardInput struct {
 
 // CardDetail is returned by CRUD endpoints and includes join fields.
 type CardDetail struct {
-	ID           int64      `json:"id"`
-	Type         string     `json:"type"`
-	Question     string     `json:"question"`
-	Answer       string     `json:"answer"`
-	Explanation  *string    `json:"explanation"`
-	Source       *string    `json:"source"`
-	CreatedByAI  bool       `json:"created_by_ai"`
-	CreatedAt    time.Time  `json:"created_at"`
-	ProblemTitle *string    `json:"problem_title"`
-	ProblemURL   *string    `json:"problem_url"`
-	PatternName  *string    `json:"pattern_name"`
+	ID           int64     `json:"id"`
+	Type         string    `json:"type"`
+	Question     string    `json:"question"`
+	Answer       string    `json:"answer"`
+	Explanation  *string   `json:"explanation"`
+	Source       *string   `json:"source"`
+	CreatedByAI  bool      `json:"created_by_ai"`
+	CreatedAt    time.Time `json:"created_at"`
+	ProblemTitle *string   `json:"problem_title"`
+	ProblemURL   *string   `json:"problem_url"`
+	PatternName  *string   `json:"pattern_name"`
 }
 
 // HTTP request types used by CRUD handlers only.

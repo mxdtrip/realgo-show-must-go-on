@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 
@@ -127,11 +128,39 @@ func newCardRecord(id int64, cardType, question, answer string, createdAt pgtype
 }
 
 func recordFromListRow(row db.ListUserCardsRow) CardRecord {
-	return newCardRecord(row.ID, row.Type, row.Question, row.Answer, row.CreatedAt, row.SourceEntityType, row.SourceEntityID, row.SourceLabel, row.ScheduleID, row.NextReviewAt, row.LastRating, row.ReviewCount, row.ReviewState)
+	return newCardRecord(
+		row.ID,
+		row.Type,
+		row.Question,
+		row.Answer,
+		row.CreatedAt,
+		row.SourceEntityType,
+		row.SourceEntityID,
+		row.SourceLabel,
+		row.ScheduleID,
+		row.NextReviewAt,
+		row.LastRating,
+		row.ReviewCount,
+		row.ReviewState,
+	)
 }
 
 func recordFromSessionRow(row db.ListCardSessionRow) CardRecord {
-	return newCardRecord(row.ID, row.Type, row.Question, row.Answer, row.CreatedAt, row.SourceEntityType, row.SourceEntityID, row.SourceLabel, row.ScheduleID, row.NextReviewAt, row.LastRating, row.ReviewCount, row.ReviewState)
+	return newCardRecord(
+		row.ID,
+		row.Type,
+		row.Question,
+		row.Answer,
+		row.CreatedAt,
+		row.SourceEntityType,
+		row.SourceEntityID,
+		row.SourceLabel,
+		row.ScheduleID,
+		row.NextReviewAt,
+		row.LastRating,
+		row.ReviewCount,
+		row.ReviewState,
+	)
 }
 
 func (r *pgRepository) Create(ctx context.Context, userID int64, p CreateCardInput) (CardDetail, error) {
@@ -156,9 +185,12 @@ func (r *pgRepository) Create(ctx context.Context, userID int64, p CreateCardInp
 	}
 	card, err := r.q.CreateCard(ctx, params)
 	if err != nil {
+		if isForeignKeyViolation(err) {
+			return CardDetail{}, ErrCardTargetNotFound
+		}
 		return CardDetail{}, fmt.Errorf("cards: create: %w", err)
 	}
-	return cardDetailFromCard(card, pgtype.Text{}, pgtype.Text{}, pgtype.Text{}), nil
+	return r.GetByID(ctx, userID, card.ID)
 }
 
 func (r *pgRepository) GetByID(ctx context.Context, userID, cardID int64) (CardDetail, error) {
@@ -196,14 +228,23 @@ func (r *pgRepository) Update(ctx context.Context, userID, cardID int64, p Updat
 	if err != nil {
 		return CardDetail{}, fmt.Errorf("cards: update: %w", err)
 	}
-	return cardDetailFromCard(card, pgtype.Text{}, pgtype.Text{}, pgtype.Text{}), nil
+	return r.GetByID(ctx, userID, card.ID)
 }
 
 func (r *pgRepository) Delete(ctx context.Context, userID, cardID int64) error {
-	if err := r.q.DeleteCard(ctx, db.DeleteCardParams{CardID: cardID, UserID: userID}); err != nil {
+	rows, err := r.q.DeleteCard(ctx, db.DeleteCardParams{CardID: cardID, UserID: userID})
+	if err != nil {
 		return fmt.Errorf("cards: delete: %w", err)
 	}
+	if rows == 0 {
+		return ErrCardNotFound
+	}
 	return nil
+}
+
+func isForeignKeyViolation(err error) bool {
+	var pgErr *pgconn.PgError
+	return errors.As(err, &pgErr) && pgErr.Code == "23503"
 }
 
 func newCardDetail(id int64, cardType, question, answer string, createdByAI bool, createdAt pgtype.Timestamptz, explanation, source pgtype.Text) CardDetail {

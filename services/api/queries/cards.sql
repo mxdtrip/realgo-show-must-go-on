@@ -33,7 +33,7 @@ SET
 WHERE id = sqlc.arg(card_id)::bigint AND user_id = sqlc.arg(user_id)::bigint
 RETURNING *;
 
--- name: DeleteCard :exec
+-- name: DeleteCard :execrows
 DELETE FROM cards
 WHERE id = sqlc.arg(card_id)::bigint AND user_id = sqlc.arg(user_id)::bigint;
 
@@ -159,6 +159,8 @@ INSERT INTO review_schedules (
     ease, stability, difficulty, review_count, algorithm
 )
 VALUES ($1, $2, $3, 0, 2.5, 0.1, 5.0, 0, 'fsrs')
+ON CONFLICT (user_id, card_id) WHERE card_id IS NOT NULL DO UPDATE
+SET updated_at = review_schedules.updated_at
 RETURNING id;
 
 -- name: CountCardSessionAttempts :one

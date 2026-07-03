@@ -94,6 +94,8 @@ INSERT INTO review_schedules (
     ease, stability, difficulty, review_count, algorithm
 )
 VALUES ($1, $2, $3, 0, 2.5, 0.1, 5.0, 0, 'fsrs')
+ON CONFLICT (user_id, card_id) WHERE card_id IS NOT NULL DO UPDATE
+SET updated_at = review_schedules.updated_at
 RETURNING id
 `
 
@@ -110,7 +112,7 @@ func (q *Queries) CreateCardReviewSchedule(ctx context.Context, arg CreateCardRe
 	return id, err
 }
 
-const deleteCard = `-- name: DeleteCard :exec
+const deleteCard = `-- name: DeleteCard :execrows
 DELETE FROM cards
 WHERE id = $1::bigint AND user_id = $2::bigint
 `
@@ -120,9 +122,12 @@ type DeleteCardParams struct {
 	UserID int64
 }
 
-func (q *Queries) DeleteCard(ctx context.Context, arg DeleteCardParams) error {
-	_, err := q.db.Exec(ctx, deleteCard, arg.CardID, arg.UserID)
-	return err
+func (q *Queries) DeleteCard(ctx context.Context, arg DeleteCardParams) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteCard, arg.CardID, arg.UserID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const getAccessibleCard = `-- name: GetAccessibleCard :one
