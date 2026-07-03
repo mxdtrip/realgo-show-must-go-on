@@ -12,6 +12,11 @@ type companyEntry struct {
 	aliases []string
 }
 
+// catalog is an intentionally static, in-memory list of companies for
+// autocomplete suggestions. There is no companies table/repository behind
+// this endpoint by design: the catalog is small, changes rarely, and doesn't
+// need per-user data or persistence. Revisit only if we need user-submitted
+// companies or a size that no longer fits in code.
 var catalog = []companyEntry{
 	{Company: Company{ID: "cmp_google", Name: "Google", Source: "manual"}, aliases: []string{"alphabet"}},
 	{Company: Company{ID: "cmp_google_cloud", Name: "Google Cloud", Source: "manual"}, aliases: []string{"gcp"}},
