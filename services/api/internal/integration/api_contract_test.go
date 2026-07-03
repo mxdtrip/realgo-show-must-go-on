@@ -72,21 +72,21 @@ func TestContractProtectedRoutesRequireBearerTokens(t *testing.T) {
 			name:     "queue missing token",
 			method:   http.MethodGet,
 			path:     "/api/v1/me/reviews/queue",
-			wantCode: "unauthorized",
+			wantCode: "UNAUTHORIZED",
 		},
 		{
 			name:     "extension missing token",
 			method:   http.MethodPost,
 			path:     "/api/v1/extension/events",
 			payload:  validEvent,
-			wantCode: "unauthorized",
+			wantCode: "UNAUTHORIZED",
 		},
 		{
 			name:     "queue expired token",
 			method:   http.MethodGet,
 			path:     "/api/v1/me/reviews/queue",
 			token:    expiredToken,
-			wantCode: "invalid_token",
+			wantCode: "INVALID_TOKEN",
 		},
 		{
 			name:     "extension malformed token",
@@ -94,7 +94,7 @@ func TestContractProtectedRoutesRequireBearerTokens(t *testing.T) {
 			path:     "/api/v1/extension/events",
 			token:    "not-a-jwt",
 			payload:  validEvent,
-			wantCode: "invalid_token",
+			wantCode: "INVALID_TOKEN",
 		},
 	}
 
@@ -263,16 +263,12 @@ func TestCoreLoopRegisterLoginSolveQueueAndRateMovesDue(t *testing.T) {
 }
 
 func TestContractProtectedRoutesShouldUseUppercaseUnauthorizedCodes(t *testing.T) {
-	t.Skip("TODO(#79): прод-код requireAuth возвращает lowercase unauthorized/invalid_token; контракт и задача требуют UNAUTHORIZED")
-
 	h := newContractHarness(t)
 	resp := h.request(t, http.MethodGet, "/api/v1/me/reviews/queue", "", nil)
 	requireErrorEnvelope(t, resp, http.StatusUnauthorized, "UNAUTHORIZED")
 }
 
 func TestContractProtectedBodiesShouldRejectUnknownFields(t *testing.T) {
-	t.Skip("TODO(#79): protected handlers extension/reviews используют json.Decoder без DisallowUnknownFields и принимают лишние поля")
-
 	h := newContractHarness(t)
 	email := uniqueEmail("unknown-fields")
 	t.Cleanup(func() { h.cleanupUser(email) })

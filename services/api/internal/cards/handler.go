@@ -14,6 +14,7 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/mxdtrip/freeburger/services/api/internal/auth"
+	"github.com/mxdtrip/freeburger/services/api/internal/server/request"
 	"github.com/mxdtrip/freeburger/services/api/internal/server/response"
 )
 
@@ -114,8 +115,7 @@ func (h *Handler) Rate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req RateRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "invalid request body")
+	if !request.DecodeJSON(w, r, &req) {
 		return
 	}
 
@@ -145,8 +145,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req createCardRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "invalid request body")
+	if !request.DecodeJSON(w, r, &req) {
 		return
 	}
 	if !validCardType(req.Type) {
@@ -172,6 +171,10 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		PatternID:   req.PatternID,
 	})
 	if err != nil {
+		if errors.Is(err, ErrCardTargetNotFound) {
+			response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "problem_id or pattern_id does not exist")
+			return
+		}
 		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", "could not create card")
 		return
 	}
@@ -219,8 +222,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req updateCardRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "invalid request body")
+	if !request.DecodeJSON(w, r, &req) {
 		return
 	}
 	if req.Type != nil && !validCardType(*req.Type) {
@@ -261,6 +263,10 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.svc.Delete(r.Context(), userID, cardID); err != nil {
+		if errors.Is(err, ErrCardNotFound) {
+			response.Fail(w, http.StatusNotFound, "NOT_FOUND", "card not found")
+			return
+		}
 		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", "could not delete card")
 		return
 	}

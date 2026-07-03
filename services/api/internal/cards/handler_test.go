@@ -206,6 +206,36 @@ func TestRateDelegatesToReviewRater(t *testing.T) {
 	}
 }
 
+func TestCreateMapsMissingTargetToBadRequest(t *testing.T) {
+	h := testHandler(&fakeRepository{createErr: ErrCardTargetNotFound}, &fakeRater{})
+	req := authenticatedRequest(http.MethodPost, "/me/cards", strings.NewReader(`{
+		"type":"edge_case",
+		"question":"front",
+		"answer":"back",
+		"problem_id":999
+	}`), 42)
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	h.Create(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d: %s", w.Code, w.Body.String())
+	}
+}
+
+func TestDeleteMapsMissingCardToNotFound(t *testing.T) {
+	h := testHandler(&fakeRepository{deleteErr: ErrCardNotFound}, &fakeRater{})
+	req := authenticatedRequest(http.MethodDelete, "/me/cards/999", nil, 42)
+	w := httptest.NewRecorder()
+
+	routeHandler(h).ServeHTTP(w, req)
+
+	if w.Code != http.StatusNotFound {
+		t.Fatalf("expected 404, got %d: %s", w.Code, w.Body.String())
+	}
+}
+
 func testHandler(repo *fakeRepository, rater *fakeRater) *Handler {
 	svc := NewService(repo, rater)
 	svc.now = func() time.Time { return time.Date(2026, 7, 2, 12, 0, 0, 0, time.UTC) }
@@ -234,6 +264,8 @@ func authenticatedRequest(method, target string, body *strings.Reader, userID in
 type fakeRepository struct {
 	list          []CardRecord
 	session       []CardRecord
+	createErr     error
+	deleteErr     error
 	listParams    ListParams
 	sessionParams SessionParams
 	scheduleID    int64
@@ -272,6 +304,9 @@ func (f *fakeRepository) CountSessionAttempts(context.Context, int64, time.Time)
 }
 
 func (f *fakeRepository) Create(_ context.Context, _ int64, _ CreateCardInput) (CardDetail, error) {
+	if f.createErr != nil {
+		return CardDetail{}, f.createErr
+	}
 	return CardDetail{}, nil
 }
 
@@ -284,6 +319,9 @@ func (f *fakeRepository) Update(_ context.Context, _, _ int64, _ UpdateCardInput
 }
 
 func (f *fakeRepository) Delete(_ context.Context, _, _ int64) error {
+	if f.deleteErr != nil {
+		return f.deleteErr
+	}
 	return nil
 }
 

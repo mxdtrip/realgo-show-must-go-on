@@ -15,8 +15,9 @@ import (
 )
 
 var (
-	ErrCardNotFound  = errors.New("card not found")
-	ErrInvalidRating = errors.New("rating must be hard, normal, or easy")
+	ErrCardNotFound       = errors.New("card not found")
+	ErrCardTargetNotFound = errors.New("card target not found")
+	ErrInvalidRating      = errors.New("rating must be hard, normal, or easy")
 )
 
 type repository interface {

@@ -42,3 +42,24 @@ type answerResult struct {
 	CorrectOption int     `json:"correct_option"`
 	Explanation   *string `json:"explanation"`
 }
+
+func questionItemFromSessionQuestion(q sessionQuestion) questionItem {
+	item := questionItem{
+		ID:           q.ID,
+		Question:     q.Question,
+		Options:      q.Options,
+		Difficulty:   q.Difficulty,
+		CreatedByAI:  q.CreatedByAI,
+		ProblemID:    q.ProblemID,
+		ProblemTitle: q.ProblemTitle,
+		PatternID:    q.PatternID,
+		PatternName:  q.PatternName,
+	}
+	if item.Options == nil {
+		item.Options = []string{}
+	}
+	if q.CreatedAt != nil {
+		item.CreatedAt = q.CreatedAt.UTC().Format(time.RFC3339)
+	}
+	return item
+}

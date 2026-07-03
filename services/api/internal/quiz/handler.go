@@ -1,15 +1,15 @@
 package quiz
 
 import (
-	"encoding/json"
+	"context"
 	"errors"
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/go-chi/chi/v5"
 
 	"github.com/mxdtrip/freeburger/services/api/internal/auth"
+	"github.com/mxdtrip/freeburger/services/api/internal/server/request"
 	"github.com/mxdtrip/freeburger/services/api/internal/server/response"
 )
 
@@ -17,6 +17,11 @@ const (
 	defaultSessionLimit = 10
 	maxSessionLimit     = 30
 )
+
+type repository interface {
+	ListQuizSession(ctx context.Context, userID int64, limit int32) ([]sessionQuestion, error)
+	GetQuizQuestion(ctx context.Context, questionID, userID int64) (questionDetail, error)
+}
 
 type Handler struct {
 	repo repository
@@ -47,21 +52,7 @@ func (h *Handler) session(w http.ResponseWriter, r *http.Request) {
 
 	items := make([]questionItem, 0, len(rows))
 	for _, q := range rows {
-		item := questionItem{
-			ID:           q.ID,
-			Question:     q.Question,
-			CreatedByAI:  q.CreatedByAI,
-			Difficulty:   q.Difficulty,
-			ProblemID:    q.ProblemID,
-			ProblemTitle: q.ProblemTitle,
-			PatternID:    q.PatternID,
-			PatternName:  q.PatternName,
-		}
-		if q.CreatedAt != nil {
-			item.CreatedAt = q.CreatedAt.UTC().Format(time.RFC3339)
-		}
-		item.Options = q.Options
-		items = append(items, item)
+		items = append(items, questionItemFromSessionQuestion(q))
 	}
 
 	response.JSON(w, http.StatusOK, map[string]any{
@@ -85,8 +76,7 @@ func (h *Handler) answer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req answerRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "invalid request body")
+	if !request.DecodeJSON(w, r, &req) {
 		return
 	}
 

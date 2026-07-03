@@ -2,13 +2,13 @@ package reviews
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"net/http"
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/mxdtrip/freeburger/services/api/internal/auth"
+	"github.com/mxdtrip/freeburger/services/api/internal/server/request"
 	"github.com/mxdtrip/freeburger/services/api/internal/server/response"
 )
 
@@ -60,8 +60,7 @@ func (h *Handler) ProcessAttempt(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req AttemptRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		response.Fail(w, http.StatusBadRequest, "invalid_request", errInvalidRequest.Error())
+	if !request.DecodeJSON(w, r, &req) {
 		return
 	}
 

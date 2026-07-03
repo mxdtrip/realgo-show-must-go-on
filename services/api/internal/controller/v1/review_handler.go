@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
 	"strconv"
@@ -12,6 +11,7 @@ import (
 	"github.com/mxdtrip/freeburger/services/api/internal/auth"
 	"github.com/mxdtrip/freeburger/services/api/internal/controller/v1/request"
 	v1response "github.com/mxdtrip/freeburger/services/api/internal/controller/v1/response"
+	serverrequest "github.com/mxdtrip/freeburger/services/api/internal/server/request"
 	"github.com/mxdtrip/freeburger/services/api/internal/server/response"
 	"github.com/mxdtrip/freeburger/services/api/internal/service"
 )
@@ -78,8 +78,7 @@ func (h *ReviewHandler) RateReview(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req request.RateReviewRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "invalid request body")
+	if !serverrequest.DecodeJSON(w, r, &req) {
 		return
 	}
 
