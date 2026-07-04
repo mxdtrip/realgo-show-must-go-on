@@ -421,6 +421,11 @@ const ru = {
           ["reviewing", "повторяется", "accent"],
           ["mastered", "освоена", "success"],
         ],
+        aiCards: {
+          generating: "Карточки генерируются…",
+          ready: "Карточки готовы",
+          none: "Карточек по задаче пока нет",
+        },
       },
       roadmap: {
         eyebrow: "/roadmap",
@@ -531,6 +536,7 @@ const ru = {
           sessionCompleteTitle: "realgo cards complete",
           sessionCompleteBody: "Карточки на сегодня разобраны. Завтра вернём нужные паттерны.",
           focus: {
+            aiBadgeTitle: "Карточка сгенерирована ИИ — возможны неточности",
             exit: "Exit session",
             progress: "Card",
             of: "of",
