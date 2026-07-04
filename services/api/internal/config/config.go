@@ -14,6 +14,7 @@ type Config struct {
 	HTTPServer `yaml:"http_server"`
 	Database   `yaml:"database"`
 	Redis      `yaml:"redis"`
+	AI         `yaml:"ai"`
 }
 
 type HTTPServer struct {
@@ -40,6 +41,20 @@ type Redis struct {
 	Port     string `yaml:"port" env:"REDIS_PORT" env-default:"6379"`
 	Password string `yaml:"password" env:"REDIS_PASSWORD"`
 	DB       int    `yaml:"db" env:"REDIS_DB" env-default:"0"`
+}
+
+// AI configures the LLM provider (Gemini via its OpenAI-compatible endpoint)
+// used for card generation. The key is optional: when empty the API boots
+// normally and generation is disabled.
+type AI struct {
+	APIKey  string `yaml:"api_key" env:"GEMINI_API_KEY"`
+	Model   string `yaml:"model" env:"AI_MODEL" env-default:"gemini-2.5-flash"`
+	BaseURL string `yaml:"base_url" env:"AI_BASE_URL" env-default:"https://generativelanguage.googleapis.com/v1beta/openai/"`
+}
+
+// Enabled reports whether an AI provider key is configured.
+func (a *AI) Enabled() bool {
+	return a.APIKey != ""
 }
 
 func Load() (*Config, error) {
