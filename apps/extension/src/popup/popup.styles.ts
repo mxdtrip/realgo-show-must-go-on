@@ -257,7 +257,9 @@ export const POPUP_CSS = `
 }
 .realgo-body__center {
   display: grid;
-  align-items: center;
+  /* Sit the rating block low in its row — closer to the cursor right after a
+     submit — rather than dead-centre. Popup size is unchanged. */
+  align-items: end;
   min-height: 0;
 }
 .realgo-foot { align-self: end; }
