@@ -11,19 +11,17 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/mxdtrip/freeburger/services/api/internal/scheduler"
 	"github.com/mxdtrip/freeburger/services/api/internal/storage/postgres/db"
 )
 
-// Default spaced-repetition columns for a freshly created schedule. The MVP
-// scheduler is fixed-interval, so these neutral values just satisfy the NOT NULL
-// FSRS/SM-2 columns until a real algorithm owns the schedule.
-const (
-	defaultEase       = 2.5
-	defaultDifficulty = 5.0
-	algorithmSimple   = "simple"
-)
+// algorithmFSRS marks every schedule written by the extension ingest as
+// FSRS-owned, matching the review-service path.
+const algorithmFSRS = "fsrs"
 
 // IngestInput carries one already-validated event into the storage transaction.
+// The scheduler Decision (FSRS fields, interval) is computed inside the
+// repository at upsert time so it can read prior state atomically.
 type IngestInput struct {
 	UserID           int64
 	PlatformID       int64
@@ -38,9 +36,7 @@ type IngestInput struct {
 	IdempotencyKey   string
 	RawPayload       []byte
 
-	Solved       bool
-	IntervalDays float64
-	NextReviewAt time.Time
+	Solved bool
 }
 
 // IngestOutput is the result of persisting one event.
@@ -60,13 +56,16 @@ type Repository interface {
 }
 
 type pgRepository struct {
-	pool *pgxpool.Pool
-	q    *db.Queries
+	pool  *pgxpool.Pool
+	q     *db.Queries
+	sched scheduler.Scheduler
 }
 
-// NewRepository builds a Postgres-backed Repository.
-func NewRepository(pool *pgxpool.Pool) *pgRepository {
-	return &pgRepository{pool: pool, q: db.New(pool)}
+// NewRepository builds a Postgres-backed Repository. The scheduler is used
+// inside upsertSchedule to compute the next-review decision with prior FSRS
+// state, so that extension and review paths share one algorithm (issue #160).
+func NewRepository(pool *pgxpool.Pool, sched scheduler.Scheduler) *pgRepository {
+	return &pgRepository{pool: pool, q: db.New(pool), sched: sched}
 }
 
 func (r *pgRepository) PlatformIDByCode(ctx context.Context, code string) (int64, error) {
@@ -187,23 +186,36 @@ func (r *pgRepository) Ingest(ctx context.Context, in IngestInput) (out IngestOu
 }
 
 // upsertSchedule creates the problem's schedule on first solve, otherwise
-// advances the existing one to the new due date.
+// advances the existing one using the scheduler. For new schedules the
+// scheduler runs Next (no prior state); for existing ones it runs NextWithState
+// so that FSRS history is preserved (issue #160).
 func (r *pgRepository) upsertSchedule(ctx context.Context, q *db.Queries, in IngestInput, problemID int64) (int64, time.Time, error) {
+	rating := scheduler.Rating(in.Rating)
+
 	existing, err := q.GetProblemReviewSchedule(ctx, db.GetProblemReviewScheduleParams{
 		UserID: in.UserID, ProblemID: toInt8(problemID),
 	})
 	switch {
 	case errors.Is(err, pgx.ErrNoRows):
+		// First solve — use Next (no prior FSRS state).
+		decision, derr := r.sched.Next(rating, in.EventTime)
+		if derr != nil {
+			return 0, time.Time{}, fmt.Errorf("extension: schedule decision: %w", derr)
+		}
 		row, cerr := q.CreateProblemReviewSchedule(ctx, db.CreateProblemReviewScheduleParams{
-			UserID:       in.UserID,
-			ProblemID:    toInt8(problemID),
-			NextReviewAt: toTimestamptz(in.NextReviewAt),
-			IntervalDays: in.IntervalDays,
-			Ease:         defaultEase,
-			Stability:    in.IntervalDays,
-			Difficulty:   defaultDifficulty,
-			LastRating:   optText(in.Rating),
-			Algorithm:    optText(algorithmSimple),
+			UserID:         in.UserID,
+			ProblemID:      toInt8(problemID),
+			NextReviewAt:   toTimestamptz(decision.NextReviewAt),
+			IntervalDays:   decision.IntervalDays,
+			Ease:           decision.Ease,
+			Stability:      decision.Stability,
+			Difficulty:     decision.Difficulty,
+			State:          int16(decision.State),
+			Lapses:         int32(decision.Lapses),
+			RemainingSteps: int32(decision.RemainingSteps),
+			LastReviewAt:   toTimestamptz(in.EventTime),
+			LastRating:     optText(in.Rating),
+			Algorithm:      optText(algorithmFSRS),
 		})
 		if cerr != nil {
 			return 0, time.Time{}, fmt.Errorf("extension: create schedule: %w", cerr)
@@ -212,11 +224,31 @@ func (r *pgRepository) upsertSchedule(ctx context.Context, q *db.Queries, in Ing
 	case err != nil:
 		return 0, time.Time{}, fmt.Errorf("extension: lookup schedule: %w", err)
 	default:
+		// Re-solve — use NextWithState with existing FSRS history.
+		prior := scheduler.SchedulerState{
+			Stability:  existing.Stability,
+			Difficulty: existing.Difficulty,
+			Ease:       existing.Ease,
+			State:      int8(existing.State),
+			Lapses:     uint64(existing.Lapses),
+			LastReview: existing.LastReviewAt.Time,
+			Due:        existing.NextReviewAt.Time,
+		}
+		decision, derr := r.sched.NextWithState(prior, rating, in.EventTime)
+		if derr != nil {
+			return 0, time.Time{}, fmt.Errorf("extension: schedule decision: %w", derr)
+		}
 		row, uerr := q.AdvanceProblemReviewSchedule(ctx, db.AdvanceProblemReviewScheduleParams{
-			ID:           existing.ID,
-			NextReviewAt: toTimestamptz(in.NextReviewAt),
-			IntervalDays: in.IntervalDays,
-			LastRating:   optText(in.Rating),
+			ID:             existing.ID,
+			NextReviewAt:   toTimestamptz(decision.NextReviewAt),
+			IntervalDays:   decision.IntervalDays,
+			Stability:      decision.Stability,
+			Difficulty:     decision.Difficulty,
+			State:          int16(decision.State),
+			Lapses:         int32(decision.Lapses),
+			RemainingSteps: int32(decision.RemainingSteps),
+			LastReviewAt:   toTimestamptz(in.EventTime),
+			LastRating:     optText(in.Rating),
 		})
 		if uerr != nil {
 			return 0, time.Time{}, fmt.Errorf("extension: advance schedule: %w", uerr)

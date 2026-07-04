@@ -78,12 +78,21 @@ func New(deps Deps) http.Handler {
 	quizHandler := quiz.NewHandler(quiz.NewRepository(deps.Postgres.Pool))
 	aiHandler := ai.NewHandler(ai.NewRepository(deps.Postgres.Pool))
 
+<<<<<<< HEAD
 	// Browser-extension ingest: simple fixed-interval scheduler (issue #17)
 	// behind the Scheduler interface, swappable for FSRS later.
 	extensionSvc := extension.NewService(extension.NewRepository(deps.Postgres.Pool), scheduler.NewSimple())
 	if deps.CardProvisioner != nil {
 		extensionSvc = extensionSvc.WithProvisioner(deps.CardProvisioner)
 	}
+=======
+		// Browser-extension ingest: FSRS scheduler behind the Scheduler interface,
+	// sharing the same algorithm as the review service (issue #160).
+	extensionSvc := extension.NewService(extension.NewRepository(deps.Postgres.Pool, scheduler.NewFSRSAdapter()))
+	if deps.CardProvisioner != nil {
+		extensionSvc = extensionSvc.WithProvisioner(deps.CardProvisioner)
+	}
+>>>>>>> 1a132fd (Бэкенд: унифицировать планировщик — extension ingest (Simple 1/3/7) vs reviews (FSRS) #160)
 	extensionHandler := extension.NewHandler(extensionSvc)
 	extensionStatusHandler := extension.NewStatusHandler(extension.NewStatusService(extension.NewStatusRepository(deps.Postgres.Pool)))
 

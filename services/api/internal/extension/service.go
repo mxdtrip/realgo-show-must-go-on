@@ -5,8 +5,6 @@ import (
 	"encoding/json"
 	"strings"
 	"time"
-
-	"github.com/mxdtrip/freeburger/services/api/internal/scheduler"
 )
 
 // Provisioner triggers AI card generation for a solved problem. Optional:
@@ -17,17 +15,22 @@ type Provisioner interface {
 }
 
 // Service turns a validated extension event into stored problem/progress/review
-// state. It is algorithm-agnostic: the scheduler decides the next review time.
+// state. The scheduler lives inside the repository so it can access the existing
+// FSRS state at upsert time without an extra round-trip.
 type Service struct {
+<<<<<<< HEAD
 	repo        Repository
-	sched       scheduler.Scheduler
 	now         func() time.Time
 	provisioner Provisioner
+=======
+	repo Repository
+	now  func() time.Time
+>>>>>>> 1a132fd (Бэкенд: унифицировать планировщик — extension ingest (Simple 1/3/7) vs reviews (FSRS) #160)
 }
 
-// NewService wires the repository and the review scheduler.
-func NewService(repo Repository, sched scheduler.Scheduler) *Service {
-	return &Service{repo: repo, sched: sched, now: time.Now}
+// NewService wires the repository.
+func NewService(repo Repository) *Service {
+	return &Service{repo: repo, now: time.Now}
 }
 
 // WithProvisioner enables AI card generation for solved problems.
@@ -65,14 +68,6 @@ func (s *Service) Handle(ctx context.Context, userID int64, req EventRequest) (E
 
 	if norm.rating != "" {
 		in.Rating = string(norm.rating)
-	}
-	if norm.solved {
-		decision, derr := s.sched.Next(norm.rating, norm.occurredAt)
-		if derr != nil {
-			return EventResult{}, derr
-		}
-		in.IntervalDays = decision.IntervalDays
-		in.NextReviewAt = decision.NextReviewAt
 	}
 
 	out, err := s.repo.Ingest(ctx, in)
