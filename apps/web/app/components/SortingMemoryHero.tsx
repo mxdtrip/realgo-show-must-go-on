@@ -557,24 +557,34 @@ export function SortingMemoryHero() {
           ))}
         </nav>
         <div className="site-auth">
-          <button
-            type="button"
-            onClick={() => {
-              setAuthMode("login");
-              setAuthOpen(true);
-            }}
-          >
-            {copy.auth.login}
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setAuthMode("signup");
-              setAuthOpen(true);
-            }}
-          >
-            {copy.auth.signup}
-          </button>
+          {auth.status === "authenticated" ? (
+            // An authed visitor (e.g. bounced here off the cabinet logo) gets a
+            // way back in instead of being offered to log in again.
+            <a className="site-auth__dashboard" href="/dashboard">
+              {copy.auth.dashboard}
+            </a>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={() => {
+                  setAuthMode("login");
+                  setAuthOpen(true);
+                }}
+              >
+                {copy.auth.login}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setAuthMode("signup");
+                  setAuthOpen(true);
+                }}
+              >
+                {copy.auth.signup}
+              </button>
+            </>
+          )}
         </div>
       </header>
 

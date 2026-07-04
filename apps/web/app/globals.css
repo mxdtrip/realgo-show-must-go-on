@@ -232,6 +232,23 @@ h3 {
   background: var(--accent-bright);
 }
 
+/* Shown instead of the log in / sign up pair once the visitor is authed. */
+.site-auth .site-auth__dashboard {
+  font-family: var(--font-stack-mono);
+  font-size: 12.5px;
+  padding: 9px 16px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #ffffff;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.18s ease;
+}
+
+.site-auth .site-auth__dashboard:hover {
+  background: var(--accent-bright);
+}
+
 /* ============================================================
    HERO SCENE
    ============================================================ */
