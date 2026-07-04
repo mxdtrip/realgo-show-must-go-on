@@ -198,10 +198,12 @@ export const POPUP_CSS = `
 /* Detected task block */
 .realgo-task {
   display: grid;
+  justify-items: center;
   gap: 9px;
   padding: 16px 20px 15px;
   border-bottom: 1px solid var(--border);
   background: rgba(1, 4, 9, 0.3);
+  text-align: center;
 }
 .realgo-eyebrow {
   font-family: var(--font-mono);
@@ -223,6 +225,7 @@ export const POPUP_CSS = `
 .realgo-task__meta {
   display: flex;
   align-items: center;
+  justify-content: center;
   flex-wrap: wrap;
   gap: 6px;
   margin: 0;
@@ -275,22 +278,16 @@ export const POPUP_CSS = `
 .realgo-section {
   width: 100%;
   display: grid;
-  gap: 9px;
+  gap: 20px;
 }
-.realgo-section__head { display: flex; align-items: baseline; }
+.realgo-section__head { display: flex; align-items: baseline; justify-content: center; }
 .realgo-section__title {
   margin: 0;
   font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--text-faint);
-}
-.realgo-section__title::before {
-  content: "// ";
-  color: var(--text-faint);
-  opacity: 0.7;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: normal;
+  color: var(--text);
 }
 
 /* difficulty: segmented mono control */
