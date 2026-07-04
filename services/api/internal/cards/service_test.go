@@ -42,6 +42,8 @@ type mockRepository struct {
 	mock.Mock
 }
 
+var _ repository = (*mockRepository)(nil)
+
 func (m *mockRepository) List(ctx context.Context, userID int64, params ListParams) ([]CardRecord, error) {
 	args := m.Called(ctx, userID, params)
 	records, _ := args.Get(0).([]CardRecord)
@@ -90,6 +92,8 @@ func (m *mockRepository) Delete(ctx context.Context, userID, cardID int64) error
 type mockReviewRater struct {
 	mock.Mock
 }
+
+var _ reviewRater = (*mockReviewRater)(nil)
 
 func (m *mockReviewRater) RateReview(ctx context.Context, reviewID, userID int64, rating string, reviewedAt time.Time) (reviewresponse.RateReviewData, error) {
 	args := m.Called(ctx, reviewID, userID, rating, reviewedAt)
