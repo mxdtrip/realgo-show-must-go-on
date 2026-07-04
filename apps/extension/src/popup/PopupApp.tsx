@@ -2,10 +2,13 @@ import { useState } from "react";
 
 import type {
   DetectedSubmission,
+  ExtensionEventResult,
+  ProblemCardsResult,
   SubmissionPayload,
   UserDifficulty,
 } from "../lib/types";
 import { POPUP_CSS } from "./popup.styles";
+import { useProblemCards, type CardsUiState } from "./useProblemCards";
 
 const BRAND_LOGO_URL = new URL("../../assets/icon.png", import.meta.url).href;
 
@@ -16,8 +19,19 @@ export interface PopupAppProps {
    * object    → show the rating form.
    */
   submission: DetectedSubmission | null | undefined;
-  /** Persists the rated submission. Rejects with an Error on failure. */
-  onSave: (payload: SubmissionPayload) => Promise<void>;
+  /**
+   * Persists the rated submission. Rejects with an Error on failure. The
+   * resolved event result feeds the cards-readiness poll (its `problemId`);
+   * `null` simply means "no polling" — the success screen stays as before.
+   */
+  onSave: (payload: SubmissionPayload) => Promise<ExtensionEventResult | null>;
+  /**
+   * One poll tick of the task's cards readiness. Injected by the host (the
+   * extension routes it through the background worker; the preview mocks it)
+   * so PopupApp itself stays a pure view with no chrome.* access. Absent →
+   * the cards block never renders.
+   */
+  onFetchCards?: (problemId: number) => Promise<ProblemCardsResult | null>;
   /**
    * "Скрыть" on the success screen — hides the extension UI until the next
    * solved task (overlay: removes itself; toolbar popup: closes the window).
@@ -56,6 +70,7 @@ type Status = "form" | "saving" | "success" | "error";
 export function PopupApp({
   submission,
   onSave,
+  onFetchCards,
   onClose,
   onCollapse,
   onReview,
@@ -64,6 +79,12 @@ export function PopupApp({
   const [difficulty, setDifficulty] = useState<UserDifficulty | null>(null);
   const [status, setStatus] = useState<Status>("form");
   const [errorMsg, setErrorMsg] = useState("");
+  // The saved event's problemId; set on success, drives the cards poll.
+  const [problemId, setProblemId] = useState<number | null>(null);
+  const cardsState = useProblemCards(
+    status === "success" ? problemId : null,
+    onFetchCards
+  );
 
   function handleReport() {
     if (onReport) {
@@ -145,6 +166,9 @@ export function PopupApp({
               Задача добавлена в очередь повторений.
             </p>
           </div>
+          {cardsState !== "hidden" && (
+            <CardsStatusRow state={cardsState} onOpen={handleGoToReviews} />
+          )}
           <div className="realgo-state__actions">
             <button
               type="button"
@@ -217,7 +241,14 @@ export function PopupApp({
       userDifficulty: value,
     };
     try {
-      await onSave(payload);
+      const result = await onSave(payload);
+      // A malformed/absent problemId only disables the cards poll — the save
+      // itself succeeded and the success screen must not depend on it.
+      setProblemId(
+        typeof result?.problemId === "number" && result.problemId > 0
+          ? result.problemId
+          : null
+      );
       setStatus("success");
     } catch (e) {
       setStatus("error");
@@ -250,6 +281,46 @@ export function PopupApp({
         </p>
       </div>
     </Shell>
+  );
+}
+
+/**
+ * One-line cards readiness on the success screen. Colors follow the project
+ * rule: the working indicator is accent-blue, green marks success only.
+ * The "hidden" state never reaches here — the caller skips rendering.
+ */
+function CardsStatusRow({
+  state,
+  onOpen,
+}: {
+  state: Exclude<CardsUiState, "hidden">;
+  onOpen: () => void;
+}) {
+  return (
+    <p className={`realgo-cards realgo-cards--${state}`} role="status">
+      {state === "generating" && (
+        <>
+          <span
+            className="realgo-spinner"
+            style={{ width: 13, height: 13, borderWidth: 2 }}
+            aria-hidden="true"
+          />
+          Генерируем карточки по задаче…
+        </>
+      )}
+      {state === "ready" && (
+        <>
+          <span className="realgo-cards__check" aria-hidden="true">
+            <IconCheck size={13} />
+          </span>
+          Карточки готовы
+          <button type="button" className="realgo-link realgo-cards__open" onClick={onOpen}>
+            открыть
+          </button>
+        </>
+      )}
+      {state === "none" && <>Карточки к задаче пока не готовы</>}
+    </p>
   );
 }
 
@@ -373,9 +444,9 @@ function BrandMark({ size = 16 }: { size?: number }) {
   );
 }
 
-function IconCheck() {
+function IconCheck({ size = 18 }: { size?: number }) {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
       strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M20 6 9 17l-5-5" />
     </svg>

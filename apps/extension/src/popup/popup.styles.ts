@@ -589,6 +589,26 @@ export const POPUP_CSS = `
   font-size: 12px;
 }
 
+/* Cards readiness row on the success screen. One quiet line between the text
+   and the pinned actions; blue = working, green = success only, faint = stub. */
+.realgo-cards {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 18px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-dim);
+}
+.realgo-cards__check {
+  display: inline-flex;
+  color: var(--success-fg);
+}
+.realgo-cards--none { color: var(--text-faint); }
+.realgo-cards__open { font-size: 12px; }
+
 .realgo-link {
   background: none;
   border: 0;

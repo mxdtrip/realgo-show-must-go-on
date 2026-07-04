@@ -4,10 +4,12 @@ import { createRoot, type Root } from "react-dom/client";
 
 import type {
   DetectedSubmission,
+  ExtensionEventResult,
   SaveResponse,
   SubmissionPayload,
   SubmitResult,
 } from "../lib/types";
+import { fetchCardsViaBackground } from "../lib/cardsClient";
 import { getReviewUrl } from "../lib/storage";
 import { detectAdapter, type PlatformAdapter, type TaskInfo } from "../platforms";
 import { PopupApp } from "../popup/PopupApp";
@@ -193,6 +195,8 @@ function showOverlay(submission: DetectedSubmission) {
     createElement(PopupApp, {
       submission,
       onSave: saveViaBackground,
+      // Cards readiness poll ticks, routed through the background worker.
+      onFetchCards: fetchCardsViaBackground,
       // "Свернуть": hide until the next solved task (overlay re-renders on submit).
       onClose: removeOverlay,
       // "К повторению": open the web app's review cards in a new tab.
@@ -208,8 +212,14 @@ async function openReview() {
   removeOverlay();
 }
 
-/** Routes the save through the background worker to dodge host-page CORS. */
-async function saveViaBackground(payload: SubmissionPayload): Promise<void> {
+/**
+ * Routes the save through the background worker to dodge host-page CORS.
+ * Resolves with the backend's event result so the popup can start the cards
+ * poll off its `problemId` (null when the backend didn't provide one).
+ */
+async function saveViaBackground(
+  payload: SubmissionPayload
+): Promise<ExtensionEventResult | null> {
   const res: SaveResponse | undefined = await chrome.runtime.sendMessage({
     type: "REALGO_SAVE_SUBMISSION",
     payload,
@@ -217,6 +227,7 @@ async function saveViaBackground(payload: SubmissionPayload): Promise<void> {
   if (!res?.ok) {
     throw new Error(res?.error ?? "Не удалось сохранить.");
   }
+  return res.result ?? null;
 }
 
 init();
