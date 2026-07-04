@@ -6,7 +6,11 @@ from datetime import datetime, timezone
 import bcrypt
 
 
-PASSWORD = "Password123!"
+# Local default only. On any publicly reachable deployment set
+# SEED_USERS_PASSWORD to a secret value — these accounts (including the
+# 'admin'-plan one) are recreated on every deploy, and the default password
+# is documented in DEMO.md.
+DEFAULT_PASSWORD = "Password123!"
 CARD_SOURCE_CODE = "realgo_demo_cards"
 
 USERS = [
@@ -498,7 +502,8 @@ def main():
     if not dsn:
         raise SystemExit("DATABASE_URL is required")
 
-    password_hash = bcrypt.hashpw(PASSWORD.encode(), bcrypt.gensalt()).decode()
+    password = os.environ.get("SEED_USERS_PASSWORD") or DEFAULT_PASSWORD
+    password_hash = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
 
     import psycopg
 
@@ -535,7 +540,11 @@ def main():
                         cur, user_id, user["email"], user["events"], platforms, event_problems
                     )
 
-    print(f"seeded {len(USERS)} users with password {PASSWORD!r}")
+    if password == DEFAULT_PASSWORD:
+        print(f"seeded {len(USERS)} users with the default password {DEFAULT_PASSWORD!r}")
+    else:
+        # Never echo a secret supplied via SEED_USERS_PASSWORD into deploy logs.
+        print(f"seeded {len(USERS)} users with the password from SEED_USERS_PASSWORD")
 
 
 if __name__ == "__main__":

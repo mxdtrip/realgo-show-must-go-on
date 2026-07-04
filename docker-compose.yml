@@ -113,6 +113,7 @@ services:
       - ./services/api/seeds:/seeds:ro
     environment:
       DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-freeburger}?sslmode=disable
+      SEED_USERS_PASSWORD: ${SEED_USERS_PASSWORD:-}
     command: sh -c "pip install --no-cache-dir -r requirements.txt && python seed_users.py"
     restart: "no"
 
@@ -174,6 +175,8 @@ services:
         condition: service_completed_successfully
     environment:
       CONFIG_PATH: /app/config.yaml
+      # "local" (default) = text logs at debug; anything else = JSON at info.
+      APP_ENV: ${APP_ENV:-local}
       ADDRESS: 0.0.0.0:8080
       DB_HOST: postgres
       DB_PORT: "5432"
@@ -187,7 +190,12 @@ services:
       AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:?AUTH_JWT_SECRET must be set}
       AUTH_ACCESS_TTL: ${AUTH_ACCESS_TTL:-15m}
       AUTH_REFRESH_TTL: ${AUTH_REFRESH_TTL:-720h}
-      TRUSTED_PROXY_CIDRS: ${TRUSTED_PROXY_CIDRS:-}
+      # In this stack the api is reachable only through the caddy container, so
+      # X-Forwarded-For from the docker network is trustworthy. Without this the
+      # auth rate limiter keys every request to caddy's container IP — one
+      # shared 20 req/min bucket for ALL users, i.e. any single client can lock
+      # everyone out of login/register/refresh.
+      TRUSTED_PROXY_CIDRS: ${TRUSTED_PROXY_CIDRS:-10.0.0.0/8,172.16.0.0/12,192.168.0.0/16}
     expose:
       - "8080"
 

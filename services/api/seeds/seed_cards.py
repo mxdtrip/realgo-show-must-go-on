@@ -185,6 +185,17 @@ def resolve_pattern_ids(cur, codes):
 
 
 def upsert(cur, manifest_code, rows):
+    """Idempotent, non-destructive sync of seeded (global) cards.
+
+    Seed jobs run on every deploy, and review_schedules/review_attempts
+    reference cards with ON DELETE CASCADE. A DELETE + re-INSERT here would
+    therefore wipe every user's review history on those cards and reshuffle
+    card ids on each deploy. Instead we update rows in place by their stable
+    `source` key, insert only what is new, and delete only seeded cards that
+    actually left the manifest. Only global rows (user_id IS NULL) are ever
+    touched, so user-created cards are safe even if their `source` collides
+    with the manifest prefix.
+    """
     validate_cards_schema(cur, rows)
     problem_ids = resolve_problem_ids(
         cur,
@@ -196,11 +207,55 @@ def upsert(cur, manifest_code, rows):
     )
 
     source_prefix = f"{manifest_code}:"
+    current_sources = [row["source"] for row in rows]
+
+    # One-time repair for environments seeded before this script became
+    # idempotent: collapse accidental duplicates, keeping the oldest row
+    # (the one existing review schedules are most likely to point at).
     cur.execute(
-        "DELETE FROM cards WHERE source = %s OR LEFT(source, %s) = %s",
-        (manifest_code, len(source_prefix), source_prefix),
+        """
+        DELETE FROM cards a
+        USING cards b
+        WHERE a.user_id IS NULL AND b.user_id IS NULL
+          AND a.source = b.source
+          AND LEFT(a.source, %s) = %s
+          AND a.id > b.id
+        """,
+        (len(source_prefix), source_prefix),
     )
+
+    # Drop only seeded cards that were removed from the manifest.
+    cur.execute(
+        """
+        DELETE FROM cards
+        WHERE user_id IS NULL
+          AND (source = %s OR LEFT(source, %s) = %s)
+          AND NOT (source = ANY(%s))
+        """,
+        (manifest_code, len(source_prefix), source_prefix, current_sources),
+    )
+
     for row in rows:
+        cur.execute(
+            """
+            UPDATE cards
+            SET problem_id = %s, pattern_id = %s, type = %s, question = %s,
+                answer = %s, explanation = %s, created_by_ai = false
+            WHERE user_id IS NULL AND source = %s
+            RETURNING id
+            """,
+            (
+                problem_ids.get(row["problem_slug"]),
+                pattern_ids.get(row["pattern_code"]),
+                row["type"],
+                row["question"],
+                row["answer"],
+                row["explanation"],
+                row["source"],
+            ),
+        )
+        if cur.fetchone() is not None:
+            continue
         cur.execute(
             """
             INSERT INTO cards (

@@ -237,6 +237,19 @@ var validGrades = map[string]bool{
 	"junior": true, "middle": true, "senior": true, "staff": true, "principal": true,
 }
 
+// validTimezone accepts IANA zone names (e.g. "Europe/Moscow", "UTC"). The
+// value ends up in Postgres `AT TIME ZONE` expressions (dashboard metrics), so
+// an unvalidated string would make those queries fail with a database error on
+// every request for that user. Go's "Local" pseudo-zone is rejected for the
+// same reason: Postgres does not recognise it.
+func validTimezone(tz string) bool {
+	if tz == "Local" {
+		return false
+	}
+	_, err := time.LoadLocation(tz)
+	return err == nil
+}
+
 // patchProfile handles PATCH /me/profile — a partial update of the onboarding
 // profile. Omitted fields are left untouched; an explicit value (including "")
 // overwrites the field.
@@ -257,6 +270,10 @@ func (h *authHandler) patchProfile(w http.ResponseWriter, r *http.Request) {
 
 	if req.Grade != nil && *req.Grade != "" && !validGrades[*req.Grade] {
 		response.Fail(w, http.StatusBadRequest, "validation_error", "grade must be one of: junior, middle, senior, staff, principal")
+		return
+	}
+	if req.Timezone != nil && *req.Timezone != "" && !validTimezone(*req.Timezone) {
+		response.Fail(w, http.StatusBadRequest, "validation_error", "timezone must be a valid IANA time zone, e.g. Europe/Moscow")
 		return
 	}
 
