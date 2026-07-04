@@ -39,7 +39,10 @@ WHERE rs.user_id = sqlc.arg(user_id)
     (sqlc.arg(status)::text = 'due' AND rs.next_review_at <= NOW())
     OR (sqlc.arg(status)::text = 'upcoming' AND rs.next_review_at > NOW())
   )
-ORDER BY rs.next_review_at ASC
+  -- Keyset pagination: row-wise comparison seeks strictly past the last item
+  -- of the previous page on the (next_review_at, id) tiebreak.
+  AND (rs.next_review_at, rs.id) > (sqlc.arg(cursor_next_review_at)::timestamptz, sqlc.arg(cursor_id)::bigint)
+ORDER BY rs.next_review_at ASC, rs.id ASC
 LIMIT sqlc.arg(queue_limit);
 
 -- name: GetReviewScheduleByID :one
