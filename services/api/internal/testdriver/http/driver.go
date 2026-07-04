@@ -11,6 +11,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
@@ -27,8 +28,12 @@ import (
 	"github.com/mxdtrip/freeburger/services/api/internal/testutil"
 )
 
-// Driver реализует specifications.HarnessProvider поверх реального HTTP-сервера.
-var _ specifications.HarnessProvider = (*Driver)(nil)
+// Driver реализует specifications.HarnessProvider и specifications.CardsProvider
+// поверх реального HTTP-сервера.
+var (
+	_ specifications.HarnessProvider = (*Driver)(nil)
+	_ specifications.CardsProvider   = (*Driver)(nil)
+)
 
 // testJWTSecret имеет длину не менее 32 байт и не содержит заглушки вида
 // "replace-with", поэтому механизм подписи JWT принимает его.
@@ -95,6 +100,19 @@ func New(t *testing.T, h *testutil.Harness) *Driver {
 // явно управлять жизненным циклом.
 func (d *Driver) Close() { d.srv.Close() }
 
+// CardsUser оборачивает AuthenticatedUser и добавляет карточные операции,
+// реализуя specifications.CardsUser.
+func (d *Driver) CardsUser(user specifications.AuthenticatedUser) specifications.CardsUser {
+	t := d.t // capture for helper calls
+	return &cardsUser{
+		driver: d,
+		user:   user,
+		t:      t,
+	}
+}
+
+// --- Register / AuthenticatedUser (harness spec) ---
+
 // Register отправляет POST-запрос на /api/v1/auth/register
 // и возвращает уже аутентифицированного пользователя.
 func (d *Driver) Register(t *testing.T, email, password string) specifications.AuthenticatedUser {
@@ -115,6 +133,149 @@ func (d *Driver) Register(t *testing.T, email, password string) specifications.A
 	}
 	return &authenticatedUser{driver: d, token: out.Data.Tokens.AccessToken}
 }
+
+// --- CardsUser implementation ---
+
+// cardsUser реализует specifications.CardsUser поверх HTTP.
+type cardsUser struct {
+	driver *Driver
+	user   specifications.AuthenticatedUser
+	t      *testing.T
+}
+
+func (u *cardsUser) OwnIdentity(t *testing.T) string {
+	return u.user.OwnIdentity(t)
+}
+
+func (u *cardsUser) CreateCard(t *testing.T, front, back, cardType string) specifications.CardInfo {
+	t.Helper()
+	body := map[string]string{
+		"type":  cardType,
+		"front": front,
+		"back":  back,
+	}
+	resp := u.driver.do(t, http.MethodPost, "/api/v1/me/cards", body, u.token())
+
+	var out struct {
+		Data struct {
+			ID    int64  `json:"id"`
+			Type  string `json:"type"`
+			Front string `json:"front"`
+			Back  string `json:"back"`
+		} `json:"data"`
+	}
+	u.driver.decode(t, resp, &out)
+	return specifications.CardInfo{
+		ID:    out.Data.ID,
+		Type:  out.Data.Type,
+		Front: out.Data.Front,
+		Back:  out.Data.Back,
+	}
+}
+
+func (u *cardsUser) GetCards(t *testing.T) []specifications.CardInfo {
+	t.Helper()
+	resp := u.driver.do(t, http.MethodGet, "/api/v1/me/cards?limit=100", nil, u.token())
+
+	var out struct {
+		Data []struct {
+			ID     int64  `json:"id"`
+			Front  string `json:"front"`
+			Back   string `json:"back"`
+			Type   string `json:"type"`
+			Status string `json:"status"`
+		} `json:"data"`
+	}
+	u.driver.decode(t, resp, &out)
+
+	cards := make([]specifications.CardInfo, len(out.Data))
+	for i, c := range out.Data {
+		cards[i] = specifications.CardInfo{
+			ID:     c.ID,
+			Front:  c.Front,
+			Back:   c.Back,
+			Type:   c.Type,
+			Status: c.Status,
+		}
+	}
+	return cards
+}
+
+func (u *cardsUser) StartSession(t *testing.T, scope string) specifications.SessionInfo {
+	t.Helper()
+	path := "/api/v1/me/cards/session?limit=100&scope=" + scope
+	resp := u.driver.do(t, http.MethodGet, path, nil, u.token())
+
+	var out struct {
+		Data struct {
+			SessionID string `json:"sessionId"`
+			Cards     []struct {
+				ID     int64  `json:"id"`
+				Front  string `json:"front"`
+				Back   string `json:"back"`
+				Type   string `json:"type"`
+				Status string `json:"status"`
+			} `json:"cards"`
+		} `json:"data"`
+	}
+	u.driver.decode(t, resp, &out)
+
+	info := specifications.SessionInfo{SessionID: out.Data.SessionID}
+	for _, c := range out.Data.Cards {
+		info.Cards = append(info.Cards, specifications.CardInfo{
+			ID:     c.ID,
+			Front:  c.Front,
+			Back:   c.Back,
+			Type:   c.Type,
+			Status: c.Status,
+		})
+	}
+	return info
+}
+
+func (u *cardsUser) RateCard(t *testing.T, sessionID string, cardID int64, rating string) specifications.RateInfo {
+	t.Helper()
+	body := map[string]string{
+		"sessionId":  sessionID,
+		"rating":     rating,
+		"reviewedAt": time.Now().UTC().Format(time.RFC3339),
+	}
+	path := fmt.Sprintf("/api/v1/me/cards/%d/rate", cardID)
+	resp := u.driver.do(t, http.MethodPost, path, body, u.token())
+
+	var out struct {
+		Data struct {
+			CardID                 int64  `json:"cardId"`
+			Rating                 string `json:"rating"`
+			RepeatInCurrentSession bool   `json:"repeatInCurrentSession"`
+			SessionProgress        struct {
+				Reviewed  int `json:"reviewed"`
+				Remaining int `json:"remaining"`
+			} `json:"sessionProgress"`
+		} `json:"data"`
+	}
+	u.driver.decode(t, resp, &out)
+
+	return specifications.RateInfo{
+		CardID:                 out.Data.CardID,
+		Rating:                 out.Data.Rating,
+		RepeatInCurrentSession: out.Data.RepeatInCurrentSession,
+		Reviewed:               out.Data.SessionProgress.Reviewed,
+		Remaining:              out.Data.SessionProgress.Remaining,
+	}
+}
+
+func (u *cardsUser) token() string {
+	// Extract token from authenticatedUser via type assertion.
+	// This is acceptable because the driver owns the AuthenticatedUser creation.
+	if au, ok := u.user.(*authenticatedUser); ok {
+		return au.token
+	}
+	u.t.Fatalf("cardsUser: expected *authenticatedUser, got %T", u.user)
+	return ""
+}
+
+// --- Internal authenticatedUser (harness spec) ---
 
 type authenticatedUser struct {
 	driver *Driver
@@ -137,6 +298,8 @@ func (u *authenticatedUser) OwnIdentity(t *testing.T) string {
 	u.driver.decode(t, resp, &out)
 	return out.Data.User.Email
 }
+
+// --- HTTP helpers ---
 
 // do выполняет HTTP-запрос к тестовому серверу, добавляя Bearer-токен,
 // если он передан, и завершает тест при любой транспортной ошибке.
