@@ -52,11 +52,14 @@ type ExtensionEvent struct {
 }
 
 type Pattern struct {
-	ID          int64
-	Code        string
-	Name        string
-	Description pgtype.Text
-	ParentID    pgtype.Int8
+	ID                  int64
+	Code                string
+	Name                string
+	Description         pgtype.Text
+	ParentID            pgtype.Int8
+	Techniques          []string
+	RecognitionSymptoms []string
+	Checklist           []string
 }
 
 type Platform struct {

@@ -1,0 +1,61 @@
+code: realgo_pattern_cards
+title: realgo Pattern Practice Cards
+source_url: https://neetcode.io/roadmap
+captured_at: 2026-07-03
+cards:
+  - key: two-pointers-opposite-signal
+    type: pattern_recognition
+    pattern_code: two_pointers
+    question: "Как понять, что нужен именно opposite pointers, а не hash map?"
+    answer: "Если массив отсортирован и требуется найти пару или тройку с заданной суммой, два указателя с разных концов сокращают перебор до одного прохода. Hash map тоже решает задачу про пару, но не использует отсортированность и плохо масштабируется на тройку."
+    explanation: "Карточка тренирует выбор между Two Pointers и Hashing по признаку «данные отсортированы»."
+  - key: two-pointers-fast-slow-meaning
+    type: algorithm_mechanics
+    pattern_code: two_pointers
+    question: "Что означает встреча fast и slow указателей в связном списке?"
+    answer: "Если fast дошёл до null, цикла нет. Если fast и slow встретились в одной ноде, в списке есть цикл, и точка встречи используется для поиска его начала вторым проходом с начала списка."
+    explanation: "Карточка фиксирует смысл fast/slow, а не просто механику движения на 1 и 2 шага."
+  - key: two-pointers-partition-edge
+    type: edge_case
+    pattern_code: two_pointers
+    question: "На что обратить внимание при partitioning тремя указателями (Dutch national flag)?"
+    answer: "После swap с high указатель mid нельзя двигать вперёд — там может оказаться ещё не проверенный элемент. После swap с low, наоборот, mid можно смело двигать дальше."
+    explanation: "Частый баг partitioning — одинаковая логика инкремента mid для обоих направлений swap."
+
+  - key: sliding-window-invariant-first
+    type: pattern_recognition
+    pattern_code: sliding_window
+    question: "Какой первый шаг перед тем, как писать sliding window решение?"
+    answer: "Сформулировать словами инвариант окна — что именно должно быть true для текущего [left, right] на любом шаге. Без этого легко перепутать, когда двигать left, а когда right."
+    explanation: "Карточка про методику, а не про конкретную задачу — инвариант первичен."
+  - key: sliding-window-shrink-trigger
+    type: algorithm_mechanics
+    pattern_code: sliding_window
+    question: "Что запускает сдвиг left в динамическом окне?"
+    answer: "Нарушение инварианта окна после очередного расширения right — например, сумма превысила target или появился повторяющийся символ. Left двигается, пока инвариант не восстановится."
+    explanation: "Карточка закрепляет момент shrink как реакцию на нарушение условия, а не как отдельный проход."
+  - key: sliding-window-exactly-k-edge
+    type: edge_case
+    pattern_code: sliding_window
+    question: "Как посчитать подмассивы с суммой ровно K через sliding window?"
+    answer: "Прямого окна для «exactly K» нет — считают как atMost(K) минус atMost(K-1), где каждый atMost — отдельное скользящее окно. Работает для положительных чисел, где сумма монотонно растёт с расширением окна."
+    explanation: "Частая ошибка — пытаться подогнать одно окно под «exactly», хотя нужна разность двух atMost."
+
+  - key: binary-search-monotonic-predicate
+    type: pattern_recognition
+    pattern_code: binary_search
+    question: "Как отличить задачу на binary search on answer от обычного поиска в массиве?"
+    answer: "Если можно сформулировать функцию can(x) — true или false — и она монотонна на диапазоне возможных ответов, это сигнал бинарного поиска по ответу, даже если исходный массив не отсортирован."
+    explanation: "Карточка тренирует узнавание binary search там, где сортировки на первый взгляд нет."
+  - key: binary-search-bounds-difference
+    type: algorithm_mechanics
+    pattern_code: binary_search
+    question: "В чём разница между lower_bound и upper_bound в реализации?"
+    answer: "Lower bound возвращает первый индекс, где значение не меньше target, upper bound — первый индекс, где значение строго больше target. Разница в том, какую половину диапазона отрезаем при равенстве mid значению target."
+    explanation: "Карточка про частую путаницу на границе при val == target."
+  - key: binary-search-rotated-edge
+    type: edge_case
+    pattern_code: binary_search
+    question: "Как binary search работает на повёрнутом (rotated) отсортированном массиве?"
+    answer: "Сначала определяется, какая из двух половин относительно mid точно отсортирована, сравнивая nums[left] и nums[mid]. Затем target сравнивается с границами именно этой отсортированной половины, чтобы решить, в какую сторону двигаться."
+    explanation: "Ошибка новичков — сравнивать target напрямую с nums[mid], не определив сначала отсортированную половину."

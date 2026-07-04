@@ -150,16 +150,36 @@ export function StatusPill({
   return <span className={`status-pill status-pill--${tone}`}>{children}</span>;
 }
 
+/** Russian plural picker: forms = [1 повторение, 2 повторения, 5 повторений]. */
+function pluralRu(n: number, forms: readonly string[]): string {
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+  if (mod10 === 1 && mod100 !== 11) return forms[0];
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return forms[1];
+  return forms[2];
+}
+
+export type HeatmapTooltipCopy = Readonly<{
+  empty: string;
+  months: readonly string[];
+  unitForms: readonly string[];
+}>;
+
 /** Contribution-style activity heatmap: each outer entry is a row of 7 days
-    (last 28 days → 4 rows × 7 columns), newest cell bottom-right. */
+    (last 28 days → 4 rows × 7 columns), newest cell bottom-right. With
+    `counts` + `tooltip` each cell grows a pure-CSS hover tip (date + reviews). */
 export function ActivityHeatmap({
   weeks,
+  counts,
+  tooltip,
   ariaLabel,
   footLeft,
   scaleLess,
   scaleMore,
 }: Readonly<{
   weeks: readonly (readonly number[])[];
+  counts?: readonly (readonly number[])[];
+  tooltip?: HeatmapTooltipCopy;
   ariaLabel: string;
   footLeft: string;
   scaleLess: string;
@@ -167,6 +187,20 @@ export function ActivityHeatmap({
 }>) {
   const lastWeek = weeks.length - 1;
   const lastDay = (weeks[lastWeek]?.length ?? 1) - 1;
+
+  // The newest cell (bottom-right) is today; walk backwards for the rest.
+  const totalDays = weeks.reduce((sum, week) => sum + week.length, 0);
+  const now = new Date();
+  const tipFor = (flatIndex: number): string | undefined => {
+    if (!tooltip) return undefined;
+    const daysAgo = totalDays - 1 - flatIndex;
+    const date = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysAgo);
+    const label = `${date.getDate()} ${tooltip.months[date.getMonth()]}`;
+    const count = counts?.[Math.floor(flatIndex / 7)]?.[flatIndex % 7] ?? 0;
+    return count > 0
+      ? `${label} · ${count} ${pluralRu(count, tooltip.unitForms)}`
+      : `${label} · ${tooltip.empty}`;
+  };
 
   return (
     <>
@@ -179,6 +213,7 @@ export function ActivityHeatmap({
               return (
                 <i
                   className={`heatmap__cell${levelClass}${isToday ? " heatmap__cell--today" : ""}`}
+                  data-tip={tipFor(weekIndex * 7 + dayIndex)}
                   key={dayIndex}
                 />
               );

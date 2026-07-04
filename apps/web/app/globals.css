@@ -2198,21 +2198,53 @@ a.cabinet-panel__meta:hover {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 6px;
+  gap: 7px;
   padding: 14px 16px 12px;
 }
 
 .heatmap__week {
   display: grid;
   grid-template-columns: repeat(7, auto);
-  gap: 6px;
+  gap: 7px;
 }
 
 .heatmap__cell {
-  width: 16px;
-  height: 16px;
-  border-radius: 3.5px;
+  position: relative;
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
   background: rgba(255, 255, 255, 0.045);
+}
+
+/* Pure-CSS hover tip: date + review count from the data-tip attribute. */
+.heatmap__cell[data-tip]::after {
+  content: attr(data-tip);
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 9px);
+  transform: translate(-50%, 3px);
+  z-index: 40;
+  white-space: nowrap;
+  padding: 6px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  background: var(--panel-strong);
+  box-shadow: 0 16px 36px -18px rgba(1, 4, 9, 0.95);
+  color: var(--text-dim);
+  font-family: var(--font-stack-mono);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
+}
+
+.heatmap__cell[data-tip]:hover::after {
+  opacity: 1;
+  transform: translate(-50%, 0);
 }
 
 .heatmap__cell--1 {
@@ -2740,6 +2772,71 @@ a.cabinet-panel__meta:hover {
   margin: 0;
   color: var(--text-faint);
   font-size: 12px;
+}
+
+.pattern-technique-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pattern-detail-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pattern-detail-list li {
+  position: relative;
+  padding-left: 16px;
+  color: var(--text-dim);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.pattern-detail-list li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 8px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent-bright);
+}
+
+.pattern-detail-examples {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pattern-detail-examples li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.pattern-detail-examples li:last-child {
+  border-bottom: 0;
+}
+
+.pattern-detail-examples a {
+  font-size: 13px;
+}
+
+.pattern-detail-examples li span {
+  font-family: var(--font-stack-mono);
+  font-size: 11px;
+  color: var(--text-faint);
+  text-transform: uppercase;
 }
 
 .confidence--danger {
@@ -5100,7 +5197,13 @@ a.cabinet-panel__meta:hover {
    render full-page instead of as a fixed overlay over the landing. */
 .auth-layer--page {
   position: relative;
+  z-index: 1;
   min-height: 100vh;
+  padding-top: calc(24px + 64px);
+  background:
+    radial-gradient(900px 520px at 82% -10%, rgba(56, 139, 253, 0.16), transparent 66%),
+    radial-gradient(760px 460px at 6% 108%, rgba(46, 160, 67, 0.1), transparent 70%),
+    var(--bg);
 }
 
 /* Tabs are <Link>s on the standalone pages (buttons in the landing modal). */
@@ -6285,5 +6388,74 @@ a.cabinet-panel__meta:hover {
     grid-column: 1 / -1;
     width: 100%;
     justify-content: space-between;
+  }
+}
+
+/* ---------- landing scroll reveal ---------- */
+/* Hidden state applies only after ScrollReveal.tsx puts `reveal-ready` on <html>,
+   so the landing stays visible without JS. Durations sync with ScrollReveal.tsx. */
+
+@media (prefers-reduced-motion: no-preference) {
+  .reveal-ready body {
+    overflow-x: clip;
+  }
+
+  /* Hidden state is applied instantly (no transition here), otherwise elements
+     visibly animate INTO hiding right after hydration. The transition lives on
+     `.is-revealed` below, so only the entrance is animated. */
+  .reveal-ready [data-reveal] {
+    opacity: 0;
+    will-change: opacity, transform;
+  }
+
+  .reveal-ready [data-reveal="left"] {
+    transform: translateX(-48px);
+  }
+
+  .reveal-ready [data-reveal="right"] {
+    transform: translateX(48px);
+  }
+
+  .reveal-ready [data-reveal="up"] {
+    transform: translateY(32px);
+  }
+
+  .reveal-ready [data-reveal="zoom"] {
+    transform: translateY(20px) scale(0.93);
+  }
+
+  .reveal-ready [data-reveal="tilt"] {
+    transform: perspective(900px) translateY(30px) rotateX(14deg);
+    transform-origin: 50% 100%;
+  }
+
+  .reveal-ready [data-reveal="blur"] {
+    transform: translateY(10px);
+    filter: blur(7px);
+  }
+
+  .reveal-ready [data-reveal].is-revealed {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+
+  /* Transition lives only here, added by JS right before each toggle and
+     removed once it finishes — so it never fights a card's own hover
+     transition outside of the brief in/out crossing itself. */
+  .reveal-ready [data-reveal].is-animating {
+    transition:
+      opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1),
+      transform 0.75s cubic-bezier(0.16, 1, 0.3, 1),
+      filter 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @media (max-width: 920px) {
+    /* Stacked single-column layout: side slides read poorly and can
+       overflow the viewport, fall back to a vertical rise. */
+    .reveal-ready [data-reveal="left"],
+    .reveal-ready [data-reveal="right"] {
+      transform: translateY(28px);
+    }
   }
 }

@@ -77,10 +77,10 @@ FROM review_schedules
 WHERE user_id = $1;
 
 -- name: UpdateProgressConfidence :exec
+-- Rows created by the extension ingest have confidence = NULL, and NULL + delta
+-- stays NULL, which silently disabled confidence tracking for real users. Start
+-- such rows from the neutral 50 (matching the dashboard's readiness midpoint)
+-- before applying the delta, clamped to [0, 100].
 UPDATE user_problem_progress
-SET confidence = CASE
-    WHEN confidence + $3::int < 0 THEN 0
-    WHEN confidence + $3::int > 100 THEN 100
-    ELSE confidence + $3::int
-END
+SET confidence = LEAST(100, GREATEST(0, COALESCE(confidence, 50) + $3::int))
 WHERE user_id = $1 AND problem_id = $2;

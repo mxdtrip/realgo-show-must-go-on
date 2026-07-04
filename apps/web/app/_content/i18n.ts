@@ -6,16 +6,16 @@ export const defaultLocale: Locale = "ru";
 
 const ru = {
   common: {
-    brand: "ReAlgo",
+    brand: "realgo",
     metadata: {
       title: "realgo — Memory layer for interview prep",
       description:
-        "realgo helps you remember solved interview tasks, review them at the right time, and prepare with a clearer plan.",
+        "realgo помогает не забывать решённые задачи, вовремя возвращает их к повторению и складывает понятный план подготовки к интервью.",
       applicationName: "realgo",
       siteUrl: "https://realgo.dev",
       ogImageAlt: "realgo interview prep memory layer preview",
       ogEyebrow: "/memory /roadmap /reviews",
-      ogHeadline: "Memory layer for interview prep",
+      ogHeadline: "«Solved» ещё не значит «запомнил»",
       ogFooter: "LeetCode solved tasks -> spaced repetition -> interview roadmap",
       keywords: [
         "interview prep",
@@ -24,6 +24,8 @@ const ru = {
         "NeetCode",
         "algorithm practice",
         "technical interviews",
+        "подготовка к собеседованиям",
+        "алгоритмические задачи",
       ],
     },
   },
@@ -31,7 +33,7 @@ const ru = {
     name: "realgo — Memory layer for interview prep",
     shortName: "realgo",
     description:
-      "realgo helps you remember solved interview tasks, review them at the right time, and prepare with a clearer plan.",
+      "realgo помогает не забывать решённые задачи, вовремя возвращает их к повторению и складывает понятный план подготовки к интервью.",
   },
   marketing: {
     hero: {
@@ -54,9 +56,9 @@ const ru = {
         error: "Something went wrong. Try again.",
       },
       sortingCodeAria: "Sorting code",
-      eyebrow: "// spaced-repetition for interview prep",
+      eyebrow: "// spaced repetition for technical interviews",
       tagline:
-        "Реши задачу один раз — realgo пересоберёт её в памяти к нужному дню. Перепиши код сортировки слева и запусти: алгоритм наводит порядок прямо в названии.",
+        "«Solved» ещё не значит «запомнил». realgo — память твоей подготовки к собеседованиям: расширение фиксирует каждую решённую задачу прямо из браузера, а интервальные повторения возвращают её ровно перед тем, как она забудется. Ты решаешь — очередь повторов, карточки и слабые паттерны собираются сами.",
       sortingControlsAria: "Sorting controls",
       wordAria: "realgo",
       chaos: "Chaos",
@@ -100,6 +102,7 @@ const ru = {
           "Авто-расписание повторений (spaced repetition)",
           "Базовая статистика прогресса",
         ],
+        "Начать бесплатно",
       ],
       [
         "Pro",
@@ -112,6 +115,7 @@ const ru = {
           "Экспорт в Anki",
           "Приоритетные напоминания",
         ],
+        "Оформить Pro",
       ],
     ],
     sections: {
@@ -119,7 +123,7 @@ const ru = {
         kicker: "Memory",
         title: "Решай задачи где удобно. realgo запомнит, что важно повторить.",
         description:
-          "После практики ты отмечаешь уровень уверенности. realgo превращает это в понятное расписание повторений и возвращает к темам, которые нужно закрепить перед интервью.",
+          "Один клик после решения — и realgo превращает твою честную оценку в расписание повторений, возвращая точно те темы, которые иначе всплывут забытыми на самом интервью.",
         demoUrl: "leetcode.com/problems/two-sum-ii",
         demoStatus: "Saved",
         ratingAria: "Difficulty rating",
@@ -129,26 +133,25 @@ const ru = {
         kicker: "Roadmap",
         head: "Backend SWE · 21 день",
         readiness: "68% готовность",
-        title: "План подготовки под твою цель и дату интервью.",
+        title: "План подготовки под твою цель и дату собеседования — без гадания, что учить дальше.",
         description:
-          "Укажи роль, компанию и сколько времени осталось. realgo соберёт маршрут по темам, задачам и повторениям, чтобы каждый день подготовки имел понятный следующий шаг.",
+          "Укажи роль, компанию и сколько времени осталось. realgo соберёт маршрут по темам, задачам и повторениям — так у каждого дня подготовки один понятный шаг, а не список из сотен нерассортированных задач.",
       },
       reviews: {
         kicker: "Reviews",
         title: "Повторяй паттерны так, чтобы вспомнить их на интервью.",
         description:
-          "realgo создаёт короткие карточки по подходу, шагам решения и граничным случаям. Вместо длинных конспектов ты получаешь вопросы, которые тренируют воспроизведение.",
+          "realgo создаёт короткие карточки по подходу, механике решения и граничным случаям. Вместо длинных конспектов, которые никто не перечитывает, — вопросы, которые тренируют вспомнить, а не просто узнать при взгляде на старый код.",
       },
       pricing: {
         kicker: "Pricing",
-        title: "Начни бесплатно. Подключи Pro, когда нужна подготовка под конкретное интервью.",
+        title: "Начни бесплатно. Переходи на Pro, когда нужна максимальная польза и контроль.",
         description:
           "Бесплатный план помогает собрать личную базу решённых задач. Pro добавляет маршрут под цель, больше повторений, тесты и экспорт в Anki.",
-        cta: "Оформить",
       },
       faq: {
         kicker: "FAQ",
-        title: "Коротко о том, как realgo вписывается в подготовку.",
+        title: "Коротко о том, как realgo встраивается в подготовку — без лишних обещаний.",
         description:
           "FAQ закрывает практические вопросы: что сохраняет расширение, как работают повторения и можно ли начать без полного перехода на новый инструмент.",
         items: [
@@ -165,7 +168,7 @@ const ru = {
           {
             question: "Чем это отличается от обычного списка решённых задач?",
             answer:
-              "Список показывает, что уже было сделано. realgo планирует, когда к этому вернуться, превращает решение в короткие карточки и подсвечивает паттерны, которые чаще всего забываются.",
+              "Список показывает, что уже было сделано. realgo планирует, когда к этому вернуться, превращает решение в короткие карточки и подсвечивает паттерны, которые чаще всего забываются — как правило, ровно перед интервью.",
           },
           {
             question: "Можно пользоваться бесплатно?",
@@ -208,7 +211,7 @@ const ru = {
         },
       ],
       copyright: "© 2026 realgo. All rights reserved.",
-      tagline: "built for people who interview",
+      tagline: "built by devs who bombed a few interviews first",
       poweredBy: "powered by",
     },
   },
@@ -259,6 +262,7 @@ const ru = {
   },
   cabinet: {
     layout: {
+      brand: "ReAlgo",
       navAria: "Personal cabinet",
       navGroups: [
         {
@@ -333,17 +337,32 @@ const ru = {
         nextTitle: "Longest Substring",
         nextMeta: "hard · 09:30",
         openQueue: "open queue",
-        queueEyebrow: "queue",
         queueTitle: "Ближайшие повторения",
-        patternsEyebrow: "patterns",
         patternsTitle: "Слабые зоны",
         heatmap: {
-          eyebrow: "activity",
           title: "Активность повторений",
           aria: "Активность повторений за последние 28 дней",
           foot: "последние 28 дней",
           scaleLess: "less",
           scaleMore: "more",
+          tooltip: {
+            empty: "без повторений",
+            months: [
+              "января",
+              "февраля",
+              "марта",
+              "апреля",
+              "мая",
+              "июня",
+              "июля",
+              "августа",
+              "сентября",
+              "октября",
+              "ноября",
+              "декабря",
+            ],
+            unitForms: ["повторение", "повторения", "повторений"],
+          },
           statDays: "активных дней",
           statReviews: "повторений за период",
           statStreak: "текущий streak",
@@ -430,12 +449,28 @@ const ru = {
         priorityMed: "review soon",
         trainLink: "review now →",
         weeklyLabel: "за неделю",
-        weakColumnEyebrow: "weak spots",
         weakColumnTitle: "Слабые паттерны",
-        strongColumnEyebrow: "strong spots",
         strongColumnTitle: "Сильные паттерны",
         strongPriority: "закреплено",
         strongEmpty: "Пока нет закреплённых паттернов — повторяй регулярно.",
+      },
+      patternDetail: {
+        eyebrow: "/patterns",
+        backLink: "← все паттерны",
+        loading: "Загружаем паттерн…",
+        errorTitle: "Не удалось загрузить паттерн",
+        notFoundTitle: "Такого паттерна нет",
+        retry: "повторить",
+        descriptionTitle: "Что это",
+        techniquesTitle: "Разновидности",
+        symptomsTitle: "Как распознать",
+        symptomsEmpty: "Материал по симптомам ещё готовится.",
+        checklistTitle: "Держи в голове",
+        examplesTitle: "Примеры задач",
+        examplesEmpty: "Пока нет привязанных задач.",
+        practiceCta: "Потренировать этот паттерн",
+        sessionEmpty: "Пока нет карточек по этому паттерну — загляни позже.",
+        sessionError: "Не удалось загрузить карточки для тренировки.",
       },
       cards: {
         eyebrow: "/cards",
@@ -763,21 +798,22 @@ const ru = {
         },
       ],
       weakPatterns: [
-        { name: "Sliding Window", confidence: 42, trend: -6, signal: "3 hard reviews за неделю" },
-        { name: "Binary Search", confidence: 48, trend: 4, signal: "часто путается граница right" },
-        { name: "Intervals", confidence: 55, trend: 2, signal: "мало повторений после решения" },
+        { name: "Sliding Window", code: "sliding_window", confidence: 42, trend: -6, signal: "3 hard reviews за неделю" },
+        { name: "Binary Search", code: "binary_search", confidence: 48, trend: 4, signal: "часто путается граница right" },
+        { name: "Intervals", code: "intervals", confidence: 55, trend: 2, signal: "мало повторений после решения" },
         {
-          name: "Dynamic Programming",
+          name: "Dynamic Programming (1D)",
+          code: "dynamic_programming_1d",
           confidence: 37,
           trend: -8,
           signal: "нужны карточки по состояниям",
         },
       ],
       strongPatterns: [
-        { name: "Two Pointers", confidence: 92, trend: 3, signal: "стабильно easy последние 5 повторений" },
-        { name: "Hashing", confidence: 88, trend: 2, signal: "быстрый recall, ошибок нет" },
-        { name: "Stack", confidence: 84, trend: 5, signal: "уверенно на скобках и монотонных" },
-        { name: "BFS / DFS", confidence: 79, trend: 1, signal: "обход графа закреплён" },
+        { name: "Two Pointers", code: "two_pointers", confidence: 92, trend: 3, signal: "стабильно easy последние 5 повторений" },
+        { name: "Hashing", code: "arrays_hashing", confidence: 88, trend: 2, signal: "быстрый recall, ошибок нет" },
+        { name: "Stack", code: "stack", confidence: 84, trend: 5, signal: "уверенно на скобках и монотонных" },
+        { name: "BFS / DFS", code: "graphs", confidence: 79, trend: 1, signal: "обход графа закреплён" },
       ],
       problems: [
         {

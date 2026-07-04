@@ -1,9 +1,9 @@
 # Local dev stack and server deployment for the FreeBurger API.
 #
-# The deploy workflow on `main` runs `docker compose up -d --build` from the
-# repository root, so this file is the single source of truth for both the
-# local environment and the appbox server. Dev-friendly defaults are inlined;
-# on the server, override secrets via environment or a root .env file.
+# The deploy workflow runs `docker compose --profile prod-demo up -d --build`
+# from the repository root, so this file is the single source of truth for both
+# the local environment and the appbox server. Dev-friendly defaults are
+# inlined; on the server, override secrets via environment or a root .env file.
 
 name: freeburger
 
@@ -77,6 +77,32 @@ services:
     command: sh -c "pip install --no-cache-dir -r requirements.txt && python seed_cards.py realgo_demo_cards.yaml"
     restart: "no"
 
+  seed-pattern-content:
+    image: python:3.12-slim
+    depends_on:
+      seed-roadmap:
+        condition: service_completed_successfully
+    working_dir: /seeds
+    volumes:
+      - ./services/api/seeds:/seeds:ro
+    environment:
+      DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-freeburger}?sslmode=disable
+    command: sh -c "pip install --no-cache-dir -r requirements.txt && python seed_pattern_content.py pattern_content.yaml"
+    restart: "no"
+
+  seed-pattern-cards:
+    image: python:3.12-slim
+    depends_on:
+      seed-pattern-content:
+        condition: service_completed_successfully
+    working_dir: /seeds
+    volumes:
+      - ./services/api/seeds:/seeds:ro
+    environment:
+      DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-freeburger}?sslmode=disable
+    command: sh -c "pip install --no-cache-dir -r requirements.txt && python seed_cards.py pattern_cards.yaml"
+    restart: "no"
+
   seed-users:
     image: python:3.12-slim
     depends_on:
@@ -87,6 +113,7 @@ services:
       - ./services/api/seeds:/seeds:ro
     environment:
       DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-freeburger}?sslmode=disable
+      SEED_USERS_PASSWORD: ${SEED_USERS_PASSWORD:-}
     command: sh -c "pip install --no-cache-dir -r requirements.txt && python seed_users.py"
     restart: "no"
 
@@ -108,7 +135,6 @@ services:
     restart: unless-stopped
     depends_on:
       - api
-      - web
     environment:
       REALGO_EXTENSION_ORIGIN: ${REALGO_EXTENSION_ORIGIN:-chrome-extension://kclglopmphebagjjimjhdpnmoddmbgea}
     ports:
@@ -126,14 +152,15 @@ services:
   # userspace TCP — no TUN/kernel modules (which the LXD host doesn't allow).
   frpc:
     image: snowdreamtech/frpc:0.61.1
+    profiles: ["prod-demo"]
     restart: unless-stopped
     depends_on:
       - caddy
     volumes:
       - ./frpc.toml:/etc/frp/frpc.toml:ro
     environment:
-      FRP_VPS_HOST: ${FRP_VPS_HOST:?FRP_VPS_HOST must be set}
-      FRP_TOKEN: ${FRP_TOKEN:?FRP_TOKEN must be set}
+      FRP_VPS_HOST: ${FRP_VPS_HOST:-}
+      FRP_TOKEN: ${FRP_TOKEN:-}
 
   api:
     build:
@@ -148,6 +175,8 @@ services:
         condition: service_completed_successfully
     environment:
       CONFIG_PATH: /app/config.yaml
+      # "local" (default) = text logs at debug; anything else = JSON at info.
+      APP_ENV: ${APP_ENV:-local}
       ADDRESS: 0.0.0.0:8080
       DB_HOST: postgres
       DB_PORT: "5432"
@@ -161,7 +190,12 @@ services:
       AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:?AUTH_JWT_SECRET must be set}
       AUTH_ACCESS_TTL: ${AUTH_ACCESS_TTL:-15m}
       AUTH_REFRESH_TTL: ${AUTH_REFRESH_TTL:-720h}
-      TRUSTED_PROXY_CIDRS: ${TRUSTED_PROXY_CIDRS:-}
+      # In this stack the api is reachable only through the caddy container, so
+      # X-Forwarded-For from the docker network is trustworthy. Without this the
+      # auth rate limiter keys every request to caddy's container IP — one
+      # shared 20 req/min bucket for ALL users, i.e. any single client can lock
+      # everyone out of login/register/refresh.
+      TRUSTED_PROXY_CIDRS: ${TRUSTED_PROXY_CIDRS:-10.0.0.0/8,172.16.0.0/12,192.168.0.0/16}
     expose:
       - "8080"
 

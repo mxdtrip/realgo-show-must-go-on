@@ -7,6 +7,7 @@ import { strongPatterns, weakPatterns } from "../_mock";
 
 type Pattern = {
   name: string;
+  code: string;
   confidence: number;
   trend: number;
   signal: string;
@@ -43,7 +44,6 @@ export default function PatternsPage() {
 
       <div className="cabinet-grid">
         <CabinetPanel
-          eyebrow={page.weakColumnEyebrow}
           title={page.weakColumnTitle}
           meta={<span className="cabinet-panel__meta">{weak.length} patterns</span>}
         >
@@ -55,7 +55,6 @@ export default function PatternsPage() {
         </CabinetPanel>
 
         <CabinetPanel
-          eyebrow={page.strongColumnEyebrow}
           title={page.strongColumnTitle}
           meta={<span className="cabinet-panel__meta">{strong.length} patterns</span>}
         >
@@ -85,7 +84,9 @@ function WeakCard({
   return (
     <article>
       <div>
-        <strong>{pattern.name}</strong>
+        <strong>
+          <Link href={`/patterns/${pattern.code}`}>{pattern.name}</Link>
+        </strong>
         <span className={severe ? "confidence--danger" : "confidence--warning"}>
           {pattern.confidence}%
         </span>
@@ -111,7 +112,9 @@ function StrongCard({
   return (
     <article>
       <div>
-        <strong>{pattern.name}</strong>
+        <strong>
+          <Link href={`/patterns/${pattern.code}`}>{pattern.name}</Link>
+        </strong>
         <span className="confidence--accent">{pattern.confidence}%</span>
       </div>
       <ProgressBar value={pattern.confidence} label={`${pattern.name} confidence`} />
