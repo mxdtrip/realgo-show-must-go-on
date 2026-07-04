@@ -9,7 +9,7 @@ import type {
   SubmitResult,
 } from "../lib/types";
 import { getReviewUrl } from "../lib/storage";
-import { detectAdapter, type PlatformAdapter } from "../platforms";
+import { detectAdapter, type PlatformAdapter, type TaskInfo } from "../platforms";
 import { PopupApp } from "../popup/PopupApp";
 
 export const config: PlasmoCSConfig = {
@@ -31,18 +31,24 @@ const RESULT_POLL_MS = 500;
 const RESULT_TIMEOUT_MS = 20_000;
 
 function init() {
-  const adapter = detectAdapter(location.href);
-  if (!adapter) return;
-
+  // The manifest already scopes this script to supported hosts, so the listener
+  // is attached unconditionally and the adapter is resolved per click. Resolving
+  // it once at load broke SPA flows: landing on a list page (e.g. /practice)
+  // yields no adapter, and the client-side hop to /problems/<slug> never
+  // re-runs init — the extension stayed inert until a hard reload.
   // Capture-phase delegation survives the SPA re-rendering its buttons.
-  document.addEventListener("click", (event) => onDocumentClick(event, adapter), true);
+  document.addEventListener("click", onDocumentClick, true);
 }
 
-function onDocumentClick(event: MouseEvent, adapter: PlatformAdapter) {
+function onDocumentClick(event: MouseEvent) {
   const target = event.target as HTMLElement | null;
   if (!target) return;
+  const adapter = detectAdapter(location.href);
+  if (!adapter) return;
   if (!isSubmitClick(target, adapter)) return;
-  watchForResult(adapter);
+  // Snapshot the task while still on the problem page: after a submit the SPA
+  // can swap to the submission-history URL, where extraction would fail.
+  watchForResult(adapter, adapter.extractTaskInfo());
 }
 
 function isSubmitClick(target: HTMLElement, adapter: PlatformAdapter): boolean {
@@ -58,7 +64,7 @@ function isSubmitClick(target: HTMLElement, adapter: PlatformAdapter): boolean {
 
 let watching = false;
 
-function watchForResult(adapter: PlatformAdapter) {
+function watchForResult(adapter: PlatformAdapter, clickInfo: TaskInfo | null) {
   if (watching) return;
   watching = true;
 
@@ -67,7 +73,7 @@ function watchForResult(adapter: PlatformAdapter) {
     clearInterval(timer);
     observer.disconnect();
     watching = false;
-    finalize(adapter, result);
+    finalize(adapter, result, clickInfo);
   };
 
   const check = () => {
@@ -89,6 +95,9 @@ function watchForResult(adapter: PlatformAdapter) {
 }
 
 let lastKey = "";
+let lastKeyAt = 0;
+/** Two detections of one task inside this window count as one submit. */
+const DEDUPE_WINDOW_MS = 15_000;
 
 /** Stable idempotency id for one submit. Falls back when randomUUID is absent. */
 function newEventId(): string {
@@ -100,8 +109,14 @@ function newEventId(): string {
   return `ev-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-function finalize(adapter: PlatformAdapter, submitResult: SubmitResult) {
-  const info = adapter.extractTaskInfo();
+function finalize(
+  adapter: PlatformAdapter,
+  submitResult: SubmitResult,
+  clickInfo: TaskInfo | null
+) {
+  // Prefer the click-time snapshot; by verdict time the SPA may already sit on
+  // a URL (submission history) the adapter cannot extract a task from.
+  const info = clickInfo ?? adapter.extractTaskInfo();
   if (!info) return;
 
   const submission: DetectedSubmission = {
@@ -118,10 +133,14 @@ function finalize(adapter: PlatformAdapter, submitResult: SubmitResult) {
     submittedAt: new Date().toISOString(),
   };
 
-  // Dedupe rapid double submits of the same task within one page session.
+  // Dedupe double detections of one physical submit. Time-bounded: a page
+  // session on an SPA can span many real submits of the same task (fail, fix,
+  // resubmit), and a forever-dedupe swallowed every one after the first.
   const key = `${submission.platformTaskSlug}|${submission.taskUrl}`;
-  if (key === lastKey) return;
+  const now = Date.now();
+  if (key === lastKey && now - lastKeyAt < DEDUPE_WINDOW_MS) return;
   lastKey = key;
+  lastKeyAt = now;
 
   try {
     chrome.runtime.sendMessage({ type: "REALGO_SUBMISSION_DETECTED", submission });
