@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"math"
 	"net/http"
 	"strconv"
@@ -60,18 +61,21 @@ func RegisterRoutes(r chi.Router, h *Handler) {
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.UserIDFromContext(r.Context())
 	if !ok {
+		slog.Warn("cards: List failed")
 		response.Fail(w, http.StatusUnauthorized, "UNAUTHORIZED", "user not authenticated")
 		return
 	}
 
 	params, err := parseListParams(r)
 	if err != nil {
+		slog.Warn("cards: List failed", slog.Any("err", err), slog.Int64("user_id", userID))
 		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", err.Error())
 		return
 	}
 
 	items, nextCursor, err := h.svc.List(r.Context(), userID, params)
 	if err != nil {
+		slog.Error("cards: List failed", slog.Any("err", err), slog.Int64("user_id", userID))
 		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", "could not load cards")
 		return
 	}
@@ -82,18 +86,21 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) Session(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.UserIDFromContext(r.Context())
 	if !ok {
+		slog.Warn("cards: Session failed")
 		response.Fail(w, http.StatusUnauthorized, "UNAUTHORIZED", "user not authenticated")
 		return
 	}
 
 	params, err := parseSessionParams(r)
 	if err != nil {
+		slog.Warn("cards: Session failed", slog.Any("err", err), slog.Int64("user_id", userID))
 		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", err.Error())
 		return
 	}
 
 	session, err := h.svc.Session(r.Context(), userID, params)
 	if err != nil {
+		slog.Error("cards: Session failed", slog.Any("err", err), slog.Int64("user_id", userID))
 		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", "could not load card session")
 		return
 	}
@@ -104,12 +111,14 @@ func (h *Handler) Session(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) Rate(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.UserIDFromContext(r.Context())
 	if !ok {
+		slog.Warn("cards: Rate failed")
 		response.Fail(w, http.StatusUnauthorized, "UNAUTHORIZED", "user not authenticated")
 		return
 	}
 
 	cardID, err := strconv.ParseInt(chi.URLParam(r, "cardId"), 10, 64)
 	if err != nil || cardID <= 0 {
+		slog.Warn("cards: Rate failed", slog.Any("err", err), slog.Int64("user_id", userID))
 		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "invalid cardId")
 		return
 	}
@@ -123,12 +132,16 @@ func (h *Handler) Rate(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, ErrCardNotFound):
+			slog.Warn("cards: Rate failed", slog.Any("err", err), slog.Int64("user_id", userID), slog.Int64("card_id", cardID))
 			response.Fail(w, http.StatusNotFound, "NOT_FOUND", err.Error())
 		case errors.Is(err, ErrInvalidRating):
+			slog.Warn("cards: Rate failed", slog.Any("err", err), slog.Int64("user_id", userID), slog.Int64("card_id", cardID))
 			response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", err.Error())
 		case strings.HasPrefix(err.Error(), "invalid reviewedAt"):
+			slog.Warn("cards: Rate failed", slog.Any("err", err), slog.Int64("user_id", userID), slog.Int64("card_id", cardID))
 			response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", err.Error())
 		default:
+			slog.Error("cards: Rate failed", slog.Any("err", err), slog.Int64("user_id", userID), slog.Int64("card_id", cardID))
 			response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", "could not rate card")
 		}
 		return
@@ -140,6 +153,7 @@ func (h *Handler) Rate(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.UserIDFromContext(r.Context())
 	if !ok {
+		slog.Warn("cards: Create failed")
 		response.Fail(w, http.StatusUnauthorized, "UNAUTHORIZED", "user not authenticated")
 		return
 	}
@@ -149,14 +163,17 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !validCardType(req.Type) {
+		slog.Warn("cards: Create failed", slog.String("type", req.Type), slog.Int64("user_id", userID))
 		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "type must be pattern_recognition, algorithm_mechanics, or edge_case")
 		return
 	}
 	if req.Front == "" || req.Back == "" {
+		slog.Warn("cards: Create failed", slog.Int64("user_id", userID))
 		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "front and back are required")
 		return
 	}
 	if req.ProblemID != nil && req.PatternID != nil {
+		slog.Warn("cards: Create failed", slog.Int64("user_id", userID))
 		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "only one of problemId or patternId may be set")
 		return
 	}
@@ -164,9 +181,11 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	card, err := h.svc.Create(r.Context(), userID, CreateCardInput(req))
 	if err != nil {
 		if errors.Is(err, ErrCardTargetNotFound) {
+			slog.Warn("cards: Create failed", slog.Any("err", err), slog.Int64("user_id", userID))
 			response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "problem_id or pattern_id does not exist")
 			return
 		}
+		slog.Error("cards: Create failed", slog.Any("err", err), slog.Int64("user_id", userID))
 		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", "could not create card")
 		return
 	}
@@ -177,22 +196,26 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.UserIDFromContext(r.Context())
 	if !ok {
+		slog.Warn("cards: Get failed")
 		response.Fail(w, http.StatusUnauthorized, "UNAUTHORIZED", "user not authenticated")
 		return
 	}
 
 	cardID, err := strconv.ParseInt(chi.URLParam(r, "cardId"), 10, 64)
 	if err != nil || cardID <= 0 {
+		slog.Warn("cards: Get failed", slog.Any("err", err), slog.Int64("user_id", userID))
 		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "invalid cardId")
 		return
 	}
 
 	card, err := h.svc.GetByID(r.Context(), userID, cardID)
 	if errors.Is(err, ErrCardNotFound) {
+		slog.Warn("cards: Get failed", slog.Any("err", err), slog.Int64("user_id", userID), slog.Int64("card_id", cardID))
 		response.Fail(w, http.StatusNotFound, "NOT_FOUND", "card not found")
 		return
 	}
 	if err != nil {
+		slog.Error("cards: Get failed", slog.Any("err", err), slog.Int64("user_id", userID), slog.Int64("card_id", cardID))
 		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", "could not fetch card")
 		return
 	}
@@ -203,12 +226,14 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.UserIDFromContext(r.Context())
 	if !ok {
+		slog.Warn("cards: Update failed")
 		response.Fail(w, http.StatusUnauthorized, "UNAUTHORIZED", "user not authenticated")
 		return
 	}
 
 	cardID, err := strconv.ParseInt(chi.URLParam(r, "cardId"), 10, 64)
 	if err != nil || cardID <= 0 {
+		slog.Warn("cards: Update failed", slog.Any("err", err), slog.Int64("user_id", userID))
 		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "invalid cardId")
 		return
 	}
@@ -218,16 +243,19 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if req.Type != nil && !validCardType(*req.Type) {
+		slog.Warn("cards: Update failed", slog.String("type", *req.Type), slog.Int64("user_id", userID), slog.Int64("card_id", cardID))
 		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "type must be pattern_recognition, algorithm_mechanics, or edge_case")
 		return
 	}
 
 	card, err := h.svc.Update(r.Context(), userID, cardID, UpdateCardInput(req))
 	if errors.Is(err, ErrCardNotFound) {
+		slog.Warn("cards: Update failed", slog.Any("err", err), slog.Int64("user_id", userID), slog.Int64("card_id", cardID))
 		response.Fail(w, http.StatusNotFound, "NOT_FOUND", "card not found")
 		return
 	}
 	if err != nil {
+		slog.Error("cards: Update failed", slog.Any("err", err), slog.Int64("user_id", userID), slog.Int64("card_id", cardID))
 		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", "could not update card")
 		return
 	}
@@ -238,21 +266,25 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.UserIDFromContext(r.Context())
 	if !ok {
+		slog.Warn("cards: Delete failed")
 		response.Fail(w, http.StatusUnauthorized, "UNAUTHORIZED", "user not authenticated")
 		return
 	}
 
 	cardID, err := strconv.ParseInt(chi.URLParam(r, "cardId"), 10, 64)
 	if err != nil || cardID <= 0 {
+		slog.Warn("cards: Delete failed", slog.Any("err", err), slog.Int64("user_id", userID))
 		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "invalid cardId")
 		return
 	}
 
 	if err := h.svc.Delete(r.Context(), userID, cardID); err != nil {
 		if errors.Is(err, ErrCardNotFound) {
+			slog.Warn("cards: Delete failed", slog.Any("err", err), slog.Int64("user_id", userID), slog.Int64("card_id", cardID))
 			response.Fail(w, http.StatusNotFound, "NOT_FOUND", "card not found")
 			return
 		}
+		slog.Error("cards: Delete failed", slog.Any("err", err), slog.Int64("user_id", userID), slog.Int64("card_id", cardID))
 		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", "could not delete card")
 		return
 	}
