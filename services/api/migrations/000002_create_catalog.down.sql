@@ -1,0 +1,8 @@
+BEGIN;
+
+DROP TABLE IF EXISTS roadmap_items;
+DROP TABLE IF EXISTS problems;
+DROP TABLE IF EXISTS patterns;
+DROP TABLE IF EXISTS platforms;
+
+COMMIT;

@@ -1,0 +1,27 @@
+# Public direct-deploy entry point. The reverse-tunnel home stack uses
+# Caddyfile.internal instead, because the VPS edge terminates TLS there.
+{$REALGO_SITE_ADDRESS:realgo.dev} {
+	encode zstd gzip
+
+	@api path /api/* /healthz /readyz
+	@allowed_origin header_regexp Origin ^(https?://(localhost|127[.]0[.]0[.]1):(5173|3000)|{$REALGO_EXTENSION_ORIGIN:chrome-extension://kclglopmphebagjjimjhdpnmoddmbgea})$
+
+	handle @api {
+		route {
+			header @allowed_origin Access-Control-Allow-Origin "{http.request.header.Origin}"
+			header @allowed_origin Access-Control-Allow-Credentials "true"
+			header @allowed_origin Access-Control-Allow-Methods "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+			header @allowed_origin Access-Control-Allow-Headers "Authorization, Content-Type"
+			header @allowed_origin Access-Control-Max-Age "86400"
+			header @allowed_origin Vary "Origin"
+
+			@preflight method OPTIONS
+			respond @preflight 204
+
+			reverse_proxy api:8080
+		}
+	}
+
+	# Everything that isn't /api/* is the Next.js app.
+	reverse_proxy web:3000
+}

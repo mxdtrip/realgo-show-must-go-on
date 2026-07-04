@@ -1,0 +1,129 @@
+# AGENTS.md — `apps/web` (realgo web)
+
+Веб-приложение realgo: маркетинговый лендинг и стартовый моковый каркас личного кабинета.
+Тёмная «программистская» эстетика с цветовой базой GitHub Primer. Центральный элемент
+лендинга — интерактивная анимация сортировки слова `realgo`, где код алгоритма можно
+править прямо на странице.
+
+## Стек
+
+- **Next.js 16** (App Router, Turbopack), **React 19**, **TypeScript**.
+- Без Tailwind / UI-китов: всё оформление — один файл `app/globals.css` (кастомные CSS-переменные).
+- Шрифты через `next/font/google` (см. `app/layout.tsx`).
+
+> Примечание: корневой `apps/web/README.md` упоминает Tailwind + shadcn/ui как намерение
+> платформы. Фактический лендинг написан на чистом CSS — ориентируйся на код, не на README.
+
+## Команды
+
+Все команды запускать из `apps/web/`:
+
+```bash
+npm install            # зависимости
+npm run dev            # дев-сервер (Turbopack), http://localhost:3000
+npm run build          # прод-сборка
+npm run start          # запуск прод-сборки
+npm run lint           # это tsc --noEmit (типы), НЕ ESLint
+```
+
+Перед коммитом гонять `npm run lint` (typecheck должен быть зелёным).
+
+## Структура
+
+```
+app/
+  layout.tsx                      # <html>, метаданные, подключение шрифтов
+  manifest.ts                     # PWA manifest
+  globals.css                     # ВЕСЬ дизайн-язык (токены, секции, кабинет, анимация)
+  (marketing)/
+    page.tsx                      # маршрут /: секции лендинга + футер
+  _content/
+    i18n.ts                       # словарь текстов и моков; locale: ru/en/es
+  _notifications/
+    notifications.ts              # localStorage-настройки уведомлений + Notification API helpers
+  _pwa/
+    PWAProvider.tsx               # регистрация service worker
+  (cabinet)/
+    layout.tsx                    # shell личного кабинета: sidebar/topbar
+    _components.tsx               # общие моковые UI-блоки кабинета
+    _mock.ts                      # мок-данные, без backend/fetch
+    dashboard/page.tsx            # /dashboard
+    reviews/page.tsx              # /reviews
+    problems/page.tsx             # /problems
+    roadmap/page.tsx              # /roadmap
+    patterns/page.tsx             # /patterns
+    cards/page.tsx                # /cards
+    extension/page.tsx            # /extension
+    settings/page.tsx             # /settings
+    settings/_components/         # PWA install + notification settings panels
+  (focus)/
+    layout.tsx                    # shell без sidebar/topbar для сфокусированных сценариев
+    cards/session/page.tsx        # /cards/session — полноэкранное повторение
+  components/
+    SortingMemoryHero.tsx         # герой: анимация сортировки + редактор кода + модалка авторизации
+```
+
+## Анимация сортировки — НЕ ЛОМАТЬ
+
+`SortingMemoryHero.tsx` — ядро продукта. Слово `realgo` рендерится как 6 абсолютно
+спозиционированных букв (`.word-letter`); пользователь редактирует код сортировки в
+`<textarea>`, жмёт тумблер — и буквы переставляются по записанным шагам алгоритма.
+
+Священная часть, которую **нельзя менять без явной просьбы**:
+
+- `recordSort(code, order)` — выполняет пользовательский код в песочнице (`new Function`)
+  с инъекцией `compare()` / `swap()`, записывает шаги и валидирует (лимит операций, проверка
+  индексов). Сюда же завязана возможность править алгоритм на лету.
+- `geometry()` / `rowPoses()` / `chaosPoses()` — геометрия слотов. Слоты равной ширины
+  (`font * 0.52`). При смене шрифта слова это работает и для пропорциональных шрифтов
+  (сейчас стоит Inter), но при сильно широком шрифте проверяй, что буквы не наезжают.
+- Цикл `sort()` с `runIdRef` для отмены устаревших прогонов; тайминги `GATHER_MS`,
+  `COMPARE_MS`, `SWAP_MS`, `SWAP_PAUSE_MS`.
+
+Поведение UI вокруг ядра (можно трогать осознанно):
+
+- **Интро**: на загрузке буквы раскиданы (`introRef`), через ~1.6 c авто-собираются
+  (`sortRef.current()`), тумблер сам встаёт на `Sort`. Любой клик по тумблеру до этого
+  отменяет авто-запуск (`cancelIntro`).
+- **Тумблер Chaos | Sort** (`.scene-toggle`): активно всегда одно; положение бегунка —
+  через `data-active`.
+- **Важно про плавность**: `transform`-transition должен жить в базовом `.word-letter`,
+  а не только в классах `motion-*`. Иначе при одновременной смене класса и позиции буквы
+  «телепортируются». Классы `motion-gathering` / `motion-swapping` лишь меняют длительность.
+
+## Дизайн-система (`globals.css`)
+
+- Цветовая база — **GitHub Primer dark**: canvas `#0d1117`, panel `#161b22`,
+  border `#30363d`, текст `#e6edf3` / `#7d8590`.
+- Акценты: **синий** `#2f81f7` / `#58a6ff` (ссылки, лейблы, активные состояния);
+  **зелёный** `#238636` / `#2ea043` для primary-действий (Sign up, Sort, submit).
+- Все цвета — через CSS-переменные в `:root`. Меняй палитру там, не хардкодь по месту.
+- Шрифты (CSS-переменные из `layout.tsx`):
+  - `--font-sans` Inter — основной текст И слово `realgo`.
+  - `--font-display` Space Grotesk — крупные заголовки секций.
+  - `--font-mono` JetBrains Mono — код, навигация `/memory`, лейблы `01 MEMORY`,
+    eyebrow `// spaced-repetition…`, древовидный футер.
+- «Программистские» детали: лейблы со слешами, нумерация секций
+  (`counter` + `decimal-leading-zero`), терминальное дерево в футере (`└─`).
+
+## Конвенции
+
+- Контент секций лендинга живёт в `_content/i18n.ts`; разметку в `(marketing)/page.tsx`
+  не дублируй ради изменения текста.
+- Тексты и моковые записи должны жить в `_content/i18n.ts`. Сейчас заведены `ru`, `en`, `es`;
+  фактические переводы для `en/es` пока не добавлены и используют source-строки.
+- Личный кабинет на текущем этапе работает только на моках из `(cabinet)/_mock.ts`; backend API
+  не подключать без отдельной задачи.
+- PWA-слой состоит из `manifest.ts`, `public/sw.js`, `public/icons/*` и `_pwa/PWAProvider.tsx`.
+  Уведомления пока локальные: browser Notification API + service worker notification display,
+  без push backend.
+- Для новых страниц кабинета используй существующий CSS-язык `cabinet-*` в `globals.css`, чтобы
+  сохранить Primer dark эстетику лендинга.
+- Повторение карточек запускается отдельным маршрутом `/cards/session` вне cabinet shell:
+  не добавляй туда sidebar/topbar и сохраняй последовательность «вопрос → ответ → оценка».
+- Длинный текст карточек должен переноситься внутри карточки; на мобильных содержимое не должно
+  создавать горизонтальный скролл или выталкивать элементы управления за viewport.
+- Язык интерфейса — русский; технические лейблы — латиница в нижнем регистре.
+- Брейкпоинты: 920px (сетки в колонку, код-панель прячется) и 640px (нав прячется).
+- Новые файлы создавать свободно; перед правкой существующих файлов репозитория —
+  сверяйся с общими правилами freeburger.

@@ -9,9 +9,14 @@ import (
 	"os"
 	"time"
 
+	"github.com/joho/godotenv"
+
+	"github.com/mxdtrip/freeburger/services/api/internal/auth"
+	"github.com/mxdtrip/freeburger/services/api/internal/cards"
 	"github.com/mxdtrip/freeburger/services/api/internal/config"
 	"github.com/mxdtrip/freeburger/services/api/internal/server"
 	"github.com/mxdtrip/freeburger/services/api/internal/storage/postgres"
+	"github.com/mxdtrip/freeburger/services/api/internal/storage/postgres/db"
 	"github.com/mxdtrip/freeburger/services/api/internal/storage/redis"
 )
 
@@ -20,6 +25,10 @@ const shutdownTimeout = 10 * time.Second
 // Run loads configuration, wires dependencies and serves HTTP until ctx is
 // cancelled (SIGINT/SIGTERM), then shuts everything down gracefully.
 func Run(ctx context.Context) error {
+	if err := godotenv.Load(); err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("load .env: %w", err)
+	}
+
 	cfg, err := config.Load()
 	if err != nil {
 		return fmt.Errorf("load config: %w", err)
@@ -27,6 +36,11 @@ func Run(ctx context.Context) error {
 
 	logger := newLogger(cfg.Env)
 	logger.Info("starting api", slog.String("env", cfg.Env))
+
+	authCfg, err := auth.LoadConfig()
+	if err != nil {
+		return fmt.Errorf("load auth config: %w", err)
+	}
 
 	pg, err := postgres.New(ctx, &cfg.Database)
 	if err != nil {
@@ -42,23 +56,30 @@ func Run(ctx context.Context) error {
 	defer func() { _ = rdb.Close() }()
 	logger.Info("connected to redis")
 
+	if err := cards.WarmSeedCache(ctx, rdb); err != nil {
+		return fmt.Errorf("warm cards seed cache: %w", err)
+	}
+
+	authSvc := auth.NewService(db.New(pg.Pool), rdb.Client, authCfg)
+
 	handler := server.New(server.Deps{
 		Logger:   logger,
 		Postgres: pg,
 		Redis:    rdb,
+		Auth:     authSvc,
 	})
 
 	srv := &http.Server{
-		Addr:         cfg.HTTPServer.Address,
+		Addr:         cfg.Address,
 		Handler:      handler,
-		ReadTimeout:  cfg.HTTPServer.Timeout,
-		WriteTimeout: cfg.HTTPServer.Timeout,
-		IdleTimeout:  cfg.HTTPServer.IdleTimeout,
+		ReadTimeout:  cfg.Timeout,
+		WriteTimeout: cfg.Timeout,
+		IdleTimeout:  cfg.IdleTimeout,
 	}
 
 	serverErr := make(chan error, 1)
 	go func() {
-		logger.Info("http server listening", slog.String("address", cfg.HTTPServer.Address))
+		logger.Info("http server listening", slog.String("address", cfg.Address))
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			serverErr <- err
 			return

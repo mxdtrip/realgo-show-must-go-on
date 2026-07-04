@@ -1,0 +1,37 @@
+# Internal home-stack router. It intentionally has no public domain: the VPS
+# edge Caddy terminates TLS for realgo.dev and reaches this listener through frp.
+
+# Requests arrive here through the frp tunnel, so the TCP peer is the frpc
+# container, not the browser. The VPS edge Caddy has already stamped the real
+# client IP into X-Forwarded-For; trust private peers so that header is passed
+# through (with the tunnel hop appended) instead of being replaced. The api's
+# rate limiter then keys on the real client IP rather than one shared proxy IP.
+{
+	servers {
+		trusted_proxies static private_ranges
+	}
+}
+
+:80 {
+	@api path /api/* /healthz /readyz
+	@allowed_origin header_regexp Origin ^(https?://(localhost|127[.]0[.]0[.]1):(5173|3000)|{$REALGO_EXTENSION_ORIGIN:chrome-extension://kclglopmphebagjjimjhdpnmoddmbgea})$
+
+	handle @api {
+		route {
+			header @allowed_origin Access-Control-Allow-Origin "{http.request.header.Origin}"
+			header @allowed_origin Access-Control-Allow-Credentials "true"
+			header @allowed_origin Access-Control-Allow-Methods "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+			header @allowed_origin Access-Control-Allow-Headers "Authorization, Content-Type"
+			header @allowed_origin Access-Control-Max-Age "86400"
+			header @allowed_origin Vary "Origin"
+
+			@preflight method OPTIONS
+			respond @preflight 204
+
+			reverse_proxy api:8080
+		}
+	}
+
+	# Everything that isn't /api/* is the Next.js app.
+	reverse_proxy web:3000
+}

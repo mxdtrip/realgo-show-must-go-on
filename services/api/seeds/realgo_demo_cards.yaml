@@ -1,0 +1,83 @@
+code: realgo_demo_cards
+title: realgo Demo Cards
+source_url: https://neetcode.io/practice/practice/neetcode150
+captured_at: 2026-07-01
+cards:
+  - key: contains-duplicate-hash-set
+    type: pattern_recognition
+    problem_slug: contains-duplicate
+    question: "Contains Duplicate: какой сигнал подсказывает выбрать Hash Set?"
+    answer: "Нужно быстро понять, встречался ли элемент раньше. Hash Set даёт O(1) average lookup и превращает задачу в проверку seen-state. Если порядок не нужен, сортировка обычно лишняя."
+    explanation: "Карточка тренирует распознавание Hashing-паттерна по требованию быстрых membership checks."
+  - key: valid-anagram-frequency-map
+    type: algorithm_mechanics
+    problem_slug: valid-anagram
+    question: "Valid Anagram: что должен сохранить frequency map?"
+    answer: "Frequency map хранит count каждого символа, а не только факт присутствия. Для anagram важен multiset: одинаковые буквы должны совпасть по количеству. Если после вычитания все counts нулевые, строки эквивалентны."
+    explanation: "Карточка фиксирует разницу между set и multiset в Arrays & Hashing."
+  - key: two-sum-complement
+    type: pattern_recognition
+    problem_slug: two-sum
+    question: "Two Sum: почему complement lookup лучше полного перебора?"
+    answer: "Для каждого числа достаточно проверить, видели ли мы target minus current. Hash Map хранит complement relation и индекс за один проход. Это меняет brute force O(n²) на expected O(n)."
+    explanation: "Ответ без кода, но с ключевой механикой complement search."
+  - key: two-sum-same-index-edge
+    type: edge_case
+    problem_slug: two-sum
+    question: "Two Sum: какой edge case защищает от использования одного индекса дважды?"
+    answer: "Проверяй complement среди уже просмотренных элементов, а текущий добавляй после проверки. Тогда пара не сможет состоять из одного и того же элемента. Дубликаты при этом остаются валидными, если у них разные индексы."
+    explanation: "Карточка покрывает частую ошибку порядка действий в one-pass Hash Map."
+  - key: group-anagrams-signature
+    type: algorithm_mechanics
+    problem_slug: group-anagrams
+    question: "Group Anagrams: что делает строку пригодной signature для группировки?"
+    answer: "Signature должна быть одинаковой для всех перестановок одних и тех же символов. Подходит sorted representation или fixed frequency vector. Главное, чтобы разные multisets давали разные keys."
+    explanation: "Карточка помогает выбрать устойчивый ключ для Hash Map группировки."
+  - key: group-anagrams-empty-string
+    type: edge_case
+    problem_slug: group-anagrams
+    question: "Group Anagrams: как думать про empty string в группировке?"
+    answer: "Empty string имеет валидную signature без символов. Все пустые строки должны попасть в одну группу. Это не special case алгоритма, а нормальный key."
+    explanation: "Карточка снижает риск ручных исключений вокруг пустых входов."
+  - key: top-k-frequency-buckets
+    type: pattern_recognition
+    problem_slug: top-k-frequent-elements
+    question: "Top K Frequent Elements: когда Bucket Sort уместнее heap?"
+    answer: "Если частота элемента не может быть больше n, можно разложить элементы по buckets частот. Затем достаточно идти от больших частот к меньшим, пока не набран k. Это использует ограниченный диапазон counts вместо сравнительной сортировки."
+    explanation: "Карточка связывает bounded frequency range с bucket-based решением."
+  - key: valid-palindrome-two-pointers
+    type: pattern_recognition
+    problem_slug: valid-palindrome
+    question: "Valid Palindrome: какой invariant держат Two Pointers?"
+    answer: "Left и right всегда указывают на следующую пару символов, которую нужно сравнить после normalization. Если пара совпала, оба указателя сдвигаются внутрь. Первое несовпадение означает, что palindrome невозможен."
+    explanation: "Карточка фиксирует invariant для базового Two Pointers."
+  - key: valid-palindrome-normalization
+    type: edge_case
+    problem_slug: valid-palindrome
+    question: "Valid Palindrome: какие символы нельзя сравнивать напрямую?"
+    answer: "Нужно игнорировать non-alphanumeric символы и сравнивать буквы case-insensitive. Иначе пунктуация и регистр создадут ложные несовпадения. Пустая после фильтрации строка считается palindrome."
+    explanation: "Карточка покрывает normalization edge cases без кода."
+  - key: stock-running-min
+    type: algorithm_mechanics
+    problem_slug: best-time-to-buy-and-sell-stock
+    question: "Best Time to Buy and Sell Stock: почему достаточно running minimum?"
+    answer: "Для продажи в текущий день лучший buy day уже должен быть раньше и иметь минимальную цену. Running minimum хранит именно эту лучшую прошлую цену. Profit обновляется как текущая цена минус этот минимум."
+    explanation: "Карточка тренирует one-pass state вместо перебора всех пар дней."
+  - key: arrays-hashing-recognition
+    type: pattern_recognition
+    pattern_code: arrays_hashing
+    question: "Arrays & Hashing: какой общий сигнал ведёт к Hash Map или Hash Set?"
+    answer: "Если задача спрашивает про duplicates, complements, grouping или counts, обычно нужен быстрый lookup по value или signature. Hashing превращает повторные линейные поиски в stateful checks. Сначала определи, что должно стать key."
+    explanation: "Pattern-карточка связывает несколько задач NeetCode 150 одним распознаваемым сигналом."
+  - key: two-pointers-invariant
+    type: algorithm_mechanics
+    pattern_code: two_pointers
+    question: "Two Pointers: что надо сформулировать перед движением указателей?"
+    answer: "Нужен invariant: почему после каждого шага не теряется возможный ответ. Обычно движение выбирается сравнением текущей пары или нарушенного условия. Без invariant указатели легко сдвинуть в неверную сторону."
+    explanation: "Pattern-карточка нужна для повторения механики Two Pointers вне конкретной задачи."
+  - key: sliding-window-signal
+    type: pattern_recognition
+    pattern_code: sliding_window
+    question: "Sliding Window: какой сигнал отличает его от обычных Two Pointers?"
+    answer: "Искомый ответ связан с contiguous subarray или substring, а окно можно расширять и сжимать по условию. State окна обновляется локально при входе и выходе элемента. Если порядок contiguous важен, проверяй Sliding Window первым."
+    explanation: "Pattern-карточка подготавливает к задачам на substring/subarray constraints."

@@ -1,0 +1,2 @@
+-- Data cleanup is irreversible: the original invalid timezone strings are not
+-- preserved. Nothing to undo.

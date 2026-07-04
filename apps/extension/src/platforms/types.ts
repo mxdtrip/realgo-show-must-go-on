@@ -4,7 +4,7 @@ export interface TaskInfo {
   taskTitle: string;
   taskUrl: string;
   platformTaskSlug?: string;
-  /** Topic tags read from the page, best-effort (empty if none found). */
+  /** Topic tags read from the page, best-effort (empty/absent if none found). */
   tags?: string[];
 }
 

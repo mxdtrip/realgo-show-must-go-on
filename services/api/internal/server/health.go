@@ -23,6 +23,14 @@ func (h *healthHandler) live(w http.ResponseWriter, _ *http.Request) {
 // ready reports whether the service can serve traffic: both Postgres and Redis
 // must answer a ping.
 func (h *healthHandler) ready(w http.ResponseWriter, r *http.Request) {
+	if h.pg == nil {
+		response.Fail(w, http.StatusServiceUnavailable, "postgres_unavailable", "postgres is not configured")
+		return
+	}
+	if h.redis == nil {
+		response.Fail(w, http.StatusServiceUnavailable, "redis_unavailable", "redis is not configured")
+		return
+	}
 	if err := h.pg.Pool.Ping(r.Context()); err != nil {
 		response.Fail(w, http.StatusServiceUnavailable, "postgres_unavailable", "postgres is not reachable")
 		return

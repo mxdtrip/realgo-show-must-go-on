@@ -43,9 +43,15 @@ function Options() {
   }, []);
 
   async function handleSaveBaseUrl() {
-    await setApiBaseUrl(baseUrl);
-    setBaseSaved(true);
-    setTimeout(() => setBaseSaved(false), 2000);
+    setError("");
+    try {
+      await ensureApiHostPermission(baseUrl);
+      await setApiBaseUrl(baseUrl);
+      setBaseSaved(true);
+      setTimeout(() => setBaseSaved(false), 2000);
+    } catch (err) {
+      setError(err instanceof AuthError ? err.message : "Не удалось сохранить API URL.");
+    }
   }
 
   async function handleSaveWebUrl() {
@@ -67,6 +73,7 @@ function Options() {
     setBusy(true);
     setError("");
     try {
+      await ensureApiHostPermission(baseUrl);
       await setApiBaseUrl(baseUrl); // make sure login hits the configured API
       const user = await login(email, password);
       setAccount(user.email);
@@ -108,7 +115,7 @@ function Options() {
               id="realgo-base-url"
               className="realgo-input"
               value={baseUrl}
-              placeholder="http://localhost:8080"
+              placeholder="https://realgo.dev"
               onChange={(e) => {
                 setBaseUrl(e.target.value);
                 setConn("idle");
@@ -151,7 +158,7 @@ function Options() {
               id="realgo-web-url"
               className="realgo-input"
               value={webUrl}
-              placeholder="http://localhost:3000"
+              placeholder="https://realgo.dev"
               onChange={(e) => setWebUrl(e.target.value)}
             />
             <button
@@ -223,6 +230,31 @@ function Options() {
       </div>
     </div>
   );
+}
+
+function apiOriginPattern(baseUrl: string): string {
+  const parsed = new URL(baseUrl);
+  return `${parsed.protocol}//${parsed.host}/*`;
+}
+
+async function ensureApiHostPermission(baseUrl: string): Promise<void> {
+  let origin: string;
+  try {
+    origin = apiOriginPattern(baseUrl);
+  } catch {
+    throw new AuthError("API base URL должен быть валидным URL.", 0, "invalid_api_url");
+  }
+
+  if (typeof chrome === "undefined" || !chrome.permissions?.contains || !chrome.permissions?.request) return;
+
+  const permissions = { origins: [origin] };
+  const alreadyGranted = await chrome.permissions.contains(permissions);
+  if (alreadyGranted) return;
+
+  const granted = await chrome.permissions.request(permissions);
+  if (!granted) {
+    throw new AuthError("Chrome не выдал доступ к API origin.", 0, "api_origin_denied");
+  }
 }
 
 export default Options;

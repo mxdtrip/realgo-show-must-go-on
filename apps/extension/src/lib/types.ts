@@ -29,9 +29,9 @@ export interface DetectedSubmission {
   taskTitle: string;
   taskUrl: string;
   platformTaskSlug?: string;
-  submitResult?: SubmitResult;
-  /** Topic tags for the task (e.g. ["arrays", "two pointers"]), best-effort. */
+  /** Topic tags read from the task page, best-effort (absent if none found). */
   tags?: string[];
+  submitResult?: SubmitResult;
   /** ISO-8601 timestamp of when the submit was observed. */
   submittedAt: string;
 }
@@ -93,10 +93,10 @@ export const STORAGE_KEYS = {
   userEmail: "realgo:userEmail",
 } as const;
 
-export const DEFAULT_API_BASE_URL = "http://localhost:8080";
+export const DEFAULT_API_BASE_URL = "https://realgo.dev";
 
 /** realgo web app (the cabinet). "К повторению" opens its review cards here. */
-export const DEFAULT_WEB_BASE_URL = "http://localhost:3000";
+export const DEFAULT_WEB_BASE_URL = "https://realgo.dev";
 
 /** Path of the spaced-repetition cards section inside the web app. */
 export const REVIEW_PATH = "/cards";

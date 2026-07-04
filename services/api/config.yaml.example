@@ -22,3 +22,10 @@ redis:
   port: "6379"
   password: ""
   db: 0
+
+ai:
+  # Empty key = AI card generation disabled. Personal free keys:
+  # https://aistudio.google.com/apikey (never commit real keys).
+  api_key: ""
+  model: gemini-2.5-flash
+  base_url: https://generativelanguage.googleapis.com/v1beta/openai/

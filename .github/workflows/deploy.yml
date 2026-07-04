@@ -1,7 +1,7 @@
 name: Deploy
 on:
   push:
-    branches: [main, master]
+    branches: [dev, main]
   workflow_dispatch:
 concurrency:
   group: deploy
@@ -15,8 +15,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build & start
+        env:
+          AUTH_JWT_SECRET: ${{ secrets.AUTH_JWT_SECRET }}
+          FRP_VPS_HOST: ${{ secrets.FRP_VPS_HOST }}
+          FRP_TOKEN: ${{ secrets.FRP_TOKEN }}
+          # Password for the re-seeded demo accounts. Optional: when the secret
+          # is unset the seed falls back to its local default (see DEMO.md).
+          SEED_USERS_PASSWORD: ${{ secrets.SEED_USERS_PASSWORD }}
+          # Gemini key for AI card generation. Optional: when unset the api
+          # boots normally with generation disabled.
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           docker compose pull --ignore-buildable || true
-          docker compose up -d --build --remove-orphans
+          docker compose --profile prod-demo up -d --build --remove-orphans
       - name: Prune old images
         run: docker image prune -f

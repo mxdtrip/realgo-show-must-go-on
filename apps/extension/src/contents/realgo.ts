@@ -96,8 +96,8 @@ function watchForResult(adapter: PlatformAdapter, clickInfo: TaskInfo | null) {
 
 let lastKey = "";
 let lastKeyAt = 0;
-/** Two detections of one task inside this window count as one submit. */
-const DEDUPE_WINDOW_MS = 15_000;
+/** Duplicate notifications of one submit land within this window. */
+const DEDUPE_WINDOW_MS = 3_000;
 
 /** Stable idempotency id for one submit. Falls back when randomUUID is absent. */
 function newEventId(): string {
@@ -133,14 +133,19 @@ function finalize(
     submittedAt: new Date().toISOString(),
   };
 
-  // Dedupe double detections of one physical submit. Time-bounded: a page
-  // session on an SPA can span many real submits of the same task (fail, fix,
-  // resubmit), and a forever-dedupe swallowed every one after the first.
-  const key = `${submission.platformTaskSlug}|${submission.taskUrl}`;
+  // Dedupe duplicate click/mutation notifications, not genuine later submits:
+  // the window is short and the key includes the verdict, so a fail → fix →
+  // resubmit sequence of one task still fires each time.
+  const key = `${submission.platformTaskSlug}|${submission.taskUrl}|${submitResult}`;
   const now = Date.now();
   if (key === lastKey && now - lastKeyAt < DEDUPE_WINDOW_MS) return;
   lastKey = key;
   lastKeyAt = now;
+
+  // The popup is a spaced-repetition rating flow and must only appear after a
+  // confirmed accepted verdict. Wrong answers, runtime errors and verdict
+  // timeouts are not solved tasks and must never create review schedules.
+  if (submitResult !== "accepted") return;
 
   try {
     chrome.runtime.sendMessage({ type: "REALGO_SUBMISSION_DETECTED", submission });
@@ -188,7 +193,7 @@ function showOverlay(submission: DetectedSubmission) {
     createElement(PopupApp, {
       submission,
       onSave: saveViaBackground,
-      // "Скрыть": hide until the next solved task (overlay re-renders on submit).
+      // "Свернуть": hide until the next solved task (overlay re-renders on submit).
       onClose: removeOverlay,
       // "К повторению": open the web app's review cards in a new tab.
       onReview: openReview,

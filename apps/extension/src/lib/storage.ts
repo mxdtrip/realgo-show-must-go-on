@@ -37,7 +37,7 @@ export function setWebBaseUrl(url: string): Promise<void> {
   return set(STORAGE_KEYS.webBaseUrl, url.trim().replace(/\/+$/, ""));
 }
 
-/** Absolute URL of the review cards section, e.g. http://localhost:3000/cards. */
+/** Absolute URL of the review cards section, e.g. https://realgo.dev/cards. */
 export async function getReviewUrl(): Promise<string> {
   return (await getWebBaseUrl()) + REVIEW_PATH;
 }

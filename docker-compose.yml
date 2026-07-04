@@ -1,15 +1,16 @@
 # Local dev stack and server deployment for the FreeBurger API.
 #
-# The deploy workflow on `main` runs `docker compose up -d --build` from the
-# repository root, so this file is the single source of truth for both the
-# local environment and the appbox server. Dev-friendly defaults are inlined;
-# on the server, override secrets via environment or a root .env file.
+# The deploy workflow runs `docker compose --profile prod-demo up -d --build`
+# from the repository root, so this file is the single source of truth for both
+# the local environment and the appbox server. Dev-friendly defaults are
+# inlined; on the server, override secrets via environment or a root .env file.
 
 name: freeburger
 
 services:
   postgres:
     image: postgres:16-alpine
+    restart: unless-stopped
     environment:
       POSTGRES_USER: ${DB_USER:-postgres}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
@@ -26,6 +27,7 @@ services:
 
   redis:
     image: redis:7-alpine
+    restart: unless-stopped
     ports:
       - "${REDIS_PORT:-6379}:6379"
     healthcheck:
@@ -49,9 +51,121 @@ services:
       - "up"
     restart: "no"
 
+  seed-roadmap:
+    image: python:3.12-slim
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    working_dir: /seeds
+    volumes:
+      - ./services/api/seeds:/seeds:ro
+    environment:
+      DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-freeburger}?sslmode=disable
+    command: sh -c "pip install --no-cache-dir -r requirements.txt && python seed_roadmap.py neetcode_150.yaml"
+    restart: "no"
+
+  seed-cards:
+    image: python:3.12-slim
+    depends_on:
+      seed-roadmap:
+        condition: service_completed_successfully
+    working_dir: /seeds
+    volumes:
+      - ./services/api/seeds:/seeds:ro
+    environment:
+      DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-freeburger}?sslmode=disable
+    command: sh -c "pip install --no-cache-dir -r requirements.txt && python seed_cards.py realgo_demo_cards.yaml"
+    restart: "no"
+
+  seed-pattern-content:
+    image: python:3.12-slim
+    depends_on:
+      seed-roadmap:
+        condition: service_completed_successfully
+    working_dir: /seeds
+    volumes:
+      - ./services/api/seeds:/seeds:ro
+    environment:
+      DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-freeburger}?sslmode=disable
+    command: sh -c "pip install --no-cache-dir -r requirements.txt && python seed_pattern_content.py pattern_content.yaml"
+    restart: "no"
+
+  seed-pattern-cards:
+    image: python:3.12-slim
+    depends_on:
+      seed-pattern-content:
+        condition: service_completed_successfully
+    working_dir: /seeds
+    volumes:
+      - ./services/api/seeds:/seeds:ro
+    environment:
+      DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-freeburger}?sslmode=disable
+    command: sh -c "pip install --no-cache-dir -r requirements.txt && python seed_cards.py pattern_cards.yaml"
+    restart: "no"
+
+  seed-users:
+    image: python:3.12-slim
+    depends_on:
+      seed-roadmap:
+        condition: service_completed_successfully
+    working_dir: /seeds
+    volumes:
+      - ./services/api/seeds:/seeds:ro
+    environment:
+      DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-freeburger}?sslmode=disable
+      SEED_USERS_PASSWORD: ${SEED_USERS_PASSWORD:-}
+    command: sh -c "pip install --no-cache-dir -r requirements.txt && python seed_users.py"
+    restart: "no"
+
+  # Production build of the realgo Next.js landing + cabinet. Served internally
+  # on :3000; Caddy fronts it and routes /api/* to the Go api instead.
+  web:
+    build:
+      context: ./apps/web
+      args:
+        # Empty = relative same-origin API calls (/api/v1/...). The browser hits
+        # realgo.dev and Caddy proxies /api/* to the api container, so no CORS.
+        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-}
+    restart: unless-stopped
+    expose:
+      - "3000"
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - api
+    environment:
+      REALGO_EXTENSION_ORIGIN: ${REALGO_EXTENSION_ORIGIN:-chrome-extension://kclglopmphebagjjimjhdpnmoddmbgea}
+    ports:
+      - "${API_PORT:-8080}:80"
+    volumes:
+      # The local/home stack is reached through the VPS edge Caddy, so it must
+      # listen plainly on :80 and not try to issue a public cert itself.
+      - ./Caddyfile.internal:/etc/caddy/Caddyfile:ro
+
+  # Reverse tunnel to the VPS. The home connection is CGNAT'd (no inbound public
+  # IP) and the provider's DPI blocks Cloudflare, so instead of exposing anything
+  # here we dial OUT to a cheap VPS running frps (see deploy/vps/). frpc registers
+  # the local caddy:80 as a proxy that the VPS reaches back through this tunnel;
+  # the VPS terminates TLS for realgo.dev and reverse-proxies into it. Pure
+  # userspace TCP — no TUN/kernel modules (which the LXD host doesn't allow).
+  frpc:
+    image: snowdreamtech/frpc:0.61.1
+    profiles: ["prod-demo"]
+    restart: unless-stopped
+    depends_on:
+      - caddy
+    volumes:
+      - ./frpc.toml:/etc/frp/frpc.toml:ro
+    environment:
+      FRP_VPS_HOST: ${FRP_VPS_HOST:-}
+      FRP_TOKEN: ${FRP_TOKEN:-}
+
   api:
     build:
       context: ./services/api
+    restart: unless-stopped
     depends_on:
       postgres:
         condition: service_healthy
@@ -61,6 +175,8 @@ services:
         condition: service_completed_successfully
     environment:
       CONFIG_PATH: /app/config.yaml
+      # "local" (default) = text logs at debug; anything else = JSON at info.
+      APP_ENV: ${APP_ENV:-local}
       ADDRESS: 0.0.0.0:8080
       DB_HOST: postgres
       DB_PORT: "5432"
@@ -71,8 +187,20 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: "6379"
       REDIS_PASSWORD: ${REDIS_PASSWORD:-}
-    ports:
-      - "${API_PORT:-8080}:8080"
+      AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:?AUTH_JWT_SECRET must be set}
+      AUTH_ACCESS_TTL: ${AUTH_ACCESS_TTL:-15m}
+      AUTH_REFRESH_TTL: ${AUTH_REFRESH_TTL:-720h}
+      # Optional: without a key the api still boots, AI card generation is
+      # just disabled. Prod gets it from the GEMINI_API_KEY GitHub secret.
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      # In this stack the api is reachable only through the caddy container, so
+      # X-Forwarded-For from the docker network is trustworthy. Without this the
+      # auth rate limiter keys every request to caddy's container IP — one
+      # shared 20 req/min bucket for ALL users, i.e. any single client can lock
+      # everyone out of login/register/refresh.
+      TRUSTED_PROXY_CIDRS: ${TRUSTED_PROXY_CIDRS:-10.0.0.0/8,172.16.0.0/12,192.168.0.0/16}
+    expose:
+      - "8080"
 
 volumes:
   pgdata:
