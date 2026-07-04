@@ -35,6 +35,25 @@ type Source struct {
 	Label      string `json:"label"`
 }
 
+type seedCard struct {
+	ID           string     `json:"id"`
+	URL          string     `json:"url"`
+	Type         string     `json:"type"`
+	Source       seedSource `json:"source"`
+	Front        string     `json:"front"`
+	Back         string     `json:"back"`
+	Status       string     `json:"status"`
+	NextReviewAt *time.Time `json:"nextReviewAt"`
+	LastRating   *string    `json:"lastRating"`
+	CreatedAt    time.Time  `json:"createdAt"`
+}
+
+type seedSource struct {
+	EntityType string `json:"entityType"`
+	EntityID   string `json:"entityId"`
+	Label      string `json:"label"`
+}
+
 type ListMeta struct {
 	NextCursor *string `json:"nextCursor"`
 }

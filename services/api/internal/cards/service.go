@@ -1,11 +1,14 @@
 package cards
 
 import (
+	"bytes"
 	"context"
+	_ "embed"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"math"
 	"strings"
 	"time"
@@ -19,6 +22,13 @@ var (
 	ErrCardTargetNotFound = errors.New("card target not found")
 	ErrInvalidRating      = errors.New("rating must be hard, normal, or easy")
 )
+
+//go:embed cards_neetcode.json
+var neetcodeCardsSeed []byte
+
+type redis interface {
+	SaveJSON(ctx context.Context, key string, value any, ttl time.Duration) error
+}
 
 type repository interface {
 	List(ctx context.Context, userID int64, params ListParams) ([]CardRecord, error)
@@ -42,7 +52,11 @@ type Service struct {
 }
 
 func NewService(repo repository, rater reviewRater) *Service {
-	return &Service{repo: repo, rater: rater, now: func() time.Time { return time.Now().UTC() }}
+	return &Service{
+		repo:  repo,
+		rater: rater,
+		now:   func() time.Time { return time.Now().UTC() },
+	}
 }
 
 func (s *Service) List(ctx context.Context, userID int64, params ListParams) ([]Card, *string, error) {
@@ -272,4 +286,30 @@ func (s *Service) Update(ctx context.Context, userID, cardID int64, p UpdateCard
 
 func (s *Service) Delete(ctx context.Context, userID, cardID int64) error {
 	return s.repo.Delete(ctx, userID, cardID)
+}
+
+func WarmSeedCache(ctx context.Context, cache redis) error {
+	return preparePayload(ctx, cache, bytes.NewReader(neetcodeCardsSeed))
+}
+
+func preparePayload(ctx context.Context, cache redis, r io.Reader) error {
+	var cardsSeed []seedCard
+	if err := json.NewDecoder(r).Decode(&cardsSeed); err != nil {
+		return err
+	}
+	return setCache(ctx, cache, cardsSeed)
+}
+
+func setCache(ctx context.Context, cache redis, cards []seedCard) error {
+	const noTTL time.Duration = 0
+	for _, card := range cards {
+		if strings.TrimSpace(card.ID) == "" {
+			return fmt.Errorf("cards: seed card has invalid id")
+		}
+		key := fmt.Sprintf("cards:seed:neetcode:%s", card.ID)
+		if err := cache.SaveJSON(ctx, key, card, noTTL); err != nil {
+			return fmt.Errorf("cards: seed cache %q: %w", key, err)
+		}
+	}
+	return nil
 }
