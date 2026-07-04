@@ -1,6 +1,7 @@
 package cards
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -13,6 +14,7 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/mxdtrip/freeburger/services/api/internal/auth"
+	"github.com/mxdtrip/freeburger/services/api/internal/server/httpjson"
 	"github.com/mxdtrip/freeburger/services/api/internal/server/response"
 )
 
@@ -27,17 +29,31 @@ var (
 	errInvalidLimit  = errors.New("limit must be a positive integer")
 )
 
-type Handler struct {
-	svc *Service
+type service interface {
+	List(ctx context.Context, userID int64, params ListParams) ([]Card, *string, error)
+	Session(ctx context.Context, userID int64, params SessionParams) (Session, error)
+	Rate(ctx context.Context, userID, cardID int64, req RateRequest) (RateResult, error)
+	Create(ctx context.Context, userID int64, p CreateCardInput) (CardDetail, error)
+	GetByID(ctx context.Context, userID, cardID int64) (CardDetail, error)
+	Update(ctx context.Context, userID, cardID int64, p UpdateCardInput) (CardDetail, error)
+	Delete(ctx context.Context, userID, cardID int64) error
 }
 
-func NewHandler(svc *Service) *Handler {
+type Handler struct {
+	svc service
+}
+
+func NewHandler(svc service) *Handler {
 	return &Handler{svc: svc}
 }
 
 func RegisterRoutes(r chi.Router, h *Handler) {
 	r.Get("/", h.List)
+	r.Post("/", h.Create)
 	r.Get("/session", h.Session)
+	r.Get("/{cardId}", h.Get)
+	r.Patch("/{cardId}", h.Update)
+	r.Delete("/{cardId}", h.Delete)
 	r.Post("/{cardId}/rate", h.Rate)
 }
 
@@ -99,8 +115,7 @@ func (h *Handler) Rate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req RateRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "invalid request body")
+	if !httpjson.DecodeStrict(w, r, &req, "VALIDATION_ERROR") {
 		return
 	}
 
@@ -122,6 +137,129 @@ func (h *Handler) Rate(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, result)
 }
 
+func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
+	userID, ok := auth.UserIDFromContext(r.Context())
+	if !ok {
+		response.Fail(w, http.StatusUnauthorized, "UNAUTHORIZED", "user not authenticated")
+		return
+	}
+
+	var req createCardRequest
+	if !httpjson.DecodeStrict(w, r, &req, "VALIDATION_ERROR") {
+		return
+	}
+	if !validCardType(req.Type) {
+		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "type must be pattern_recognition, algorithm_mechanics, or edge_case")
+		return
+	}
+	if req.Front == "" || req.Back == "" {
+		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "front and back are required")
+		return
+	}
+	if req.ProblemID != nil && req.PatternID != nil {
+		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "only one of problemId or patternId may be set")
+		return
+	}
+
+	card, err := h.svc.Create(r.Context(), userID, CreateCardInput(req))
+	if err != nil {
+		if errors.Is(err, ErrCardTargetNotFound) {
+			response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "problem_id or pattern_id does not exist")
+			return
+		}
+		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", "could not create card")
+		return
+	}
+
+	response.JSON(w, http.StatusCreated, card)
+}
+
+func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
+	userID, ok := auth.UserIDFromContext(r.Context())
+	if !ok {
+		response.Fail(w, http.StatusUnauthorized, "UNAUTHORIZED", "user not authenticated")
+		return
+	}
+
+	cardID, err := strconv.ParseInt(chi.URLParam(r, "cardId"), 10, 64)
+	if err != nil || cardID <= 0 {
+		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "invalid cardId")
+		return
+	}
+
+	card, err := h.svc.GetByID(r.Context(), userID, cardID)
+	if errors.Is(err, ErrCardNotFound) {
+		response.Fail(w, http.StatusNotFound, "NOT_FOUND", "card not found")
+		return
+	}
+	if err != nil {
+		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", "could not fetch card")
+		return
+	}
+
+	response.JSON(w, http.StatusOK, card)
+}
+
+func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
+	userID, ok := auth.UserIDFromContext(r.Context())
+	if !ok {
+		response.Fail(w, http.StatusUnauthorized, "UNAUTHORIZED", "user not authenticated")
+		return
+	}
+
+	cardID, err := strconv.ParseInt(chi.URLParam(r, "cardId"), 10, 64)
+	if err != nil || cardID <= 0 {
+		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "invalid cardId")
+		return
+	}
+
+	var req updateCardRequest
+	if !httpjson.DecodeStrict(w, r, &req, "VALIDATION_ERROR") {
+		return
+	}
+	if req.Type != nil && !validCardType(*req.Type) {
+		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "type must be pattern_recognition, algorithm_mechanics, or edge_case")
+		return
+	}
+
+	card, err := h.svc.Update(r.Context(), userID, cardID, UpdateCardInput(req))
+	if errors.Is(err, ErrCardNotFound) {
+		response.Fail(w, http.StatusNotFound, "NOT_FOUND", "card not found")
+		return
+	}
+	if err != nil {
+		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", "could not update card")
+		return
+	}
+
+	response.JSON(w, http.StatusOK, card)
+}
+
+func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
+	userID, ok := auth.UserIDFromContext(r.Context())
+	if !ok {
+		response.Fail(w, http.StatusUnauthorized, "UNAUTHORIZED", "user not authenticated")
+		return
+	}
+
+	cardID, err := strconv.ParseInt(chi.URLParam(r, "cardId"), 10, 64)
+	if err != nil || cardID <= 0 {
+		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "invalid cardId")
+		return
+	}
+
+	if err := h.svc.Delete(r.Context(), userID, cardID); err != nil {
+		if errors.Is(err, ErrCardNotFound) {
+			response.Fail(w, http.StatusNotFound, "NOT_FOUND", "card not found")
+			return
+		}
+		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", "could not delete card")
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func parseListParams(r *http.Request) (ListParams, error) {
 	limit, err := parseLimit(r.URL.Query().Get("limit"), defaultListLimit)
 	if err != nil {
@@ -133,6 +271,8 @@ func parseListParams(r *http.Request) (ListParams, error) {
 		return ListParams{}, errors.New("type must be one of pattern_recognition, algorithm_mechanics, edge_case")
 	}
 
+	patternCode := strings.TrimSpace(r.URL.Query().Get("patternCode"))
+
 	cursor := initialCursor()
 	if raw := strings.TrimSpace(r.URL.Query().Get("cursor")); raw != "" {
 		cursor, err = decodeCursor(raw)
@@ -142,10 +282,11 @@ func parseListParams(r *http.Request) (ListParams, error) {
 	}
 
 	return ListParams{
-		Limit:    int32(limit + 1),
-		Type:     cardType,
-		Cursor:   cursor,
-		PageSize: limit,
+		Limit:       int32(limit + 1),
+		Type:        cardType,
+		PatternCode: patternCode,
+		Cursor:      cursor,
+		PageSize:    limit,
 	}, nil
 }
 
@@ -163,7 +304,9 @@ func parseSessionParams(r *http.Request) (SessionParams, error) {
 		return SessionParams{}, errors.New("scope must be due, hard_normal, or all")
 	}
 
-	return SessionParams{Scope: scope, Limit: int32(limit)}, nil
+	patternCode := strings.TrimSpace(r.URL.Query().Get("patternCode"))
+
+	return SessionParams{Scope: scope, PatternCode: patternCode, Limit: int32(limit)}, nil
 }
 
 func parseLimit(raw string, defaultValue int) (int, error) {
@@ -215,7 +358,10 @@ func encodeCursor(cursor Cursor) string {
 		CreatedAt: cursor.CreatedAt.UTC().Format(time.RFC3339Nano),
 		ID:        cursor.ID,
 	}
-	raw, _ := json.Marshal(payload)
+	raw, err := json.Marshal(payload)
+	if err != nil {
+		return ""
+	}
 	return base64.RawURLEncoding.EncodeToString(raw)
 }
 

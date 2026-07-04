@@ -1,11 +1,14 @@
 package cards
 
 import (
+	"bytes"
 	"context"
+	_ "embed"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"math"
 	"strings"
 	"time"
@@ -15,15 +18,27 @@ import (
 )
 
 var (
-	ErrCardNotFound  = errors.New("card not found")
-	ErrInvalidRating = errors.New("rating must be hard, normal, or easy")
+	ErrCardNotFound       = errors.New("card not found")
+	ErrCardTargetNotFound = errors.New("card target not found")
+	ErrInvalidRating      = errors.New("rating must be hard, normal, or easy")
 )
+
+//go:embed cards_neetcode.json
+var neetcodeCardsSeed []byte
+
+type redis interface {
+	SaveJSON(ctx context.Context, key string, value any, ttl time.Duration) error
+}
 
 type repository interface {
 	List(ctx context.Context, userID int64, params ListParams) ([]CardRecord, error)
 	ListSession(ctx context.Context, userID int64, params SessionParams) ([]CardRecord, error)
 	EnsureReviewSchedule(ctx context.Context, userID, cardID int64, reviewedAt time.Time) (int64, error)
 	CountSessionAttempts(ctx context.Context, userID int64, since time.Time) (int, error)
+	Create(ctx context.Context, userID int64, p CreateCardInput) (CardDetail, error)
+	GetByID(ctx context.Context, userID, cardID int64) (CardDetail, error)
+	Update(ctx context.Context, userID, cardID int64, p UpdateCardInput) (CardDetail, error)
+	Delete(ctx context.Context, userID, cardID int64) error
 }
 
 type reviewRater interface {
@@ -37,7 +52,11 @@ type Service struct {
 }
 
 func NewService(repo repository, rater reviewRater) *Service {
-	return &Service{repo: repo, rater: rater, now: func() time.Time { return time.Now().UTC() }}
+	return &Service{
+		repo:  repo,
+		rater: rater,
+		now:   func() time.Time { return time.Now().UTC() },
+	}
 }
 
 func (s *Service) List(ctx context.Context, userID int64, params ListParams) ([]Card, *string, error) {
@@ -154,8 +173,8 @@ func cardFromRecord(record CardRecord, now time.Time) Card {
 			EntityID:   record.SourceEntityID,
 			Label:      record.SourceLabel,
 		},
-		Front:        record.Question,
-		Back:         record.Answer,
+		Front:        record.Front,
+		Back:         record.Back,
 		Status:       status(record, now),
 		NextReviewAt: record.NextReviewAt,
 		LastRating:   record.LastRating,
@@ -168,8 +187,8 @@ func sessionCardFromRecord(record CardRecord) SessionCard {
 		ID:          record.ID,
 		Type:        record.Type,
 		SourceLabel: record.SourceLabel,
-		Front:       record.Question,
-		Back:        record.Answer,
+		Front:       record.Front,
+		Back:        record.Back,
 		ReviewState: ReviewState{
 			Attempts:     record.ReviewCount,
 			LastRating:   record.LastRating,
@@ -239,4 +258,58 @@ func decodeSessionID(value string) sessionToken {
 		return sessionToken{}
 	}
 	return token
+}
+
+func (s *Service) Create(ctx context.Context, userID int64, p CreateCardInput) (CardDetail, error) {
+	card, err := s.repo.Create(ctx, userID, p)
+	if err != nil {
+		return CardDetail{}, fmt.Errorf("cards: create: %w", err)
+	}
+	return card, nil
+}
+
+func (s *Service) GetByID(ctx context.Context, userID, cardID int64) (CardDetail, error) {
+	card, err := s.repo.GetByID(ctx, userID, cardID)
+	if err != nil {
+		return CardDetail{}, fmt.Errorf("cards: get by id: %w", err)
+	}
+	return card, nil
+}
+
+func (s *Service) Update(ctx context.Context, userID, cardID int64, p UpdateCardInput) (CardDetail, error) {
+	card, err := s.repo.Update(ctx, userID, cardID, p)
+	if err != nil {
+		return CardDetail{}, fmt.Errorf("cards: update: %w", err)
+	}
+	return card, nil
+}
+
+func (s *Service) Delete(ctx context.Context, userID, cardID int64) error {
+	return s.repo.Delete(ctx, userID, cardID)
+}
+
+func WarmSeedCache(ctx context.Context, cache redis) error {
+	return preparePayload(ctx, cache, bytes.NewReader(neetcodeCardsSeed))
+}
+
+func preparePayload(ctx context.Context, cache redis, r io.Reader) error {
+	var cardsSeed []seedCard
+	if err := json.NewDecoder(r).Decode(&cardsSeed); err != nil {
+		return err
+	}
+	return setCache(ctx, cache, cardsSeed)
+}
+
+func setCache(ctx context.Context, cache redis, cards []seedCard) error {
+	const noTTL time.Duration = 0
+	for _, card := range cards {
+		if strings.TrimSpace(card.ID) == "" {
+			return fmt.Errorf("cards: seed card has invalid id")
+		}
+		key := fmt.Sprintf("cards:seed:neetcode:%s", card.ID)
+		if err := cache.SaveJSON(ctx, key, card, noTTL); err != nil {
+			return fmt.Errorf("cards: seed cache %q: %w", key, err)
+		}
+	}
+	return nil
 }

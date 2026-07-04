@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"io"
@@ -96,22 +97,19 @@ func newUserResponse(u db.User) userResponse {
 }
 
 func (h *authHandler) register(w http.ResponseWriter, r *http.Request) {
-	if h.unavailable(w) {
-		return
-	}
-	req, ok := decodeCredentials(w, r)
-	if !ok {
-		return
-	}
-	user, tokens, err := h.svc.Register(r.Context(), req.Email, req.Password)
-	if err != nil {
-		writeAuthError(w, err)
-		return
-	}
-	response.JSON(w, http.StatusCreated, authResponse{User: newUserResponse(user), Tokens: tokens})
+	h.handleCredentials(w, r, h.svc.Register, http.StatusCreated)
 }
 
 func (h *authHandler) login(w http.ResponseWriter, r *http.Request) {
+	h.handleCredentials(w, r, h.svc.Login, http.StatusOK)
+}
+
+func (h *authHandler) handleCredentials(
+	w http.ResponseWriter,
+	r *http.Request,
+	fn func(context.Context, string, string) (db.User, auth.TokenPair, error),
+	status int,
+) {
 	if h.unavailable(w) {
 		return
 	}
@@ -119,12 +117,12 @@ func (h *authHandler) login(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	user, tokens, err := h.svc.Login(r.Context(), req.Email, req.Password)
+	user, tokens, err := fn(r.Context(), req.Email, req.Password)
 	if err != nil {
 		writeAuthError(w, err)
 		return
 	}
-	response.JSON(w, http.StatusOK, authResponse{User: newUserResponse(user), Tokens: tokens})
+	response.JSON(w, status, authResponse{User: newUserResponse(user), Tokens: tokens})
 }
 
 func (h *authHandler) refresh(w http.ResponseWriter, r *http.Request) {
@@ -136,7 +134,7 @@ func (h *authHandler) refresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if req.RefreshToken == "" {
-		response.Fail(w, http.StatusBadRequest, "validation_error", "refresh_token is required")
+		response.FailWithDetails(w, http.StatusBadRequest, "validation_error", "refresh_token is required", "refresh_token")
 		return
 	}
 	tokens, err := h.svc.Refresh(r.Context(), req.RefreshToken)
@@ -156,7 +154,7 @@ func (h *authHandler) logout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if req.RefreshToken == "" {
-		response.Fail(w, http.StatusBadRequest, "validation_error", "refresh_token is required")
+		response.FailWithDetails(w, http.StatusBadRequest, "validation_error", "refresh_token is required", "refresh_token")
 		return
 	}
 	if err := h.svc.Logout(r.Context(), req.RefreshToken); err != nil {
@@ -196,8 +194,12 @@ func decodeCredentials(w http.ResponseWriter, r *http.Request) (credentialsReque
 	if !decodeJSON(w, r, &req) {
 		return req, false
 	}
-	if req.Email == "" || req.Password == "" {
-		response.Fail(w, http.StatusBadRequest, "validation_error", "email and password are required")
+	if req.Email == "" {
+		response.FailWithDetails(w, http.StatusBadRequest, "validation_error", "email is required", "email")
+		return req, false
+	}
+	if req.Password == "" {
+		response.FailWithDetails(w, http.StatusBadRequest, "validation_error", "password is required", "password")
 		return req, false
 	}
 	return req, true
@@ -237,6 +239,19 @@ var validGrades = map[string]bool{
 	"junior": true, "middle": true, "senior": true, "staff": true, "principal": true,
 }
 
+// validTimezone accepts IANA zone names (e.g. "Europe/Moscow", "UTC"). The
+// value ends up in Postgres `AT TIME ZONE` expressions (dashboard metrics), so
+// an unvalidated string would make those queries fail with a database error on
+// every request for that user. Go's "Local" pseudo-zone is rejected for the
+// same reason: Postgres does not recognise it.
+func validTimezone(tz string) bool {
+	if tz == "Local" {
+		return false
+	}
+	_, err := time.LoadLocation(tz)
+	return err == nil
+}
+
 // patchProfile handles PATCH /me/profile — a partial update of the onboarding
 // profile. Omitted fields are left untouched; an explicit value (including "")
 // overwrites the field.
@@ -256,7 +271,11 @@ func (h *authHandler) patchProfile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if req.Grade != nil && *req.Grade != "" && !validGrades[*req.Grade] {
-		response.Fail(w, http.StatusBadRequest, "validation_error", "grade must be one of: junior, middle, senior, staff, principal")
+		response.FailWithDetails(w, http.StatusBadRequest, "validation_error", "grade must be one of: junior, middle, senior, staff, principal", "grade")
+		return
+	}
+	if req.Timezone != nil && *req.Timezone != "" && !validTimezone(*req.Timezone) {
+		response.Fail(w, http.StatusBadRequest, "validation_error", "timezone must be a valid IANA time zone, e.g. Europe/Moscow")
 		return
 	}
 
@@ -270,7 +289,7 @@ func (h *authHandler) patchProfile(w http.ResponseWriter, r *http.Request) {
 	if req.InterviewDate != nil {
 		t, err := time.Parse(time.RFC3339, *req.InterviewDate)
 		if err != nil {
-			response.Fail(w, http.StatusBadRequest, "validation_error", "interview_date must be RFC3339")
+			response.FailWithDetails(w, http.StatusBadRequest, "validation_error", "interview_date must be RFC3339", "interview_date")
 			return
 		}
 		upd.InterviewDate = &t
@@ -363,7 +382,7 @@ func (h *authHandler) deleteMe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if req.Password == "" {
-		response.Fail(w, http.StatusBadRequest, "validation_error", "password is required to delete the account")
+		response.FailWithDetails(w, http.StatusBadRequest, "validation_error", "password is required to delete the account", "password")
 		return
 	}
 
@@ -377,13 +396,13 @@ func (h *authHandler) deleteMe(w http.ResponseWriter, r *http.Request) {
 func writeAuthError(w http.ResponseWriter, err error) {
 	switch {
 	case errors.Is(err, auth.ErrInvalidEmail):
-		response.Fail(w, http.StatusBadRequest, "validation_error", "email is not valid")
+		response.FailWithDetails(w, http.StatusBadRequest, "validation_error", "email is not valid", "email")
 	case errors.Is(err, auth.ErrWeakPassword):
-		response.Fail(w, http.StatusBadRequest, "validation_error", "password must be at least 8 characters")
+		response.FailWithDetails(w, http.StatusBadRequest, "validation_error", "password must be at least 8 characters", "password")
 	case errors.Is(err, auth.ErrPasswordTooLong):
-		response.Fail(w, http.StatusBadRequest, "validation_error", "password must be at most 72 bytes")
+		response.FailWithDetails(w, http.StatusBadRequest, "validation_error", "password must be at most 72 bytes", "password")
 	case errors.Is(err, auth.ErrEmailTaken):
-		response.Fail(w, http.StatusConflict, "email_taken", "email is already registered")
+		response.FailWithDetails(w, http.StatusConflict, "email_taken", "email is already registered", "email")
 	case errors.Is(err, auth.ErrInvalidCredentials):
 		response.Fail(w, http.StatusUnauthorized, "invalid_credentials", "invalid email or password")
 	case errors.Is(err, auth.ErrInvalidToken):

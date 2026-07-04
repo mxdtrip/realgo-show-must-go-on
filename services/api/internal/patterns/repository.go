@@ -2,12 +2,18 @@ package patterns
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/mxdtrip/freeburger/services/api/internal/storage/postgres/db"
 )
+
+// Five example problems are enough to illustrate a pattern without turning
+// the detail view into a full roadmap browser.
+const defaultExampleProblemsLimit = 6
 
 type pgRepository struct {
 	q *db.Queries
@@ -15,6 +21,33 @@ type pgRepository struct {
 
 func NewRepository(pool *pgxpool.Pool) *pgRepository {
 	return &pgRepository{q: db.New(pool)}
+}
+
+func (r *pgRepository) List(ctx context.Context, userID int64) ([]Pattern, error) {
+	rows, err := r.q.ListPatterns(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("patterns: list: %w", err)
+	}
+
+	items := make([]Pattern, 0, len(rows))
+	for _, row := range rows {
+		var parentID *int64
+		if row.ParentID.Valid {
+			v := row.ParentID.Int64
+			parentID = &v
+		}
+		items = append(items, Pattern{
+			ID:           row.ID,
+			Code:         row.Code,
+			Name:         row.Name,
+			Description:  row.Description,
+			ParentID:     parentID,
+			ProblemCount: int(row.ProblemCount),
+			SolvedCount:  int(row.SolvedCount),
+			DueCount:     int(row.DueCount),
+		})
+	}
+	return items, nil
 }
 
 func (r *pgRepository) ListWeak(ctx context.Context, userID int64, limit int32) ([]WeakPattern, error) {
@@ -34,4 +67,44 @@ func (r *pgRepository) ListWeak(ctx context.Context, userID int64, limit int32) 
 		})
 	}
 	return items, nil
+}
+
+func (r *pgRepository) GetByCode(ctx context.Context, code string) (PatternDetail, error) {
+	row, err := r.q.GetPatternByCode(ctx, code)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return PatternDetail{}, ErrPatternNotFound
+		}
+		return PatternDetail{}, fmt.Errorf("patterns: get by code: %w", err)
+	}
+
+	examples, err := r.q.ListPatternExampleProblems(ctx, db.ListPatternExampleProblemsParams{
+		PatternID: row.ID,
+		Limit:     defaultExampleProblemsLimit,
+	})
+	if err != nil {
+		return PatternDetail{}, fmt.Errorf("patterns: list example problems: %w", err)
+	}
+
+	return PatternDetail{
+		Code:                row.Code,
+		Name:                row.Name,
+		Description:         row.Description.String,
+		Techniques:          row.Techniques,
+		RecognitionSymptoms: row.RecognitionSymptoms,
+		Checklist:           row.Checklist,
+		ExampleProblems:     exampleProblemsFromRows(examples),
+	}, nil
+}
+
+func exampleProblemsFromRows(rows []db.ListPatternExampleProblemsRow) []ExampleProblem {
+	items := make([]ExampleProblem, 0, len(rows))
+	for _, row := range rows {
+		items = append(items, ExampleProblem{
+			Title:      row.Title,
+			Difficulty: row.Difficulty.String,
+			URL:        row.Url,
+		})
+	}
+	return items
 }

@@ -53,9 +53,9 @@ func TestListReturnsTopLevelDataAndMeta(t *testing.T) {
 	created2 := created1.Add(-time.Minute)
 	created3 := created2.Add(-time.Minute)
 	repo := &fakeRepository{list: []CardRecord{
-		{ID: 3, Type: CardTypePatternRecognition, Question: "front 3", Answer: "back 3", CreatedAt: created1, SourceEntityType: "custom", SourceLabel: "custom card"},
-		{ID: 2, Type: CardTypeEdgeCase, Question: "front 2", Answer: "back 2", CreatedAt: created2, SourceEntityType: "custom", SourceLabel: "custom card"},
-		{ID: 1, Type: CardTypeAlgorithmMechanics, Question: "front 1", Answer: "back 1", CreatedAt: created3, SourceEntityType: "custom", SourceLabel: "custom card"},
+		{ID: 3, Type: CardTypePatternRecognition, Front: "front 3", Back: "back 3", CreatedAt: created1, SourceEntityType: "custom", SourceLabel: "custom card"},
+		{ID: 2, Type: CardTypeEdgeCase, Front: "front 2", Back: "back 2", CreatedAt: created2, SourceEntityType: "custom", SourceLabel: "custom card"},
+		{ID: 1, Type: CardTypeAlgorithmMechanics, Front: "front 1", Back: "back 1", CreatedAt: created3, SourceEntityType: "custom", SourceLabel: "custom card"},
 	}}
 	h := testHandler(repo, &fakeRater{})
 	req := authenticatedRequest(http.MethodGet, "/me/cards?limit=2&type=edge_case", nil, 42)
@@ -111,7 +111,7 @@ func TestSessionReturnsPayload(t *testing.T) {
 	next := time.Date(2026, 7, 3, 10, 0, 0, 0, time.UTC)
 	repo := &fakeRepository{session: []CardRecord{
 		{
-			ID: 10, Type: CardTypePatternRecognition, Question: "front", Answer: "back",
+			ID: 10, Type: CardTypePatternRecognition, Front: "front", Back: "back",
 			CreatedAt: time.Date(2026, 7, 1, 10, 0, 0, 0, time.UTC), SourceLabel: "Two Sum",
 			NextReviewAt: &next, ReviewCount: 2,
 		},
@@ -140,6 +140,38 @@ func TestSessionReturnsPayload(t *testing.T) {
 	}
 	if len(body.Data.Cards) != 1 || body.Data.Cards[0].ReviewState.Attempts != 2 {
 		t.Fatalf("unexpected cards payload: %+v", body.Data.Cards)
+	}
+}
+
+func TestListCapturesPatternCode(t *testing.T) {
+	repo := &fakeRepository{}
+	h := testHandler(repo, &fakeRater{})
+	req := authenticatedRequest(http.MethodGet, "/me/cards?patternCode=two_pointers", nil, 42)
+	w := httptest.NewRecorder()
+
+	h.List(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", w.Code, w.Body.String())
+	}
+	if repo.listParams.PatternCode != "two_pointers" {
+		t.Fatalf("patternCode = %q, want two_pointers", repo.listParams.PatternCode)
+	}
+}
+
+func TestSessionCapturesPatternCode(t *testing.T) {
+	repo := &fakeRepository{}
+	h := testHandler(repo, &fakeRater{})
+	req := authenticatedRequest(http.MethodGet, "/me/cards/session?scope=all&patternCode=sliding_window", nil, 42)
+	w := httptest.NewRecorder()
+
+	h.Session(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", w.Code, w.Body.String())
+	}
+	if repo.sessionParams.PatternCode != "sliding_window" {
+		t.Fatalf("patternCode = %q, want sliding_window", repo.sessionParams.PatternCode)
 	}
 }
 
@@ -206,6 +238,36 @@ func TestRateDelegatesToReviewRater(t *testing.T) {
 	}
 }
 
+func TestCreateMapsMissingTargetToBadRequest(t *testing.T) {
+	h := testHandler(&fakeRepository{createErr: ErrCardTargetNotFound}, &fakeRater{})
+	req := authenticatedRequest(http.MethodPost, "/me/cards", strings.NewReader(`{
+			"type":"edge_case",
+			"front":"front",
+			"back":"back",
+			"problemId":999
+		}`), 42)
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	h.Create(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d: %s", w.Code, w.Body.String())
+	}
+}
+
+func TestDeleteMapsMissingCardToNotFound(t *testing.T) {
+	h := testHandler(&fakeRepository{deleteErr: ErrCardNotFound}, &fakeRater{})
+	req := authenticatedRequest(http.MethodDelete, "/me/cards/999", nil, 42)
+	w := httptest.NewRecorder()
+
+	routeHandler(h).ServeHTTP(w, req)
+
+	if w.Code != http.StatusNotFound {
+		t.Fatalf("expected 404, got %d: %s", w.Code, w.Body.String())
+	}
+}
+
 func testHandler(repo *fakeRepository, rater *fakeRater) *Handler {
 	svc := NewService(repo, rater)
 	svc.now = func() time.Time { return time.Date(2026, 7, 2, 12, 0, 0, 0, time.UTC) }
@@ -234,6 +296,8 @@ func authenticatedRequest(method, target string, body *strings.Reader, userID in
 type fakeRepository struct {
 	list          []CardRecord
 	session       []CardRecord
+	createErr     error
+	deleteErr     error
 	listParams    ListParams
 	sessionParams SessionParams
 	scheduleID    int64
@@ -269,6 +333,28 @@ func (f *fakeRepository) EnsureReviewSchedule(_ context.Context, userID, cardID 
 
 func (f *fakeRepository) CountSessionAttempts(context.Context, int64, time.Time) (int, error) {
 	return f.attemptCount, nil
+}
+
+func (f *fakeRepository) Create(_ context.Context, _ int64, _ CreateCardInput) (CardDetail, error) {
+	if f.createErr != nil {
+		return CardDetail{}, f.createErr
+	}
+	return CardDetail{}, nil
+}
+
+func (f *fakeRepository) GetByID(_ context.Context, _, _ int64) (CardDetail, error) {
+	return CardDetail{}, ErrCardNotFound
+}
+
+func (f *fakeRepository) Update(_ context.Context, _, _ int64, _ UpdateCardInput) (CardDetail, error) {
+	return CardDetail{}, ErrCardNotFound
+}
+
+func (f *fakeRepository) Delete(_ context.Context, _, _ int64) error {
+	if f.deleteErr != nil {
+		return f.deleteErr
+	}
+	return nil
 }
 
 type fakeRater struct {

@@ -1,1 +1,0 @@
-ALTER TABLE problems ADD COLUMN IF NOT EXISTS external_id TEXT;

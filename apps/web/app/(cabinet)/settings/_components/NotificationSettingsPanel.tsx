@@ -2,6 +2,9 @@
 
 import { useEffect, useState } from "react";
 
+import { updateNotificationSettings } from "../../../_api/account";
+import { useAuth } from "../../../_api/AuthProvider";
+import { ApiError } from "../../../_api/types";
 import {
   getNotificationPermission,
   readNotificationSettings,
@@ -26,6 +29,7 @@ type NotificationSettingsPanelProps = {
     permissionUnsupported: string;
     reminderTime: string;
     sendTest: string;
+    syncFailed: string;
     streakReminder: string;
     testBody: string;
     testSent: string;
@@ -35,14 +39,26 @@ type NotificationSettingsPanelProps = {
 
 export function NotificationSettingsPanel({ copy }: Readonly<NotificationSettingsPanelProps>) {
   const toast = useToast();
+  const { user } = useAuth();
   const [permission, setPermission] = useState<NotificationPermissionState>("default");
   const [settings, setSettings] = useState<NotificationSettingsState | null>(null);
   const [lastResult, setLastResult] = useState("");
 
   useEffect(() => {
     setPermission(getNotificationPermission());
-    setSettings(readNotificationSettings());
-  }, []);
+    const localSettings = readNotificationSettings();
+    const remote = user?.notification_settings;
+    setSettings(
+      remote
+        ? {
+            ...localSettings,
+            enabled: remote.email_enabled,
+            dailyReminder: remote.weekly_digest,
+            cardReviewReminder: remote.review_reminder,
+          }
+        : localSettings,
+    );
+  }, [user?.notification_settings]);
 
   useEffect(() => {
     if (!settings) return;
@@ -62,7 +78,24 @@ export function NotificationSettingsPanel({ copy }: Readonly<NotificationSetting
   const permissionLabel = permissionLabelByState[permission];
 
   const update = (patch: Partial<NotificationSettingsState>) => {
-    setSettings((current) => (current ? { ...current, ...patch } : current));
+    setSettings((current) => {
+      if (!current) return current;
+      const next = { ...current, ...patch };
+      void syncRemote(next);
+      return next;
+    });
+  };
+
+  const syncRemote = async (next: NotificationSettingsState) => {
+    try {
+      await updateNotificationSettings({
+        email_enabled: next.enabled,
+        weekly_digest: next.dailyReminder,
+        review_reminder: next.cardReviewReminder,
+      });
+    } catch (e) {
+      toast.error(e instanceof ApiError ? e.message : copy.syncFailed);
+    }
   };
 
   const enableNotifications = async () => {

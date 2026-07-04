@@ -28,20 +28,7 @@ type CreateReviewAttemptParams struct {
 	WasCorrect  pgtype.Bool
 }
 
-type CreateReviewAttemptRow struct {
-	ID          int64
-	UserID      int64
-	ProblemID   pgtype.Int8
-	PatternID   pgtype.Int8
-	CardID      pgtype.Int8
-	Rating      string
-	ReviewType  string
-	DurationSec pgtype.Int4
-	WasCorrect  pgtype.Bool
-	CreatedAt   pgtype.Timestamptz
-}
-
-func (q *Queries) CreateReviewAttempt(ctx context.Context, arg CreateReviewAttemptParams) (CreateReviewAttemptRow, error) {
+func (q *Queries) CreateReviewAttempt(ctx context.Context, arg CreateReviewAttemptParams) (ReviewAttempt, error) {
 	row := q.db.QueryRow(ctx, createReviewAttempt,
 		arg.UserID,
 		arg.ProblemID,
@@ -52,7 +39,7 @@ func (q *Queries) CreateReviewAttempt(ctx context.Context, arg CreateReviewAttem
 		arg.DurationSec,
 		arg.WasCorrect,
 	)
-	var i CreateReviewAttemptRow
+	var i ReviewAttempt
 	err := row.Scan(
 		&i.ID,
 		&i.UserID,
@@ -264,14 +251,19 @@ WHERE rs.user_id = $1
     ($2::text = 'due' AND rs.next_review_at <= NOW())
     OR ($2::text = 'upcoming' AND rs.next_review_at > NOW())
   )
-ORDER BY rs.next_review_at ASC
-LIMIT $3
+  -- Keyset pagination: row-wise comparison seeks strictly past the last item
+  -- of the previous page on the (next_review_at, id) tiebreak.
+  AND (rs.next_review_at, rs.id) > ($3::timestamptz, $4::bigint)
+ORDER BY rs.next_review_at ASC, rs.id ASC
+LIMIT $5
 `
 
 type ListReviewQueueParams struct {
-	UserID     int64
-	Status     string
-	QueueLimit int32
+	UserID             int64
+	Status             string
+	CursorNextReviewAt pgtype.Timestamptz
+	CursorID           int64
+	QueueLimit         int32
 }
 
 type ListReviewQueueRow struct {
@@ -299,7 +291,13 @@ type ListReviewQueueRow struct {
 }
 
 func (q *Queries) ListReviewQueue(ctx context.Context, arg ListReviewQueueParams) ([]ListReviewQueueRow, error) {
-	rows, err := q.db.Query(ctx, listReviewQueue, arg.UserID, arg.Status, arg.QueueLimit)
+	rows, err := q.db.Query(ctx, listReviewQueue,
+		arg.UserID,
+		arg.Status,
+		arg.CursorNextReviewAt,
+		arg.CursorID,
+		arg.QueueLimit,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -342,11 +340,7 @@ func (q *Queries) ListReviewQueue(ctx context.Context, arg ListReviewQueueParams
 
 const updateProgressConfidence = `-- name: UpdateProgressConfidence :exec
 UPDATE user_problem_progress
-SET confidence = CASE
-    WHEN confidence + $3::int < 0 THEN 0
-    WHEN confidence + $3::int > 100 THEN 100
-    ELSE confidence + $3::int
-END
+SET confidence = LEAST(100, GREATEST(0, COALESCE(confidence, 50) + $3::int))
 WHERE user_id = $1 AND problem_id = $2
 `
 
@@ -356,6 +350,10 @@ type UpdateProgressConfidenceParams struct {
 	Column3   int32
 }
 
+// Rows created by the extension ingest have confidence = NULL, and NULL + delta
+// stays NULL, which silently disabled confidence tracking for real users. Start
+// such rows from the neutral 50 (matching the dashboard's readiness midpoint)
+// before applying the delta, clamped to [0, 100].
 func (q *Queries) UpdateProgressConfidence(ctx context.Context, arg UpdateProgressConfidenceParams) error {
 	_, err := q.db.Exec(ctx, updateProgressConfidence, arg.UserID, arg.ProblemID, arg.Column3)
 	return err
@@ -366,7 +364,7 @@ UPDATE review_schedules
 SET next_review_at = $2, interval_days = $3, stability = $4, difficulty = $5,
     review_count = $6, last_rating = $7, state = $8, lapses = $9,
     last_review_at = $10, remaining_steps = $11, updated_at = NOW()
-WHERE id = $1
+WHERE id = $1 AND user_id = $12
 RETURNING id, user_id, problem_id, pattern_id, card_id, next_review_at,
           interval_days, stability, difficulty, review_count, last_rating,
           state, lapses, last_review_at, remaining_steps
@@ -384,6 +382,7 @@ type UpdateReviewScheduleParams struct {
 	Lapses         int32
 	LastReviewAt   pgtype.Timestamptz
 	RemainingSteps int32
+	UserID         int64
 }
 
 type UpdateReviewScheduleRow struct {
@@ -417,6 +416,7 @@ func (q *Queries) UpdateReviewSchedule(ctx context.Context, arg UpdateReviewSche
 		arg.Lapses,
 		arg.LastReviewAt,
 		arg.RemainingSteps,
+		arg.UserID,
 	)
 	var i UpdateReviewScheduleRow
 	err := row.Scan(

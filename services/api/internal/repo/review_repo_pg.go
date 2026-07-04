@@ -29,8 +29,14 @@ func NewReviewRepository(pool *pgxpool.Pool) ReviewRepository {
 	return &pgReviewRepository{pool: pool, q: db.New(pool)}
 }
 
-func (r *pgReviewRepository) QueueReviews(ctx context.Context, userID int64, status string, limit int32) ([]entity.ReviewItem, error) {
-	rows, err := r.q.ListReviewQueue(ctx, db.ListReviewQueueParams{UserID: userID, Status: status, QueueLimit: limit})
+func (r *pgReviewRepository) QueueReviews(ctx context.Context, userID int64, status string, cursor entity.ReviewQueueCursor, limit int32) ([]entity.ReviewItem, error) {
+	rows, err := r.q.ListReviewQueue(ctx, db.ListReviewQueueParams{
+		UserID:             userID,
+		Status:             status,
+		CursorNextReviewAt: toPgTimestamptz(cursor.NextReviewAt),
+		CursorID:           cursor.ID,
+		QueueLimit:         limit,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("reviews: query review queue: %w", err)
 	}
@@ -45,7 +51,7 @@ func (r *pgReviewRepository) QueueReviews(ctx context.Context, userID int64, sta
 			Meta:       buildMeta(row.CardID, row.PatternTitle, row.ProblemDifficulty, row.CardType),
 			TypeLabel:  typeLabel(row.ProblemID, row.PatternID, row.CardID),
 			DueAt:      row.NextReviewAt.Time,
-			Status:     statusFromState(int8(row.State)),
+			Status:     status,
 			LastRating: stringPtrFromPg(row.LastRating),
 			Attempts:   int(row.ReviewCount.Int32),
 		})
@@ -64,7 +70,7 @@ func (r *pgReviewRepository) ScheduleByID(ctx context.Context, scheduleID, userI
 	return scheduleFromRow(row), nil
 }
 
-func (r *pgReviewRepository) SaveReview(ctx context.Context, schedule entity.ReviewSchedule, attempt entity.ReviewAttempt) (entity.ReviewSchedule, error) {
+func (r *pgReviewRepository) SaveReview(ctx context.Context, schedule entity.ReviewSchedule, attempt entity.ReviewAttempt) (saved entity.ReviewSchedule, err error) {
 	kind, err := reviewType(attempt)
 	if err != nil {
 		return entity.ReviewSchedule{}, err
@@ -74,11 +80,20 @@ func (r *pgReviewRepository) SaveReview(ctx context.Context, schedule entity.Rev
 	if err != nil {
 		return entity.ReviewSchedule{}, fmt.Errorf("reviews: begin tx: %w", err)
 	}
-	defer tx.Rollback(ctx)
+	committed := false
+	defer func() {
+		if committed {
+			return
+		}
+		if rollbackErr := tx.Rollback(ctx); rollbackErr != nil {
+			err = errors.Join(err, fmt.Errorf("reviews: rollback tx: %w", rollbackErr))
+		}
+	}()
 
 	q := r.q.WithTx(tx)
 	updated, err := q.UpdateReviewSchedule(ctx, db.UpdateReviewScheduleParams{
 		ID:             schedule.ID,
+		UserID:         schedule.UserID,
 		NextReviewAt:   toPgTimestamptz(schedule.NextReviewAt),
 		IntervalDays:   schedule.IntervalDays,
 		Stability:      schedule.Stability,
@@ -110,6 +125,7 @@ func (r *pgReviewRepository) SaveReview(ctx context.Context, schedule entity.Rev
 	if err := tx.Commit(ctx); err != nil {
 		return entity.ReviewSchedule{}, fmt.Errorf("reviews: commit tx: %w", err)
 	}
+	committed = true
 	return scheduleFromUpdate(updated), nil
 }
 
@@ -225,21 +241,6 @@ func typeLabel(problemID, patternID, cardID pgtype.Int8) string {
 		return "card review"
 	}
 	return ""
-}
-
-func statusFromState(state int8) string {
-	switch state {
-	case 0:
-		return "due"
-	case 1:
-		return "due"
-	case 2:
-		return "due"
-	case 3:
-		return "due"
-	default:
-		return "due"
-	}
 }
 
 func reviewType(attempt entity.ReviewAttempt) (string, error) {

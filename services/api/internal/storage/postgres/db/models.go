@@ -52,11 +52,14 @@ type ExtensionEvent struct {
 }
 
 type Pattern struct {
-	ID          int64
-	Code        string
-	Name        string
-	Description pgtype.Text
-	ParentID    pgtype.Int8
+	ID                  int64
+	Code                string
+	Name                string
+	Description         pgtype.Text
+	ParentID            pgtype.Int8
+	Techniques          []string
+	RecognitionSymptoms []string
+	Checklist           []string
 }
 
 type Platform struct {
@@ -99,12 +102,12 @@ type ReviewAttempt struct {
 	UserID      int64
 	ProblemID   pgtype.Int8
 	PatternID   pgtype.Int8
+	CardID      pgtype.Int8
 	Rating      string
 	ReviewType  string
 	DurationSec pgtype.Int4
 	WasCorrect  pgtype.Bool
 	CreatedAt   pgtype.Timestamptz
-	CardID      pgtype.Int8
 }
 
 type ReviewSchedule struct {
@@ -112,6 +115,7 @@ type ReviewSchedule struct {
 	UserID       int64
 	ProblemID    pgtype.Int8
 	PatternID    pgtype.Int8
+	CardID       pgtype.Int8
 	NextReviewAt pgtype.Timestamptz
 	// Current review interval length in days.
 	IntervalDays float64
@@ -134,7 +138,6 @@ type ReviewSchedule struct {
 	LastReviewAt pgtype.Timestamptz
 	// Remaining learning/relearning steps (FSRS Card.RemainingSteps).
 	RemainingSteps int32
-	CardID         pgtype.Int8
 }
 
 type RoadmapItem struct {

@@ -2,6 +2,7 @@ package patterns
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -24,7 +25,9 @@ type Handler struct {
 }
 
 type repository interface {
+	List(ctx context.Context, userID int64) ([]Pattern, error)
 	ListWeak(ctx context.Context, userID int64, limit int32) ([]WeakPattern, error)
+	GetByCode(ctx context.Context, code string) (PatternDetail, error)
 }
 
 func NewHandler(repo repository) *Handler {
@@ -32,7 +35,25 @@ func NewHandler(repo repository) *Handler {
 }
 
 func RegisterRoutes(r chi.Router, h *Handler) {
+	r.Get("/", h.List)
 	r.Get("/weak", h.ListWeak)
+	r.Get("/{code}", h.GetDetail)
+}
+
+func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
+	userID, ok := auth.UserIDFromContext(r.Context())
+	if !ok {
+		response.Fail(w, http.StatusUnauthorized, "UNAUTHORIZED", "authentication required")
+		return
+	}
+
+	items, err := h.repo.List(r.Context(), userID)
+	if err != nil {
+		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", "could not list patterns")
+		return
+	}
+
+	response.JSON(w, http.StatusOK, map[string][]Pattern{"patterns": items})
 }
 
 func (h *Handler) ListWeak(w http.ResponseWriter, r *http.Request) {
@@ -49,6 +70,27 @@ func (h *Handler) ListWeak(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response.JSON(w, http.StatusOK, items)
+}
+
+func (h *Handler) GetDetail(w http.ResponseWriter, r *http.Request) {
+	if _, ok := auth.UserIDFromContext(r.Context()); !ok {
+		response.Fail(w, http.StatusUnauthorized, "unauthorized", "authentication required")
+		return
+	}
+
+	code := chi.URLParam(r, "code")
+
+	detail, err := h.repo.GetByCode(r.Context(), code)
+	if err != nil {
+		if errors.Is(err, ErrPatternNotFound) {
+			response.Fail(w, http.StatusNotFound, "not_found", "pattern not found")
+			return
+		}
+		response.Fail(w, http.StatusInternalServerError, "internal_error", "could not load pattern")
+		return
+	}
+
+	response.JSON(w, http.StatusOK, detail)
 }
 
 func weakPatternsLimit(r *http.Request) int32 {

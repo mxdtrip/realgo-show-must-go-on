@@ -2,6 +2,7 @@ import { CabinetPanel } from "../_components";
 import { getDictionary } from "../../_content/i18n";
 import { InstallAppPanel } from "./_components/InstallAppPanel";
 import { NotificationSettingsPanel } from "./_components/NotificationSettingsPanel";
+import { PrivacyActions } from "./_components/PrivacyActions";
 import { ProfileSettingsPanel } from "./_components/ProfileSettingsPanel";
 
 export default function SettingsPage() {
@@ -33,10 +34,7 @@ export default function SettingsPage() {
         <CabinetPanel eyebrow={page.privacyEyebrow} title={page.privacyTitle}>
           <div className="privacy-box">
             <p>{page.privacyDescription}</p>
-            <div className="privacy-actions">
-              <button>{page.exportProgress}</button>
-              <button>{page.deleteAccount}</button>
-            </div>
+            <PrivacyActions copy={page} />
           </div>
         </CabinetPanel>
       </div>

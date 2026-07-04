@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
 import json
 import os
-from datetime import datetime, timezone
+from datetime import datetime
 
 import bcrypt
 
 
-PASSWORD = "Password123!"
+# Local default only. On any publicly reachable deployment set
+# SEED_USERS_PASSWORD to a secret value — these accounts (including the
+# 'admin'-plan one) are recreated on every deploy, and the default password
+# is documented in DEMO.md.
+DEFAULT_PASSWORD = "Password123!"
 CARD_SOURCE_CODE = "realgo_demo_cards"
 
 USERS = [
@@ -16,21 +20,46 @@ USERS = [
         "plan": "free",
         "interview_date": "2026-09-01T09:00:00+00:00",
         "progress": [
-            ("contains-duplicate", "solved", "easy", 90, "Smoke: solved easy problem"),
-            ("valid-anagram", "solved", "normal", 75, "Smoke: normal confidence"),
-            ("two-sum", "reviewing", "hard", 45, "Smoke: due for review"),
-            ("group-anagrams", "in_progress", None, 30, "Smoke: in progress"),
-            ("top-k-frequent-elements", "not_started", None, 10, "Smoke: not started"),
+            ("contains-duplicate", "solved", "easy", 96, 6, "Arrays: warmed up"),
+            ("valid-anagram", "solved", "normal", 82, 5, "Arrays: counting chars"),
+            ("two-sum", "reviewing", "hard", 48, 4, "Arrays: due for complement review"),
+            ("group-anagrams", "in_progress", None, 38, 3, "Arrays: grouping key draft"),
+            ("top-k-frequent-elements", "not_started", None, 12, 2, "Arrays: next topic"),
+            ("valid-palindrome", "solved", "easy", 88, 6, "Two pointers: baseline"),
+            ("two-sum-ii-input-array-is-sorted", "reviewing", "normal", 62, 3, "Two pointers: sorted input"),
+            ("3sum", "in_progress", None, 34, 2, "Two pointers: duplicates still tricky"),
+            ("container-with-most-water", "skipped", None, 18, 1, "Two pointers: postponed"),
+            ("best-time-to-buy-and-sell-stock", "solved", "easy", 92, 5, "Sliding window: one pass"),
+            (
+                "longest-substring-without-repeating-characters",
+                "reviewing",
+                "hard",
+                42,
+                1,
+                "Sliding window: repeat boundary",
+            ),
+            ("longest-repeating-character-replacement", "in_progress", None, 36, 0, "Sliding window: window invariant"),
+            ("valid-parentheses", "solved", "easy", 90, 4, "Stack: pair matching"),
+            ("min-stack", "in_progress", None, 40, 0, "Stack: min history"),
+            ("daily-temperatures", "reviewing", "normal", 66, 2, "Stack: monotonic review"),
+            ("binary-search", "solved", "easy", 94, 3, "Binary search: bounds"),
+            ("search-a-2d-matrix", "in_progress", None, 44, 0, "Binary search: matrix mapping"),
         ],
         "events": [
-            ("leetcode", "problem_viewed", "contains-duplicate", None, 6),
-            ("leetcode", "problem_solved", "contains-duplicate", "easy", 5),
-            ("leetcode", "rating_changed", "two-sum", "hard", 2),
-            ("leetcode", "problem_viewed", "group-anagrams", None, 1),
+            ("leetcode", "problem_solved", "contains-duplicate", "easy", 150),
+            ("leetcode", "problem_solved", "valid-anagram", "normal", 126),
+            ("leetcode", "problem_viewed", "group-anagrams", None, 78),
+            ("leetcode", "rating_changed", "two-sum", "hard", 54),
+            ("leetcode", "problem_solved", "valid-palindrome", "easy", 32),
+            ("leetcode", "problem_viewed", "longest-repeating-character-replacement", None, 8),
+            ("leetcode", "problem_viewed", "min-stack", None, 2),
         ],
         "pattern_reviews": [
             ("arrays_hashing", "normal", -3, 2, 2.6, 3.5, 4.0, 2, 2),
             ("two_pointers", "easy", 18, 4, 2.8, 5.0, 3.2, 3, 2),
+            ("sliding_window", "hard", -18, 1, 2.3, 2.2, 6.0, 2, 3),
+            ("stack", "normal", -6, 2, 2.5, 3.1, 4.5, 2, 2),
+            ("binary_search", "easy", 30, 5, 2.9, 6.0, 3.0, 4, 2),
         ],
         "card_reviews": [
             ("two-sum-complement", "hard", -1, 1, 2.3, 1.4, 6.0, 1, 1),
@@ -43,12 +72,15 @@ USERS = [
         "plan": "pro",
         "interview_date": "2026-10-15T12:00:00+00:00",
         "progress": [
-            ("contains-duplicate", "solved", "normal", 80, "Pro smoke data"),
-            ("valid-palindrome", "reviewing", "easy", 70, "Pro review item"),
+            ("contains-duplicate", "solved", "normal", 80, 4, "Pro smoke data"),
+            ("valid-palindrome", "reviewing", "easy", 70, 2, "Pro review item"),
+            ("best-time-to-buy-and-sell-stock", "solved", "easy", 86, 1, "Pro sliding window"),
+            ("binary-search", "in_progress", None, 45, 0, "Pro binary search"),
         ],
         "events": [
-            ("leetcode", "problem_viewed", "valid-palindrome", None, 4),
-            ("leetcode", "problem_solved", "valid-palindrome", "easy", 3),
+            ("leetcode", "problem_viewed", "valid-palindrome", None, 52),
+            ("leetcode", "problem_solved", "valid-palindrome", "easy", 51),
+            ("leetcode", "problem_viewed", "binary-search", None, 3),
         ],
     },
     {
@@ -148,20 +180,25 @@ def table_columns(cur, table):
 
 
 def seed_progress(cur, user_id, progress, problems, schedule_columns):
-    now = datetime.now(timezone.utc)
-    for index, (slug, status, rating, confidence, note) in enumerate(progress):
+    for index, (slug, status, rating, confidence, age_days, note) in enumerate(progress):
         problem_id = problems.get(slug)
         if not problem_id:
             raise ValueError(f"problem {slug!r} is missing; run seed_roadmap.py first")
 
-        solved_at = now if status in ("solved", "reviewing") else None
+        done = status in ("solved", "reviewing")
         cur.execute(
             """
             INSERT INTO user_problem_progress (
                 user_id, problem_id, status, rating, first_seen_at,
                 solved_at, last_reviewed_at, confidence, note
             )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (
+                %s, %s, %s, %s,
+                CURRENT_TIMESTAMP - (%s * INTERVAL '1 day'),
+                CASE WHEN %s THEN CURRENT_TIMESTAMP - (%s * INTERVAL '1 day') END,
+                CASE WHEN %s THEN CURRENT_TIMESTAMP - (%s * INTERVAL '1 day') END,
+                %s, %s
+            )
             ON CONFLICT (user_id, problem_id) DO UPDATE SET
                 status = EXCLUDED.status,
                 rating = EXCLUDED.rating,
@@ -176,9 +213,11 @@ def seed_progress(cur, user_id, progress, problems, schedule_columns):
                 problem_id,
                 status,
                 rating,
-                now,
-                solved_at,
-                solved_at,
+                age_days,
+                done,
+                age_days,
+                done,
+                age_days,
                 confidence,
                 note,
             ),
@@ -239,9 +278,12 @@ def seed_progress(cur, user_id, progress, problems, schedule_columns):
             cur.execute(
                 """
                 INSERT INTO review_attempts (
-                    user_id, problem_id, rating, review_type, duration_sec, was_correct
+                    user_id, problem_id, rating, review_type, duration_sec, was_correct, created_at
                 )
-                VALUES (%s, %s, %s, 'problem', %s, %s)
+                VALUES (
+                    %s, %s, %s, 'problem', %s, %s,
+                    CURRENT_TIMESTAMP - (%s * INTERVAL '1 day')
+                )
                 """,
                 (
                     user_id,
@@ -249,6 +291,7 @@ def seed_progress(cur, user_id, progress, problems, schedule_columns):
                     rating or "normal",
                     180 + index * 30,
                     rating != "hard",
+                    age_days,
                 ),
             )
 
@@ -338,15 +381,16 @@ def insert_review_attempt(
     review_type,
     duration_sec,
     was_correct,
+    age_days,
 ):
     cur.execute(
         f"""
         INSERT INTO review_attempts (
-            user_id, {target_column}, rating, review_type, duration_sec, was_correct
+            user_id, {target_column}, rating, review_type, duration_sec, was_correct, created_at
         )
-        VALUES (%s, %s, %s, %s, %s, %s)
+        VALUES (%s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP - (%s * INTERVAL '1 day'))
         """,
-        (user_id, target_id, rating, review_type, duration_sec, was_correct),
+        (user_id, target_id, rating, review_type, duration_sec, was_correct, age_days),
     )
 
 
@@ -390,6 +434,7 @@ def seed_pattern_reviews(cur, user_id, reviews, patterns, schedule_columns):
             "pattern",
             150 + index * 20,
             rating != "hard",
+            index % 7,
         )
 
 
@@ -445,6 +490,7 @@ def seed_card_reviews(cur, user_id, reviews, cards, schedule_columns, attempt_co
             "card",
             120 + index * 20,
             rating != "hard",
+            index % 7,
         )
 
 
@@ -498,7 +544,8 @@ def main():
     if not dsn:
         raise SystemExit("DATABASE_URL is required")
 
-    password_hash = bcrypt.hashpw(PASSWORD.encode(), bcrypt.gensalt()).decode()
+    password = os.environ.get("SEED_USERS_PASSWORD") or DEFAULT_PASSWORD
+    password_hash = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
 
     import psycopg
 
@@ -535,7 +582,11 @@ def main():
                         cur, user_id, user["email"], user["events"], platforms, event_problems
                     )
 
-    print(f"seeded {len(USERS)} users with password {PASSWORD!r}")
+    if password == DEFAULT_PASSWORD:
+        print(f"seeded {len(USERS)} users with the default password {DEFAULT_PASSWORD!r}")
+    else:
+        # Never echo a secret supplied via SEED_USERS_PASSWORD into deploy logs.
+        print(f"seeded {len(USERS)} users with the password from SEED_USERS_PASSWORD")
 
 
 if __name__ == "__main__":

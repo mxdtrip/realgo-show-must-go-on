@@ -10,7 +10,7 @@ import (
 )
 
 type Config struct {
-	Env        string `yaml:"env" env-default:"local"`
+	Env        string `yaml:"env" env:"APP_ENV" env-default:"local"`
 	HTTPServer `yaml:"http_server"`
 	Database   `yaml:"database"`
 	Redis      `yaml:"redis"`

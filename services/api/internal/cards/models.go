@@ -35,15 +35,35 @@ type Source struct {
 	Label      string `json:"label"`
 }
 
+type seedCard struct {
+	ID           string     `json:"id"`
+	URL          string     `json:"url"`
+	Type         string     `json:"type"`
+	Source       seedSource `json:"source"`
+	Front        string     `json:"front"`
+	Back         string     `json:"back"`
+	Status       string     `json:"status"`
+	NextReviewAt *time.Time `json:"nextReviewAt"`
+	LastRating   *string    `json:"lastRating"`
+	CreatedAt    time.Time  `json:"createdAt"`
+}
+
+type seedSource struct {
+	EntityType string `json:"entityType"`
+	EntityID   string `json:"entityId"`
+	Label      string `json:"label"`
+}
+
 type ListMeta struct {
 	NextCursor *string `json:"nextCursor"`
 }
 
 type ListParams struct {
-	Limit    int32
-	Type     string
-	Cursor   Cursor
-	PageSize int
+	Limit       int32
+	Type        string
+	PatternCode string
+	Cursor      Cursor
+	PageSize    int
 }
 
 type Cursor struct {
@@ -54,8 +74,8 @@ type Cursor struct {
 type CardRecord struct {
 	ID               int64
 	Type             string
-	Question         string
-	Answer           string
+	Front            string
+	Back             string
 	CreatedAt        time.Time
 	SourceEntityType string
 	SourceEntityID   *int64
@@ -68,8 +88,9 @@ type CardRecord struct {
 }
 
 type SessionParams struct {
-	Scope string
-	Limit int32
+	Scope       string
+	PatternCode string
+	Limit       int32
 }
 
 type Session struct {
@@ -116,4 +137,60 @@ type SessionProgress struct {
 	Reviewed  int `json:"reviewed"`
 	Total     int `json:"total"`
 	Remaining int `json:"remaining"`
+}
+
+// --- CRUD types ---
+
+// CreateCardInput is the input for creating a new card.
+type CreateCardInput struct {
+	Type        string
+	Front       string
+	Back        string
+	Explanation *string
+	SourceText  *string
+	ProblemID   *int64
+	PatternID   *int64
+}
+
+// UpdateCardInput contains the fields that may be patched on a card.
+type UpdateCardInput struct {
+	Type        *string
+	Front       *string
+	Back        *string
+	Explanation *string
+	SourceText  *string
+}
+
+// CardDetail is returned by CRUD endpoints and includes join fields.
+type CardDetail struct {
+	ID           int64     `json:"id"`
+	Type         string    `json:"type"`
+	Front        string    `json:"front"`
+	Back         string    `json:"back"`
+	Explanation  *string   `json:"explanation"`
+	Source       Source    `json:"source"`
+	CreatedByAI  bool      `json:"createdByAi"`
+	CreatedAt    time.Time `json:"createdAt"`
+	ProblemTitle *string   `json:"problemTitle"`
+	ProblemURL   *string   `json:"problemUrl"`
+	PatternName  *string   `json:"patternName"`
+}
+
+// HTTP request types used by CRUD handlers only.
+type createCardRequest struct {
+	Type        string  `json:"type"`
+	Front       string  `json:"front"`
+	Back        string  `json:"back"`
+	Explanation *string `json:"explanation"`
+	SourceText  *string `json:"sourceText"`
+	ProblemID   *int64  `json:"problemId"`
+	PatternID   *int64  `json:"patternId"`
+}
+
+type updateCardRequest struct {
+	Type        *string `json:"type"`
+	Front       *string `json:"front"`
+	Back        *string `json:"back"`
+	Explanation *string `json:"explanation"`
+	SourceText  *string `json:"sourceText"`
 }

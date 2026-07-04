@@ -1,6 +1,28 @@
 package problems
 
-import "time"
+import (
+	"errors"
+	"time"
+)
+
+var errNotFound = errors.New("problem not found")
+
+// ProblemDetail is returned by GET /me/problems/{id}.
+type ProblemDetail struct {
+	ID           int64           `json:"id"`
+	ExternalID   string          `json:"external_id"`
+	Title        string          `json:"title"`
+	URL          string          `json:"url"`
+	Platform     string          `json:"platform"`
+	Difficulty   string          `json:"difficulty"`
+	Pattern      *ProblemPattern `json:"pattern"`
+	Status       string          `json:"status"`
+	NextReviewAt *time.Time      `json:"next_review_at"`
+	LastRating   *string         `json:"last_rating"`
+	SolvedAt     *time.Time      `json:"solved_at"`
+	Note         *string         `json:"note"`
+	CreatedAt    time.Time       `json:"created_at"`
+}
 
 type Problem struct {
 	ID           int64           `json:"id"`

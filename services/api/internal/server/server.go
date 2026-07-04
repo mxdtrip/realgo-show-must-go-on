@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
+	"github.com/mxdtrip/freeburger/services/api/internal/ai"
 	"github.com/mxdtrip/freeburger/services/api/internal/auth"
 	"github.com/mxdtrip/freeburger/services/api/internal/cards"
 	"github.com/mxdtrip/freeburger/services/api/internal/companies"
@@ -16,6 +17,7 @@ import (
 	"github.com/mxdtrip/freeburger/services/api/internal/extension"
 	"github.com/mxdtrip/freeburger/services/api/internal/patterns"
 	"github.com/mxdtrip/freeburger/services/api/internal/problems"
+	"github.com/mxdtrip/freeburger/services/api/internal/quiz"
 	"github.com/mxdtrip/freeburger/services/api/internal/repo"
 	"github.com/mxdtrip/freeburger/services/api/internal/roadmap"
 	"github.com/mxdtrip/freeburger/services/api/internal/roadmaps"
@@ -65,6 +67,8 @@ func New(deps Deps) http.Handler {
 	companiesHandler := companies.NewHandler()
 	dashboardHandler := dashboard.NewHandler(dashboard.NewService(dashboard.NewRepository(deps.Postgres.Pool), patterns.NewRepository(deps.Postgres.Pool)))
 	cardsHandler := cards.NewHandler(cards.NewService(cards.NewRepository(deps.Postgres.Pool), reviewService))
+	quizHandler := quiz.NewHandler(quiz.NewRepository(deps.Postgres.Pool))
+	aiHandler := ai.NewHandler(ai.NewRepository(deps.Postgres.Pool))
 
 	// Browser-extension ingest: simple fixed-interval scheduler (issue #17)
 	// behind the Scheduler interface, swappable for FSRS later.
@@ -120,13 +124,25 @@ func New(deps Deps) http.Handler {
 		r.With(requireAuth(deps.Auth)).Get("/me/extension/status", extensionStatusHandler.GetStatus) // codex/s3-ext-status
 
 		// S2 problems.
-		r.With(requireAuth(deps.Auth)).Get("/me/problems", problemsHandler.List)
+		r.Route("/me/problems", func(r chi.Router) {
+			r.With(requireAuth(deps.Auth)).Group(func(r chi.Router) {
+				problems.RegisterRoutes(r, problemsHandler)
+			})
+		})
 
 		r.With(requireAuth(deps.Auth)).Get("/me/dashboard", dashboardHandler.Get) // codex/s1-dashboard
 
 		r.Route("/me/cards", func(r chi.Router) {
 			r.With(requireAuth(deps.Auth)).Group(func(r chi.Router) {
 				cards.RegisterRoutes(r, cardsHandler)
+				ai.RegisterCardRoutes(r, aiHandler)
+			})
+		})
+
+		r.Route("/me/quiz", func(r chi.Router) {
+			r.With(requireAuth(deps.Auth)).Group(func(r chi.Router) {
+				quiz.RegisterRoutes(r, quizHandler)
+				ai.RegisterQuizRoutes(r, aiHandler)
 			})
 		})
 

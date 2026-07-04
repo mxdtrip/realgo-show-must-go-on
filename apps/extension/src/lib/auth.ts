@@ -87,7 +87,7 @@ export async function refreshAccessToken(): Promise<string> {
   try {
     data = await postJson(`${baseUrl}${AUTH_BASE}/refresh`, { refresh_token: refresh });
   } catch (e) {
-    if (e instanceof AuthError && e.status !== 0) await clearTokens();
+    if (e instanceof AuthError && e.status === 401) await clearTokens();
     throw e;
   }
 

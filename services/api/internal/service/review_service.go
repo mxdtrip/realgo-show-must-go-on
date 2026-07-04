@@ -20,12 +20,10 @@ var (
 	ErrInvalidRating  = errors.New("invalid rating: must be hard, normal, or easy")
 )
 
-const todayReviewsLimit = 100
-
 // ReviewService — бизнес-логика для повторений.
 // Обёрнут в data согласно контракту
 type ReviewService interface {
-	GetQueue(ctx context.Context, userID int64, status string, limit int32) (response.QueueResponse, error)
+	GetQueue(ctx context.Context, userID int64, status string, cursor entity.ReviewQueueCursor, limit int32) (response.QueueResponse, error)
 	RateReview(ctx context.Context, reviewID, userID int64, rating string, reviewedAt time.Time) (response.RateReviewData, error)
 	GetStats(ctx context.Context, userID int64) (response.StatsResponse, error)
 }
@@ -44,10 +42,17 @@ func NewReviewService(repo repo.ReviewRepository, logger *slog.Logger) ReviewSer
 	}
 }
 
-func (s *reviewService) GetQueue(ctx context.Context, userID int64, status string, limit int32) (response.QueueResponse, error) {
-	items, err := s.repo.QueueReviews(ctx, userID, status, limit)
+func (s *reviewService) GetQueue(ctx context.Context, userID int64, status string, cursor entity.ReviewQueueCursor, limit int32) (response.QueueResponse, error) {
+	// Запрашиваем на одну запись больше limit — если она пришла, значит есть
+	// следующая страница, и её же используем как источник nextCursor.
+	items, err := s.repo.QueueReviews(ctx, userID, status, cursor, limit+1)
 	if err != nil {
 		return response.QueueResponse{}, fmt.Errorf("reviews: GetQueue: %w", err)
+	}
+
+	hasMore := len(items) > int(limit)
+	if hasMore {
+		items = items[:limit]
 	}
 
 	// Конвертируем entity в response
@@ -67,9 +72,19 @@ func (s *reviewService) GetQueue(ctx context.Context, userID int64, status strin
 		})
 	}
 
+	var nextCursor *string
+	if hasMore && len(items) > 0 {
+		last := items[len(items)-1]
+		encoded, err := entity.EncodeReviewQueueCursor(entity.ReviewQueueCursor{NextReviewAt: last.DueAt, ID: last.ID})
+		if err != nil {
+			return response.QueueResponse{}, fmt.Errorf("reviews: GetQueue: %w", err)
+		}
+		nextCursor = &encoded
+	}
+
 	return response.QueueResponse{
 		Data: data,
-		Meta: response.QueueMeta{NextCursor: nil},
+		Meta: response.QueueMeta{NextCursor: nextCursor},
 	}, nil
 }
 

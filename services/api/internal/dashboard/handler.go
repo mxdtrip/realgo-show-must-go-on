@@ -35,7 +35,7 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 
 	data, err := h.svc.Get(r.Context(), userID)
 	if err != nil {
-		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", err.Error())
+		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", "could not load dashboard")
 		return
 	}
 	response.JSON(w, http.StatusOK, data)

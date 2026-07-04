@@ -19,12 +19,12 @@ func requireAuth(svc *auth.Service) func(http.Handler) http.Handler {
 			}
 			token, ok := bearerToken(r)
 			if !ok {
-				response.Fail(w, http.StatusUnauthorized, "unauthorized", "missing bearer token")
+				response.Fail(w, http.StatusUnauthorized, "UNAUTHORIZED", "missing bearer token")
 				return
 			}
 			userID, err := svc.ParseAccessToken(token)
 			if err != nil {
-				response.Fail(w, http.StatusUnauthorized, "invalid_token", "invalid or expired token")
+				response.Fail(w, http.StatusUnauthorized, "INVALID_TOKEN", "invalid or expired token")
 				return
 			}
 			ctx := auth.ContextWithUserID(r.Context(), userID)

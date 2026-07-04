@@ -69,6 +69,57 @@ func TestWeakPatternsLimit(t *testing.T) {
 	}
 }
 
+func TestGetDetail_Unauthorized(t *testing.T) {
+	h := NewHandler(nil)
+	r := httptest.NewRequest(http.MethodGet, "/patterns/two_pointers", nil)
+	w := httptest.NewRecorder()
+
+	h.GetDetail(w, r)
+
+	if w.Code != http.StatusUnauthorized {
+		t.Fatalf("expected 401, got %d", w.Code)
+	}
+}
+
+func TestGetDetail_Found(t *testing.T) {
+	want := PatternDetail{
+		Code:        "two_pointers",
+		Name:        "Two Pointers",
+		Description: "Два индекса двигаются по одной структуре.",
+		Techniques:  []string{"Opposite pointers"},
+	}
+	h := NewHandler(fakeRepository{detail: want})
+	r := withUser(httptest.NewRequest(http.MethodGet, "/patterns/two_pointers", nil), 1)
+	w := httptest.NewRecorder()
+
+	routePatterns(h).ServeHTTP(w, r)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+	var body struct {
+		Data PatternDetail `json:"data"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &body); err != nil {
+		t.Fatalf("invalid json: %v", err)
+	}
+	if body.Data.Code != want.Code {
+		t.Fatalf("code = %q, want %q", body.Data.Code, want.Code)
+	}
+}
+
+func TestGetDetail_NotFound(t *testing.T) {
+	h := NewHandler(fakeRepository{detailErr: ErrPatternNotFound})
+	r := withUser(httptest.NewRequest(http.MethodGet, "/patterns/unknown-code", nil), 1)
+	w := httptest.NewRecorder()
+
+	routePatterns(h).ServeHTTP(w, r)
+
+	if w.Code != http.StatusNotFound {
+		t.Fatalf("expected 404, got %d", w.Code)
+	}
+}
+
 func routePatterns(h *Handler) http.Handler {
 	r := chi.NewRouter()
 	r.Route("/patterns", func(r chi.Router) {
@@ -82,7 +133,13 @@ func withUser(r *http.Request, userID int64) *http.Request {
 }
 
 type fakeRepository struct {
-	items []WeakPattern
+	items     []WeakPattern
+	detail    PatternDetail
+	detailErr error
+}
+
+func (f fakeRepository) List(context.Context, int64) ([]Pattern, error) {
+	return []Pattern{}, nil
 }
 
 func (f fakeRepository) ListWeak(context.Context, int64, int32) ([]WeakPattern, error) {
@@ -90,4 +147,11 @@ func (f fakeRepository) ListWeak(context.Context, int64, int32) ([]WeakPattern, 
 		return []WeakPattern{}, nil
 	}
 	return f.items, nil
+}
+
+func (f fakeRepository) GetByCode(context.Context, string) (PatternDetail, error) {
+	if f.detailErr != nil {
+		return PatternDetail{}, f.detailErr
+	}
+	return f.detail, nil
 }

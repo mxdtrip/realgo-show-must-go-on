@@ -59,8 +59,25 @@ async function rawRequest<T>(path: string, options: RequestOptions, token: strin
   return envelope.data;
 }
 
+// Single-flight guard: the backend rotates the refresh token atomically (the
+// old one is deleted the moment a refresh succeeds), so two concurrent
+// refreshes would race — the loser sends an already-consumed token, gets a 401
+// and wipes a perfectly valid session. Typical trigger: several API calls fire
+// together after the access token expired (e.g. returning to the dashboard).
+// All concurrent callers must therefore share one in-flight refresh.
+let refreshInFlight: Promise<string> | null = null;
+
 /** Exchanges the stored refresh token for a new access token, or throws. */
-export async function refreshAccessToken(): Promise<string> {
+export function refreshAccessToken(): Promise<string> {
+  if (!refreshInFlight) {
+    refreshInFlight = doRefreshAccessToken().finally(() => {
+      refreshInFlight = null;
+    });
+  }
+  return refreshInFlight;
+}
+
+async function doRefreshAccessToken(): Promise<string> {
   const refresh = getRefreshToken();
   if (!refresh) {
     throw new ApiError("Сессия не найдена. Войдите в аккаунт.", 401, "no_session");

@@ -39,7 +39,10 @@ WHERE rs.user_id = sqlc.arg(user_id)
     (sqlc.arg(status)::text = 'due' AND rs.next_review_at <= NOW())
     OR (sqlc.arg(status)::text = 'upcoming' AND rs.next_review_at > NOW())
   )
-ORDER BY rs.next_review_at ASC
+  -- Keyset pagination: row-wise comparison seeks strictly past the last item
+  -- of the previous page on the (next_review_at, id) tiebreak.
+  AND (rs.next_review_at, rs.id) > (sqlc.arg(cursor_next_review_at)::timestamptz, sqlc.arg(cursor_id)::bigint)
+ORDER BY rs.next_review_at ASC, rs.id ASC
 LIMIT sqlc.arg(queue_limit);
 
 -- name: GetReviewScheduleByID :one
@@ -54,7 +57,7 @@ UPDATE review_schedules
 SET next_review_at = $2, interval_days = $3, stability = $4, difficulty = $5,
     review_count = $6, last_rating = $7, state = $8, lapses = $9,
     last_review_at = $10, remaining_steps = $11, updated_at = NOW()
-WHERE id = $1
+WHERE id = $1 AND user_id = sqlc.arg(user_id)
 RETURNING id, user_id, problem_id, pattern_id, card_id, next_review_at,
           interval_days, stability, difficulty, review_count, last_rating,
           state, lapses, last_review_at, remaining_steps;
@@ -74,10 +77,10 @@ FROM review_schedules
 WHERE user_id = $1;
 
 -- name: UpdateProgressConfidence :exec
+-- Rows created by the extension ingest have confidence = NULL, and NULL + delta
+-- stays NULL, which silently disabled confidence tracking for real users. Start
+-- such rows from the neutral 50 (matching the dashboard's readiness midpoint)
+-- before applying the delta, clamped to [0, 100].
 UPDATE user_problem_progress
-SET confidence = CASE
-    WHEN confidence + $3::int < 0 THEN 0
-    WHEN confidence + $3::int > 100 THEN 100
-    ELSE confidence + $3::int
-END
+SET confidence = LEAST(100, GREATEST(0, COALESCE(confidence, 50) + $3::int))
 WHERE user_id = $1 AND problem_id = $2;

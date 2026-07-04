@@ -27,6 +27,7 @@ const cardTypeLabels: Record<MockCard["type"], string> = {
 export const overviewStats = cabinet.mock.overviewStats;
 export const reviewQueue = cabinet.mock.reviewQueue;
 export const weakPatterns = cabinet.mock.weakPatterns;
+export const strongPatterns = cabinet.mock.strongPatterns;
 export const problems = cabinet.mock.problems;
 export const roadmapWeeks = cabinet.mock.roadmapWeeks;
 export const cardRecords: readonly MockCard[] = cabinet.mock.cards;
@@ -54,8 +55,8 @@ function mulberry32(seed: number) {
 
 const heatRand = mulberry32(20260702);
 
-/** 26 weeks × 7 days of review-activity levels (0–4), newest week last. */
-export const activityWeeks: readonly (readonly number[])[] = Array.from({ length: 26 }, () =>
+/** Last 28 days of review-activity levels (0–4): 4 rows × 7 days, newest last. */
+export const activityWeeks: readonly (readonly number[])[] = Array.from({ length: 4 }, () =>
   Array.from({ length: 7 }, () => {
     const r = heatRand();
     if (r < 0.34) return 0;
@@ -66,5 +67,24 @@ export const activityWeeks: readonly (readonly number[])[] = Array.from({ length
   }),
 );
 
+// Per-day review counts behind the levels (for the hover tooltip). A separate
+// PRNG stream jitters counts inside each level's bracket without touching the
+// level pattern above.
+const countRand = mulberry32(20260703);
+const countBrackets: readonly (readonly [number, number])[] = [
+  [0, 0], // level 0
+  [1, 2], // level 1
+  [3, 4], // level 2
+  [5, 7], // level 3
+  [8, 11], // level 4
+];
+
+export const activityCounts: readonly (readonly number[])[] = activityWeeks.map((week) =>
+  week.map((level) => {
+    const [min, max] = countBrackets[level];
+    return min + Math.floor(countRand() * (max - min + 1));
+  }),
+);
+
 export const activityActiveDays = activityWeeks.flat().filter((level) => level > 0).length;
-export const activityTotalReviews = activityWeeks.flat().reduce((sum, level) => sum + level * 2, 0);
+export const activityTotalReviews = activityCounts.flat().reduce((sum, count) => sum + count, 0);

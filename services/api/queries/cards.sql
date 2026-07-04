@@ -1,3 +1,42 @@
+-- name: CreateCard :one
+INSERT INTO cards (user_id, problem_id, pattern_id, type, question, answer, explanation, source, created_by_ai)
+VALUES (
+    sqlc.arg(user_id)::bigint,
+    sqlc.narg(problem_id),
+    sqlc.narg(pattern_id),
+    sqlc.arg(card_type),
+    sqlc.arg(question),
+    sqlc.arg(answer),
+    sqlc.narg(explanation),
+    sqlc.narg(source),
+    sqlc.arg(created_by_ai)
+)
+RETURNING *;
+
+-- name: GetCardByID :one
+SELECT c.id, c.user_id, c.problem_id, c.pattern_id, c.type, c.question, c.answer,
+       c.explanation, c.source, c.created_by_ai, c.created_at,
+       p.title AS problem_title, p.url AS problem_url, pat.name AS pattern_name
+FROM cards c
+LEFT JOIN problems p   ON p.id   = c.problem_id
+LEFT JOIN patterns pat ON pat.id = c.pattern_id
+WHERE c.id = sqlc.arg(card_id)::bigint AND c.user_id = sqlc.arg(user_id)::bigint;
+
+-- name: UpdateCard :one
+UPDATE cards
+SET
+    type        = COALESCE(sqlc.narg(card_type), type),
+    question    = COALESCE(sqlc.narg(question), question),
+    answer      = COALESCE(sqlc.narg(answer), answer),
+    explanation = COALESCE(sqlc.narg(explanation), explanation),
+    source      = COALESCE(sqlc.narg(source), source)
+WHERE id = sqlc.arg(card_id)::bigint AND user_id = sqlc.arg(user_id)::bigint
+RETURNING *;
+
+-- name: DeleteCard :execrows
+DELETE FROM cards
+WHERE id = sqlc.arg(card_id)::bigint AND user_id = sqlc.arg(user_id)::bigint;
+
 -- name: ListUserCards :many
 SELECT
     c.id,
@@ -36,6 +75,11 @@ LEFT JOIN roadmap_items ri ON ri.problem_id = c.problem_id AND ri.roadmap_code =
 LEFT JOIN patterns rpt ON rpt.id = ri.pattern_id
 WHERE (c.user_id = sqlc.arg(user_id)::bigint OR c.user_id IS NULL OR rs.id IS NOT NULL)
   AND (sqlc.arg(card_type)::text = '' OR c.type = sqlc.arg(card_type)::text)
+  AND (
+    sqlc.arg(pattern_code)::text = ''
+    OR cpt.code = sqlc.arg(pattern_code)::text
+    OR rpt.code = sqlc.arg(pattern_code)::text
+  )
   AND (c.created_at, c.id) < (sqlc.arg(cursor_created_at)::timestamptz, sqlc.arg(cursor_id)::bigint)
 ORDER BY c.created_at DESC, c.id DESC
 LIMIT sqlc.arg(limit_rows)::integer;
@@ -77,6 +121,11 @@ LEFT JOIN patterns cpt ON cpt.id = c.pattern_id
 LEFT JOIN roadmap_items ri ON ri.problem_id = c.problem_id AND ri.roadmap_code = 'neetcode_150'
 LEFT JOIN patterns rpt ON rpt.id = ri.pattern_id
 WHERE (c.user_id = sqlc.arg(user_id)::bigint OR c.user_id IS NULL OR rs.id IS NOT NULL)
+  AND (
+    sqlc.arg(pattern_code)::text = ''
+    OR cpt.code = sqlc.arg(pattern_code)::text
+    OR rpt.code = sqlc.arg(pattern_code)::text
+  )
   AND (
     (sqlc.arg(scope)::text = 'due' AND rs.next_review_at <= NOW())
     OR (sqlc.arg(scope)::text = 'hard_normal' AND rs.last_rating IN ('hard', 'normal'))
@@ -120,6 +169,8 @@ INSERT INTO review_schedules (
     ease, stability, difficulty, review_count, algorithm
 )
 VALUES ($1, $2, $3, 0, 2.5, 0.1, 5.0, 0, 'fsrs')
+ON CONFLICT (user_id, card_id) WHERE card_id IS NOT NULL DO UPDATE
+SET updated_at = review_schedules.updated_at
 RETURNING id;
 
 -- name: CountCardSessionAttempts :one

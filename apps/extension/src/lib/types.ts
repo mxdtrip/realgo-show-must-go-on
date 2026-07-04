@@ -31,6 +31,8 @@ export interface DetectedSubmission {
   taskTitle: string;
   taskUrl: string;
   platformTaskSlug?: string;
+  /** Topic tags read from the task page, best-effort (absent if none found). */
+  tags?: string[];
   submitResult?: SubmitResult;
   /** ISO-8601 timestamp of when the submit was observed. */
   submittedAt: string;

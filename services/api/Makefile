@@ -1,7 +1,8 @@
 GO ?= go
 COMPOSE ?= docker compose -f ../../docker-compose.yml
+PROD_COMPOSE ?= $(COMPOSE) --profile prod-demo
 
-.PHONY: help build run test test-integration vet fmt tidy sqlc up down migrate seed-roadmap seed-cards seed-users reset-demo logs
+.PHONY: help build run test test-integration vet fmt tidy sqlc up up-api prod-demo-up down migrate seed-roadmap seed-cards seed-users reset-demo logs
 
 help: ## Show available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-10s\033[0m %s\n", $$1, $$2}'
@@ -32,6 +33,12 @@ sqlc: ## Generate sqlc code from queries/
 
 up: ## Build and start the full stack in the background
 	$(COMPOSE) up -d --build
+
+up-api: ## Build and start only API, Postgres, Redis, migrations, and Caddy
+	$(COMPOSE) up -d --build postgres redis migrate api caddy
+
+prod-demo-up: ## Build and start the stack with the VPS reverse tunnel
+	$(PROD_COMPOSE) up -d --build
 
 down: ## Stop the stack and remove its containers
 	$(COMPOSE) down

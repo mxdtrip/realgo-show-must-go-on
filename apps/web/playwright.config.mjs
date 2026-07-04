@@ -32,7 +32,12 @@ export default defineConfig({
       timeout: 30_000,
     },
     {
-      command: `npm run build && npm run start -- -p ${WEB_PORT}`,
+      command:
+        "npm run build && " +
+        "cp -R public .next/standalone/ && " +
+        "mkdir -p .next/standalone/.next && " +
+        "cp -R .next/static .next/standalone/.next/static && " +
+        `PORT=${WEB_PORT} HOSTNAME=127.0.0.1 node .next/standalone/server.js`,
       env: {
         NEXT_PUBLIC_API_BASE_URL: `http://127.0.0.1:${STUB_PORT}`,
         // Guard bypass ON so /dashboard renders deterministically without a

@@ -34,7 +34,7 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 			response.Fail(w, http.StatusNotFound, "NOT_FOUND", "user not found")
 			return
 		}
-		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", err.Error())
+		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", "could not load roadmap")
 		return
 	}
 

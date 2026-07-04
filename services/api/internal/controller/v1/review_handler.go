@@ -1,10 +1,10 @@
 package v1
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -12,6 +12,8 @@ import (
 	"github.com/mxdtrip/freeburger/services/api/internal/auth"
 	"github.com/mxdtrip/freeburger/services/api/internal/controller/v1/request"
 	v1response "github.com/mxdtrip/freeburger/services/api/internal/controller/v1/response"
+	"github.com/mxdtrip/freeburger/services/api/internal/entity"
+	"github.com/mxdtrip/freeburger/services/api/internal/server/httpjson"
 	"github.com/mxdtrip/freeburger/services/api/internal/server/response"
 	"github.com/mxdtrip/freeburger/services/api/internal/service"
 )
@@ -54,7 +56,16 @@ func (h *ReviewHandler) GetQueue(w http.ResponseWriter, r *http.Request) {
 
 	limit := parseLimit(r, defaultQueueLimit)
 
-	resp, err := h.svc.GetQueue(r.Context(), userID, status, limit)
+	cursor := entity.FirstReviewQueueCursor()
+	if raw := strings.TrimSpace(r.URL.Query().Get("cursor")); raw != "" {
+		cursor, err = entity.DecodeReviewQueueCursor(raw)
+		if err != nil {
+			response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "invalid cursor")
+			return
+		}
+	}
+
+	resp, err := h.svc.GetQueue(r.Context(), userID, status, cursor, limit)
 	if err != nil {
 		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", "could not load review queue")
 		return
@@ -78,8 +89,7 @@ func (h *ReviewHandler) RateReview(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req request.RateReviewRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "invalid request body")
+	if !httpjson.DecodeStrict(w, r, &req, "VALIDATION_ERROR") {
 		return
 	}
 

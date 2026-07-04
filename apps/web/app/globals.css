@@ -696,6 +696,22 @@ h3 {
   overflow: hidden;
 }
 
+/* Memory section — live extension-popup demo (MemoryExtensionDemo).
+   The popup is a fixed 400x372 card; center it in the grid cell and scale it
+   down on narrow columns so it never overflows the viewport. */
+.memory-ext-demo {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+@media (max-width: 520px) {
+  .memory-ext-demo {
+    transform: scale(0.82);
+    transform-origin: top center;
+    margin-bottom: -67px; /* reclaim the height freed by the down-scale */
+  }
+}
+
 .demo-toolbar {
   display: flex;
   align-items: center;
@@ -1601,29 +1617,6 @@ h3 {
   color: var(--text-dim);
 }
 
-.cabinet-path__caret {
-  display: inline-block;
-  flex: none;
-  width: 7px;
-  height: 13px;
-  margin-left: 7px;
-  vertical-align: -2px;
-  background: var(--accent);
-  opacity: 0.9;
-  animation: cabinet-caret 1.15s steps(1) infinite;
-}
-
-@keyframes cabinet-caret {
-  0%,
-  49% {
-    opacity: 0.9;
-  }
-  50%,
-  100% {
-    opacity: 0;
-  }
-}
-
 .cabinet-topbar__actions {
   display: flex;
   align-items: center;
@@ -1637,6 +1630,11 @@ h3 {
   color: var(--text-dim);
   text-transform: lowercase;
   transition: color 0.16s ease;
+}
+
+/* "на сайт" is the last action — pin it to the right edge of the topbar. */
+.cabinet-topbar__back {
+  margin-left: auto;
 }
 
 .cabinet-topbar__link::after {
@@ -2198,25 +2196,55 @@ a.cabinet-panel__meta:hover {
 
 .heatmap {
   display: flex;
+  flex-direction: column;
   align-items: flex-start;
-  gap: 3px;
+  gap: 7px;
   padding: 14px 16px 12px;
-  overflow-x: auto;
-  scrollbar-width: thin;
 }
 
 .heatmap__week {
   display: grid;
-  grid-template-rows: repeat(7, auto);
-  gap: 3px;
-  flex: none;
+  grid-template-columns: repeat(7, auto);
+  gap: 7px;
 }
 
 .heatmap__cell {
-  width: 11px;
-  height: 11px;
-  border-radius: 2.5px;
+  position: relative;
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
   background: rgba(255, 255, 255, 0.045);
+}
+
+/* Pure-CSS hover tip: date + review count from the data-tip attribute. */
+.heatmap__cell[data-tip]::after {
+  content: attr(data-tip);
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 9px);
+  transform: translate(-50%, 3px);
+  z-index: 40;
+  white-space: nowrap;
+  padding: 6px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  background: var(--panel-strong);
+  box-shadow: 0 16px 36px -18px rgba(1, 4, 9, 0.95);
+  color: var(--text-dim);
+  font-family: var(--font-stack-mono);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
+}
+
+.heatmap__cell[data-tip]:hover::after {
+  opacity: 1;
+  transform: translate(-50%, 0);
 }
 
 .heatmap__cell--1 {
@@ -2746,6 +2774,71 @@ a.cabinet-panel__meta:hover {
   font-size: 12px;
 }
 
+.pattern-technique-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pattern-detail-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pattern-detail-list li {
+  position: relative;
+  padding-left: 16px;
+  color: var(--text-dim);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.pattern-detail-list li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 8px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent-bright);
+}
+
+.pattern-detail-examples {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pattern-detail-examples li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.pattern-detail-examples li:last-child {
+  border-bottom: 0;
+}
+
+.pattern-detail-examples a {
+  font-size: 13px;
+}
+
+.pattern-detail-examples li span {
+  font-family: var(--font-stack-mono);
+  font-size: 11px;
+  color: var(--text-faint);
+  text-transform: uppercase;
+}
+
 .confidence--danger {
   color: var(--danger-bright);
 }
@@ -2823,6 +2916,22 @@ a.cabinet-panel__meta:hover {
 }
 
 .pattern-card__score em.is-down {
+  color: var(--danger-bright);
+}
+
+/* Trend chip inside the compact pattern-stack cards (patterns page columns). */
+.pattern-card__trend {
+  font-family: var(--font-stack-mono);
+  font-size: 11px;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.pattern-card__trend.is-up {
+  color: var(--success-fg);
+}
+
+.pattern-card__trend.is-down {
   color: var(--danger-bright);
 }
 
@@ -3140,9 +3249,9 @@ a.cabinet-panel__meta:hover {
 
 .term-log__listen i {
   width: 7px;
-  height: 13px;
+  height: 7px;
+  border-radius: 50%;
   background: var(--accent);
-  animation: cabinet-caret 1.15s steps(1) infinite;
 }
 
 /* ---------- cards page: session launcher ---------- */
@@ -5070,8 +5179,6 @@ a.cabinet-panel__meta:hover {
     transition: none;
   }
 
-  .cabinet-path__caret,
-  .term-log__listen i,
   .user-menu {
     animation: none;
   }
@@ -5090,7 +5197,13 @@ a.cabinet-panel__meta:hover {
    render full-page instead of as a fixed overlay over the landing. */
 .auth-layer--page {
   position: relative;
+  z-index: 1;
   min-height: 100vh;
+  padding-top: calc(24px + 64px);
+  background:
+    radial-gradient(900px 520px at 82% -10%, rgba(56, 139, 253, 0.16), transparent 66%),
+    radial-gradient(760px 460px at 6% 108%, rgba(46, 160, 67, 0.1), transparent 70%),
+    var(--bg);
 }
 
 /* Tabs are <Link>s on the standalone pages (buttons in the landing modal). */
@@ -6275,5 +6388,74 @@ a.cabinet-panel__meta:hover {
     grid-column: 1 / -1;
     width: 100%;
     justify-content: space-between;
+  }
+}
+
+/* ---------- landing scroll reveal ---------- */
+/* Hidden state applies only after ScrollReveal.tsx puts `reveal-ready` on <html>,
+   so the landing stays visible without JS. Durations sync with ScrollReveal.tsx. */
+
+@media (prefers-reduced-motion: no-preference) {
+  .reveal-ready body {
+    overflow-x: clip;
+  }
+
+  /* Hidden state is applied instantly (no transition here), otherwise elements
+     visibly animate INTO hiding right after hydration. The transition lives on
+     `.is-revealed` below, so only the entrance is animated. */
+  .reveal-ready [data-reveal] {
+    opacity: 0;
+    will-change: opacity, transform;
+  }
+
+  .reveal-ready [data-reveal="left"] {
+    transform: translateX(-48px);
+  }
+
+  .reveal-ready [data-reveal="right"] {
+    transform: translateX(48px);
+  }
+
+  .reveal-ready [data-reveal="up"] {
+    transform: translateY(32px);
+  }
+
+  .reveal-ready [data-reveal="zoom"] {
+    transform: translateY(20px) scale(0.93);
+  }
+
+  .reveal-ready [data-reveal="tilt"] {
+    transform: perspective(900px) translateY(30px) rotateX(14deg);
+    transform-origin: 50% 100%;
+  }
+
+  .reveal-ready [data-reveal="blur"] {
+    transform: translateY(10px);
+    filter: blur(7px);
+  }
+
+  .reveal-ready [data-reveal].is-revealed {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+
+  /* Transition lives only here, added by JS right before each toggle and
+     removed once it finishes — so it never fights a card's own hover
+     transition outside of the brief in/out crossing itself. */
+  .reveal-ready [data-reveal].is-animating {
+    transition:
+      opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1),
+      transform 0.75s cubic-bezier(0.16, 1, 0.3, 1),
+      filter 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @media (max-width: 920px) {
+    /* Stacked single-column layout: side slides read poorly and can
+       overflow the viewport, fall back to a vertical rise. */
+    .reveal-ready [data-reveal="left"],
+    .reveal-ready [data-reveal="right"] {
+      transform: translateY(28px);
+    }
   }
 }

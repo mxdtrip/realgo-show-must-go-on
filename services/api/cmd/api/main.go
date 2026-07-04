@@ -6,6 +6,9 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	// Embed the IANA time zone database so time.LoadLocation-based validation
+	// works identically in every runtime, including minimal container images.
+	_ "time/tzdata"
 
 	"github.com/mxdtrip/freeburger/services/api/internal/app"
 )
