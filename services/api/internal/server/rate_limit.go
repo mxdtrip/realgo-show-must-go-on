@@ -2,7 +2,6 @@ package server
 
 import (
 	"fmt"
-	"log/slog"
 	"net"
 	"net/http"
 	"os"
@@ -33,7 +32,6 @@ func rateLimit(store *redisstore.Storage, namespace string, limit int64, window 
 			key := fmt.Sprintf("rate:%s:%s:%s:%s", namespace, r.Method, r.URL.Path, clientIP(r))
 			count, retryAfter, err := incrementRateLimit(store, r, key, window)
 			if err != nil {
-				slog.Error("server: rate limit failed", slog.Any("err", err), slog.String("namespace", namespace))
 				response.Fail(w, http.StatusServiceUnavailable, "rate_limit_unavailable", "rate limit service is unavailable")
 				return
 			}
@@ -42,7 +40,6 @@ func rateLimit(store *redisstore.Storage, namespace string, limit int64, window 
 			w.Header().Set("X-RateLimit-Remaining", strconv.FormatInt(remaining, 10))
 			if count > limit {
 				w.Header().Set("Retry-After", strconv.FormatInt(ceilSeconds(retryAfter), 10))
-				slog.Warn("server: rate limit failed", slog.String("namespace", namespace), slog.Int64("count", count), slog.Int64("limit", limit))
 				response.Fail(w, http.StatusTooManyRequests, "rate_limited", "too many requests")
 				return
 			}

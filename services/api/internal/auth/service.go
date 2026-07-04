@@ -3,7 +3,6 @@ package auth
 import (
 	"context"
 	"errors"
-	"log/slog"
 	"net/mail"
 	"strings"
 	"time"
@@ -67,14 +66,7 @@ func (s *Service) Register(ctx context.Context, email, password string) (db.User
 	if err != nil {
 		cleanupCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 2*time.Second)
 		defer cancel()
-		if cleanupErr := s.queries.DeleteUserByID(cleanupCtx, user.ID); cleanupErr != nil {
-			slog.Error("auth: registration cleanup failed",
-				slog.String("layer", "service"),
-				slog.String("module", "auth"),
-				slog.Any("err", cleanupErr),
-				slog.Int64("user_id", user.ID),
-			)
-		}
+		_ = s.queries.DeleteUserByID(cleanupCtx, user.ID)
 		return db.User{}, TokenPair{}, err
 	}
 	return user, tokens, nil
@@ -228,14 +220,7 @@ func (s *Service) DeleteAccount(ctx context.Context, userID int64, password, ref
 	}
 	if refreshToken != "" {
 		// Best-effort: the account is already gone, so a revoke failure is not fatal.
-		if revokeErr := s.revokeRefreshToken(ctx, refreshToken); revokeErr != nil {
-			slog.Error("auth: delete account revoke refresh token failed",
-				slog.String("layer", "service"),
-				slog.String("module", "auth"),
-				slog.Any("err", revokeErr),
-				slog.Int64("user_id", userID),
-			)
-		}
+		_ = s.revokeRefreshToken(ctx, refreshToken)
 	}
 	return nil
 }

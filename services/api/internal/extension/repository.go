@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -134,16 +133,12 @@ func (r *pgRepository) Ingest(ctx context.Context, in IngestInput) (out IngestOu
 	// A replayed event must not advance the schedule; return current state.
 	if duplicate {
 		out.Duplicate = true
-		sched, e := q.GetProblemReviewSchedule(ctx, db.GetProblemReviewScheduleParams{
+		if sched, e := q.GetProblemReviewSchedule(ctx, db.GetProblemReviewScheduleParams{
 			UserID: in.UserID, ProblemID: toInt8(problemID),
-		})
-		switch {
-		case e == nil:
+		}); e == nil {
 			out.Status = "reviewing"
 			out.ReviewID = sched.ID
 			out.NextReviewAt = timePtr(sched.NextReviewAt)
-		case !errors.Is(e, pgx.ErrNoRows):
-			slog.Error("extension: lookup review schedule failed", slog.String("layer", "repo"), slog.String("module", "extension"), slog.Any("err", e), slog.Int64("user_id", in.UserID), slog.Int64("problem_id", problemID))
 		}
 		if err := tx.Commit(ctx); err != nil {
 			return IngestOutput{}, fmt.Errorf("extension: commit tx: %w", err)

@@ -2,7 +2,6 @@ package v1
 
 import (
 	"errors"
-	"log/slog"
 	"net/http"
 	"strconv"
 	"strings"
@@ -42,7 +41,6 @@ func RegisterReviewRoutes(r chi.Router, h *ReviewHandler) {
 func (h *ReviewHandler) GetQueue(w http.ResponseWriter, r *http.Request) {
 	userID, err := getUserID(r)
 	if err != nil {
-		slog.Warn("reviews: GetQueue failed", slog.Any("err", err))
 		response.Fail(w, http.StatusUnauthorized, "UNAUTHORIZED", "user not authenticated")
 		return
 	}
@@ -52,7 +50,6 @@ func (h *ReviewHandler) GetQueue(w http.ResponseWriter, r *http.Request) {
 		status = "due"
 	}
 	if !validQueueStatus(status) {
-		slog.Warn("reviews: GetQueue failed", slog.Int64("user_id", userID), slog.String("status", status))
 		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "status must be due or upcoming")
 		return
 	}
@@ -63,7 +60,6 @@ func (h *ReviewHandler) GetQueue(w http.ResponseWriter, r *http.Request) {
 	if raw := strings.TrimSpace(r.URL.Query().Get("cursor")); raw != "" {
 		cursor, err = entity.DecodeReviewQueueCursor(raw)
 		if err != nil {
-			slog.Warn("reviews: GetQueue failed", slog.Any("err", err), slog.Int64("user_id", userID))
 			response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "invalid cursor")
 			return
 		}
@@ -71,7 +67,6 @@ func (h *ReviewHandler) GetQueue(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := h.svc.GetQueue(r.Context(), userID, status, cursor, limit)
 	if err != nil {
-		slog.Error("reviews: GetQueue failed", slog.Any("err", err), slog.Int64("user_id", userID))
 		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", "could not load review queue")
 		return
 	}
@@ -83,14 +78,12 @@ func (h *ReviewHandler) GetQueue(w http.ResponseWriter, r *http.Request) {
 func (h *ReviewHandler) RateReview(w http.ResponseWriter, r *http.Request) {
 	userID, err := getUserID(r)
 	if err != nil {
-		slog.Warn("reviews: RateReview failed", slog.Any("err", err))
 		response.Fail(w, http.StatusUnauthorized, "UNAUTHORIZED", "user not authenticated")
 		return
 	}
 
 	reviewID, err := strconv.ParseInt(chi.URLParam(r, "reviewId"), 10, 64)
 	if err != nil {
-		slog.Warn("reviews: RateReview failed", slog.Any("err", err), slog.Int64("user_id", userID))
 		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "invalid reviewId")
 		return
 	}
@@ -101,7 +94,6 @@ func (h *ReviewHandler) RateReview(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !req.Valid() {
-		slog.Warn("reviews: RateReview failed", slog.Int64("user_id", userID), slog.Int64("review_id", reviewID), slog.String("rating", req.Rating))
 		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", service.ErrInvalidRating.Error())
 		return
 	}
@@ -109,7 +101,6 @@ func (h *ReviewHandler) RateReview(w http.ResponseWriter, r *http.Request) {
 	// Парсим reviewedAt из запроса (ISO 8601)
 	reviewedAt, err := time.Parse(time.RFC3339, req.ReviewedAt)
 	if err != nil {
-		slog.Warn("reviews: RateReview failed", slog.Any("err", err), slog.Int64("user_id", userID), slog.Int64("review_id", reviewID))
 		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "invalid reviewedAt format, expected ISO 8601")
 		return
 	}
@@ -117,11 +108,9 @@ func (h *ReviewHandler) RateReview(w http.ResponseWriter, r *http.Request) {
 	data, err := h.svc.RateReview(r.Context(), reviewID, userID, req.Rating, reviewedAt)
 	if err != nil {
 		if errors.Is(err, service.ErrReviewNotFound) {
-			slog.Warn("reviews: RateReview failed", slog.Any("err", err), slog.Int64("user_id", userID), slog.Int64("review_id", reviewID))
 			response.Fail(w, http.StatusNotFound, "NOT_FOUND", err.Error())
 			return
 		}
-		slog.Error("reviews: RateReview failed", slog.Any("err", err), slog.Int64("user_id", userID), slog.Int64("review_id", reviewID))
 		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", "could not rate review")
 		return
 	}
@@ -133,14 +122,12 @@ func (h *ReviewHandler) RateReview(w http.ResponseWriter, r *http.Request) {
 func (h *ReviewHandler) GetStats(w http.ResponseWriter, r *http.Request) {
 	userID, err := getUserID(r)
 	if err != nil {
-		slog.Warn("reviews: GetStats failed", slog.Any("err", err))
 		response.Fail(w, http.StatusUnauthorized, "UNAUTHORIZED", "user not authenticated")
 		return
 	}
 
 	resp, err := h.svc.GetStats(r.Context(), userID)
 	if err != nil {
-		slog.Error("reviews: GetStats failed", slog.Any("err", err), slog.Int64("user_id", userID))
 		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", "could not load review stats")
 		return
 	}

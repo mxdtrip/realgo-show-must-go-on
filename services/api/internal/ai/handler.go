@@ -5,7 +5,6 @@ package ai
 
 import (
 	"context"
-	"log/slog"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -50,25 +49,21 @@ func validateTarget(problemID, patternID *int64) string {
 func (h *Handler) GenerateCard(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.UserIDFromContext(r.Context())
 	if !ok {
-		slog.Warn("ai: GenerateCard failed")
 		response.Fail(w, http.StatusUnauthorized, "UNAUTHORIZED", "user not authenticated")
 		return
 	}
 
 	var req GenerateCardRequest
 	if !httpjson.DecodeStrict(w, r, &req, "VALIDATION_ERROR") {
-		slog.Warn("ai: GenerateCard failed", slog.Int64("user_id", userID))
 		return
 	}
 	if msg := validateTarget(req.ProblemID, req.PatternID); msg != "" {
-		slog.Warn("ai: GenerateCard failed", slog.Int64("user_id", userID), slog.String("reason", msg))
 		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", msg)
 		return
 	}
 
 	id, err := h.repo.CreateAIRequestLog(r.Context(), userID, "card_generation")
 	if err != nil {
-		slog.Error("ai: GenerateCard failed", slog.Any("err", err), slog.Int64("user_id", userID))
 		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", "could not queue generation request")
 		return
 	}
@@ -84,25 +79,21 @@ func (h *Handler) GenerateCard(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) GenerateQuiz(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.UserIDFromContext(r.Context())
 	if !ok {
-		slog.Warn("ai: GenerateQuiz failed")
 		response.Fail(w, http.StatusUnauthorized, "UNAUTHORIZED", "user not authenticated")
 		return
 	}
 
 	var req GenerateQuizRequest
 	if !httpjson.DecodeStrict(w, r, &req, "VALIDATION_ERROR") {
-		slog.Warn("ai: GenerateQuiz failed", slog.Int64("user_id", userID))
 		return
 	}
 	if msg := validateTarget(req.ProblemID, req.PatternID); msg != "" {
-		slog.Warn("ai: GenerateQuiz failed", slog.Int64("user_id", userID), slog.String("reason", msg))
 		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", msg)
 		return
 	}
 
 	id, err := h.repo.CreateAIRequestLog(r.Context(), userID, "quiz_generation")
 	if err != nil {
-		slog.Error("ai: GenerateQuiz failed", slog.Any("err", err), slog.Int64("user_id", userID))
 		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", "could not queue generation request")
 		return
 	}

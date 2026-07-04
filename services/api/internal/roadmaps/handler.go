@@ -2,7 +2,6 @@ package roadmaps
 
 import (
 	"context"
-	"log/slog"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -31,7 +30,6 @@ func RegisterRoutes(r chi.Router, h *Handler) {
 func (h *Handler) GetNeetCode150(w http.ResponseWriter, r *http.Request) {
 	items, err := h.repo.List(r.Context(), neetcode150Code)
 	if err != nil {
-		slog.Error("roadmaps: GetNeetCode150 failed", slog.Any("err", err), slog.String("code", neetcode150Code))
 		response.Fail(w, http.StatusInternalServerError, "internal_error", "could not load roadmap")
 		return
 	}
