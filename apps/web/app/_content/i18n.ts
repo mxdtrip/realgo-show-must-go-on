@@ -43,6 +43,7 @@ const ru = {
       auth: {
         login: "Log in",
         signup: "Sign up",
+        dashboard: "Dashboard",
         createAccount: "Create account",
         continue: "Continue",
         email: "Email",
