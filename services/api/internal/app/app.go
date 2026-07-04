@@ -12,6 +12,7 @@ import (
 	"github.com/joho/godotenv"
 
 	"github.com/mxdtrip/freeburger/services/api/internal/auth"
+	"github.com/mxdtrip/freeburger/services/api/internal/cards"
 	"github.com/mxdtrip/freeburger/services/api/internal/config"
 	"github.com/mxdtrip/freeburger/services/api/internal/server"
 	"github.com/mxdtrip/freeburger/services/api/internal/storage/postgres"
@@ -54,6 +55,10 @@ func Run(ctx context.Context) error {
 	}
 	defer func() { _ = rdb.Close() }()
 	logger.Info("connected to redis")
+
+	if err := cards.WarmSeedCache(ctx, rdb); err != nil {
+		return fmt.Errorf("warm cards seed cache: %w", err)
+	}
 
 	authSvc := auth.NewService(db.New(pg.Pool), rdb.Client, authCfg)
 
