@@ -10,6 +10,7 @@ type FlashcardProps = {
     hideAnswer: string;
     question: string;
     showAnswer: string;
+    aiBadgeTitle?: string;
   };
   onToggle: () => void;
 };
@@ -19,6 +20,11 @@ export function Flashcard({ card, isFlipped, labels, onToggle }: Readonly<Flashc
     <article className={`flashcard ${isFlipped ? "flashcard--flipped" : ""}`}>
       <div className="flashcard__meta">
         <span>{card.type}</span>
+        {card.createdByAi ? (
+          <b className="card-ai-badge" title={labels.aiBadgeTitle}>
+            AI
+          </b>
+        ) : null}
         <em>{card.source}</em>
       </div>
       <div className="flashcard__body">

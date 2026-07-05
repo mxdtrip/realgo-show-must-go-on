@@ -10,6 +10,8 @@ export type ReviewCard = {
   source: string;
   front: string;
   back: string;
+  /** Marks AI-generated cards; absent on mock/legacy data means false. */
+  createdByAi?: boolean;
 };
 
 export type ReviewLog = {
