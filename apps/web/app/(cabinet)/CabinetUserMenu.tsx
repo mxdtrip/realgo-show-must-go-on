@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import { useAuth } from "../_api/AuthProvider";
+import { openReportProblemDialog } from "./ReportProblemDialog";
 
 type AccountCopy = {
   name: string;
@@ -11,6 +12,7 @@ type AccountCopy = {
   initials: string;
   rows: ReadonlyArray<readonly [string, string]>;
   menuSettings: string;
+  menuReport: string;
   menuLogout: string;
   logoutPending: string;
 };
@@ -69,6 +71,17 @@ export function CabinetUserMenu({ copy }: { copy: AccountCopy }) {
             ))}
           </dl>
           <div className="user-menu__actions">
+            <button
+              className="user-menu__report"
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                setOpen(false);
+                openReportProblemDialog();
+              }}
+            >
+              {copy.menuReport}
+            </button>
             <button
               className="user-menu__logout"
               type="button"
