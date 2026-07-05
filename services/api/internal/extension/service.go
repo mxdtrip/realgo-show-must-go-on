@@ -9,17 +9,31 @@ import (
 	"github.com/mxdtrip/freeburger/services/api/internal/scheduler"
 )
 
+// Provisioner triggers AI card generation for a solved problem. Optional:
+// a nil Provisioner (the default) leaves generation disabled, e.g. when no
+// AI provider key is configured.
+type Provisioner interface {
+	ProvisionAsync(problemID int64, platform, slug string)
+}
+
 // Service turns a validated extension event into stored problem/progress/review
 // state. It is algorithm-agnostic: the scheduler decides the next review time.
 type Service struct {
-	repo  Repository
-	sched scheduler.Scheduler
-	now   func() time.Time
+	repo        Repository
+	sched       scheduler.Scheduler
+	now         func() time.Time
+	provisioner Provisioner
 }
 
 // NewService wires the repository and the review scheduler.
 func NewService(repo Repository, sched scheduler.Scheduler) *Service {
 	return &Service{repo: repo, sched: sched, now: time.Now}
+}
+
+// WithProvisioner enables AI card generation for solved problems.
+func (s *Service) WithProvisioner(p Provisioner) *Service {
+	s.provisioner = p
+	return s
 }
 
 // Handle validates and persists one event for the authenticated user.
@@ -64,6 +78,10 @@ func (s *Service) Handle(ctx context.Context, userID int64, req EventRequest) (E
 	out, err := s.repo.Ingest(ctx, in)
 	if err != nil {
 		return EventResult{}, err
+	}
+
+	if norm.solved && s.provisioner != nil {
+		s.provisioner.ProvisionAsync(out.ProblemID, norm.platform, norm.slug)
 	}
 
 	return EventResult{

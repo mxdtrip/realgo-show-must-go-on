@@ -1,7 +1,6 @@
 package ai
 
 import (
-	"bytes"
 	_ "embed"
 	"fmt"
 	"strings"
@@ -9,32 +8,62 @@ import (
 )
 
 //go:embed prompts/generate_cards_v1.md
-var generateCardsPromptV1 string
+var promptDocV1 string
 
-func buildGenerateCardsPrompt(in ProblemPromptInput) (systemPrompt, userPrompt string, err error) {
-	systemPrompt, userTemplate, err := splitPrompt(generateCardsPromptV1)
+// PromptVersionV1 must be bumped alongside the prompt whenever a change
+// alters generation semantics (see prompts/generate_cards_v1.md), so stale
+// cards.ai_prompt_version rows are regenerated instead of silently reused.
+const PromptVersionV1 = "1"
+
+// Anchored to a line of their own: the prompt doc's intro prose also
+// mentions the bare marker text inline (inside backticks) to describe the
+// convention, so a plain substring search would match that mention instead
+// of the real section delimiters below it.
+const (
+	promptSystemMarker = "\n<!-- system -->\n"
+	promptUserMarker   = "\n<!-- user -->\n"
+)
+
+var (
+	promptSystemV1   string
+	promptUserTmplV1 *template.Template
+)
+
+func init() {
+	system, userTmplSrc, err := splitPrompt(promptDocV1)
 	if err != nil {
-		return "", "", err
+		panic(fmt.Errorf("ai: parse generate_cards_v1.md: %w", err))
 	}
-	tpl, err := template.New("generate_cards_v1").Parse(userTemplate)
-	if err != nil {
-		return "", "", fmt.Errorf("ai: parse card prompt: %w", err)
-	}
-	var buf bytes.Buffer
-	if err := tpl.Execute(&buf, in); err != nil {
-		return "", "", fmt.Errorf("ai: render card prompt: %w", err)
-	}
-	return systemPrompt, strings.TrimSpace(buf.String()), nil
+	promptSystemV1 = system
+	promptUserTmplV1 = template.Must(template.New("generate_cards_v1_user").Parse(userTmplSrc))
 }
 
-func splitPrompt(raw string) (string, string, error) {
-	_, afterSystem, ok := strings.Cut(raw, "<!-- system -->")
-	if !ok {
-		return "", "", fmt.Errorf("ai: card prompt missing system marker")
+// promptUserData is the Go text/template input for the prompt's user section.
+type promptUserData struct {
+	Platform   string
+	Slug       string
+	Title      string
+	Difficulty string
+	URL        string
+}
+
+// splitPrompt separates a prompt document into its system and user sections,
+// delimited by the <!-- system --> / <!-- user --> markers.
+func splitPrompt(doc string) (system, user string, err error) {
+	si := strings.Index(doc, promptSystemMarker)
+	ui := strings.Index(doc, promptUserMarker)
+	if si == -1 || ui == -1 || ui < si {
+		return "", "", fmt.Errorf("missing %q/%q markers", promptSystemMarker, promptUserMarker)
 	}
-	systemPrompt, userPrompt, ok := strings.Cut(afterSystem, "<!-- user -->")
-	if !ok {
-		return "", "", fmt.Errorf("ai: card prompt missing user marker")
+	system = strings.TrimSpace(doc[si+len(promptSystemMarker) : ui])
+	user = strings.TrimSpace(doc[ui+len(promptUserMarker):])
+	return system, user, nil
+}
+
+func renderPromptUser(tmpl *template.Template, in GenerateCardsInput) (string, error) {
+	var buf strings.Builder
+	if err := tmpl.Execute(&buf, promptUserData(in)); err != nil {
+		return "", fmt.Errorf("ai: render prompt: %w", err)
 	}
-	return strings.TrimSpace(systemPrompt), strings.TrimSpace(userPrompt), nil
+	return buf.String(), nil
 }
