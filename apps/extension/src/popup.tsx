@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 
+import { fetchCardsViaBackground } from "./lib/cardsClient";
 import { clearLastSubmission, getLastSubmission, getReviewUrl } from "./lib/storage";
 import type {
   DetectedSubmission,
+  ExtensionEventResult,
   SaveResponse,
   SubmissionPayload,
 } from "./lib/types";
@@ -24,7 +26,9 @@ function IndexPopup() {
       .catch(() => setSubmission(null));
   }, []);
 
-  async function handleSave(payload: SubmissionPayload) {
+  async function handleSave(
+    payload: SubmissionPayload
+  ): Promise<ExtensionEventResult | null> {
     // Route the save through the background worker (same path as the in-page
     // overlay) so transport/business logic lives in one place (#35, #38).
     const res: SaveResponse | undefined = await chrome.runtime.sendMessage({
@@ -40,6 +44,8 @@ function IndexPopup() {
     } catch {
       /* action API may be unavailable in some contexts */
     }
+    // The event result carries problemId — the popup polls cards off it.
+    return res.result ?? null;
   }
 
   async function handleReview() {
@@ -57,7 +63,8 @@ function IndexPopup() {
     <PopupApp
       submission={submission}
       onSave={handleSave}
-      onClose={() => window.close()}
+      onFetchCards={fetchCardsViaBackground}
+      onCollapse={() => window.close()}
       onReview={handleReview}
     />
   );

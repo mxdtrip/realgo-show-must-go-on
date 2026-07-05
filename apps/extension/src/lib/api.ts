@@ -1,6 +1,11 @@
 import { AuthError, refreshAccessToken } from "./auth";
 import { getAccessToken, getApiBaseUrl } from "./storage";
-import type { ExtensionEventResult, Platform, SubmissionPayload } from "./types";
+import type {
+  ExtensionEventResult,
+  Platform,
+  ProblemCardsResult,
+  SubmissionPayload,
+} from "./types";
 
 /**
  * Transport for the browser-extension ingest endpoint (implemented & merged in
@@ -20,6 +25,10 @@ export const EXTENSION_EVENTS_PATH = "/api/v1/extension/events";
 
 /** Root liveness probe used as a connection check (not under /api/v1). */
 export const HEALTH_PATH = "/healthz";
+
+/** Cards readiness of a problem (Bearer, like the rest of /me/*). */
+export const problemCardsPath = (problemId: number) =>
+  `/api/v1/me/problems/${problemId}/cards`;
 
 /** The exact JSON body the backend expects (see services/api .../extension). */
 interface EventRequest {
@@ -161,6 +170,56 @@ export async function checkApiStatus(): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+/**
+ * Cards readiness for a problem, `GET /api/v1/me/problems/{id}/cards` (contract
+ * fixed in issue #227; the backend route lands in #222/#227 — until then the
+ * server answers 404 for the path itself).
+ *
+ * Deliberately never throws: `null` covers every unusable outcome — missing
+ * route, 404 problem, auth failure, network error, malformed body — so callers
+ * can treat `null` as "feature unavailable" and stay silent instead of nagging
+ * the user about an endpoint that hasn't shipped yet.
+ */
+export async function getProblemCards(
+  problemId: number
+): Promise<ProblemCardsResult | null> {
+  try {
+    const baseUrl = await getApiBaseUrl();
+    const url = `${baseUrl}${problemCardsPath(problemId)}`;
+
+    let token = await getAccessToken();
+    if (!token) token = await tryRefresh();
+
+    let res = await authedGet(url, token);
+    // Same one-shot refresh dance as saveSubmission: expired access → retry.
+    if (res.status === 401) {
+      token = await tryRefresh();
+      res = await authedGet(url, token);
+    }
+    if (!res.ok) return null;
+
+    const data = await safeJson(res);
+    // /me/* handlers wrap responses in the { data: … } envelope like the events
+    // endpoint; the #227 contract shows the bare object. Accept both shapes.
+    const payload = data?.data ?? data;
+    const status = payload?.status;
+    if (status !== "ready" && status !== "generating" && status !== "none") {
+      return null;
+    }
+    const cards = payload?.cards;
+    return { status, cardsCount: Array.isArray(cards) ? cards.length : 0 };
+  } catch {
+    return null;
+  }
+}
+
+async function authedGet(url: string, token: string): Promise<Response> {
+  return fetch(url, {
+    method: "GET",
+    headers: { Authorization: `Bearer ${token}` },
+  });
 }
 
 /** Refreshes the access token, translating "no session" into a friendly error. */

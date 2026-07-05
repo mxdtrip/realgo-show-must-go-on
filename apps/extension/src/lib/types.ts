@@ -2,7 +2,7 @@
  * Shared types for the realgo extension.
  *
  * TODO: promote the cross-cutting payload/DTO types (SubmissionPayload,
- * UserDifficulty, CanSolveAgain) into `packages/shared` once that package is
+ * UserDifficulty) into `packages/shared` once that package is
  * wired up, so the Go API client and the web app can share the same contract.
  */
 
@@ -16,8 +16,6 @@ export type SubmitResult =
   | "unknown";
 
 export type UserDifficulty = "hard" | "normal" | "easy";
-
-export type CanSolveAgain = "no" | "probably" | "yes";
 
 /** What the content script detects on the page and hands to the popup. */
 export interface DetectedSubmission {
@@ -46,7 +44,8 @@ export interface SubmissionPayload extends DetectedSubmission {
 /** Messages exchanged between content script, background and popup. */
 export type RuntimeMessage =
   | { type: "REALGO_SUBMISSION_DETECTED"; submission: DetectedSubmission }
-  | { type: "REALGO_SAVE_SUBMISSION"; payload: SubmissionPayload };
+  | { type: "REALGO_SAVE_SUBMISSION"; payload: SubmissionPayload }
+  | { type: "REALGO_GET_PROBLEM_CARDS"; problemId: number };
 
 /**
  * Parsed result of a successful `POST /api/v1/extension/events` (the backend
@@ -70,6 +69,31 @@ export interface SaveResponse {
   error?: string;
   /** Present when `!ok`: machine code, e.g. "unauthorized" | "network". */
   code?: string;
+}
+
+/**
+ * Cards readiness of a problem, `GET /api/v1/me/problems/{id}/cards` (contract
+ * fixed in issue #227; the backend route ships in #222/#227):
+ *   ready      — cards exist and are available to the user;
+ *   generating — the async LLM generation holds the lock right now;
+ *   none       — no cards and no generation running (unrecognised task, quota…).
+ * A 404 means the problem — or, until the backend lands, the route itself —
+ * does not exist; the client treats that as "feature unavailable", not an error.
+ */
+export type ProblemCardsStatus = "ready" | "generating" | "none";
+
+/** What the UI needs from the cards endpoint (cards themselves stay behind). */
+export interface ProblemCardsResult {
+  status: ProblemCardsStatus;
+  /** How many cards came with "ready" (0 for the other statuses). */
+  cardsCount: number;
+}
+
+/** Reply shape for REALGO_GET_PROBLEM_CARDS (background → UI). */
+export interface CardsResponse {
+  ok: boolean;
+  /** Present when `ok`; absent means "endpoint unavailable" — stay silent. */
+  result?: ProblemCardsResult;
 }
 
 /** Token pair returned by the backend auth endpoints (snake_case = wire format). */
