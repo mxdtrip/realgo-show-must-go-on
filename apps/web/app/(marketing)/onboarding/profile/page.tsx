@@ -3,9 +3,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { getDictionary } from "../../../_content/i18n";
-
-const companiesEndpoint = "https://api.github.com/repos/liquidslr/leetcode-company-wise-problems/contents?ref=main";
+import { updateProfile } from "../../../_api/account";
+import { useAuth } from "../../../_api/AuthProvider";
+import { searchCompanies } from "../../../_api/companies";
+import { ApiError } from "../../../_api/types";
+import { getDictionary, onboardingApiCopy } from "../../../_content/i18n";
 
 const fallbackCompanies = [
   "Amazon",
@@ -38,20 +40,15 @@ const algorithmTopics = [
   { id: "bit", label: "Bit Manipulation" },
 ] as const;
 
-type CompanyApiItem = {
-  name?: string;
-  type?: string;
-};
-
 type CalendarDay = {
   iso: string;
   label: number;
   weekday: string;
 };
 
-type OnboardingStep = "company" | "date" | "topics" | "welcome";
+type OnboardingStep = "company" | "date" | "topics" | "goal" | "welcome";
 
-const steps: OnboardingStep[] = ["company", "date", "topics"];
+const steps: OnboardingStep[] = ["company", "date", "topics", "goal"];
 const onboardingStorageKey = "realgo:onboarding-profile:v1";
 
 function toDateInputValue(date: Date) {
@@ -111,22 +108,39 @@ function replaceActiveCompany(value: string, suggestion: string) {
 
 export default function OnboardingProfilePage() {
   const router = useRouter();
+  const { user, status } = useAuth();
   const dictionary = getDictionary();
   const copy = dictionary.onboarding.profile;
-  const [companies, setCompanies] = useState<string[]>([...fallbackCompanies]);
+
+  const [companySuggestions, setCompanySuggestions] = useState<string[]>([...fallbackCompanies]);
   const [companyInput, setCompanyInput] = useState("");
+  const [targetPosition, setTargetPosition] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
+  const [prepGoal, setPrepGoal] = useState("");
+  const [grade, setGrade] = useState("");
   const [step, setStep] = useState<OnboardingStep>("company");
   const [customCalendarOpen, setCustomCalendarOpen] = useState(false);
   const [customMonthOffset, setCustomMonthOffset] = useState(3);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
+
+  // Auth guard: redirect anonymous users to login, already-onboarded to dashboard.
+  useEffect(() => {
+    if (status === "anonymous") {
+      router.replace("/login");
+    } else if (status === "authenticated" && user?.onboarding_completed) {
+      router.replace("/dashboard");
+    }
+  }, [router, status, user?.onboarding_completed]);
 
   const currentStepIndex = Math.max(0, steps.indexOf(step));
   const selectedCompanies = useMemo(() => splitCompanies(companyInput), [companyInput]);
   const currentStepHasValue =
     (step === "company" && selectedCompanies.length > 0) ||
     (step === "date" && selectedDate.length > 0) ||
-    (step === "topics" && selectedTopics.length > 0);
+    (step === "topics" && selectedTopics.length > 0) ||
+    step === "goal";
 
   const months = useMemo(() => {
     const today = new Date();
@@ -142,37 +156,36 @@ export default function OnboardingProfilePage() {
     const query = activeCompanyQuery(companyInput).toLowerCase();
     const used = new Set(selectedCompanies.map((item) => item.toLowerCase()));
     if (query.length < 2) return [];
-    return companies
+    return companySuggestions
       .filter((item) => item.toLowerCase().includes(query) && !used.has(item.toLowerCase()))
       .slice(0, 6);
-  }, [companies, companyInput, selectedCompanies]);
+  }, [companySuggestions, companyInput, selectedCompanies]);
 
+  // Debounced company autocomplete from the backend API.
   useEffect(() => {
-    let ignore = false;
-
-    async function loadCompanies() {
-      try {
-        const response = await fetch(companiesEndpoint);
-        if (!response.ok) return;
-        const data = (await response.json()) as CompanyApiItem[];
-        const names = data
-          .filter((item) => item.type === "dir" && typeof item.name === "string")
-          .map((item) => item.name as string)
-          .sort((first, second) => first.localeCompare(second));
-
-        if (!ignore && names.length > 0) {
-          setCompanies(names);
-        }
-      } catch {
-        // Fallback companies keep the mock onboarding usable offline.
-      }
+    const query = activeCompanyQuery(companyInput);
+    if (query.trim().length < 2) {
+      setCompanySuggestions([...fallbackCompanies]);
+      return;
     }
 
-    void loadCompanies();
+    const controller = new AbortController();
+    const timer = setTimeout(async () => {
+      try {
+        const results = await searchCompanies(query.trim(), controller.signal, 8);
+        if (!controller.signal.aborted) {
+          setCompanySuggestions(results.map((company) => company.name));
+        }
+      } catch {
+        // Keep fallback suggestions on error.
+      }
+    }, 300);
+
     return () => {
-      ignore = true;
+      clearTimeout(timer);
+      controller.abort();
     };
-  }, []);
+  }, [companyInput]);
 
   const toggleTopic = useCallback((topicId: string) => {
     setSelectedTopics((current) =>
@@ -181,18 +194,34 @@ export default function OnboardingProfilePage() {
   }, []);
 
   const saveProfile = useCallback(
-    (topics = selectedTopics) => {
-      window.localStorage.setItem(
-        onboardingStorageKey,
-        JSON.stringify({
-          companies: selectedCompanies,
-          interviewDate: selectedDate,
-          topics,
-          savedAt: new Date().toISOString(),
-        }),
-      );
+    async (topics = selectedTopics) => {
+      setSaving(true);
+      setSaveError("");
+      try {
+        const timezone =
+          Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+        await updateProfile({
+          target_company: selectedCompanies[0] ?? "",
+          target_position: targetPosition.trim() || undefined,
+          interview_date: selectedDate ? `${selectedDate}T09:00:00Z` : undefined,
+          prep_goal: prepGoal.trim() || undefined,
+          grade: grade || undefined,
+          timezone,
+          onboarding_completed: true,
+        });
+        // Topics have no backend field — keep them in localStorage.
+        window.localStorage.setItem(
+          onboardingStorageKey,
+          JSON.stringify({ topics, savedAt: new Date().toISOString() }),
+        );
+        setStep("welcome");
+      } catch (e) {
+        setSaveError(e instanceof ApiError ? e.message : onboardingApiCopy.saveFailed);
+      } finally {
+        setSaving(false);
+      }
     },
-    [selectedCompanies, selectedDate, selectedTopics],
+    [grade, prepGoal, selectedCompanies, selectedDate, selectedTopics, targetPosition],
   );
 
   const goNext = useCallback(() => {
@@ -206,13 +235,19 @@ export default function OnboardingProfilePage() {
       return;
     }
 
-    saveProfile();
-    setStep("welcome");
+    if (step === "topics") {
+      setStep("goal");
+      return;
+    }
+
+    // step === "goal" → save and transition to welcome on success.
+    void saveProfile();
   }, [saveProfile, step]);
 
   const goBack = useCallback(() => {
     if (step === "date") setStep("company");
     if (step === "topics") setStep("date");
+    if (step === "goal") setStep("topics");
   }, [step]);
 
   const skipCurrent = useCallback(() => {
@@ -229,8 +264,13 @@ export default function OnboardingProfilePage() {
 
     if (step === "topics") {
       setSelectedTopics([]);
-      saveProfile([]);
-      setStep("welcome");
+      setStep("goal");
+    }
+
+    if (step === "goal") {
+      setPrepGoal("");
+      setGrade("");
+      void saveProfile([]);
     }
   }, [saveProfile, step]);
 
@@ -261,6 +301,11 @@ export default function OnboardingProfilePage() {
     </article>
   );
 
+  // While auth status is being determined, render nothing.
+  if (status === "loading") {
+    return null;
+  }
+
   if (step === "welcome") {
     const summary = copy.welcome.summary;
     const topicLabels = algorithmTopics
@@ -288,8 +333,20 @@ export default function OnboardingProfilePage() {
                 <dd>{selectedCompanies.length > 0 ? selectedCompanies.join(", ") : summary.empty}</dd>
               </div>
               <div>
+                <dt>{onboardingApiCopy.summaryPosition}</dt>
+                <dd>{targetPosition.trim() || summary.empty}</dd>
+              </div>
+              <div>
                 <dt>{summary.date}</dt>
                 <dd>{selectedDate ? fullDateLabel(selectedDate) : summary.empty}</dd>
+              </div>
+              <div>
+                <dt>{onboardingApiCopy.summaryGoal}</dt>
+                <dd>{prepGoal.trim() || summary.empty}</dd>
+              </div>
+              <div>
+                <dt>{onboardingApiCopy.summaryGrade}</dt>
+                <dd>{grade || summary.empty}</dd>
               </div>
               <div>
                 <dt>{summary.topics}</dt>
@@ -332,8 +389,17 @@ export default function OnboardingProfilePage() {
         <div className="onboarding-body" key={step}>
           <aside className="onboarding-copy">
             <span className="onboarding-eyebrow">{stepTag}</span>
-            <h2>{copy[step].title}</h2>
-            <p>{copy[step].description}</p>
+            {step === "goal" ? (
+              <>
+                <h2>{onboardingApiCopy.goal.title}</h2>
+                <p>{onboardingApiCopy.goal.description}</p>
+              </>
+            ) : (
+              <>
+                <h2>{copy[step].title}</h2>
+                <p>{copy[step].description}</p>
+              </>
+            )}
           </aside>
 
           {step === "company" ? (
@@ -376,6 +442,15 @@ export default function OnboardingProfilePage() {
                   ))}
                 </div>
               ) : null}
+              <label className="onboarding-input">
+                {onboardingApiCopy.positionLabel}
+                <input
+                  autoComplete="organization-title"
+                  placeholder={onboardingApiCopy.positionPlaceholder}
+                  value={targetPosition}
+                  onChange={(event) => setTargetPosition(event.target.value)}
+                />
+              </label>
             </div>
           ) : null}
 
@@ -436,27 +511,58 @@ export default function OnboardingProfilePage() {
               </p>
             </div>
           ) : null}
+
+          {step === "goal" ? (
+            <div className="onboarding-main">
+              <label className="onboarding-input">
+                {onboardingApiCopy.goal.prepGoalLabel}
+                <textarea
+                  placeholder={onboardingApiCopy.goal.prepGoalPlaceholder}
+                  rows={3}
+                  value={prepGoal}
+                  onChange={(event) => setPrepGoal(event.target.value)}
+                />
+              </label>
+              <label className="onboarding-input">
+                {onboardingApiCopy.goal.gradeLabel}
+                <select value={grade} onChange={(event) => setGrade(event.target.value)}>
+                  <option value="">—</option>
+                  {onboardingApiCopy.goal.grades.map((item) => (
+                    <option key={item} value={item}>
+                      {item}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+          ) : null}
         </div>
+
+        {saveError ? (
+          <p className="onboarding-save-error" role="alert">
+            {saveError}
+          </p>
+        ) : null}
 
         <footer className="onboarding-actions">
           <div>
             {step !== "company" ? (
-              <button className="onboarding-ghost" type="button" onClick={goBack}>
+              <button className="onboarding-ghost" type="button" onClick={goBack} disabled={saving}>
                 {copy.back}
               </button>
             ) : null}
           </div>
           <div>
-            <button className="onboarding-ghost" type="button" onClick={skipCurrent}>
+            <button className="onboarding-ghost" type="button" onClick={skipCurrent} disabled={saving}>
               {copy.skip}
             </button>
             <button
               className="onboarding-primary"
-              disabled={!currentStepHasValue}
+              disabled={!currentStepHasValue || saving}
               type="button"
               onClick={goNext}
             >
-              {copy.next}
+              {saving ? onboardingApiCopy.saving : copy.next}
             </button>
           </div>
         </footer>

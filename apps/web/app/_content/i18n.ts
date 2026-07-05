@@ -1077,3 +1077,24 @@ export const accountSecurityCopy = {
   revokeFallback: "Серверная заглушка — текущая сессия завершена локально.",
   revokeFailed: "revoke failed",
 } as const;
+
+// ===== #62 onboarding API wiring =====
+export const onboardingApiCopy = {
+  positionLabel: "target position",
+  positionPlaceholder: "Например, Senior Backend Engineer",
+  goal: {
+    title: "Цель подготовки",
+    description:
+      "Расскажи, к чему готовишься. Это поможет подобрать план повторения и карточки под твою цель.",
+    prepGoalLabel: "цель",
+    prepGoalPlaceholder: "Например: пройти интервью в Google через 2 месяца",
+    gradeLabel: "уровень",
+    grades: ["junior", "middle", "senior", "staff", "principal"],
+  },
+  saving: "Сохраняем…",
+  saveFailed: "Не удалось сохранить профиль. Попробуйте ещё раз.",
+  companiesSearchFailed: "Не удалось загрузить подсказки компаний.",
+  summaryPosition: "позиция",
+  summaryGoal: "цель",
+  summaryGrade: "уровень",
+} as const;

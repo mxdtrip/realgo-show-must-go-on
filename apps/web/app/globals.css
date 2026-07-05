@@ -6579,3 +6579,71 @@ a.cabinet-panel__meta:hover {
   font-size: 12.5px;
   line-height: 1.55;
 }
+
+/* ---------- #62 onboarding API wiring ---------- */
+
+.onboarding-input textarea {
+  width: 100%;
+  min-height: 80px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 13px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  font-family: var(--font-stack-sans);
+  font-size: 14px;
+  letter-spacing: normal;
+  text-transform: none;
+  outline: none;
+  resize: vertical;
+  transition:
+    border-color 0.16s ease,
+    background 0.16s ease,
+    box-shadow 0.16s ease;
+}
+
+.onboarding-input textarea::placeholder {
+  color: var(--text-faint);
+}
+
+.onboarding-input textarea:focus {
+  border-color: var(--accent-line);
+  background: rgba(255, 255, 255, 0.055);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.onboarding-input select {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0 13px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  font-family: var(--font-stack-sans);
+  font-size: 14px;
+  letter-spacing: normal;
+  text-transform: none;
+  outline: none;
+  cursor: pointer;
+  color-scheme: dark;
+  transition:
+    border-color 0.16s ease,
+    background 0.16s ease,
+    box-shadow 0.16s ease;
+}
+
+.onboarding-input select:focus {
+  border-color: var(--accent-line);
+  background: rgba(255, 255, 255, 0.055);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.onboarding-save-error {
+  margin: 0;
+  padding: 8px 24px;
+  color: var(--danger-bright, #ffa198);
+  font-family: var(--font-stack-mono);
+  font-size: 11px;
+  line-height: 1.4;
+}

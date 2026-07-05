@@ -41,11 +41,12 @@ export function AuthForm({ mode }: { mode: Mode }) {
     setError("");
     try {
       if (mode === "login") {
-        await auth.login(email.trim(), password);
+        const authUser = await auth.login(email.trim(), password);
+        router.push(authUser.onboarding_completed ? "/dashboard" : "/onboarding/profile");
       } else {
-        await auth.register(email.trim(), password);
+        const authUser = await auth.register(email.trim(), password);
+        router.push(authUser.onboarding_completed ? "/dashboard" : "/onboarding/profile");
       }
-      router.push(copy.redirect);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Что-то пошло не так. Попробуйте ещё раз.");
       setPending(false);

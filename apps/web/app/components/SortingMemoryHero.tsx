@@ -443,11 +443,11 @@ export function SortingMemoryHero() {
       setAuthError("");
       try {
         if (authMode === "signup") {
-          await auth.register(authEmail.trim(), authPassword);
-          router.push("/onboarding/profile");
+          const authUser = await auth.register(authEmail.trim(), authPassword);
+          router.push(authUser.onboarding_completed ? "/dashboard" : "/onboarding/profile");
         } else {
-          await auth.login(authEmail.trim(), authPassword);
-          router.push("/dashboard");
+          const authUser = await auth.login(authEmail.trim(), authPassword);
+          router.push(authUser.onboarding_completed ? "/dashboard" : "/onboarding/profile");
         }
         // Keep the button disabled while the redirect happens; the component
         // unmounts on navigation, so there's no need to reset pending here.
