@@ -106,6 +106,19 @@ const GLYPHS: Record<string, ReactElement> = {
       <path d="m13 6 6 6-6 6" />
     </>
   ),
+  keyboard: (
+    <>
+      <rect x="2.5" y="5.5" width="19" height="13" rx="2" />
+      <path d="M6.2 9.5h.01M9.7 9.5h.01M13.2 9.5h.01M16.7 9.5h.01M6.2 12.5h.01M9.7 12.5h.01M13.2 12.5h.01M16.7 12.5h.01M8 15.5h8" />
+    </>
+  ),
+  megaphone: (
+    <>
+      <path d="M3 10.8v2.4a1.6 1.6 0 0 0 1.6 1.6h1.6l6.8 3.7V5.5L6.2 9.2H4.6A1.6 1.6 0 0 0 3 10.8Z" />
+      <path d="M16.6 9.2a4.2 4.2 0 0 1 0 5.6" />
+      <path d="M19.2 6.8a7.6 7.6 0 0 1 0 10.4" />
+    </>
+  ),
 };
 
 export function CabinetIcon({

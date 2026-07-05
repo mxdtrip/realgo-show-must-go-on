@@ -4,10 +4,13 @@ import { CabinetMobileNav } from "../_demo/CabinetMobileNav";
 import { DemoBanner } from "../_demo/DemoBanner";
 import { getDictionary } from "../_content/i18n";
 import { CabinetGuard } from "./CabinetGuard";
+import { CabinetHotkeys } from "./CabinetHotkeys";
 import { CabinetInterviewCountdown } from "./CabinetInterviewCountdown";
 import { CabinetNav } from "./CabinetNav";
 import { CabinetPath } from "./CabinetPath";
 import { CabinetUserMenu } from "./CabinetUserMenu";
+import { CabinetWelcomeTour } from "./CabinetWelcomeTour";
+import { ReportProblemLauncher } from "./ReportProblemDialog";
 import { reviewQueue } from "./_mock";
 
 export default function CabinetLayout({
@@ -17,6 +20,7 @@ export default function CabinetLayout({
 }>) {
   const dictionary = getDictionary();
   const copy = dictionary.cabinet.layout;
+  const shellCopy = dictionary.cabinet.shell;
   const profileCopy = dictionary.cabinet.pages.settings.profile;
 
   return (
@@ -25,7 +29,7 @@ export default function CabinetLayout({
         Перейти к содержимому
       </a>
       <div className="cabinet-shell">
-        <aside className="cabinet-sidebar">
+        <aside className="cabinet-sidebar" data-tour="nav">
           <div className="cabinet-brand-block">
             <Link className="site-brand" href="/dashboard">
               {copy.brand}
@@ -55,7 +59,8 @@ export default function CabinetLayout({
             <CabinetPath prefix={copy.pathPrefix} />
             <div className="cabinet-topbar__actions">
               <DemoBanner label={copy.demoBadge} title={copy.demoTitle} />
-              <Link className="cabinet-due-chip" href="/reviews">
+              <ReportProblemLauncher copy={shellCopy.report} />
+              <Link className="cabinet-due-chip" data-tour="due" href="/reviews">
                 {reviewQueue.length} {copy.dueChip}
               </Link>
               <Link className="cabinet-topbar__link cabinet-topbar__back" href="/">
@@ -63,11 +68,13 @@ export default function CabinetLayout({
               </Link>
             </div>
           </header>
-          <div className="cabinet-content" id="cabinet-content" tabIndex={-1}>
+          <div className="cabinet-content" id="cabinet-content" data-tour="content" tabIndex={-1}>
             {children}
           </div>
         </div>
       </div>
+      <CabinetHotkeys copy={shellCopy.hotkeys} />
+      <CabinetWelcomeTour copy={shellCopy.tour} />
     </CabinetGuard>
   );
 }
