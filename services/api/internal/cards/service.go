@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"math"
 	"strings"
 	"time"
@@ -149,6 +150,8 @@ func (s *Service) Rate(ctx context.Context, userID, cardID int64, req RateReques
 	if !token.StartedAt.IsZero() {
 		if count, countErr := s.repo.CountSessionAttempts(ctx, userID, token.StartedAt); countErr == nil && count > 0 {
 			reviewed = count
+		} else if countErr != nil {
+			slog.Error("cards: count session attempts failed", slog.String("layer", "service"), slog.String("module", "cards"), slog.Any("err", countErr), slog.Int64("user_id", userID), slog.Int64("card_id", cardID))
 		}
 	}
 	total := token.Total

@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"math"
 	"net/http"
 	"strconv"
@@ -50,18 +51,21 @@ func RegisterRoutes(r chi.Router, h *Handler) {
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.UserIDFromContext(r.Context())
 	if !ok {
+		slog.Warn("problems: List failed")
 		response.Fail(w, http.StatusUnauthorized, "UNAUTHORIZED", "user not authenticated")
 		return
 	}
 
 	params, pageLimit, err := parseListParams(r)
 	if err != nil {
+		slog.Warn("problems: List failed", slog.Any("err", err), slog.Int64("user_id", userID))
 		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", err.Error())
 		return
 	}
 
 	items, err := h.repo.List(r.Context(), userID, params)
 	if err != nil {
+		slog.Error("problems: List failed", slog.Any("err", err), slog.Int64("user_id", userID))
 		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", "could not list problems")
 		return
 	}
@@ -74,22 +78,26 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.UserIDFromContext(r.Context())
 	if !ok {
+		slog.Warn("problems: Get failed")
 		response.Fail(w, http.StatusUnauthorized, "UNAUTHORIZED", "user not authenticated")
 		return
 	}
 
 	problemID, err := strconv.ParseInt(chi.URLParam(r, "problemId"), 10, 64)
 	if err != nil {
+		slog.Warn("problems: Get failed", slog.Any("err", err), slog.Int64("user_id", userID))
 		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "invalid problemId")
 		return
 	}
 
 	problem, err := h.repo.GetByID(r.Context(), userID, problemID)
 	if errors.Is(err, errNotFound) {
+		slog.Warn("problems: Get failed", slog.Any("err", err), slog.Int64("user_id", userID), slog.Int64("problem_id", problemID))
 		response.Fail(w, http.StatusNotFound, "NOT_FOUND", "problem not found")
 		return
 	}
 	if err != nil {
+		slog.Error("problems: Get failed", slog.Any("err", err), slog.Int64("user_id", userID), slog.Int64("problem_id", problemID))
 		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", "could not fetch problem")
 		return
 	}
@@ -101,22 +109,26 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) Save(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.UserIDFromContext(r.Context())
 	if !ok {
+		slog.Warn("problems: Save failed")
 		response.Fail(w, http.StatusUnauthorized, "UNAUTHORIZED", "user not authenticated")
 		return
 	}
 
 	problemID, err := strconv.ParseInt(chi.URLParam(r, "problemId"), 10, 64)
 	if err != nil {
+		slog.Warn("problems: Save failed", slog.Any("err", err), slog.Int64("user_id", userID))
 		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "invalid problemId")
 		return
 	}
 
 	status, err := h.repo.Save(r.Context(), userID, problemID)
 	if errors.Is(err, errNotFound) {
+		slog.Warn("problems: Save failed", slog.Any("err", err), slog.Int64("user_id", userID), slog.Int64("problem_id", problemID))
 		response.Fail(w, http.StatusNotFound, "NOT_FOUND", "problem not found")
 		return
 	}
 	if err != nil {
+		slog.Error("problems: Save failed", slog.Any("err", err), slog.Int64("user_id", userID), slog.Int64("problem_id", problemID))
 		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", "could not save problem")
 		return
 	}

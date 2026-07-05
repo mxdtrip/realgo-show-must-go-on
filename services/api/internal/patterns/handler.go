@@ -3,6 +3,7 @@ package patterns
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"net/http"
 	"strconv"
 
@@ -43,12 +44,14 @@ func RegisterRoutes(r chi.Router, h *Handler) {
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.UserIDFromContext(r.Context())
 	if !ok {
+		slog.Warn("patterns: List failed")
 		response.Fail(w, http.StatusUnauthorized, "UNAUTHORIZED", "authentication required")
 		return
 	}
 
 	items, err := h.repo.List(r.Context(), userID)
 	if err != nil {
+		slog.Error("patterns: List failed", slog.Any("err", err), slog.Int64("user_id", userID))
 		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", "could not list patterns")
 		return
 	}
@@ -59,12 +62,14 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) ListWeak(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.UserIDFromContext(r.Context())
 	if !ok {
+		slog.Warn("patterns: ListWeak failed")
 		response.Fail(w, http.StatusUnauthorized, "unauthorized", "authentication required")
 		return
 	}
 
 	items, err := h.repo.ListWeak(r.Context(), userID, weakPatternsLimit(r))
 	if err != nil {
+		slog.Error("patterns: ListWeak failed", slog.Any("err", err), slog.Int64("user_id", userID))
 		response.Fail(w, http.StatusInternalServerError, "internal_error", "could not list weak patterns")
 		return
 	}
@@ -74,6 +79,7 @@ func (h *Handler) ListWeak(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) GetDetail(w http.ResponseWriter, r *http.Request) {
 	if _, ok := auth.UserIDFromContext(r.Context()); !ok {
+		slog.Warn("patterns: GetDetail failed")
 		response.Fail(w, http.StatusUnauthorized, "unauthorized", "authentication required")
 		return
 	}
@@ -83,9 +89,11 @@ func (h *Handler) GetDetail(w http.ResponseWriter, r *http.Request) {
 	detail, err := h.repo.GetByCode(r.Context(), code)
 	if err != nil {
 		if errors.Is(err, ErrPatternNotFound) {
+			slog.Warn("patterns: GetDetail failed", slog.Any("err", err), slog.String("code", code))
 			response.Fail(w, http.StatusNotFound, "not_found", "pattern not found")
 			return
 		}
+		slog.Error("patterns: GetDetail failed", slog.Any("err", err), slog.String("code", code))
 		response.Fail(w, http.StatusInternalServerError, "internal_error", "could not load pattern")
 		return
 	}
