@@ -6647,3 +6647,13 @@ a.cabinet-panel__meta:hover {
   font-size: 11px;
   line-height: 1.4;
 }
+
+/* ---------- #208 resize animation fix: reduced-motion override ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .word-letter {
+    transition:
+      color 0.2s ease,
+      text-shadow 0.2s ease;
+  }
+}

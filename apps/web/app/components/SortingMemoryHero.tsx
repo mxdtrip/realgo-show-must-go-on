@@ -297,6 +297,20 @@ export function SortingMemoryHero() {
   const introTimerRef = useRef<number | null>(null);
   const sortRef = useRef<() => void>(() => {});
 
+  // Respect prefers-reduced-motion: when active, skip the scatter/sort
+  // animation and place letters directly in a gathered row.
+  const prefersReducedMotionRef = useRef(false);
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    prefersReducedMotionRef.current = mq.matches;
+    const onChange = () => {
+      prefersReducedMotionRef.current = mq.matches;
+    };
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
   // metricsVersion is a dependency so the layout recomputes when glyph widths
   // are refined from the loaded font, even though geometry reads them globally.
   const g = useMemo(() => geometry(size), [size, metricsVersion]);
@@ -309,7 +323,7 @@ export function SortingMemoryHero() {
     setActiveKeys([]);
     setActiveLines([]);
     setMotionMode("gathering");
-    setPoses(chaosPoses(size, next));
+    setPoses(prefersReducedMotionRef.current ? rowPoses(size, next) : chaosPoses(size, next));
     setScattered(true);
   }, [isSorting, order, size]);
 
@@ -331,6 +345,19 @@ export function SortingMemoryHero() {
       return;
     }
     setCodeError(false);
+
+    // Under prefers-reduced-motion, skip the step-by-step animation and place
+    // the sorted word in a gathered row directly.
+    if (prefersReducedMotionRef.current) {
+      setPoses(rowPoses(size, recording.result));
+      setOrder(recording.result);
+      setIsSorting(false);
+      setMotionMode("idle");
+      setScattered(false);
+      setActiveKeys([]);
+      setActiveLines([]);
+      return;
+    }
 
     // Which source line each kind of step maps to, so we can light it up while
     // the step plays. Found by keyword, so it survives the user editing the code.
@@ -480,14 +507,32 @@ export function SortingMemoryHero() {
     // Wait for the real measured size before placing the letters, so they never
     // first paint at the default-size centre and then visibly fly outward.
     if (!measured || poses.length > 0 || isSorting) return;
-    setPoses(introRef.current ? chaosPoses(size, order) : rowPoses(size, order));
+    setPoses(
+      introRef.current && !prefersReducedMotionRef.current
+        ? chaosPoses(size, order)
+        : rowPoses(size, order),
+    );
   }, [measured, isSorting, order, poses.length, size]);
 
   useEffect(() => {
     // Re-scatter onto the oval for the new viewport while the word is apart;
     // the gathered word is recentred by the effect below.
-    if (isSorting || poses.length === 0 || (!introRef.current && !scattered)) return;
-    setPoses(chaosPoses(size, order));
+    if (poses.length === 0) return;
+    if (isSorting) {
+      // Resize during a sort: the running sort closure captured the pre-resize
+      // size, so its rowPoses() calls produce stale coordinates. Cancel the
+      // stale run and re-snapshot to the new viewport. The word is always in a
+      // gathered row during a sort, never scattered.
+      runIdRef.current += 1;
+      setIsSorting(false);
+      setMotionMode("idle");
+      setActiveKeys([]);
+      setActiveLines([]);
+      setPoses(rowPoses(size, order));
+      return;
+    }
+    if (!introRef.current && !scattered) return;
+    setPoses(prefersReducedMotionRef.current ? rowPoses(size, order) : chaosPoses(size, order));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [size.width, size.height]);
 
@@ -529,6 +574,12 @@ export function SortingMemoryHero() {
   // tight shuffled row instead of flying in from the edges.
   useEffect(() => {
     if (!measured || !introRef.current) return;
+    // Under reduced motion the word is already placed in a gathered row by the
+    // initial placement effect — skip the auto-sort entirely.
+    if (prefersReducedMotionRef.current) {
+      introRef.current = false;
+      return;
+    }
     let raf1 = 0;
     let raf2 = 0;
     raf1 = window.requestAnimationFrame(() => {
