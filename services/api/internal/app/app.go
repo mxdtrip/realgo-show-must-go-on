@@ -69,9 +69,9 @@ func Run(ctx context.Context) error {
 		Redis:    rdb,
 		Auth:     authSvc,
 	}
-	if cfg.AI.Enabled() {
+	if cfg.Enabled() {
 		deps.CardProvisioner = ai.NewProvisioner(ai.NewRepository(pg.Pool), rdb, ai.NewGeminiProvider(cfg.AI), logger)
-		logger.Info("ai card generation enabled", slog.String("model", cfg.AI.Model))
+		logger.Info("ai card generation enabled", slog.String("model", cfg.Model))
 	}
 
 	handler := server.New(deps)

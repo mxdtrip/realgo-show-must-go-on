@@ -82,7 +82,7 @@ func (p *GeminiProvider) GenerateCards(ctx context.Context, in GenerateCardsInpu
 	if err != nil {
 		return nil, fmt.Errorf("ai: call gemini: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode == http.StatusTooManyRequests {
 		return nil, ErrQuotaExceeded
@@ -129,12 +129,7 @@ func parseGenerationContent(content string) ([]GeneratedCard, error) {
 		}
 		cards := make([]GeneratedCard, 0, len(raw))
 		for _, c := range raw {
-			cards = append(cards, GeneratedCard{
-				Type:        c.Type,
-				Question:    c.Question,
-				Answer:      c.Answer,
-				Explanation: c.Explanation,
-			})
+			cards = append(cards, GeneratedCard(c))
 		}
 		return cards, nil
 	}

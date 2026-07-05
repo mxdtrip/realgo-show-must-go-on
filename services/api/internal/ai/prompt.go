@@ -62,13 +62,7 @@ func splitPrompt(doc string) (system, user string, err error) {
 
 func renderPromptUser(tmpl *template.Template, in GenerateCardsInput) (string, error) {
 	var buf strings.Builder
-	if err := tmpl.Execute(&buf, promptUserData{
-		Platform:   in.Platform,
-		Slug:       in.Slug,
-		Title:      in.Title,
-		Difficulty: in.Difficulty,
-		URL:        in.URL,
-	}); err != nil {
+	if err := tmpl.Execute(&buf, promptUserData(in)); err != nil {
 		return "", fmt.Errorf("ai: render prompt: %w", err)
 	}
 	return buf.String(), nil
