@@ -16,6 +16,7 @@ import (
 	"github.com/mxdtrip/freeburger/services/api/internal/dashboard"
 	"github.com/mxdtrip/freeburger/services/api/internal/extension"
 	"github.com/mxdtrip/freeburger/services/api/internal/patterns"
+	"github.com/mxdtrip/freeburger/services/api/internal/problemcards"
 	"github.com/mxdtrip/freeburger/services/api/internal/problems"
 	"github.com/mxdtrip/freeburger/services/api/internal/quiz"
 	"github.com/mxdtrip/freeburger/services/api/internal/repo"
@@ -35,6 +36,11 @@ type Deps struct {
 	Postgres *postgres.Storage
 	Redis    *redis.Storage
 	Auth     *auth.Service
+	// CardProvisioner optionally triggers AI card generation when a user
+	// solves a problem with no existing cards. Nil disables generation
+	// (e.g. no AI provider key configured); wiring lives in cmd/api
+	// (production, via config.AI) or tests (a fake provider).
+	CardProvisioner extension.Provisioner
 }
 
 // New builds the application's HTTP handler with the base middleware stack,
@@ -63,16 +69,21 @@ func New(deps Deps) http.Handler {
 	patternsHandler := patterns.NewHandler(patterns.NewRepository(deps.Postgres.Pool))
 	roadmapHandler := roadmap.NewHandler(roadmap.NewRepository(deps.Postgres.Pool))
 	problemsHandler := problems.NewHandler(problems.NewRepository(deps.Postgres.Pool))
+	cardsSvc := cards.NewService(cards.NewRepository(deps.Postgres.Pool), reviewService)
+	problemCardsHandler := problemcards.NewHandler(problemcards.NewService(problemcards.NewRepository(deps.Postgres.Pool), cardsSvc, deps.Redis))
 	roadmapsHandler := roadmaps.NewHandler(roadmaps.NewRepository(deps.Postgres.Pool))
 	companiesHandler := companies.NewHandler()
 	dashboardHandler := dashboard.NewHandler(dashboard.NewService(dashboard.NewRepository(deps.Postgres.Pool), patterns.NewRepository(deps.Postgres.Pool)))
-	cardsHandler := cards.NewHandler(cards.NewService(cards.NewRepository(deps.Postgres.Pool), reviewService))
+	cardsHandler := cards.NewHandler(cardsSvc)
 	quizHandler := quiz.NewHandler(quiz.NewRepository(deps.Postgres.Pool))
 	aiHandler := ai.NewHandler(ai.NewRepository(deps.Postgres.Pool))
 
 	// Browser-extension ingest: simple fixed-interval scheduler (issue #17)
 	// behind the Scheduler interface, swappable for FSRS later.
 	extensionSvc := extension.NewService(extension.NewRepository(deps.Postgres.Pool), scheduler.NewSimple())
+	if deps.CardProvisioner != nil {
+		extensionSvc = extensionSvc.WithProvisioner(deps.CardProvisioner)
+	}
 	extensionHandler := extension.NewHandler(extensionSvc)
 	extensionStatusHandler := extension.NewStatusHandler(extension.NewStatusService(extension.NewStatusRepository(deps.Postgres.Pool)))
 
@@ -127,6 +138,7 @@ func New(deps Deps) http.Handler {
 		r.Route("/me/problems", func(r chi.Router) {
 			r.With(requireAuth(deps.Auth)).Group(func(r chi.Router) {
 				problems.RegisterRoutes(r, problemsHandler)
+				problemcards.RegisterRoutes(r, problemCardsHandler)
 			})
 		})
 

@@ -35,6 +35,28 @@ LEFT JOIN roadmap_items ri ON ri.problem_id = p.id AND ri.roadmap_code = 'neetco
 LEFT JOIN patterns pt ON pt.id = ri.pattern_id
 WHERE p.id = sqlc.arg(problem_id)::bigint;
 
+-- name: GetProblemLockKeyParts :one
+-- Platform code + external slug for one problem, used to build the
+-- CardProvisioner Redis lock key (lock:gen:{platform}:{slug}) and to check
+-- existence for GET /me/problems/{id}/cards. pgx.ErrNoRows means the problem
+-- does not exist.
+SELECT pl.code AS platform, p.external_slug AS slug
+FROM problems p
+JOIN platforms pl ON pl.id = p.platform_id
+WHERE p.id = sqlc.arg(problem_id)::bigint;
+
+-- name: GetProblemForGeneration :one
+-- Problem context fed into the AI card-generation prompt.
+SELECT
+    p.title,
+    p.url,
+    COALESCE(p.difficulty, 'unknown')::text AS difficulty,
+    pl.code AS platform,
+    p.external_slug AS slug
+FROM problems p
+JOIN platforms pl ON pl.id = p.platform_id
+WHERE p.id = sqlc.arg(problem_id)::bigint;
+
 -- name: UpsertProblemProgress :one
 -- Save a problem to the user's list (idempotent; won't downgrade reviewing/solved status).
 INSERT INTO user_problem_progress (user_id, problem_id, status, first_seen_at)

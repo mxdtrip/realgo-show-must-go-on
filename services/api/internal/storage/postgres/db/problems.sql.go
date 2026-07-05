@@ -28,6 +28,63 @@ func (q *Queries) CreateProblemScheduleIfAbsent(ctx context.Context, arg CreateP
 	return err
 }
 
+const getProblemForGeneration = `-- name: GetProblemForGeneration :one
+SELECT
+    p.title,
+    p.url,
+    COALESCE(p.difficulty, 'unknown')::text AS difficulty,
+    pl.code AS platform,
+    p.external_slug AS slug
+FROM problems p
+JOIN platforms pl ON pl.id = p.platform_id
+WHERE p.id = $1::bigint
+`
+
+type GetProblemForGenerationRow struct {
+	Title      string
+	Url        string
+	Difficulty string
+	Platform   string
+	Slug       string
+}
+
+// Problem context fed into the AI card-generation prompt.
+func (q *Queries) GetProblemForGeneration(ctx context.Context, problemID int64) (GetProblemForGenerationRow, error) {
+	row := q.db.QueryRow(ctx, getProblemForGeneration, problemID)
+	var i GetProblemForGenerationRow
+	err := row.Scan(
+		&i.Title,
+		&i.Url,
+		&i.Difficulty,
+		&i.Platform,
+		&i.Slug,
+	)
+	return i, err
+}
+
+const getProblemLockKeyParts = `-- name: GetProblemLockKeyParts :one
+SELECT pl.code AS platform, p.external_slug AS slug
+FROM problems p
+JOIN platforms pl ON pl.id = p.platform_id
+WHERE p.id = $1::bigint
+`
+
+type GetProblemLockKeyPartsRow struct {
+	Platform string
+	Slug     string
+}
+
+// Platform code + external slug for one problem, used to build the
+// CardProvisioner Redis lock key (lock:gen:{platform}:{slug}) and to check
+// existence for GET /me/problems/{id}/cards. pgx.ErrNoRows means the problem
+// does not exist.
+func (q *Queries) GetProblemLockKeyParts(ctx context.Context, problemID int64) (GetProblemLockKeyPartsRow, error) {
+	row := q.db.QueryRow(ctx, getProblemLockKeyParts, problemID)
+	var i GetProblemLockKeyPartsRow
+	err := row.Scan(&i.Platform, &i.Slug)
+	return i, err
+}
+
 const getUserProblem = `-- name: GetUserProblem :one
 SELECT
     p.id,

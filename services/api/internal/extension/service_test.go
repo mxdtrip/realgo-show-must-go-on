@@ -41,6 +41,20 @@ func newTestService(repo Repository, now time.Time) *Service {
 	return s
 }
 
+type fakeProvisioner struct {
+	calls     int
+	problemID int64
+	platform  string
+	slug      string
+}
+
+func (f *fakeProvisioner) ProvisionAsync(problemID int64, platform, slug string) {
+	f.calls++
+	f.problemID = problemID
+	f.platform = platform
+	f.slug = slug
+}
+
 func solvedRequest() EventRequest {
 	return EventRequest{
 		EventID: "evt_1",
@@ -105,6 +119,52 @@ func TestHandle_SolvedWithoutRating_Validation(t *testing.T) {
 	_, err := svc.Handle(context.Background(), 1, req)
 	if !errors.Is(err, ErrValidation) {
 		t.Fatalf("expected ErrValidation for solved without rating, got %v", err)
+	}
+}
+
+func TestHandle_Solved_TriggersProvisioner(t *testing.T) {
+	now := time.Date(2026, 6, 30, 9, 0, 0, 0, time.UTC)
+	repo := &fakeRepo{platformID: 7, out: IngestOutput{ProblemID: 42, Status: "reviewing"}}
+	svc := newTestService(repo, now)
+	provisioner := &fakeProvisioner{}
+	svc.WithProvisioner(provisioner)
+
+	if _, err := svc.Handle(context.Background(), 100, solvedRequest()); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if provisioner.calls != 1 {
+		t.Fatalf("provisioner calls = %d, want 1", provisioner.calls)
+	}
+	if provisioner.problemID != 42 || provisioner.platform != "leetcode" || provisioner.slug != "two-sum" {
+		t.Errorf("unexpected provisioner args: problemID=%d platform=%q slug=%q", provisioner.problemID, provisioner.platform, provisioner.slug)
+	}
+}
+
+func TestHandle_NonSolved_DoesNotTriggerProvisioner(t *testing.T) {
+	now := time.Date(2026, 6, 30, 9, 0, 0, 0, time.UTC)
+	repo := &fakeRepo{platformID: 3, out: IngestOutput{ProblemID: 9, Status: "saved"}}
+	svc := newTestService(repo, now)
+	provisioner := &fakeProvisioner{}
+	svc.WithProvisioner(provisioner)
+
+	req := solvedRequest()
+	req.Event = "problem_viewed"
+	req.Rating = ""
+	if _, err := svc.Handle(context.Background(), 1, req); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if provisioner.calls != 0 {
+		t.Fatalf("provisioner calls = %d, want 0 for a non-solved event", provisioner.calls)
+	}
+}
+
+func TestHandle_NilProvisioner_DoesNotPanic(t *testing.T) {
+	now := time.Date(2026, 6, 30, 9, 0, 0, 0, time.UTC)
+	repo := &fakeRepo{platformID: 7, out: IngestOutput{ProblemID: 42, Status: "reviewing"}}
+	svc := newTestService(repo, now)
+
+	if _, err := svc.Handle(context.Background(), 100, solvedRequest()); err != nil {
+		t.Fatalf("unexpected error: %v", err)
 	}
 }
 

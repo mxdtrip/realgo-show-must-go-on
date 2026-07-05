@@ -43,6 +43,7 @@ const ru = {
       auth: {
         login: "Log in",
         signup: "Sign up",
+        dashboard: "Dashboard",
         createAccount: "Create account",
         continue: "Continue",
         email: "Email",
@@ -1052,3 +1053,48 @@ export function getDictionary(locale: Locale = defaultLocale) {
 export function isSupportedLocale(value: string): value is Locale {
   return supportedLocales.includes(value as Locale);
 }
+
+// ===== #114 account security panel =====
+export const accountSecurityCopy = {
+  panelEyebrow: "security",
+  panelTitle: "Password & sessions",
+  currentPasswordLabel: "current password",
+  newPasswordLabel: "new password",
+  confirmPasswordLabel: "confirm password",
+  passwordPlaceholder: "••••••••",
+  save: "change password",
+  saved: "password changed",
+  saveFailed: "password change failed",
+  tooShort: "Минимум 8 символов",
+  mismatch: "Пароли не совпадают",
+  soon: "Смена пароля скоро будет доступна.",
+  revokeTitle: "Выйти со всех устройств",
+  revokeDescription:
+    "Завершит все активные сессии, кроме текущей. Потребуется заново войти на других устройствах.",
+  revokeAction: "log out everywhere",
+  revokeConfirm: "Выйти со всех устройств? Это действие нельзя отменить.",
+  revokeDone: "all sessions revoked",
+  revokeFallback: "Серверная заглушка — текущая сессия завершена локально.",
+  revokeFailed: "revoke failed",
+} as const;
+
+// ===== #62 onboarding API wiring =====
+export const onboardingApiCopy = {
+  positionLabel: "target position",
+  positionPlaceholder: "Например, Senior Backend Engineer",
+  goal: {
+    title: "Цель подготовки",
+    description:
+      "Расскажи, к чему готовишься. Это поможет подобрать план повторения и карточки под твою цель.",
+    prepGoalLabel: "цель",
+    prepGoalPlaceholder: "Например: пройти интервью в Google через 2 месяца",
+    gradeLabel: "уровень",
+    grades: ["junior", "middle", "senior", "staff", "principal"],
+  },
+  saving: "Сохраняем…",
+  saveFailed: "Не удалось сохранить профиль. Попробуйте ещё раз.",
+  companiesSearchFailed: "Не удалось загрузить подсказки компаний.",
+  summaryPosition: "позиция",
+  summaryGoal: "цель",
+  summaryGrade: "уровень",
+} as const;

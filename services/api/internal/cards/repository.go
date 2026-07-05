@@ -43,6 +43,22 @@ func (r *pgRepository) List(ctx context.Context, userID int64, params ListParams
 	return items, nil
 }
 
+func (r *pgRepository) ListByProblem(ctx context.Context, userID, problemID int64) ([]CardRecord, error) {
+	rows, err := r.q.ListCardsByProblem(ctx, db.ListCardsByProblemParams{
+		UserID:    userID,
+		ProblemID: problemID,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("cards: list by problem: %w", err)
+	}
+
+	items := make([]CardRecord, 0, len(rows))
+	for _, row := range rows {
+		items = append(items, recordFromByProblemRow(row))
+	}
+	return items, nil
+}
+
 func (r *pgRepository) ListSession(ctx context.Context, userID int64, params SessionParams) ([]CardRecord, error) {
 	rows, err := r.q.ListCardSession(ctx, db.ListCardSessionParams{
 		UserID:      userID,
@@ -121,12 +137,13 @@ func (r *pgRepository) CountSessionAttempts(ctx context.Context, userID int64, s
 	return int(count), nil
 }
 
-func newCardRecord(id int64, cardType, front, back string, createdAt pgtype.Timestamptz, sourceEntityType string, sourceEntityID pgtype.Int8, sourceLabel string, scheduleID int64, nextReviewAt pgtype.Timestamptz, lastRating pgtype.Text, reviewCount, reviewState int32) CardRecord {
+func newCardRecord(id int64, cardType, front, back string, createdByAI bool, createdAt pgtype.Timestamptz, sourceEntityType string, sourceEntityID pgtype.Int8, sourceLabel string, scheduleID int64, nextReviewAt pgtype.Timestamptz, lastRating pgtype.Text, reviewCount, reviewState int32) CardRecord {
 	return CardRecord{
 		ID:               id,
 		Type:             cardType,
 		Front:            front,
 		Back:             back,
+		CreatedByAI:      createdByAI,
 		CreatedAt:        timeFromPg(createdAt),
 		SourceEntityType: sourceEntityType,
 		SourceEntityID:   int64PtrFromPg(sourceEntityID),
@@ -145,6 +162,7 @@ func recordFromListRow(row db.ListUserCardsRow) CardRecord {
 		row.Type,
 		row.Question, // sqlc still returns DB column name "question" (rename in migration 000008)
 		row.Answer,   // sqlc still returns DB column name "answer" (rename in migration 000008)
+		row.CreatedByAi.Bool,
 		row.CreatedAt,
 		row.SourceEntityType,
 		row.SourceEntityID,
@@ -163,6 +181,26 @@ func recordFromSessionRow(row db.ListCardSessionRow) CardRecord {
 		row.Type,
 		row.Question, // sqlc still returns DB column name "question" (rename in migration 000008)
 		row.Answer,   // sqlc still returns DB column name "answer" (rename in migration 000008)
+		row.CreatedByAi.Bool,
+		row.CreatedAt,
+		row.SourceEntityType,
+		row.SourceEntityID,
+		row.SourceLabel,
+		row.ScheduleID,
+		row.NextReviewAt,
+		row.LastRating,
+		row.ReviewCount,
+		row.ReviewState,
+	)
+}
+
+func recordFromByProblemRow(row db.ListCardsByProblemRow) CardRecord {
+	return newCardRecord(
+		row.ID,
+		row.Type,
+		row.Question,
+		row.Answer,
+		row.CreatedByAi.Bool,
 		row.CreatedAt,
 		row.SourceEntityType,
 		row.SourceEntityID,

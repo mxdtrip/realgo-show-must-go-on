@@ -72,6 +72,35 @@ test.describe("bug #2 — cabinet logo & session hardening", () => {
     expect(await readTokens(page)).toEqual(["LIVE.access", "LIVE.refresh"]);
   });
 
+  test("mobile nav panel brand points to /dashboard", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/dashboard");
+    await seedTokens(page, "LIVE", "LIVE");
+    await page.goto("/dashboard");
+
+    // Same hydration caveat as openLoginModal: retry until the panel opens.
+    const trigger = page.locator(".cabinet-mobile-nav__trigger");
+    const panel = page.locator(".cabinet-mobile-nav__panel");
+    await expect(async () => {
+      await trigger.click();
+      await expect(panel).toBeVisible({ timeout: 1500 });
+    }).toPass({ timeout: 20_000 });
+
+    const brand = panel.locator("a.site-brand");
+    await expect(brand).toHaveAttribute("href", "/dashboard");
+  });
+
+  test("landing header offers Dashboard instead of log in / sign up when authed", async ({ page }) => {
+    await page.goto("/");
+    await seedTokens(page, "LIVE", "LIVE");
+    await page.goto("/");
+
+    const dash = page.locator(".site-auth .site-auth__dashboard");
+    await expect(dash).toBeVisible({ timeout: 15_000 });
+    await expect(dash).toHaveAttribute("href", "/dashboard");
+    await expect(page.locator(".site-auth button")).toHaveCount(0);
+  });
+
   test("revoked session (refresh 401) clears tokens", async ({ page }) => {
     await page.goto("/dashboard");
     await seedTokens(page, "DEAD", "DEAD"); // getMe 401 -> refresh 401 -> clearTokens

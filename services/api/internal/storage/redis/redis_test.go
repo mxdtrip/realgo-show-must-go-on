@@ -44,4 +44,26 @@ func TestStorageSaveGet(t *testing.T) {
 	id, err := got["id"].(json.Number).Int64()
 	require.NoError(t, err)
 	require.Equal(t, int64(42), id)
+
+	locked, err := store.Locked(ctx, "test:lock")
+	require.NoError(t, err)
+	require.False(t, locked)
+
+	acquired, err := store.TryLock(ctx, "test:lock", time.Minute)
+	require.NoError(t, err)
+	require.True(t, acquired, "first TryLock should acquire the lock")
+
+	acquired, err = store.TryLock(ctx, "test:lock", time.Minute)
+	require.NoError(t, err)
+	require.False(t, acquired, "second TryLock must not acquire an already-held lock")
+
+	locked, err = store.Locked(ctx, "test:lock")
+	require.NoError(t, err)
+	require.True(t, locked)
+
+	require.NoError(t, store.Unlock(ctx, "test:lock"))
+
+	acquired, err = store.TryLock(ctx, "test:lock", time.Minute)
+	require.NoError(t, err)
+	require.True(t, acquired, "TryLock should acquire again after Unlock")
 }

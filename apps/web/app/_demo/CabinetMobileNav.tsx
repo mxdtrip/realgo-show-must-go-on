@@ -165,7 +165,7 @@ export function CabinetMobileNav({
           >
             <div className="cabinet-mobile-nav__head">
               <div className="cabinet-brand-block">
-                <Link className="site-brand" href="/" onClick={closeAfterNavigation}>
+                <Link className="site-brand" href="/dashboard" onClick={closeAfterNavigation}>
                   {brand}
                 </Link>
                 <CabinetInterviewCountdown
