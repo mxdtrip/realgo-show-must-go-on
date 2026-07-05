@@ -2,7 +2,7 @@
 
 import { apiFetch } from "./client";
 import { clearTokens, getRefreshToken } from "./tokens";
-import type { AuthUser } from "./types";
+import { ApiError, type AuthUser } from "./types";
 
 type UserResponse = { user: AuthUser };
 
@@ -58,4 +58,46 @@ export async function deleteAccount(password: string): Promise<void> {
     },
   });
   clearTokens();
+}
+
+/**
+ * POST /me/password — change the current user's password.
+ *
+ * The backend endpoint is not implemented yet; callers should treat a 404/405
+ * response as "feature coming soon" rather than a hard error.
+ */
+export async function changePassword(
+  currentPassword: string,
+  newPassword: string,
+): Promise<void> {
+  await apiFetch<{ status: string }>("/me/password", {
+    method: "POST",
+    body: {
+      current_password: currentPassword,
+      new_password: newPassword,
+    },
+  });
+}
+
+/**
+ * POST /me/sessions/revoke — revoke all other sessions for the current user.
+ *
+ * The backend endpoint is not implemented yet; on 404/405 we fall back to
+ * clearing the local session so the user is at least logged out of this device.
+ * Returns true if the server confirmed revocation, false if it was a local
+ * fallback (endpoint unavailable).
+ */
+export async function revokeAllSessions(): Promise<boolean> {
+  try {
+    await apiFetch<{ status: string }>("/me/sessions/revoke", {
+      method: "POST",
+    });
+    return true;
+  } catch (e) {
+    if (e instanceof ApiError && (e.status === 404 || e.status === 405)) {
+      clearTokens();
+      return false;
+    }
+    throw e;
+  }
 }
