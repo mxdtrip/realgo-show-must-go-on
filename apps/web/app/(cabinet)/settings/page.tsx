@@ -1,9 +1,11 @@
 import { CabinetPanel } from "../_components";
 import { getDictionary } from "../../_content/i18n";
+import { accountSecurityCopy } from "../../_content/i18n";
 import { InstallAppPanel } from "./_components/InstallAppPanel";
 import { NotificationSettingsPanel } from "./_components/NotificationSettingsPanel";
 import { PrivacyActions } from "./_components/PrivacyActions";
 import { ProfileSettingsPanel } from "./_components/ProfileSettingsPanel";
+import { SecurityPanel } from "./_components/SecurityPanel";
 
 export default function SettingsPage() {
   const page = getDictionary().cabinet.pages.settings;
@@ -21,6 +23,13 @@ export default function SettingsPage() {
       <div className="cabinet-grid">
         <CabinetPanel eyebrow={page.profileEyebrow} title={page.profileTitle}>
           <ProfileSettingsPanel copy={page.profile} />
+        </CabinetPanel>
+
+        <CabinetPanel
+          eyebrow={accountSecurityCopy.panelEyebrow}
+          title={accountSecurityCopy.panelTitle}
+        >
+          <SecurityPanel />
         </CabinetPanel>
 
         <CabinetPanel eyebrow={page.installEyebrow} title={page.installTitle}>

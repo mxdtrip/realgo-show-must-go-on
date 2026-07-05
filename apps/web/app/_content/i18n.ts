@@ -1053,3 +1053,27 @@ export function getDictionary(locale: Locale = defaultLocale) {
 export function isSupportedLocale(value: string): value is Locale {
   return supportedLocales.includes(value as Locale);
 }
+
+// ===== #114 account security panel =====
+export const accountSecurityCopy = {
+  panelEyebrow: "security",
+  panelTitle: "Password & sessions",
+  currentPasswordLabel: "current password",
+  newPasswordLabel: "new password",
+  confirmPasswordLabel: "confirm password",
+  passwordPlaceholder: "••••••••",
+  save: "change password",
+  saved: "password changed",
+  saveFailed: "password change failed",
+  tooShort: "Минимум 8 символов",
+  mismatch: "Пароли не совпадают",
+  soon: "Смена пароля скоро будет доступна.",
+  revokeTitle: "Выйти со всех устройств",
+  revokeDescription:
+    "Завершит все активные сессии, кроме текущей. Потребуется заново войти на других устройствах.",
+  revokeAction: "log out everywhere",
+  revokeConfirm: "Выйти со всех устройств? Это действие нельзя отменить.",
+  revokeDone: "all sessions revoked",
+  revokeFallback: "Серверная заглушка — текущая сессия завершена локально.",
+  revokeFailed: "revoke failed",
+} as const;

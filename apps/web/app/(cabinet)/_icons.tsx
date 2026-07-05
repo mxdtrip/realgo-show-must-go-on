@@ -100,6 +100,20 @@ const GLYPHS: Record<string, ReactElement> = {
       <line x1="12" y1="8" x2="12.01" y2="8" />
     </>
   ),
+  lock: (
+    <>
+      <rect x="4.5" y="10.5" width="15" height="10" rx="2" />
+      <path d="M8 10.5V7a4 4 0 0 1 8 0v3.5" />
+      <circle cx="12" cy="15.5" r="1.3" />
+    </>
+  ),
+  logout: (
+    <>
+      <path d="M14 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3" />
+      <path d="M10 17 5 12l5-5" />
+      <line x1="5" y1="12" x2="15" y2="12" />
+    </>
+  ),
   arrow: (
     <>
       <line x1="4" y1="12" x2="19" y2="12" />
