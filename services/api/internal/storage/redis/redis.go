@@ -61,6 +61,35 @@ func (s *Storage) SaveJSON(ctx context.Context, key string, value any, ttl time.
 	return s.Save(ctx, key, data, ttl)
 }
 
+// TryLock attempts to acquire a short-lived lock at key, expiring after ttl
+// even if never released (e.g. the holder crashes mid-generation). Returns
+// true only for the caller that actually acquired it.
+func (s *Storage) TryLock(ctx context.Context, key string, ttl time.Duration) (bool, error) {
+	acquired, err := s.Client.SetNX(ctx, key, "1", ttl).Result()
+	if err != nil {
+		return false, fmt.Errorf("redis trylock %q: %w", key, err)
+	}
+	return acquired, nil
+}
+
+// Unlock releases a lock acquired via TryLock.
+func (s *Storage) Unlock(ctx context.Context, key string) error {
+	if err := s.Client.Del(ctx, key).Err(); err != nil {
+		return fmt.Errorf("redis unlock %q: %w", key, err)
+	}
+	return nil
+}
+
+// Locked reports whether key currently exists, without attempting to acquire
+// it. Used for read-only status checks (e.g. reporting "generating").
+func (s *Storage) Locked(ctx context.Context, key string) (bool, error) {
+	n, err := s.Client.Exists(ctx, key).Result()
+	if err != nil {
+		return false, fmt.Errorf("redis exists %q: %w", key, err)
+	}
+	return n > 0, nil
+}
+
 // GetJSON reads a JSON object from key.
 func (s *Storage) GetJSON(ctx context.Context, key string) (map[string]any, error) {
 	data, err := s.Get(ctx, key)

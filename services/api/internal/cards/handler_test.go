@@ -322,6 +322,10 @@ func (f *fakeRepository) ListSession(_ context.Context, _ int64, params SessionP
 	return f.session, nil
 }
 
+func (f *fakeRepository) ListByProblem(_ context.Context, _, _ int64) ([]CardRecord, error) {
+	return []CardRecord{}, nil
+}
+
 func (f *fakeRepository) EnsureReviewSchedule(_ context.Context, userID, cardID int64, _ time.Time) (int64, error) {
 	f.ensureUserID = userID
 	f.ensureCardID = cardID

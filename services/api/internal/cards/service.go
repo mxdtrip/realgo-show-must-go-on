@@ -33,6 +33,7 @@ type redis interface {
 type repository interface {
 	List(ctx context.Context, userID int64, params ListParams) ([]CardRecord, error)
 	ListSession(ctx context.Context, userID int64, params SessionParams) ([]CardRecord, error)
+	ListByProblem(ctx context.Context, userID, problemID int64) ([]CardRecord, error)
 	EnsureReviewSchedule(ctx context.Context, userID, cardID int64, reviewedAt time.Time) (int64, error)
 	CountSessionAttempts(ctx context.Context, userID int64, since time.Time) (int, error)
 	Create(ctx context.Context, userID int64, p CreateCardInput) (CardDetail, error)
@@ -79,6 +80,22 @@ func (s *Service) List(ctx context.Context, userID int64, params ListParams) ([]
 		items = append(items, cardFromRecord(record, now))
 	}
 	return items, nextCursor, nil
+}
+
+// ListByProblem returns the cards a user can see for one problem: their own
+// cards plus global seed/AI cards. Used by GET /me/problems/{id}/cards.
+func (s *Service) ListByProblem(ctx context.Context, userID, problemID int64) ([]Card, error) {
+	records, err := s.repo.ListByProblem(ctx, userID, problemID)
+	if err != nil {
+		return nil, fmt.Errorf("cards: list by problem: %w", err)
+	}
+
+	now := s.now()
+	items := make([]Card, 0, len(records))
+	for _, record := range records {
+		items = append(items, cardFromRecord(record, now))
+	}
+	return items, nil
 }
 
 func (s *Service) Session(ctx context.Context, userID int64, params SessionParams) (Session, error) {
@@ -178,6 +195,7 @@ func cardFromRecord(record CardRecord, now time.Time) Card {
 		Status:       status(record, now),
 		NextReviewAt: record.NextReviewAt,
 		LastRating:   record.LastRating,
+		CreatedByAI:  record.CreatedByAI,
 		CreatedAt:    record.CreatedAt,
 	}
 }
@@ -189,6 +207,7 @@ func sessionCardFromRecord(record CardRecord) SessionCard {
 		SourceLabel: record.SourceLabel,
 		Front:       record.Front,
 		Back:        record.Back,
+		CreatedByAI: record.CreatedByAI,
 		ReviewState: ReviewState{
 			Attempts:     record.ReviewCount,
 			LastRating:   record.LastRating,

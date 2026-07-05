@@ -26,6 +26,7 @@ type Card struct {
 	Status       string     `json:"status"`
 	NextReviewAt *time.Time `json:"nextReviewAt"`
 	LastRating   *string    `json:"lastRating"`
+	CreatedByAI  bool       `json:"createdByAi"`
 	CreatedAt    time.Time  `json:"createdAt"`
 }
 
@@ -76,6 +77,7 @@ type CardRecord struct {
 	Type             string
 	Front            string
 	Back             string
+	CreatedByAI      bool
 	CreatedAt        time.Time
 	SourceEntityType string
 	SourceEntityID   *int64
@@ -106,6 +108,7 @@ type SessionCard struct {
 	SourceLabel string      `json:"sourceLabel"`
 	Front       string      `json:"front"`
 	Back        string      `json:"back"`
+	CreatedByAI bool        `json:"createdByAi"`
 	ReviewState ReviewState `json:"reviewState"`
 }
 

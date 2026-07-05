@@ -56,6 +56,12 @@ func (m *mockRepository) ListSession(ctx context.Context, userID int64, params S
 	return records, args.Error(1)
 }
 
+func (m *mockRepository) ListByProblem(ctx context.Context, userID, problemID int64) ([]CardRecord, error) {
+	args := m.Called(ctx, userID, problemID)
+	records, _ := args.Get(0).([]CardRecord)
+	return records, args.Error(1)
+}
+
 func (m *mockRepository) EnsureReviewSchedule(ctx context.Context, userID, cardID int64, reviewedAt time.Time) (int64, error) {
 	args := m.Called(ctx, userID, cardID, reviewedAt)
 	return args.Get(0).(int64), args.Error(1)

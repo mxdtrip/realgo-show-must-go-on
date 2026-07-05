@@ -22,17 +22,18 @@ type AiRequestLog struct {
 }
 
 type Card struct {
-	ID          int64
-	UserID      pgtype.Int8
-	ProblemID   pgtype.Int8
-	PatternID   pgtype.Int8
-	Type        string
-	Question    string
-	Answer      string
-	Explanation pgtype.Text
-	Source      pgtype.Text
-	CreatedByAi pgtype.Bool
-	CreatedAt   pgtype.Timestamptz
+	ID              int64
+	UserID          pgtype.Int8
+	ProblemID       pgtype.Int8
+	PatternID       pgtype.Int8
+	Type            string
+	Question        string
+	Answer          string
+	Explanation     pgtype.Text
+	Source          pgtype.Text
+	CreatedByAi     pgtype.Bool
+	CreatedAt       pgtype.Timestamptz
+	AiPromptVersion pgtype.Text
 }
 
 type ExtensionEvent struct {

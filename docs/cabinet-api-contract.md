@@ -431,6 +431,57 @@ Response:
 }
 ```
 
+### `GET /me/problems/{problemId}/cards`
+
+Contract fixed 2026-07-05 (coordinator @mxdtrip) so the web AI-card badge and
+generation-status UI (#228) can build against it before the backend cards
+land. Auth: Bearer, as for the rest of `/me/*`.
+
+Response:
+
+```json
+{
+  "data": {
+    "status": "ready",
+    "cards": [
+      {
+        "id": "card_01J...",
+        "type": "pattern_recognition",
+        "source": {
+          "entityType": "problem",
+          "entityId": "prb_01J...",
+          "label": "Two Sum II · Two Pointers"
+        },
+        "front": "Дан отсортированный массив и target. Какой подход выбрать?",
+        "back": "Two Pointers: двигаем left/right внутрь по сравнению суммы с target.",
+        "status": "new",
+        "nextReviewAt": null,
+        "lastRating": null,
+        "createdByAi": true,
+        "createdAt": "2026-07-05T10:00:00Z"
+      }
+    ]
+  }
+}
+```
+
+`status`:
+
+```text
+ready      - the user has accessible cards for the problem: global seed/AI
+             cards (filtered by the user's progress, see #226) or their own.
+             cards is the same shape as GET /me/cards, non-empty.
+generating - no cards yet, but AI generation is in flight
+             (Redis lock lock:gen:{platform}:{slug} held). cards: [].
+none       - no cards and no generation in flight. Also covers a model
+             unknown_problem refusal and exhausted AI quota. cards: [].
+```
+
+404 when `problemId` does not exist.
+
+Client polling: every 2-3s until `status` is `ready` or `none`, capped at
+~60s; treat a still-`generating` result past the cap as `none`.
+
 ## Cards
 
 ### `GET /me/cards?type=pattern_recognition&limit=50&cursor=...`
@@ -455,6 +506,7 @@ Response:
       "status": "due",
       "nextReviewAt": "2026-06-30T09:30:00Z",
       "lastRating": "normal",
+      "createdByAi": false,
       "createdAt": "2026-06-28T20:10:00Z"
     }
   ],
@@ -490,6 +542,7 @@ Response:
         "sourceLabel": "Two Sum II · Two Pointers",
         "front": "Дан отсортированный массив и target. Какой подход выбрать?",
         "back": "Two Pointers: двигаем left/right внутрь по сравнению суммы с target.",
+        "createdByAi": false,
         "reviewState": {
           "attempts": 2,
           "lastRating": "normal",

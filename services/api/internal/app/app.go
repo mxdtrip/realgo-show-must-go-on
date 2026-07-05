@@ -11,6 +11,7 @@ import (
 
 	"github.com/joho/godotenv"
 
+	"github.com/mxdtrip/freeburger/services/api/internal/ai"
 	"github.com/mxdtrip/freeburger/services/api/internal/auth"
 	"github.com/mxdtrip/freeburger/services/api/internal/cards"
 	"github.com/mxdtrip/freeburger/services/api/internal/config"
@@ -62,12 +63,18 @@ func Run(ctx context.Context) error {
 
 	authSvc := auth.NewService(db.New(pg.Pool), rdb.Client, authCfg)
 
-	handler := server.New(server.Deps{
+	deps := server.Deps{
 		Logger:   logger,
 		Postgres: pg,
 		Redis:    rdb,
 		Auth:     authSvc,
-	})
+	}
+	if cfg.AI.Enabled() {
+		deps.CardProvisioner = ai.NewProvisioner(ai.NewRepository(pg.Pool), rdb, ai.NewGeminiProvider(cfg.AI), logger)
+		logger.Info("ai card generation enabled", slog.String("model", cfg.AI.Model))
+	}
+
+	handler := server.New(deps)
 
 	srv := &http.Server{
 		Addr:         cfg.Address,

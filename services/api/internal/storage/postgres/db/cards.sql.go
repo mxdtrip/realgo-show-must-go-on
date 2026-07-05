@@ -31,6 +31,23 @@ func (q *Queries) CountCardSessionAttempts(ctx context.Context, arg CountCardSes
 	return column_1, err
 }
 
+const countGlobalAICardsByProblem = `-- name: CountGlobalAICardsByProblem :one
+SELECT COUNT(*)::bigint
+FROM cards
+WHERE problem_id = $1::bigint
+  AND user_id IS NULL
+  AND created_by_ai = TRUE
+`
+
+// Idempotency check for CardProvisioner: has this problem already been
+// globally AI-provisioned, regardless of which user triggers generation.
+func (q *Queries) CountGlobalAICardsByProblem(ctx context.Context, problemID int64) (int64, error) {
+	row := q.db.QueryRow(ctx, countGlobalAICardsByProblem, problemID)
+	var column_1 int64
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
 const createCard = `-- name: CreateCard :one
 INSERT INTO cards (user_id, problem_id, pattern_id, type, question, answer, explanation, source, created_by_ai)
 VALUES (
@@ -44,7 +61,7 @@ VALUES (
     $8,
     $9
 )
-RETURNING id, user_id, problem_id, pattern_id, type, question, answer, explanation, source, created_by_ai, created_at
+RETURNING id, user_id, problem_id, pattern_id, type, question, answer, explanation, source, created_by_ai, created_at, ai_prompt_version
 `
 
 type CreateCardParams struct {
@@ -84,6 +101,7 @@ func (q *Queries) CreateCard(ctx context.Context, arg CreateCardParams) (Card, e
 		&i.Source,
 		&i.CreatedByAi,
 		&i.CreatedAt,
+		&i.AiPromptVersion,
 	)
 	return i, err
 }
@@ -237,6 +255,7 @@ SELECT
     c.type,
     c.question,
     c.answer,
+    c.created_by_ai,
     c.created_at,
     CASE
         WHEN c.problem_id IS NOT NULL THEN 'problem'
@@ -302,6 +321,7 @@ type ListCardSessionRow struct {
 	Type             string
 	Question         string
 	Answer           string
+	CreatedByAi      pgtype.Bool
 	CreatedAt        pgtype.Timestamptz
 	SourceEntityType string
 	SourceEntityID   pgtype.Int8
@@ -332,6 +352,96 @@ func (q *Queries) ListCardSession(ctx context.Context, arg ListCardSessionParams
 			&i.Type,
 			&i.Question,
 			&i.Answer,
+			&i.CreatedByAi,
+			&i.CreatedAt,
+			&i.SourceEntityType,
+			&i.SourceEntityID,
+			&i.SourceLabel,
+			&i.ScheduleID,
+			&i.NextReviewAt,
+			&i.LastRating,
+			&i.ReviewCount,
+			&i.ReviewState,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listCardsByProblem = `-- name: ListCardsByProblem :many
+SELECT
+    c.id,
+    c.type,
+    c.question,
+    c.answer,
+    c.created_by_ai,
+    c.created_at,
+    'problem'::text AS source_entity_type,
+    c.problem_id AS source_entity_id,
+    COALESCE(NULLIF(p.title, ''), 'custom card')::text AS source_label,
+    COALESCE(rs.id, 0)::bigint AS schedule_id,
+    rs.next_review_at,
+    rs.last_rating,
+    COALESCE(rs.review_count, 0)::integer AS review_count,
+    COALESCE(rs.state, 0)::integer AS review_state
+FROM cards c
+LEFT JOIN LATERAL (
+    SELECT id, next_review_at, last_rating, review_count, state
+    FROM review_schedules
+    WHERE user_id = $1::bigint AND card_id = c.id
+    ORDER BY next_review_at ASC, id ASC
+    LIMIT 1
+) rs ON true
+LEFT JOIN problems p ON p.id = c.problem_id
+WHERE c.problem_id = $2::bigint
+  AND (c.user_id = $1::bigint OR c.user_id IS NULL)
+ORDER BY c.created_at ASC, c.id ASC
+`
+
+type ListCardsByProblemParams struct {
+	UserID    int64
+	ProblemID int64
+}
+
+type ListCardsByProblemRow struct {
+	ID               int64
+	Type             string
+	Question         string
+	Answer           string
+	CreatedByAi      pgtype.Bool
+	CreatedAt        pgtype.Timestamptz
+	SourceEntityType string
+	SourceEntityID   pgtype.Int8
+	SourceLabel      string
+	ScheduleID       int64
+	NextReviewAt     pgtype.Timestamptz
+	LastRating       pgtype.Text
+	ReviewCount      int32
+	ReviewState      int32
+}
+
+// Cards visible to the user for one problem: their own cards plus global
+// seed/AI cards (user_id IS NULL). Used by GET /me/problems/{id}/cards.
+func (q *Queries) ListCardsByProblem(ctx context.Context, arg ListCardsByProblemParams) ([]ListCardsByProblemRow, error) {
+	rows, err := q.db.Query(ctx, listCardsByProblem, arg.UserID, arg.ProblemID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListCardsByProblemRow
+	for rows.Next() {
+		var i ListCardsByProblemRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Type,
+			&i.Question,
+			&i.Answer,
+			&i.CreatedByAi,
 			&i.CreatedAt,
 			&i.SourceEntityType,
 			&i.SourceEntityID,
@@ -358,6 +468,7 @@ SELECT
     c.type,
     c.question,
     c.answer,
+    c.created_by_ai,
     c.created_at,
     CASE
         WHEN c.problem_id IS NOT NULL THEN 'problem'
@@ -414,6 +525,7 @@ type ListUserCardsRow struct {
 	Type             string
 	Question         string
 	Answer           string
+	CreatedByAi      pgtype.Bool
 	CreatedAt        pgtype.Timestamptz
 	SourceEntityType string
 	SourceEntityID   pgtype.Int8
@@ -446,6 +558,7 @@ func (q *Queries) ListUserCards(ctx context.Context, arg ListUserCardsParams) ([
 			&i.Type,
 			&i.Question,
 			&i.Answer,
+			&i.CreatedByAi,
 			&i.CreatedAt,
 			&i.SourceEntityType,
 			&i.SourceEntityID,
@@ -475,7 +588,7 @@ SET
     explanation = COALESCE($4, explanation),
     source      = COALESCE($5, source)
 WHERE id = $6::bigint AND user_id = $7::bigint
-RETURNING id, user_id, problem_id, pattern_id, type, question, answer, explanation, source, created_by_ai, created_at
+RETURNING id, user_id, problem_id, pattern_id, type, question, answer, explanation, source, created_by_ai, created_at, ai_prompt_version
 `
 
 type UpdateCardParams struct {
@@ -511,6 +624,51 @@ func (q *Queries) UpdateCard(ctx context.Context, arg UpdateCardParams) (Card, e
 		&i.Source,
 		&i.CreatedByAi,
 		&i.CreatedAt,
+		&i.AiPromptVersion,
 	)
 	return i, err
+}
+
+const upsertGeneratedCard = `-- name: UpsertGeneratedCard :one
+INSERT INTO cards (problem_id, type, question, answer, explanation, created_by_ai, ai_prompt_version)
+VALUES (
+    $1::bigint,
+    $2,
+    $3,
+    $4,
+    $5,
+    TRUE,
+    $6
+)
+ON CONFLICT (problem_id, type, ai_prompt_version) WHERE user_id IS NULL AND created_by_ai = TRUE AND problem_id IS NOT NULL
+DO UPDATE SET
+    question    = EXCLUDED.question,
+    answer      = EXCLUDED.answer,
+    explanation = EXCLUDED.explanation
+RETURNING id
+`
+
+type UpsertGeneratedCardParams struct {
+	ProblemID       int64
+	CardType        string
+	Question        string
+	Answer          string
+	Explanation     pgtype.Text
+	AiPromptVersion pgtype.Text
+}
+
+// Idempotent insert for one AI-generated global card. Concurrent generations
+// for the same problem+type+prompt_version converge on cards_ai_global_unique_idx.
+func (q *Queries) UpsertGeneratedCard(ctx context.Context, arg UpsertGeneratedCardParams) (int64, error) {
+	row := q.db.QueryRow(ctx, upsertGeneratedCard,
+		arg.ProblemID,
+		arg.CardType,
+		arg.Question,
+		arg.Answer,
+		arg.Explanation,
+		arg.AiPromptVersion,
+	)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
 }
