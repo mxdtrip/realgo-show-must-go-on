@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
+import { TOUR_RESTART_EVENT } from "./CabinetWelcomeTour";
+
 export type HotkeysCopy = Readonly<{
   title: string;
   description: string;
@@ -25,6 +27,9 @@ const GO_TARGETS: Record<string, string> = {
   KeyC: "/cards",
   KeyT: "/patterns",
   KeyS: "/settings",
+  // Тест-триггер: полевой онбординг заново (?force=1 обходит редирект
+  // «уже онбордился» на странице онбординга).
+  KeyO: "/onboarding/profile?force=1",
 };
 
 const SESSION_ROUTE = "/cards/session";
@@ -82,6 +87,14 @@ export function CabinetHotkeys({ copy }: Readonly<{ copy: HotkeysCopy }>) {
       const now = Date.now();
       if (event.code === "KeyG") {
         pendingGoUntil.current = now + SEQUENCE_TIMEOUT_MS;
+        return;
+      }
+
+      // Тест-триггер: `g w` перезапускает welcome-тур кабинета.
+      if (pendingGoUntil.current > now && event.code === "KeyW") {
+        pendingGoUntil.current = 0;
+        event.preventDefault();
+        document.dispatchEvent(new CustomEvent(TOUR_RESTART_EVENT));
         return;
       }
 
