@@ -346,15 +346,21 @@ function TreeView({
                     <span className="atlas-table__cell atlas-table__cell--name" role="cell">
                       <button
                         type="button"
-                        className="atlas-family__name"
+                        className="atlas-family__toggle"
                         aria-expanded={isOpen}
                         aria-controls={subpatternsId}
                         aria-label={`${isOpen ? copy.collapseAria : copy.expandAria}: ${family.name}`}
                         onClick={() => onToggle(family.code)}
                       >
                         <i className={isOpen ? "atlas-caret is-open" : "atlas-caret"} aria-hidden="true" />
-                        <span>{family.name}</span>
                       </button>
+                      <Link
+                        href={`/patterns/${family.code}`}
+                        className="atlas-family__name"
+                        title={copy.openPattern}
+                      >
+                        <span>{family.name}</span>
+                      </Link>
                     </span>
                     <span className="atlas-table__cell atlas-family__difficulty" role="cell" title={difficulty.title}>
                       <strong className={difficulty.known ? undefined : "is-muted"}>{difficulty.label}</strong>

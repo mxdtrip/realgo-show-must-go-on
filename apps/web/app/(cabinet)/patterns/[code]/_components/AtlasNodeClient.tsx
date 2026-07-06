@@ -12,6 +12,7 @@ import {
 import { ApiError } from "../../../../_api/types";
 import { CabinetPanel, ProgressBar, StatusPill } from "../../../_components";
 import { CabinetIcon } from "../../../_icons";
+import { PatternProfile } from "./PatternProfile";
 import type { getDictionary } from "../../../../_content/i18n";
 
 type NodeCopy = ReturnType<typeof getDictionary>["cabinet"]["pages"]["atlasNode"];
@@ -52,7 +53,9 @@ export function AtlasNodeClient({
 
     getAtlasNode(code, controller.signal)
       .then((data) => {
-        if (data.kind !== "subpattern") {
+        // Субпаттерн = рабочий узел, семейство = страница паттерна;
+        // у tool/pattern своих страниц нет.
+        if (data.kind !== "subpattern" && data.kind !== "family") {
           setDetail(null);
           setLoadState("not_found");
           return;
@@ -101,7 +104,11 @@ export function AtlasNodeClient({
       ) : null}
 
       {loadState === "loaded" && detail ? (
-        <NodeBody detail={detail} copy={copy} atlasCopy={atlasCopy} />
+        detail.kind === "family" ? (
+          <PatternProfile detail={detail} copy={copy.profile} />
+        ) : (
+          <NodeBody detail={detail} copy={copy} atlasCopy={atlasCopy} />
+        )
       ) : null}
     </main>
   );

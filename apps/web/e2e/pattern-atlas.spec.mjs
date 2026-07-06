@@ -40,7 +40,8 @@ test.describe("pattern atlas tree", () => {
     await expect(page).toHaveURL(/\/patterns$/);
     await expect(page.getByText("Binary Search on Answer")).toBeVisible();
     await expect(page.locator(".atlas-sub:visible")).toHaveCount(2);
-    await expect(page.locator('a[href="/patterns/binary_search"]')).toHaveCount(0);
+    // The family name itself links to the pattern profile page.
+    await expect(page.locator('a[href="/patterns/binary_search"]')).toBeVisible();
 
     // Mastery state is text, not colour alone.
     await expect(page.locator(".atlas-status--unstable")).toContainText("нестабильный");
@@ -138,10 +139,21 @@ test.describe("subpattern detail", () => {
     await expect(page.getByText("Данных о компаниях по этому субпаттерну пока нет.")).toBeVisible();
   });
 
-  test("pattern families do not have detail pages", async ({ page }) => {
+  test("family page renders the pattern profile", async ({ page }) => {
     await openAtlas(page);
     await page.goto("/patterns/binary_search");
-    await expect(page.getByText("Такого узла в атласе нет").first()).toBeVisible();
+
+    await expect(page.locator(".pattern-profile h1")).toContainText("Binary Search");
+    await expect(page.getByText("Что это", { exact: true })).toBeVisible();
+    await expect(page.getByText("Когда не подходит", { exact: true })).toBeVisible();
+
+    // Content is not written yet — sections show an honest pending state.
+    await expect(page.locator(".pattern-profile__pending").first()).toBeVisible();
+
+    // Subpatterns come from the API and link to their own pages.
+    const subLink = page.locator('a[href="/patterns/binary_search_on_answer"]');
+    await expect(subLink).toBeVisible();
+    await expect(subLink).toContainText("Binary Search on Answer");
   });
 
   test("unknown node shows not-found state", async ({ page }) => {

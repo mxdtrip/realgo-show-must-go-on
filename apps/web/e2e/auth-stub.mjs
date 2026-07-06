@@ -169,7 +169,7 @@ const ATLAS_NODES = {
     code: "binary_search",
     name: "Binary Search",
     kind: "family",
-    description: "Family node stub that should not render as a detail page.",
+    description: "Family node stub rendered as the pattern profile page.",
     taxonomy_version: "realgo-v1",
     techniques: [],
     recognition_symptoms: [],
