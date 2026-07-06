@@ -12,6 +12,12 @@ export type TourCopy = Readonly<{
 }>;
 
 const STORAGE_KEY = "realgo.cabinet.tour";
+
+// Перезапуск тура для тестов и ручной проверки: хоткей `g w` (см.
+// CabinetHotkeys) шлёт это событие, а `?tour=1` в URL форсит показ,
+// игнорируя done-флаг в localStorage.
+export const TOUR_RESTART_EVENT = "realgo:cabinet:tour-restart";
+
 const SPOTLIGHT_PAD = 6;
 const CARD_WIDTH = 320;
 const CARD_GAP = 16;
@@ -45,10 +51,19 @@ export function CabinetWelcomeTour({ copy }: Readonly<{ copy: TourCopy }>) {
   const [rect, setRect] = useState<TargetRect | null>(null);
 
   useEffect(() => {
-    if (window.localStorage.getItem(STORAGE_KEY) === "done") return;
+    const forced = new URLSearchParams(window.location.search).get("tour") === "1";
+    if (!forced && window.localStorage.getItem(STORAGE_KEY) === "done") return;
     // Даём кабинету дорисоваться, чтобы замеры якорей были честными.
     const id = window.setTimeout(() => setStep(0), 600);
     return () => window.clearTimeout(id);
+  }, []);
+
+  useEffect(() => {
+    function onRestart() {
+      setStep(0);
+    }
+    document.addEventListener(TOUR_RESTART_EVENT, onRestart);
+    return () => document.removeEventListener(TOUR_RESTART_EVENT, onRestart);
   }, []);
 
   const active = step >= 0 && step < copy.steps.length ? copy.steps[step] : null;

@@ -125,11 +125,14 @@ export default function OnboardingProfilePage() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
 
-  // Auth guard: redirect anonymous users to login, already-onboarded to dashboard.
+  // Auth guard: redirect anonymous users to login, already-onboarded to
+  // dashboard. `?force=1` (тест-триггер, см. хоткей `g o` в кабинете)
+  // позволяет пройти онбординг повторно.
   useEffect(() => {
+    const forced = new URLSearchParams(window.location.search).get("force") === "1";
     if (status === "anonymous") {
       router.replace("/login");
-    } else if (status === "authenticated" && user?.onboarding_completed) {
+    } else if (!forced && status === "authenticated" && user?.onboarding_completed) {
       router.replace("/dashboard");
     }
   }, [router, status, user?.onboarding_completed]);
