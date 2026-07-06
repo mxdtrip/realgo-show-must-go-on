@@ -7,6 +7,7 @@ import {
   getAtlas,
   getAtlasCompanies,
   type AtlasCompany,
+  type AtlasRelevantProblem,
   type AtlasResponse,
   type AtlasSubpattern,
   type RelevanceLevel,
@@ -289,22 +290,6 @@ function TreeView({
   return (
     <>
       <CabinetPanel
-        eyebrow="prerequisites"
-        title={copy.toolsTitle}
-        meta={<span className="cabinet-panel__meta">{atlas.tools.length}</span>}
-      >
-        <p className="atlas-tools-hint">{copy.toolsHint}</p>
-        <div className="atlas-tools" role="list">
-          {atlas.tools.map((tool) => (
-            <span className="meta-chip" role="listitem" key={tool.code} title={tool.name}>
-              {tool.name}
-              <em>{tool.subpattern_codes.length}</em>
-            </span>
-          ))}
-        </div>
-      </CabinetPanel>
-
-      <CabinetPanel
         eyebrow="taxonomy"
         title={copy.familiesTitle}
         meta={
@@ -424,6 +409,25 @@ function ReadinessView({ atlas, copy }: Readonly<{ atlas: AtlasResponse; copy: A
       return byLevel !== 0 ? byLevel : a.mastery.percent - b.mastery.percent;
     });
 
+  const problems = overlay.relevant_problems ?? [];
+  const problemGroups: {
+    code: string;
+    name: string;
+    problems: AtlasRelevantProblem[];
+  }[] = [];
+  for (const problem of problems) {
+    const last = problemGroups[problemGroups.length - 1];
+    if (last && last.code === problem.subpattern_code) {
+      last.problems.push(problem);
+    } else {
+      problemGroups.push({
+        code: problem.subpattern_code,
+        name: problem.subpattern_name,
+        problems: [problem],
+      });
+    }
+  }
+
   return (
     <div className="cabinet-grid">
       <CabinetPanel
@@ -489,6 +493,52 @@ function ReadinessView({ atlas, copy }: Readonly<{ atlas: AtlasResponse; copy: A
               <SubpatternRow key={sub.code} sub={sub} copy={copy} />
             ))}
           </ul>
+        )}
+      </CabinetPanel>
+
+      <CabinetPanel
+        eyebrow="tasks"
+        title={copy.coverage.problemsTitle}
+        meta={<span className="cabinet-panel__meta">{problems.length}</span>}
+      >
+        {problems.length === 0 ? (
+          <p>{copy.coverage.problemsEmpty}</p>
+        ) : (
+          <>
+            <p className="atlas-tools-hint">{copy.coverage.problemsHint}</p>
+            <ul className="atlas-problems">
+              {problemGroups.map((group) => (
+                <li key={group.code}>
+                  <Link href={`/patterns/${group.code}`} className="atlas-problems__group">
+                    {group.name}
+                  </Link>
+                  <ul>
+                    {group.problems.map((problem) => (
+                      <li key={`${group.code}-${problem.id}`}>
+                        <a href={problem.url} target="_blank" rel="noreferrer">
+                          {problem.title}
+                        </a>
+                        <span className="atlas-problem__meta">
+                          {problem.difficulty ? (
+                            <span className="meta-chip">{problem.difficulty}</span>
+                          ) : null}
+                          {problem.tier ? (
+                            <span className="meta-chip meta-chip--muted">{problem.tier}</span>
+                          ) : null}
+                          <span className={`atlas-status atlas-status--${problem.status}`}>
+                            {problem.status}
+                          </span>
+                          {problem.evidence_count > 0 ? (
+                            <span className="atlas-solved">×{problem.evidence_count}</span>
+                          ) : null}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </li>
+              ))}
+            </ul>
+          </>
         )}
       </CabinetPanel>
     </div>

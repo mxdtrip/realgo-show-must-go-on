@@ -94,10 +94,11 @@ type CompanyRelevance struct {
 }
 
 type AtlasCompanyOverlay struct {
-	Code     string        `json:"code"`
-	Name     string        `json:"name"`
-	DemoOnly bool          `json:"demo_only"`
-	Coverage AtlasCoverage `json:"coverage"`
+	Code             string                 `json:"code"`
+	Name             string                 `json:"name"`
+	DemoOnly         bool                   `json:"demo_only"`
+	Coverage         AtlasCoverage          `json:"coverage"`
+	RelevantProblems []AtlasRelevantProblem `json:"relevant_problems,omitempty"`
 }
 
 // AtlasCoverage is the readiness summary for a selected company, bucketed by
@@ -116,6 +117,19 @@ type AtlasGap struct {
 	Name           string `json:"name"`
 	Relevance      string `json:"relevance"`
 	MasteryPercent int    `json:"mastery_percent"`
+}
+
+// AtlasRelevantProblem is one company-evidence task surfaced in the readiness
+// overlay. It pairs PracticeProblem fields with the subpattern the task trains
+// and the company evidence weight, so the UI can group tasks next to the
+// relevant subpatterns and top gaps.
+type AtlasRelevantProblem struct {
+	PracticeProblem
+	SubpatternCode string `json:"subpattern_code"`
+	SubpatternName string `json:"subpattern_name"`
+	EvidenceCount  int    `json:"evidence_count"`
+	LastSeenAt     string `json:"last_seen_at,omitempty"`
+	SourceType     string `json:"source_type"`
 }
 
 type AtlasCompany struct {

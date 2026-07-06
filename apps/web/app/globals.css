@@ -7512,6 +7512,66 @@ a.cabinet-panel__meta:hover {
   font-size: 11px;
 }
 
+.atlas-problems {
+  margin: 0;
+  padding-left: 0;
+  list-style: none;
+}
+
+.atlas-problems > li {
+  padding: 8px 0;
+  border-top: 1px solid var(--border);
+}
+
+.atlas-problems > li:first-child {
+  border-top: none;
+}
+
+.atlas-problems__group {
+  display: block;
+  color: var(--text);
+  text-decoration: none;
+  font-family: var(--font-stack-mono);
+  font-size: 11px;
+  text-transform: lowercase;
+  margin-bottom: 4px;
+}
+
+.atlas-problems__group:hover {
+  color: var(--accent-bright);
+}
+
+.atlas-problems ul {
+  margin: 0;
+  padding-left: 16px;
+  list-style: none;
+}
+
+.atlas-problems ul > li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 3px 0;
+}
+
+.atlas-problems ul a {
+  color: var(--text);
+  text-decoration: none;
+}
+
+.atlas-problems ul a:hover {
+  color: var(--accent-bright);
+}
+
+.atlas-problem__meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-stack-mono);
+  font-size: 11px;
+}
+
 /* ---------- node detail ---------- */
 
 .atlas-node-refs {

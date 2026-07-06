@@ -89,11 +89,20 @@ export type AtlasCoverage = {
   top_gaps: AtlasGap[];
 };
 
+export type AtlasRelevantProblem = PracticeProblem & {
+  subpattern_code: string;
+  subpattern_name: string;
+  evidence_count: number;
+  last_seen_at?: string;
+  source_type: string;
+};
+
 export type AtlasCompanyOverlay = {
   code: string;
   name: string;
   demo_only: boolean;
   coverage: AtlasCoverage;
+  relevant_problems?: AtlasRelevantProblem[];
 };
 
 export type AtlasResponse = {

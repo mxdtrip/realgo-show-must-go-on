@@ -583,8 +583,6 @@ const ru = {
         companiesEmpty: "Данных по компаниям пока нет.",
         demoBadge: "demo data",
         demoNote: "Демо-данные для примера — не реальная статистика интервью.",
-        toolsTitle: "Tools",
-        toolsHint: "База, на которую опираются субпаттерны — это не паттерны решения.",
         familiesTitle: "Pattern Families",
         expandAll: "развернуть всё",
         collapseAll: "свернуть всё",
@@ -619,6 +617,9 @@ const ru = {
           gapsTitle: "Top gaps",
           gapsEmpty: "Провалов нет — релевантные субпаттерны в хорошей форме.",
           noCompany: "Выбери компанию, чтобы увидеть готовность к ней.",
+          problemsTitle: "Relevant Problems",
+          problemsEmpty: "У компании пока нет привязанных задач.",
+          problemsHint: "Задачи, по которым у компании есть evidence — отрабатывай их рядом с релевантными субпаттернами.",
         },
       },
       atlasNode: {

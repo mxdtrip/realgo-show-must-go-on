@@ -135,6 +135,32 @@ func (r *pgRepository) GetAtlas(ctx context.Context, userID int64, companyCode s
 
 	if overlay != nil {
 		overlay.Coverage = computeCoverage(resp.Subpatterns)
+		problems, err := r.q.ListCompanyRelevantProblems(ctx, db.ListCompanyRelevantProblemsParams{
+			UserID:      userID,
+			CompanyCode: companyCode,
+		})
+		if err != nil {
+			return AtlasResponse{}, fmt.Errorf("atlas: list company relevant problems: %w", err)
+		}
+		overlay.RelevantProblems = make([]AtlasRelevantProblem, 0, len(problems))
+		for _, row := range problems {
+			overlay.RelevantProblems = append(overlay.RelevantProblems, AtlasRelevantProblem{
+				PracticeProblem: PracticeProblem{
+					ID:           row.ID,
+					Title:        row.Title,
+					URL:          row.Url,
+					Difficulty:   row.Difficulty,
+					Tier:         row.Tier,
+					Status:       row.Status,
+					NextReviewAt: timestamptzPtr(row.NextReviewAt),
+				},
+				SubpatternCode: row.SubpatternCode,
+				SubpatternName: row.SubpatternName,
+				EvidenceCount:  int(row.EvidenceCount),
+				LastSeenAt:     dateString(row.LastSeenAt),
+				SourceType:     row.SourceType,
+			})
+		}
 	}
 
 	return resp, nil

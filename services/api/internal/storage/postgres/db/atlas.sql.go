@@ -179,6 +179,90 @@ func (q *Queries) ListAtlasCompanies(ctx context.Context) ([]ListAtlasCompaniesR
 	return items, nil
 }
 
+const listCompanyRelevantProblems = `-- name: ListCompanyRelevantProblems :many
+SELECT
+    p.code AS subpattern_code,
+    p.name AS subpattern_name,
+    COALESCE(ps.tier, '')::text AS tier,
+    pr.id,
+    pr.title,
+    pr.url,
+    COALESCE(pr.difficulty, '')::text AS difficulty,
+    cp.evidence_count,
+    cp.last_seen_at,
+    cp.source_type,
+    COALESCE(upp.status, 'not_started')::text AS status,
+    rs.next_review_at
+FROM company_problems cp
+JOIN companies co ON co.id = cp.company_id
+JOIN problems pr ON pr.id = cp.problem_id
+JOIN problem_subpatterns ps ON ps.problem_id = pr.id
+JOIN patterns p ON p.id = ps.subpattern_id
+LEFT JOIN user_problem_progress upp
+    ON upp.problem_id = pr.id AND upp.user_id = $1::bigint
+LEFT JOIN review_schedules rs
+    ON rs.problem_id = pr.id AND rs.user_id = $1::bigint
+WHERE co.code = $2::text
+ORDER BY p.code, ps.tier, pr.title
+`
+
+type ListCompanyRelevantProblemsParams struct {
+	UserID      int64
+	CompanyCode string
+}
+
+type ListCompanyRelevantProblemsRow struct {
+	SubpatternCode string
+	SubpatternName string
+	Tier           string
+	ID             int64
+	Title          string
+	Url            string
+	Difficulty     string
+	EvidenceCount  int32
+	LastSeenAt     pgtype.Date
+	SourceType     string
+	Status         string
+	NextReviewAt   pgtype.Timestamptz
+}
+
+// Company-scoped practice: every problem with evidence for a company,
+// joined to the subpatterns it practices. Drives the readiness overlay so
+// relevant tasks can surface next to relevant subpatterns. A problem that
+// practices several subpatterns repeats once per link.
+func (q *Queries) ListCompanyRelevantProblems(ctx context.Context, arg ListCompanyRelevantProblemsParams) ([]ListCompanyRelevantProblemsRow, error) {
+	rows, err := q.db.Query(ctx, listCompanyRelevantProblems, arg.UserID, arg.CompanyCode)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListCompanyRelevantProblemsRow
+	for rows.Next() {
+		var i ListCompanyRelevantProblemsRow
+		if err := rows.Scan(
+			&i.SubpatternCode,
+			&i.SubpatternName,
+			&i.Tier,
+			&i.ID,
+			&i.Title,
+			&i.Url,
+			&i.Difficulty,
+			&i.EvidenceCount,
+			&i.LastSeenAt,
+			&i.SourceType,
+			&i.Status,
+			&i.NextReviewAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listCompanySubpatternRelevance = `-- name: ListCompanySubpatternRelevance :many
 SELECT
     p.code,

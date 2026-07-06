@@ -265,6 +265,36 @@ LEFT JOIN review_schedules rs
 WHERE ps.subpattern_id = sqlc.arg(subpattern_id)::bigint
 ORDER BY co.name, pr.title;
 
+-- Company-scoped practice: every problem with evidence for a company,
+-- joined to the subpatterns it practices. Drives the readiness overlay so
+-- relevant tasks can surface next to relevant subpatterns. A problem that
+-- practices several subpatterns repeats once per link.
+-- name: ListCompanyRelevantProblems :many
+SELECT
+    p.code AS subpattern_code,
+    p.name AS subpattern_name,
+    COALESCE(ps.tier, '')::text AS tier,
+    pr.id,
+    pr.title,
+    pr.url,
+    COALESCE(pr.difficulty, '')::text AS difficulty,
+    cp.evidence_count,
+    cp.last_seen_at,
+    cp.source_type,
+    COALESCE(upp.status, 'not_started')::text AS status,
+    rs.next_review_at
+FROM company_problems cp
+JOIN companies co ON co.id = cp.company_id
+JOIN problems pr ON pr.id = cp.problem_id
+JOIN problem_subpatterns ps ON ps.problem_id = pr.id
+JOIN patterns p ON p.id = ps.subpattern_id
+LEFT JOIN user_problem_progress upp
+    ON upp.problem_id = pr.id AND upp.user_id = sqlc.arg(user_id)::bigint
+LEFT JOIN review_schedules rs
+    ON rs.problem_id = pr.id AND rs.user_id = sqlc.arg(user_id)::bigint
+WHERE co.code = sqlc.arg(company_code)::text
+ORDER BY p.code, ps.tier, pr.title;
+
 -- Card summaries for a taxonomy node's detail view (shared + own cards).
 -- name: ListPatternCardSummaries :many
 SELECT
