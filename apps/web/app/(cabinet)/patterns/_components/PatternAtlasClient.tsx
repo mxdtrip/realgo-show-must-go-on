@@ -50,6 +50,55 @@ function writeStored(key: string, value: string | null) {
   }
 }
 
+const difficultyWeights = {
+  easy: 1,
+  medium: 2,
+  hard: 3,
+} as const;
+
+function familyStats(subs: readonly AtlasSubpattern[]) {
+  return {
+    problemCount: subs.reduce((sum, sub) => sum + sub.stats.problem_count, 0),
+    dueCount: subs.reduce((sum, sub) => sum + sub.stats.due_count, 0),
+  };
+}
+
+function familyDifficulty(subs: readonly AtlasSubpattern[], copy: AtlasCopy) {
+  let known = 0;
+  let weighted = 0;
+  const counts = { easy: 0, medium: 0, hard: 0 };
+
+  for (const sub of subs) {
+    const byDifficulty = sub.stats.difficulty_counts;
+    if (!byDifficulty) continue;
+
+    for (const key of Object.keys(difficultyWeights) as (keyof typeof difficultyWeights)[]) {
+      const count = byDifficulty[key] ?? 0;
+      counts[key] += count;
+      known += count;
+      weighted += count * difficultyWeights[key];
+    }
+  }
+
+  if (known === 0) {
+    return {
+      label: copy.familyDifficultyUnknown,
+      detail: copy.familyDifficultyNoData,
+      title: copy.familyDifficultyHint,
+      known: false,
+    };
+  }
+
+  const avg = weighted / known;
+  const label = avg < 1.5 ? "easy" : avg < 2.35 ? "medium" : "hard";
+  return {
+    label,
+    detail: `easy ${counts.easy} · medium ${counts.medium} · hard ${counts.hard}`,
+    title: copy.familyDifficultyHint,
+    known: true,
+  };
+}
+
 export function PatternAtlasClient({ copy }: Readonly<{ copy: AtlasCopy }>) {
   const [atlas, setAtlas] = useState<AtlasResponse | null>(null);
   const [companies, setCompanies] = useState<AtlasCompany[]>([]);
@@ -132,15 +181,6 @@ export function PatternAtlasClient({ copy }: Readonly<{ copy: AtlasCopy }>) {
     });
   }, []);
 
-  const setAllFamilies = useCallback(
-    (open: boolean) => {
-      const next = open ? new Set(atlas?.families.map((f) => f.code) ?? []) : new Set<string>();
-      setExpanded(next);
-      writeStored(EXPANDED_KEY, JSON.stringify([...next]));
-    },
-    [atlas],
-  );
-
   const subpatternsByCode = useMemo(() => {
     const map = new Map<string, AtlasSubpattern>();
     for (const sub of atlas?.subpatterns ?? []) map.set(sub.code, sub);
@@ -158,12 +198,12 @@ export function PatternAtlasClient({ copy }: Readonly<{ copy: AtlasCopy }>) {
     if (!atlas) return [];
     return atlas.families
       .map((family) => {
-        const subs = family.subpattern_codes
+        const allSubs = family.subpattern_codes
           .map((code) => subpatternsByCode.get(code))
-          .filter((sub): sub is AtlasSubpattern => sub !== undefined)
-          .filter(matchesQuery);
+          .filter((sub): sub is AtlasSubpattern => sub !== undefined);
         const familyMatches = !query || family.name.toLowerCase().includes(query);
-        return { family, subs, show: subs.length > 0 || familyMatches };
+        const subs = query && familyMatches ? allSubs : allSubs.filter(matchesQuery);
+        return { family, subs, allSubs, show: subs.length > 0 || familyMatches };
       })
       .filter((entry) => entry.show);
   }, [atlas, subpatternsByCode, matchesQuery, query]);
@@ -253,13 +293,11 @@ export function PatternAtlasClient({ copy }: Readonly<{ copy: AtlasCopy }>) {
           <ReadinessView atlas={atlas} copy={copy} />
         ) : (
           <TreeView
-            atlas={atlas}
             copy={copy}
             visibleFamilies={visibleFamilies}
             expanded={expanded}
             searchActive={query.length > 0}
             onToggle={toggleFamily}
-            onSetAll={setAllFamilies}
           />
         )
       ) : null}
@@ -268,82 +306,87 @@ export function PatternAtlasClient({ copy }: Readonly<{ copy: AtlasCopy }>) {
 }
 
 function TreeView({
-  atlas,
   copy,
   visibleFamilies,
   expanded,
   searchActive,
   onToggle,
-  onSetAll,
 }: Readonly<{
-  atlas: AtlasResponse;
   copy: AtlasCopy;
   visibleFamilies: readonly {
     family: AtlasResponse["families"][number];
     subs: readonly AtlasSubpattern[];
+    allSubs: readonly AtlasSubpattern[];
   }[];
   expanded: ReadonlySet<string>;
   searchActive: boolean;
   onToggle: (code: string) => void;
-  onSetAll: (open: boolean) => void;
 }>) {
   return (
     <>
-      <CabinetPanel
-        eyebrow="taxonomy"
-        title={copy.familiesTitle}
-        padded
-        meta={
-          <span className="atlas-tree-controls">
-            <button type="button" className="btn-ghost" onClick={() => onSetAll(true)}>
-              {copy.expandAll}
-            </button>
-            <button type="button" className="btn-ghost" onClick={() => onSetAll(false)}>
-              {copy.collapseAll}
-            </button>
-          </span>
-        }
-      >
+      <CabinetPanel eyebrow="taxonomy" title={copy.familiesTitle} padded>
         {visibleFamilies.length === 0 ? (
           <p>{copy.searchEmpty}</p>
         ) : (
-          <ul className="atlas-tree">
-            {visibleFamilies.map(({ family, subs }) => {
+          <div className="atlas-tree atlas-table" role="table" aria-label={copy.familiesTitle}>
+            <div className="atlas-table__head" role="row">
+              <span role="columnheader">{copy.familyColumns.pattern}</span>
+              <span role="columnheader">{copy.familyColumns.difficulty}</span>
+              <span role="columnheader">{copy.familyColumns.tasks}</span>
+              <span role="columnheader">{copy.familyColumns.subpatterns}</span>
+            </div>
+            {visibleFamilies.map(({ family, subs, allSubs }) => {
               const isOpen = searchActive || expanded.has(family.code);
-              const due = subs.reduce((sum, sub) => sum + sub.stats.due_count, 0);
+              const stats = familyStats(allSubs);
+              const difficulty = familyDifficulty(allSubs, copy);
+              const subpatternsId = `atlas-subpatterns-${family.code}`;
               return (
-                <li key={family.code}>
-                  <div className="atlas-family">
-                    <span className="atlas-family__head">
+                <div className="atlas-family-group" role="rowgroup" key={family.code}>
+                  <div className="atlas-family" role="row">
+                    <span className="atlas-table__cell atlas-table__cell--name" role="cell">
                       <button
                         type="button"
-                        className="atlas-family__toggle"
+                        className="atlas-family__name"
                         aria-expanded={isOpen}
+                        aria-controls={subpatternsId}
                         aria-label={`${isOpen ? copy.collapseAria : copy.expandAria}: ${family.name}`}
                         onClick={() => onToggle(family.code)}
                       >
                         <i className={isOpen ? "atlas-caret is-open" : "atlas-caret"} aria-hidden="true" />
+                        <span>{family.name}</span>
                       </button>
-                      <Link href={`/patterns/${family.code}`} className="atlas-family__name">
-                        {family.name}
-                      </Link>
                     </span>
-                    <span className="atlas-family__meta">
-                      {subs.length} {pluralRu(subs.length, copy.subpatternUnit)}
-                      {due > 0 ? <em className="atlas-due">{due} {copy.dueLabel}</em> : null}
+                    <span className="atlas-table__cell atlas-family__difficulty" role="cell" title={difficulty.title}>
+                      <strong className={difficulty.known ? undefined : "is-muted"}>{difficulty.label}</strong>
+                      <em>{difficulty.detail}</em>
+                    </span>
+                    <span className="atlas-table__cell atlas-family__tasks" role="cell">
+                      <strong>{stats.problemCount}</strong>
+                      <span>{pluralRu(stats.problemCount, copy.taskUnit)}</span>
+                    </span>
+                    <span className="atlas-table__cell atlas-family__meta" role="cell">
+                      <strong>{allSubs.length}</strong>
+                      <span>{pluralRu(allSubs.length, copy.subpatternUnit)}</span>
+                      {stats.dueCount > 0 ? <em className="atlas-due">{stats.dueCount} {copy.dueLabel}</em> : null}
                     </span>
                   </div>
-                  {isOpen ? (
-                    <ul className="atlas-subs">
-                      {subs.map((sub) => (
-                        <SubpatternRow key={sub.code} sub={sub} copy={copy} />
-                      ))}
-                    </ul>
-                  ) : null}
-                </li>
+                  <div
+                    className={isOpen ? "atlas-subs-shell is-open" : "atlas-subs-shell"}
+                    id={subpatternsId}
+                    aria-hidden={!isOpen}
+                  >
+                    <div className="atlas-subs-shell__inner">
+                      <ul className="atlas-subs">
+                        {subs.map((sub) => (
+                          <SubpatternRow key={sub.code} sub={sub} copy={copy} />
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
               );
             })}
-          </ul>
+          </div>
         )}
       </CabinetPanel>
     </>

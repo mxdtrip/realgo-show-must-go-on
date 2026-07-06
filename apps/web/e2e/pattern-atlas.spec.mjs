@@ -30,24 +30,29 @@ test.describe("pattern atlas tree", () => {
 
     await expect(page.locator(".atlas-tree")).toBeVisible();
     await expect(page.getByText("Binary Search", { exact: true })).toBeVisible();
+    await expect(page.getByText("сложность", { exact: true })).toBeVisible();
+    await expect(page.getByText("подпаттерны", { exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "развернуть всё" })).toHaveCount(0);
 
     // Progressive disclosure: subpatterns hidden until expanded.
-    await expect(page.locator(".atlas-sub")).toHaveCount(0);
-    await page.click('button[aria-label$="Binary Search"]');
+    await expect(page.locator(".atlas-sub:visible")).toHaveCount(0);
+    await page.getByRole("button", { name: /Binary Search$/ }).click();
+    await expect(page).toHaveURL(/\/patterns$/);
     await expect(page.getByText("Binary Search on Answer")).toBeVisible();
-    await expect(page.locator(".atlas-sub")).toHaveCount(2);
+    await expect(page.locator(".atlas-sub:visible")).toHaveCount(2);
+    await expect(page.locator('a[href="/patterns/binary_search"]')).toHaveCount(0);
 
     // Mastery state is text, not colour alone.
     await expect(page.locator(".atlas-status--unstable")).toContainText("нестабильный");
 
     // Collapse hides the branch again.
-    await page.click('button[aria-label$="Binary Search"]');
-    await expect(page.locator(".atlas-sub")).toHaveCount(0);
+    await page.getByRole("button", { name: /Binary Search$/ }).click();
+    await expect(page.locator(".atlas-sub:visible")).toHaveCount(0);
 
     // Expansion state survives a reload.
-    await page.click('button[aria-label$="Binary Search"]');
+    await page.getByRole("button", { name: /Binary Search$/ }).click();
     await page.reload();
-    await expect(page.locator(".atlas-sub")).toHaveCount(2);
+    await expect(page.locator(".atlas-sub:visible")).toHaveCount(2);
   });
 
   test("search filters subpatterns", async ({ page }) => {
@@ -69,11 +74,11 @@ test.describe("pattern atlas tree", () => {
     await page.selectOption(".atlas-company select", "cmp_stub");
     await expect(page.locator(".atlas-demo-note")).toBeVisible();
 
-    await page.click('button[aria-label$="Binary Search"]');
+    await page.getByRole("button", { name: /Binary Search$/ }).click();
     await expect(page.locator(".atlas-relevance--high")).toBeVisible();
 
     // No relevance marker on nodes without evidence.
-    await page.click('button[aria-label$="Sliding Window"]');
+    await page.getByRole("button", { name: /Sliding Window$/ }).click();
     const windowRow = page.locator(".atlas-sub", { hasText: "Fixed-Size Window" });
     await expect(windowRow.locator(".atlas-relevance")).toHaveCount(0);
   });
@@ -131,6 +136,12 @@ test.describe("subpattern detail", () => {
     await expect(page.getByText("Методический материал готовится")).toBeVisible();
     await expect(page.getByText("К этому субпаттерну задачи ещё не привязаны.")).toBeVisible();
     await expect(page.getByText("Данных о компаниях по этому субпаттерну пока нет.")).toBeVisible();
+  });
+
+  test("pattern families do not have detail pages", async ({ page }) => {
+    await openAtlas(page);
+    await page.goto("/patterns/binary_search");
+    await expect(page.getByText("Такого узла в атласе нет").first()).toBeVisible();
   });
 
   test("unknown node shows not-found state", async ({ page }) => {

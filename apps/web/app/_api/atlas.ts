@@ -29,6 +29,7 @@ export type SubpatternStats = {
   card_count: number;
   attempt_count: number;
   hard_count: number;
+  difficulty_counts?: Partial<Record<"easy" | "medium" | "hard" | "unknown", number>>;
   next_review_at?: string;
   last_solved_at?: string;
 };

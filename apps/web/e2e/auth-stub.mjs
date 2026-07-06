@@ -165,6 +165,25 @@ function atlasPayload(withCompany) {
 }
 
 const ATLAS_NODES = {
+  binary_search: {
+    code: "binary_search",
+    name: "Binary Search",
+    kind: "family",
+    description: "Family node stub that should not render as a detail page.",
+    taxonomy_version: "realgo-v1",
+    techniques: [],
+    recognition_symptoms: [],
+    checklist: [],
+    example_problems: [],
+    subpatterns: [
+      { code: "binary_search_on_answer", name: "Binary Search on Answer" },
+      { code: "lower_upper_bound", name: "Lower / Upper Bound" },
+    ],
+    cards: [],
+    practice: [],
+    company_practice: [],
+    relevant_companies: [],
+  },
   binary_search_on_answer: {
     code: "binary_search_on_answer",
     name: "Binary Search on Answer",

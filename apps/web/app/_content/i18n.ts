@@ -584,11 +584,20 @@ const ru = {
         demoBadge: "demo data",
         demoNote: "Демо-данные для примера — не реальная статистика интервью.",
         familiesTitle: "Pattern Families",
-        expandAll: "развернуть всё",
-        collapseAll: "свернуть всё",
+        familyColumns: {
+          pattern: "паттерн",
+          difficulty: "сложность",
+          tasks: "задачи",
+          subpatterns: "подпаттерны",
+        },
+        familyDifficultyUnknown: "нет данных",
+        familyDifficultyNoData: "нужен easy/medium/hard",
+        familyDifficultyHint:
+          "Среднюю сложность честно считать можно только из распределения easy/medium/hard по привязанным задачам. Текущий ответ атласа его не отдаёт.",
         expandAria: "Раскрыть семейство",
         collapseAria: "Свернуть семейство",
         subpatternUnit: ["субпаттерн", "субпаттерна", "субпаттернов"],
+        taskUnit: ["задача", "задачи", "задач"],
         solvedLabel: "solved",
         dueLabel: "due",
         masteryStatuses: {

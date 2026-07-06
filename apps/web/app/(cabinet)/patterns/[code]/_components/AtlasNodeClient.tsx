@@ -52,6 +52,11 @@ export function AtlasNodeClient({
 
     getAtlasNode(code, controller.signal)
       .then((data) => {
+        if (data.kind !== "subpattern") {
+          setDetail(null);
+          setLoadState("not_found");
+          return;
+        }
         setDetail(data);
         setLoadState("loaded");
       })
@@ -107,7 +112,6 @@ function NodeBody({
   copy,
   atlasCopy,
 }: Readonly<{ detail: NodeDetail; copy: NodeCopy; atlasCopy: AtlasCopy }>) {
-  const isSubpattern = detail.kind === "subpattern";
   const mastery = detail.mastery;
   const stats = detail.stats;
 
@@ -120,33 +124,31 @@ function NodeBody({
           </span>
           <h1>{detail.name}</h1>
           {detail.description ? <p>{detail.description}</p> : null}
-          {isSubpattern ? (
-            <p className="atlas-node-refs">
-              {detail.families && detail.families.length > 0 ? (
-                <span>
-                  {copy.familiesLabel}:{" "}
-                  {detail.families.map((family, index) => (
-                    <span key={family.code}>
-                      {index > 0 ? ", " : null}
-                      <Link href={`/patterns/${family.code}`}>{family.name}</Link>
-                    </span>
-                  ))}
-                </span>
-              ) : null}
-              {detail.tools && detail.tools.length > 0 ? (
-                <span className="atlas-node-tools">
-                  {copy.toolsLabel}:{" "}
-                  {detail.tools.map((tool) => (
-                    <span className="meta-chip" key={tool.code}>
-                      {tool.name}
-                    </span>
-                  ))}
-                </span>
-              ) : null}
-            </p>
-          ) : null}
+          <p className="atlas-node-refs">
+            {detail.families && detail.families.length > 0 ? (
+              <span>
+                {copy.familiesLabel}:{" "}
+                {detail.families.map((family, index) => (
+                  <span key={family.code}>
+                    {index > 0 ? ", " : null}
+                    {family.name}
+                  </span>
+                ))}
+              </span>
+            ) : null}
+            {detail.tools && detail.tools.length > 0 ? (
+              <span className="atlas-node-tools">
+                {copy.toolsLabel}:{" "}
+                {detail.tools.map((tool) => (
+                  <span className="meta-chip" key={tool.code}>
+                    {tool.name}
+                  </span>
+                ))}
+              </span>
+            ) : null}
+          </p>
         </div>
-        {isSubpattern && mastery && stats ? (
+        {mastery && stats ? (
           <div className="cabinet-page-head__actions">
             <div className="atlas-node-mastery">
               <span className="cabinet-next-hint">
@@ -178,35 +180,27 @@ function NodeBody({
         ) : null}
       </section>
 
-      {isSubpattern ? (
-        <nav className="atlas-node-actions" aria-label={copy.learn.title}>
-          <a className="btn-ghost" href="#atlas-cards">
-            {copy.actions.cards}
-          </a>
-          <a className="btn-ghost" href="#atlas-practice">
-            {copy.actions.practice}
-          </a>
-          <a className="btn-ghost" href="#atlas-company">
-            {copy.actions.company}
-          </a>
-          <Link className="cabinet-cta" href={`/patterns/${detail.code}/session`}>
-            {copy.actions.session}
-            <CabinetIcon name="arrow" />
-          </Link>
-        </nav>
-      ) : null}
+      <nav className="atlas-node-actions" aria-label={copy.learn.title}>
+        <a className="btn-ghost" href="#atlas-cards">
+          {copy.actions.cards}
+        </a>
+        <a className="btn-ghost" href="#atlas-practice">
+          {copy.actions.practice}
+        </a>
+        <a className="btn-ghost" href="#atlas-company">
+          {copy.actions.company}
+        </a>
+        <Link className="cabinet-cta" href={`/patterns/${detail.code}/session`}>
+          {copy.actions.session}
+          <CabinetIcon name="arrow" />
+        </Link>
+      </nav>
 
       <div className="cabinet-grid">
-        {isSubpattern ? (
-          <>
-            <LearnPanel detail={detail} copy={copy} />
-            <CardsPanel cards={detail.cards} copy={copy} />
-            <PracticePanel practice={detail.practice} copy={copy} />
-            <CompanyPanel detail={detail} copy={copy} atlasCopy={atlasCopy} />
-          </>
-        ) : (
-          <FamilyPanels detail={detail} copy={copy} />
-        )}
+        <LearnPanel detail={detail} copy={copy} />
+        <CardsPanel cards={detail.cards} copy={copy} />
+        <PracticePanel practice={detail.practice} copy={copy} />
+        <CompanyPanel detail={detail} copy={copy} atlasCopy={atlasCopy} />
       </div>
     </>
   );
@@ -454,78 +448,6 @@ function CompanyPanel({
           </div>
         )}
       </CabinetPanel>
-    </>
-  );
-}
-
-function FamilyPanels({ detail, copy }: Readonly<{ detail: NodeDetail; copy: NodeCopy }>) {
-  return (
-    <>
-      {detail.subpatterns && detail.subpatterns.length > 0 ? (
-        <CabinetPanel
-          eyebrow="subpatterns"
-          title={copy.subpatternsTitle}
-          padded
-          meta={<span className="cabinet-panel__meta">{detail.subpatterns.length}</span>}
-        >
-          <ul className="atlas-subs atlas-subs--flat">
-            {detail.subpatterns.map((sub) => (
-              <li className="atlas-sub" key={sub.code}>
-                <Link href={`/patterns/${sub.code}`} className="atlas-sub__link">
-                  <span className="atlas-sub__name">{sub.name}</span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </CabinetPanel>
-      ) : null}
-
-      {detail.techniques.length > 0 ? (
-        <CabinetPanel eyebrow="techniques" title="Разновидности" padded>
-          <div className="pattern-technique-chips">
-            {detail.techniques.map((technique) => (
-              <span className="meta-chip" key={technique}>
-                {technique}
-              </span>
-            ))}
-          </div>
-        </CabinetPanel>
-      ) : null}
-
-      {detail.recognition_symptoms.length > 0 ? (
-        <CabinetPanel eyebrow="symptoms" title="Как распознать" padded>
-          <ul className="pattern-detail-list">
-            {detail.recognition_symptoms.map((symptom) => (
-              <li key={symptom}>{symptom}</li>
-            ))}
-          </ul>
-        </CabinetPanel>
-      ) : null}
-
-      {detail.checklist.length > 0 ? (
-        <CabinetPanel eyebrow="checklist" title="Держи в голове" padded>
-          <ul className="pattern-detail-list">
-            {detail.checklist.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
-        </CabinetPanel>
-      ) : null}
-
-      {detail.example_problems.length > 0 ? (
-        <CabinetPanel eyebrow="examples" title="Примеры задач" padded>
-          <ul className="pattern-detail-examples">
-            {detail.example_problems.map((problem) => (
-              <li key={problem.title}>
-                <a href={problem.url} target="_blank" rel="noreferrer">
-                  {problem.title}
-                </a>
-                {problem.difficulty ? <span>{problem.difficulty}</span> : null}
-              </li>
-            ))}
-          </ul>
-        </CabinetPanel>
-      ) : null}
     </>
   );
 }
