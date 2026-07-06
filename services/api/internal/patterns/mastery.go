@@ -5,19 +5,20 @@ package patterns
 // separately so richer models (recognition, discrimination, transfer) can be
 // added later without reinterpreting a single opaque percent.
 //
-//   practice  — share of the subpattern's linked problems the user solved.
-//   retention — share of non-hard ratings among the user's review attempts
-//               mapped to this subpattern (problems, node reviews, cards).
+//	practice  — share of the subpattern's linked problems the user solved.
+//	retention — share of non-hard ratings among the user's review attempts
+//	            mapped to this subpattern (problems, node reviews, cards).
 //
 // Status thresholds:
-//   not_started — no solved problems, no in-progress problems, no attempts.
-//   weak        — hard ratings dominate recent attempts (>= 40%).
-//   learning    — practice below a third of the linked problems.
-//   mastered    — >= 85% practice, < 15% hard, nothing due.
-//   unstable    — noticeable hard share (>= 15%) or overdue reviews.
-//   strong      — everything else.
+//
+//	not_started — no solved problems, no in-progress problems, no attempts.
+//	weak        — hard ratings dominate recent attempts (>= 40%).
+//	learning    — practice below a third of the linked problems.
+//	mastered    — >= 85% practice, < 15% hard, nothing due.
+//	unstable    — noticeable hard share (>= 15%) or overdue reviews.
+//	strong      — everything else.
 const (
-	practiceWeight = 6
+	practiceWeight  = 6
 	retentionWeight = 4
 
 	weakHardShare     = 0.40
