@@ -18,14 +18,9 @@ type Provisioner interface {
 // state. The scheduler lives inside the repository so it can access the existing
 // FSRS state at upsert time without an extra round-trip.
 type Service struct {
-<<<<<<< HEAD
 	repo        Repository
 	now         func() time.Time
 	provisioner Provisioner
-=======
-	repo Repository
-	now  func() time.Time
->>>>>>> 1a132fd (Бэкенд: унифицировать планировщик — extension ingest (Simple 1/3/7) vs reviews (FSRS) #160)
 }
 
 // NewService wires the repository.
