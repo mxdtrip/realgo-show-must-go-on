@@ -15,6 +15,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/stretchr/testify/require"
 
 	"github.com/mxdtrip/freeburger/services/api/internal/auth"
@@ -174,4 +175,156 @@ func countRows(t *testing.T, ctx context.Context, pg *postgres.Storage, query st
 	var count int64
 	require.NoError(t, pg.Pool.QueryRow(ctx, query, args...).Scan(&count))
 	return count
+}
+
+func TestExtensionSolvedCreatesSchedule(t *testing.T) {
+	ctx := context.Background()
+
+	pg, err := postgres.New(ctx, &config.Database{
+		Host:            "localhost",
+		Port:            5432,
+		User:            "postgres",
+		Password:        "postgres",
+		DBName:          "freeburger",
+		SSLMode:         "disable",
+		MaxConns:        16,
+		MaxConnLifetime: time.Hour,
+		MaxConnIdleTime: time.Minute,
+	})
+	require.NoError(t, err)
+
+	rdb, err := redis.New(ctx, &config.Redis{
+		Host: "localhost",
+		Port: "6379",
+	})
+	require.NoError(t, err)
+
+	authSvc := auth.NewService(
+		db.New(pg.Pool),
+		rdb.Client,
+		auth.Config{
+			JWTSecret:  []byte("integration-secret-with-more-than-32-bytes"),
+			AccessTTL:  time.Hour,
+			RefreshTTL: time.Hour,
+			Issuer:     "freeburger",
+		},
+	)
+
+	h := server.New(server.Deps{
+		Logger:   slog.New(slog.NewTextHandler(io.Discard, nil)),
+		Postgres: pg,
+		Redis:    rdb,
+		Auth:     authSvc,
+	})
+
+	suffix := time.Now().UTC().Format("20060102150405.000000000")
+
+	email := "extension-fsrs-" + suffix + "@example.test"
+	eventID := "extension-fsrs-" + suffix
+	slug := "extension-fsrs-two-sum-" + suffix
+
+	defer func() {
+		_, _ = pg.Pool.Exec(ctx,
+			"DELETE FROM extension_events WHERE idempotency_key = $1",
+			eventID,
+		)
+		_, _ = pg.Pool.Exec(ctx,
+			"DELETE FROM review_schedules WHERE user_id IN (SELECT id FROM users WHERE email = $1)",
+			email,
+		)
+		_, _ = pg.Pool.Exec(ctx,
+			"DELETE FROM user_problem_progress WHERE user_id IN (SELECT id FROM users WHERE email = $1)",
+			email,
+		)
+		_, _ = pg.Pool.Exec(ctx,
+			"DELETE FROM problems WHERE external_slug = $1",
+			slug,
+		)
+		_, _ = pg.Pool.Exec(ctx,
+			"DELETE FROM users WHERE email = $1",
+			email,
+		)
+
+		_ = rdb.Close()
+		pg.Close()
+	}()
+
+	token := register(t, h, email)
+
+	user, err := db.New(pg.Pool).GetUserByEmail(ctx, email)
+	require.NoError(t, err)
+
+	occurredAt := time.Now().UTC().Add(-2 * time.Hour).Truncate(time.Second)
+
+	payload := map[string]any{
+		"eventId":          eventID,
+		"source":           "leetcode",
+		"event":            "problem_solved",
+		"occurredAt":       occurredAt.Format(time.RFC3339),
+		"rating":           "easy",
+		"extensionVersion": "integration",
+		"problem": map[string]any{
+			"externalId": slug,
+			"title":      "Two Sum",
+			"url":        "https://leetcode.com/problems/two-sum/",
+			"difficulty": "easy",
+		},
+	}
+
+	body, status, err := postJSONConcurrent(
+		h,
+		"/api/v1/extension/events",
+		token,
+		payload,
+	)
+
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, status)
+
+	data := body["data"].(map[string]any)
+	require.Equal(t, true, data["accepted"])
+
+	var problemID int64
+	err = pg.Pool.QueryRow(ctx,
+		`SELECT id FROM problems WHERE external_slug=$1`,
+		slug,
+	).Scan(&problemID)
+	require.NoError(t, err)
+
+	q := db.New(pg.Pool)
+
+	schedule, err := q.GetProblemReviewSchedule(ctx, db.GetProblemReviewScheduleParams{
+		UserID: user.ID,
+		ProblemID: pgtype.Int8{
+			Int64: problemID,
+			Valid: true,
+		},
+	})
+	require.NoError(t, err)
+
+	require.Greater(t, schedule.IntervalDays, 0.0)
+	require.Greater(t, schedule.Stability, 0.0)
+	require.Greater(t, schedule.Difficulty, 0.0)
+
+	require.NotEqual(t, int16(0), schedule.State)
+
+	require.True(t, schedule.ReviewCount.Valid)
+	require.Equal(t, int32(1), schedule.ReviewCount.Int32)
+
+	require.Equal(t, int32(0), schedule.Lapses)
+
+	require.True(t, schedule.LastReviewAt.Valid)
+	require.WithinDuration(
+		t,
+		occurredAt,
+		schedule.LastReviewAt.Time,
+		time.Second,
+	)
+
+	require.True(t, schedule.NextReviewAt.Valid)
+	require.True(t,
+		schedule.NextReviewAt.Time.After(schedule.LastReviewAt.Time),
+	)
+
+	require.Equal(t, int32(0), schedule.RemainingSteps)
 }

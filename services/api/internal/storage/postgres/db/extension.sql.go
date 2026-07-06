@@ -15,18 +15,30 @@ const advanceProblemReviewSchedule = `-- name: AdvanceProblemReviewSchedule :one
 UPDATE review_schedules
 SET next_review_at = $2,
     interval_days = $3,
+    stability = $4,
+    difficulty = $5,
+    state = $6,
+    lapses = $7,
+    remaining_steps = $8,
+    last_review_at = $9,
     review_count = review_count + 1,
-    last_rating = $4,
+    last_rating = $10,
     updated_at = NOW()
 WHERE id = $1
 RETURNING id, next_review_at
 `
 
 type AdvanceProblemReviewScheduleParams struct {
-	ID           int64
-	NextReviewAt pgtype.Timestamptz
-	IntervalDays float64
-	LastRating   pgtype.Text
+	ID             int64
+	NextReviewAt   pgtype.Timestamptz
+	IntervalDays   float64
+	Stability      float64
+	Difficulty     float64
+	State          int16
+	Lapses         int32
+	RemainingSteps int32
+	LastReviewAt   pgtype.Timestamptz
+	LastRating     pgtype.Text
 }
 
 type AdvanceProblemReviewScheduleRow struct {
@@ -39,6 +51,12 @@ func (q *Queries) AdvanceProblemReviewSchedule(ctx context.Context, arg AdvanceP
 		arg.ID,
 		arg.NextReviewAt,
 		arg.IntervalDays,
+		arg.Stability,
+		arg.Difficulty,
+		arg.State,
+		arg.Lapses,
+		arg.RemainingSteps,
+		arg.LastReviewAt,
 		arg.LastRating,
 	)
 	var i AdvanceProblemReviewScheduleRow
@@ -49,14 +67,19 @@ func (q *Queries) AdvanceProblemReviewSchedule(ctx context.Context, arg AdvanceP
 const createProblemReviewSchedule = `-- name: CreateProblemReviewSchedule :one
 INSERT INTO review_schedules (
     user_id, problem_id, next_review_at, interval_days,
-    ease, stability, difficulty, review_count, last_rating, algorithm
+    ease, stability, difficulty, state, lapses, remaining_steps,
+    last_review_at, review_count, last_rating, algorithm
 )
-VALUES ($1, $2, $3, $4, $5, $6, $7, 1, $8, $9)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 1, $12, $13)
 ON CONFLICT (user_id, problem_id) WHERE problem_id IS NOT NULL DO UPDATE
 SET next_review_at = EXCLUDED.next_review_at,
     interval_days = EXCLUDED.interval_days,
     stability = EXCLUDED.stability,
     difficulty = EXCLUDED.difficulty,
+    state = EXCLUDED.state,
+    lapses = EXCLUDED.lapses,
+    remaining_steps = EXCLUDED.remaining_steps,
+    last_review_at = EXCLUDED.last_review_at,
     review_count = review_schedules.review_count + 1,
     last_rating = EXCLUDED.last_rating,
     updated_at = NOW()
@@ -64,15 +87,19 @@ RETURNING id, next_review_at
 `
 
 type CreateProblemReviewScheduleParams struct {
-	UserID       int64
-	ProblemID    pgtype.Int8
-	NextReviewAt pgtype.Timestamptz
-	IntervalDays float64
-	Ease         float64
-	Stability    float64
-	Difficulty   float64
-	LastRating   pgtype.Text
-	Algorithm    pgtype.Text
+	UserID         int64
+	ProblemID      pgtype.Int8
+	NextReviewAt   pgtype.Timestamptz
+	IntervalDays   float64
+	Ease           float64
+	Stability      float64
+	Difficulty     float64
+	State          int16
+	Lapses         int32
+	RemainingSteps int32
+	LastReviewAt   pgtype.Timestamptz
+	LastRating     pgtype.Text
+	Algorithm      pgtype.Text
 }
 
 type CreateProblemReviewScheduleRow struct {
@@ -89,6 +116,10 @@ func (q *Queries) CreateProblemReviewSchedule(ctx context.Context, arg CreatePro
 		arg.Ease,
 		arg.Stability,
 		arg.Difficulty,
+		arg.State,
+		arg.Lapses,
+		arg.RemainingSteps,
+		arg.LastReviewAt,
 		arg.LastRating,
 		arg.Algorithm,
 	)
@@ -116,7 +147,9 @@ func (q *Queries) GetPlatformByCode(ctx context.Context, code string) (Platform,
 }
 
 const getProblemReviewSchedule = `-- name: GetProblemReviewSchedule :one
-SELECT id, next_review_at, review_count
+SELECT id, next_review_at, review_count,
+       interval_days, stability, difficulty, ease, state, lapses,
+       last_review_at, remaining_steps
 FROM review_schedules
 WHERE user_id = $1 AND problem_id = $2
 `
@@ -127,15 +160,35 @@ type GetProblemReviewScheduleParams struct {
 }
 
 type GetProblemReviewScheduleRow struct {
-	ID           int64
-	NextReviewAt pgtype.Timestamptz
-	ReviewCount  pgtype.Int4
+	ID             int64
+	NextReviewAt   pgtype.Timestamptz
+	ReviewCount    pgtype.Int4
+	IntervalDays   float64
+	Stability      float64
+	Difficulty     float64
+	Ease           float64
+	State          int16
+	Lapses         int32
+	LastReviewAt   pgtype.Timestamptz
+	RemainingSteps int32
 }
 
 func (q *Queries) GetProblemReviewSchedule(ctx context.Context, arg GetProblemReviewScheduleParams) (GetProblemReviewScheduleRow, error) {
 	row := q.db.QueryRow(ctx, getProblemReviewSchedule, arg.UserID, arg.ProblemID)
 	var i GetProblemReviewScheduleRow
-	err := row.Scan(&i.ID, &i.NextReviewAt, &i.ReviewCount)
+	err := row.Scan(
+		&i.ID,
+		&i.NextReviewAt,
+		&i.ReviewCount,
+		&i.IntervalDays,
+		&i.Stability,
+		&i.Difficulty,
+		&i.Ease,
+		&i.State,
+		&i.Lapses,
+		&i.LastReviewAt,
+		&i.RemainingSteps,
+	)
 	return i, err
 }
 

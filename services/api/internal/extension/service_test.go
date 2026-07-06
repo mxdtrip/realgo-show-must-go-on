@@ -5,8 +5,6 @@ import (
 	"errors"
 	"testing"
 	"time"
-
-	"github.com/mxdtrip/freeburger/services/api/internal/scheduler"
 )
 
 type fakeRepo struct {
@@ -36,7 +34,7 @@ func (f *fakeRepo) Ingest(_ context.Context, in IngestInput) (IngestOutput, erro
 }
 
 func newTestService(repo Repository, now time.Time) *Service {
-	s := NewService(repo, scheduler.NewSimple())
+	s := NewService(repo)
 	s.now = func() time.Time { return now }
 	return s
 }
@@ -65,33 +63,66 @@ func solvedRequest() EventRequest {
 	}
 }
 
-func TestHandle_Solved_PassesSchedulerDecision(t *testing.T) {
+func TestHandle_Solved_BuildsIngestInput(t *testing.T) {
 	now := time.Date(2026, 6, 30, 9, 0, 0, 0, time.UTC)
-	repo := &fakeRepo{platformID: 7, out: IngestOutput{ProblemID: 42, Status: "reviewing"}}
+	repo := &fakeRepo{
+		platformID: 7,
+		out: IngestOutput{
+			ProblemID: 42,
+			Status:    "reviewing",
+		},
+	}
 	svc := newTestService(repo, now)
 
 	res, err := svc.Handle(context.Background(), 100, solvedRequest())
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
+
 	if !res.Accepted || res.ProblemID != 42 || res.Status != "reviewing" {
 		t.Fatalf("unexpected result: %+v", res)
 	}
+
 	if repo.calls != 1 {
 		t.Fatalf("Ingest calls = %d, want 1", repo.calls)
 	}
+
 	in := repo.lastIn
-	if !in.Solved || in.EventType != EventProblemSolved {
-		t.Errorf("expected solved problem_solved, got solved=%v type=%q", in.Solved, in.EventType)
+
+	if !in.Solved {
+		t.Error("Solved = false, want true")
 	}
-	if in.Rating != "easy" || in.IntervalDays != 7 {
-		t.Errorf("easy rating should give 7d interval, got rating=%q interval=%v", in.Rating, in.IntervalDays)
+
+	if in.EventType != EventProblemSolved {
+		t.Errorf("EventType = %q, want %q", in.EventType, EventProblemSolved)
 	}
-	if !in.NextReviewAt.Equal(now.Add(7 * 24 * time.Hour)) {
-		t.Errorf("nextReviewAt = %v, want %v", in.NextReviewAt, now.Add(7*24*time.Hour))
+
+	if in.Rating != "easy" {
+		t.Errorf("Rating = %q, want %q", in.Rating, "easy")
 	}
-	if in.Slug != "two-sum" || in.PlatformID != 7 {
-		t.Errorf("normalization off: slug=%q platformID=%d", in.Slug, in.PlatformID)
+
+	if !in.EventTime.Equal(now) {
+		t.Errorf("EventTime = %v, want %v", in.EventTime, now)
+	}
+
+	if in.Slug != "two-sum" {
+		t.Errorf("Slug = %q, want %q", in.Slug, "two-sum")
+	}
+
+	if in.PlatformID != 7 {
+		t.Errorf("PlatformID = %d, want %d", in.PlatformID, 7)
+	}
+
+	if in.UserID != 100 {
+		t.Errorf("UserID = %d, want %d", in.UserID, 100)
+	}
+
+	if in.Title != "Two Sum" {
+		t.Errorf("Title = %q, want %q", in.Title, "Two Sum")
+	}
+
+	if in.URL != "https://leetcode.com/problems/two-sum/" {
+		t.Errorf("URL = %q, want %q", in.URL, "https://leetcode.com/problems/two-sum/")
 	}
 }
 
@@ -180,28 +211,58 @@ func TestHandle_UnknownPlatform(t *testing.T) {
 
 func TestHandle_NonSolved_NoRatingNeeded(t *testing.T) {
 	now := time.Date(2026, 6, 30, 9, 0, 0, 0, time.UTC)
-	repo := &fakeRepo{platformID: 3, out: IngestOutput{ProblemID: 9, Status: "saved"}}
+	repo := &fakeRepo{
+		platformID: 3,
+		out: IngestOutput{
+			ProblemID: 9,
+			Status:    "saved",
+		},
+	}
 	svc := newTestService(repo, now)
 
 	req := solvedRequest()
 	req.Event = "problem_viewed"
 	req.Rating = ""
+
 	res, err := svc.Handle(context.Background(), 1, req)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
+
 	if res.Status != "saved" {
-		t.Errorf("status = %q, want saved", res.Status)
+		t.Errorf("Status = %q, want %q", res.Status, "saved")
 	}
-	if repo.lastIn.Solved || repo.lastIn.IntervalDays != 0 {
-		t.Errorf("non-solved must not schedule: solved=%v interval=%v", repo.lastIn.Solved, repo.lastIn.IntervalDays)
+
+	in := repo.lastIn
+
+	if in.Solved {
+		t.Error("Solved = true, want false")
+	}
+
+	if in.Rating != "" {
+		t.Errorf("Rating = %q, want empty", in.Rating)
+	}
+
+	if in.EventType != EventProblemViewed {
+		t.Errorf("EventType = %q, want %q", in.EventType, EventProblemViewed)
+	}
+
+	if !in.EventTime.Equal(now) {
+		t.Errorf("EventTime = %v, want %v", in.EventTime, now)
 	}
 }
 
 func TestHandle_SubmissionPayload_Accepted(t *testing.T) {
 	now := time.Date(2026, 6, 30, 9, 0, 0, 0, time.UTC)
 	submittedAt := now.Add(-15 * time.Minute)
-	repo := &fakeRepo{platformID: 5, out: IngestOutput{ProblemID: 11, Status: "reviewing"}}
+
+	repo := &fakeRepo{
+		platformID: 5,
+		out: IngestOutput{
+			ProblemID: 11,
+			Status:    "reviewing",
+		},
+	}
 	svc := newTestService(repo, now)
 
 	res, err := svc.Handle(context.Background(), 7, EventRequest{
@@ -217,23 +278,37 @@ func TestHandle_SubmissionPayload_Accepted(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
+
 	if !res.Accepted || res.Status != "reviewing" {
 		t.Fatalf("unexpected result: %+v", res)
 	}
 
 	in := repo.lastIn
+
 	if !in.Solved || in.EventType != EventProblemSolved {
 		t.Fatalf("event type = %q solved=%v, want solved", in.EventType, in.Solved)
 	}
-	if in.PlatformID != 5 || in.Slug != "two-sum" || in.Title != "Two Sum" {
-		t.Fatalf("normalization off: platform=%d slug=%q title=%q", in.PlatformID, in.Slug, in.Title)
+
+	if in.PlatformID != 5 {
+		t.Fatalf("PlatformID = %d, want 5", in.PlatformID)
 	}
-	if in.Rating != "normal" || in.IntervalDays != 3 {
-		t.Fatalf("rating=%q interval=%v, want normal/3", in.Rating, in.IntervalDays)
+
+	if in.Slug != "two-sum" {
+		t.Fatalf("Slug = %q, want %q", in.Slug, "two-sum")
 	}
+
+	if in.Title != "Two Sum" {
+		t.Fatalf("Title = %q, want %q", in.Title, "Two Sum")
+	}
+
+	if in.Rating != "normal" {
+		t.Fatalf("Rating = %q, want %q", in.Rating, "normal")
+	}
+
 	if !in.EventTime.Equal(submittedAt) {
-		t.Fatalf("event time = %v, want %v", in.EventTime, submittedAt)
+		t.Fatalf("EventTime = %v, want %v", in.EventTime, submittedAt)
 	}
+
 	if in.IdempotencyKey == "" {
 		t.Fatal("generated idempotency key must not be empty")
 	}
@@ -241,7 +316,13 @@ func TestHandle_SubmissionPayload_Accepted(t *testing.T) {
 
 func TestHandle_SubmissionPayload_NonAcceptedRecordsSubmittedOnly(t *testing.T) {
 	now := time.Date(2026, 6, 30, 9, 0, 0, 0, time.UTC)
-	repo := &fakeRepo{platformID: 5, out: IngestOutput{ProblemID: 12, Status: "saved"}}
+	repo := &fakeRepo{
+		platformID: 5,
+		out: IngestOutput{
+			ProblemID: 12,
+			Status:    "saved",
+		},
+	}
 	svc := newTestService(repo, now)
 
 	_, err := svc.Handle(context.Background(), 7, EventRequest{
@@ -257,13 +338,28 @@ func TestHandle_SubmissionPayload_NonAcceptedRecordsSubmittedOnly(t *testing.T) 
 	}
 
 	in := repo.lastIn
-	if in.Solved || in.EventType != EventProblemSubmitted {
-		t.Fatalf("event type = %q solved=%v, want submitted only", in.EventType, in.Solved)
+
+	if in.Solved {
+		t.Fatal("Solved = true, want false")
 	}
-	if in.IntervalDays != 0 || !in.NextReviewAt.IsZero() {
-		t.Fatalf("non-accepted submit must not schedule: interval=%v next=%v", in.IntervalDays, in.NextReviewAt)
+
+	if in.EventType != EventProblemSubmitted {
+		t.Fatalf("EventType = %q, want %q", in.EventType, EventProblemSubmitted)
 	}
+
 	if in.Rating != "hard" {
-		t.Fatalf("rating = %q, want hard", in.Rating)
+		t.Fatalf("Rating = %q, want %q", in.Rating, "hard")
+	}
+
+	if !in.EventTime.Equal(now) {
+		t.Fatalf("EventTime = %v, want %v", in.EventTime, now)
+	}
+
+	if in.PlatformID != 5 {
+		t.Fatalf("PlatformID = %d, want 5", in.PlatformID)
+	}
+
+	if in.Title != "Valid Parentheses" {
+		t.Fatalf("Title = %q, want %q", in.Title, "Valid Parentheses")
 	}
 }

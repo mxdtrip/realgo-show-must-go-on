@@ -37,21 +37,28 @@ ON CONFLICT (user_id, problem_id) DO UPDATE
         last_reviewed_at = EXCLUDED.last_reviewed_at;
 
 -- name: GetProblemReviewSchedule :one
-SELECT id, next_review_at, review_count
+SELECT id, next_review_at, review_count,
+       interval_days, stability, difficulty, ease, state, lapses,
+       last_review_at, remaining_steps
 FROM review_schedules
 WHERE user_id = $1 AND problem_id = $2;
 
 -- name: CreateProblemReviewSchedule :one
 INSERT INTO review_schedules (
     user_id, problem_id, next_review_at, interval_days,
-    ease, stability, difficulty, review_count, last_rating, algorithm
+    ease, stability, difficulty, state, lapses, remaining_steps,
+    last_review_at, review_count, last_rating, algorithm
 )
-VALUES ($1, $2, $3, $4, $5, $6, $7, 1, $8, $9)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 1, $12, $13)
 ON CONFLICT (user_id, problem_id) WHERE problem_id IS NOT NULL DO UPDATE
 SET next_review_at = EXCLUDED.next_review_at,
     interval_days = EXCLUDED.interval_days,
     stability = EXCLUDED.stability,
     difficulty = EXCLUDED.difficulty,
+    state = EXCLUDED.state,
+    lapses = EXCLUDED.lapses,
+    remaining_steps = EXCLUDED.remaining_steps,
+    last_review_at = EXCLUDED.last_review_at,
     review_count = review_schedules.review_count + 1,
     last_rating = EXCLUDED.last_rating,
     updated_at = NOW()
@@ -61,8 +68,14 @@ RETURNING id, next_review_at;
 UPDATE review_schedules
 SET next_review_at = $2,
     interval_days = $3,
+    stability = $4,
+    difficulty = $5,
+    state = $6,
+    lapses = $7,
+    remaining_steps = $8,
+    last_review_at = $9,
     review_count = review_count + 1,
-    last_rating = $4,
+    last_rating = $10,
     updated_at = NOW()
 WHERE id = $1
 RETURNING id, next_review_at;
