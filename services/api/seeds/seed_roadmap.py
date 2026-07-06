@@ -75,11 +75,18 @@ def upsert(cur, manifest_code, rows):
         code = row["pattern_code"]
         if code in pattern_ids:
             continue
+        # Taxonomy nodes (patterns.taxonomy_version set by migration 000011)
+        # keep their curated names; only legacy roadmap groupings follow the
+        # manifest. The CASE keeps the upsert a real UPDATE so RETURNING
+        # always yields the id.
         cur.execute(
             """
             INSERT INTO patterns (code, name)
             VALUES (%s, %s)
-            ON CONFLICT (code) DO UPDATE SET name = EXCLUDED.name
+            ON CONFLICT (code) DO UPDATE SET name = CASE
+                WHEN patterns.taxonomy_version IS NULL THEN EXCLUDED.name
+                ELSE patterns.name
+            END
             RETURNING id
             """,
             (code, row["pattern_name"]),

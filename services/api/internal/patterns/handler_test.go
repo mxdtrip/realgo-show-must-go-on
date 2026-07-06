@@ -136,6 +136,11 @@ type fakeRepository struct {
 	items     []WeakPattern
 	detail    PatternDetail
 	detailErr error
+	atlas     AtlasResponse
+	atlasErr  error
+	companies []AtlasCompany
+	node      NodeDetail
+	nodeErr   error
 }
 
 func (f fakeRepository) List(context.Context, int64) ([]Pattern, error) {
@@ -154,4 +159,25 @@ func (f fakeRepository) GetByCode(context.Context, string) (PatternDetail, error
 		return PatternDetail{}, f.detailErr
 	}
 	return f.detail, nil
+}
+
+func (f fakeRepository) GetAtlas(context.Context, int64, string) (AtlasResponse, error) {
+	if f.atlasErr != nil {
+		return AtlasResponse{}, f.atlasErr
+	}
+	return f.atlas, nil
+}
+
+func (f fakeRepository) ListCompanies(context.Context) ([]AtlasCompany, error) {
+	if f.companies == nil {
+		return []AtlasCompany{}, nil
+	}
+	return f.companies, nil
+}
+
+func (f fakeRepository) GetAtlasNode(context.Context, int64, string) (NodeDetail, error) {
+	if f.nodeErr != nil {
+		return NodeDetail{}, f.nodeErr
+	}
+	return f.node, nil
 }

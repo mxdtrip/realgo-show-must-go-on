@@ -36,6 +36,20 @@ type Card struct {
 	AiPromptVersion pgtype.Text
 }
 
+type Company struct {
+	ID   int64
+	Code string
+	Name string
+}
+
+type CompanyProblem struct {
+	CompanyID     int64
+	ProblemID     int64
+	EvidenceCount int32
+	LastSeenAt    pgtype.Date
+	SourceType    string
+}
+
 type ExtensionEvent struct {
 	ID               int64
 	UserID           pgtype.Int8
@@ -61,6 +75,32 @@ type Pattern struct {
 	Techniques          []string
 	RecognitionSymptoms []string
 	Checklist           []string
+	// Node role: pattern=legacy roadmap grouping, tool=prerequisite, family=pattern family, subpattern=learning unit.
+	Kind string
+	// Taxonomy release this node belongs to (NULL for legacy nodes outside the taxonomy).
+	TaxonomyVersion pgtype.Text
+	// Display order inside its kind for taxonomy nodes.
+	Position pgtype.Int4
+}
+
+type PatternFamilySubpattern struct {
+	FamilyID     int64
+	SubpatternID int64
+	Position     int32
+}
+
+type PatternLearningMaterial struct {
+	PatternID         int64
+	WhatItIs          string
+	MentalModel       string
+	RecognitionCues   []string
+	AntiCues          []string
+	CoreInvariant     string
+	CanonicalSkeleton string
+	CommonMistakes    []string
+	// JSON array of {"title","note"} contrast pairs.
+	DontConfuseWith []byte
+	UpdatedAt       pgtype.Timestamptz
 }
 
 type Platform struct {
@@ -82,6 +122,13 @@ type Problem struct {
 	CreatedAt       pgtype.Timestamptz
 	UpdatedAt       pgtype.Timestamptz
 	ExternalID      pgtype.Text
+}
+
+type ProblemSubpattern struct {
+	ProblemID    int64
+	SubpatternID int64
+	Tier         pgtype.Text
+	Position     pgtype.Int4
 }
 
 type QuizQuestion struct {
@@ -146,6 +193,27 @@ type RoadmapItem struct {
 	PatternID   int64
 	ProblemID   int64
 	Position    int32
+}
+
+type SubpatternCompany struct {
+	SubpatternID  int64
+	CompanyID     int64
+	Relevance     string
+	Confidence    string
+	EvidenceCount int32
+	LastSeenAt    pgtype.Date
+	SourceType    string
+}
+
+type SubpatternPrerequisite struct {
+	SubpatternID int64
+	ToolID       int64
+}
+
+type TaxonomyVersion struct {
+	Code      string
+	Title     string
+	CreatedAt pgtype.Timestamptz
 }
 
 type User struct {

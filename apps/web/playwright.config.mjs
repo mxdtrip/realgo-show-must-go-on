@@ -6,8 +6,10 @@ import { defineConfig, devices } from "@playwright/test";
 // server's HMR socket fails under headless Chrome and blocks hydration, so the
 // page never becomes interactive. NEXT_PUBLIC_* are baked at build time, hence
 // they are passed to the build command below.
-const WEB_PORT = 3000;
-const STUB_PORT = 8080;
+// Overridable so a local run can dodge ports already taken by other dev
+// servers (reuseExistingServer would otherwise silently test a stale build).
+const WEB_PORT = Number(process.env.E2E_WEB_PORT ?? 3000);
+const STUB_PORT = Number(process.env.E2E_STUB_PORT ?? 8080);
 
 export default defineConfig({
   testDir: "./e2e",
