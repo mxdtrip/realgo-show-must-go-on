@@ -608,12 +608,23 @@ export function SortingMemoryHero() {
           ))}
         </nav>
         <div className="site-auth">
-          {auth.status === "authenticated" ? (
-            // An authed visitor (e.g. bounced here off the cabinet logo) gets a
-            // way back in instead of being offered to log in again.
-            <a className="site-auth__dashboard" href="/dashboard">
-              {copy.auth.dashboard}
-            </a>
+          {auth.status === "authenticated" && auth.user ? (
+            // An authed visitor sees their account chip next to a way back
+            // into the cabinet, instead of being asked to log in again.
+            <>
+              <a className="site-auth__account" href="/settings" title={auth.user.email}>
+                <span className="site-auth__avatar" aria-hidden="true">
+                  {auth.user.email.slice(0, 2).toLowerCase()}
+                </span>
+                <span className="site-auth__account-id">
+                  <strong>{auth.user.email.split("@")[0]}</strong>
+                  <span>{auth.user.plan}</span>
+                </span>
+              </a>
+              <a className="site-auth__dashboard" href="/dashboard">
+                {copy.auth.dashboard}
+              </a>
+            </>
           ) : (
             <>
               <button

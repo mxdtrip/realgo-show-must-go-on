@@ -270,8 +270,8 @@ const ru = {
           title: "подготовка",
           items: [
             { href: "/dashboard", label: "dashboard", icon: "dashboard", count: "" },
-            { href: "/reviews", label: "reviews", icon: "reviews", count: "12" },
-            { href: "/problems", label: "problems", icon: "problems", count: "" },
+            { href: "/reviews", label: "reviews", icon: "reviews", count: "" },
+            { href: "/problems", label: "problems", icon: "problems", count: "12" },
             { href: "/cards", label: "cards", icon: "cards", count: "6" },
           ],
         },
