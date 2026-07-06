@@ -75,19 +75,19 @@ export function AtlasNodeClient({
       </Link>
 
       {loadState === "loading" ? (
-        <CabinetPanel title={copy.loading}>
+        <CabinetPanel title={copy.loading} padded>
           <p>{copy.loading}</p>
         </CabinetPanel>
       ) : null}
 
       {loadState === "not_found" ? (
-        <CabinetPanel title={copy.notFoundTitle}>
+        <CabinetPanel title={copy.notFoundTitle} padded>
           <p>{copy.notFoundTitle}</p>
         </CabinetPanel>
       ) : null}
 
       {loadState === "error" ? (
-        <CabinetPanel title={copy.errorTitle}>
+        <CabinetPanel title={copy.errorTitle} padded>
           <p>{error || copy.errorTitle}</p>
           <button className="btn-ghost" type="button" onClick={() => setReloadVersion((v) => v + 1)}>
             {copy.retry}
@@ -215,7 +215,7 @@ function NodeBody({
 function LearnPanel({ detail, copy }: Readonly<{ detail: NodeDetail; copy: NodeCopy }>) {
   const material = detail.material;
   return (
-    <CabinetPanel eyebrow="learn" title={copy.learn.title}>
+    <CabinetPanel eyebrow="learn" title={copy.learn.title} padded>
       {!material ? (
         <p>{copy.learn.preparing}</p>
       ) : (
@@ -305,6 +305,7 @@ function CardsPanel({ cards, copy }: Readonly<{ cards: CardSummary[]; copy: Node
     <CabinetPanel
       eyebrow="cards"
       title={copy.cards.title}
+      padded
       meta={<span className="cabinet-panel__meta" id="atlas-cards">{cards.length}</span>}
     >
       {cards.length === 0 ? (
@@ -358,6 +359,7 @@ function PracticePanel({
     <CabinetPanel
       eyebrow="practice"
       title={copy.practice.title}
+      padded
       meta={<span className="cabinet-panel__meta" id="atlas-practice">{practice.length}</span>}
     >
       {practice.length === 0 ? (
@@ -383,6 +385,7 @@ function CompanyPanel({
       <CabinetPanel
         eyebrow="companies"
         title={copy.relevantCompanies.title}
+        padded
         meta={<span className="cabinet-panel__meta" id="atlas-company">{detail.relevant_companies.length}</span>}
       >
         {detail.relevant_companies.length === 0 ? (
@@ -417,7 +420,7 @@ function CompanyPanel({
         )}
       </CabinetPanel>
 
-      <CabinetPanel eyebrow="company practice" title={copy.companyPractice.title}>
+      <CabinetPanel eyebrow="company practice" title={copy.companyPractice.title} padded>
         {detail.company_practice.length === 0 ? (
           <p>{copy.companyPractice.empty}</p>
         ) : (
@@ -462,6 +465,7 @@ function FamilyPanels({ detail, copy }: Readonly<{ detail: NodeDetail; copy: Nod
         <CabinetPanel
           eyebrow="subpatterns"
           title={copy.subpatternsTitle}
+          padded
           meta={<span className="cabinet-panel__meta">{detail.subpatterns.length}</span>}
         >
           <ul className="atlas-subs atlas-subs--flat">
@@ -477,7 +481,7 @@ function FamilyPanels({ detail, copy }: Readonly<{ detail: NodeDetail; copy: Nod
       ) : null}
 
       {detail.techniques.length > 0 ? (
-        <CabinetPanel eyebrow="techniques" title="Разновидности">
+        <CabinetPanel eyebrow="techniques" title="Разновидности" padded>
           <div className="pattern-technique-chips">
             {detail.techniques.map((technique) => (
               <span className="meta-chip" key={technique}>
@@ -489,7 +493,7 @@ function FamilyPanels({ detail, copy }: Readonly<{ detail: NodeDetail; copy: Nod
       ) : null}
 
       {detail.recognition_symptoms.length > 0 ? (
-        <CabinetPanel eyebrow="symptoms" title="Как распознать">
+        <CabinetPanel eyebrow="symptoms" title="Как распознать" padded>
           <ul className="pattern-detail-list">
             {detail.recognition_symptoms.map((symptom) => (
               <li key={symptom}>{symptom}</li>
@@ -499,7 +503,7 @@ function FamilyPanels({ detail, copy }: Readonly<{ detail: NodeDetail; copy: Nod
       ) : null}
 
       {detail.checklist.length > 0 ? (
-        <CabinetPanel eyebrow="checklist" title="Держи в голове">
+        <CabinetPanel eyebrow="checklist" title="Держи в голове" padded>
           <ul className="pattern-detail-list">
             {detail.checklist.map((item) => (
               <li key={item}>{item}</li>
@@ -509,7 +513,7 @@ function FamilyPanels({ detail, copy }: Readonly<{ detail: NodeDetail; copy: Nod
       ) : null}
 
       {detail.example_problems.length > 0 ? (
-        <CabinetPanel eyebrow="examples" title="Примеры задач">
+        <CabinetPanel eyebrow="examples" title="Примеры задач" padded>
           <ul className="pattern-detail-examples">
             {detail.example_problems.map((problem) => (
               <li key={problem.title}>

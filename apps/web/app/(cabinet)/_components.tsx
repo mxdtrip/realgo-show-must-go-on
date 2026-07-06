@@ -6,11 +6,15 @@ export function CabinetPanel({
   eyebrow,
   title,
   meta,
+  padded,
   children,
 }: Readonly<{
   eyebrow?: string;
   title: string;
   meta?: ReactNode;
+  /** Wraps children in the standard 16px body inset; full-bleed content
+      (data tables) keeps managing its own padding. */
+  padded?: boolean;
   children: ReactNode;
 }>) {
   return (
@@ -22,7 +26,7 @@ export function CabinetPanel({
         </div>
         {meta ?? null}
       </div>
-      {children}
+      {padded ? <div className="cabinet-panel__body">{children}</div> : children}
     </section>
   );
 }

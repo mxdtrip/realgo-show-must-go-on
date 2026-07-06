@@ -234,13 +234,13 @@ export function PatternAtlasClient({ copy }: Readonly<{ copy: AtlasCopy }>) {
       ) : null}
 
       {loadState === "loading" ? (
-        <CabinetPanel title={copy.loading}>
+        <CabinetPanel title={copy.loading} padded>
           <p>{copy.loading}</p>
         </CabinetPanel>
       ) : null}
 
       {loadState === "error" ? (
-        <CabinetPanel title={copy.errorTitle}>
+        <CabinetPanel title={copy.errorTitle} padded>
           <p>{error || copy.errorTitle}</p>
           <button className="btn-ghost" type="button" onClick={() => setReloadVersion((v) => v + 1)}>
             {copy.retry}
@@ -292,6 +292,7 @@ function TreeView({
       <CabinetPanel
         eyebrow="taxonomy"
         title={copy.familiesTitle}
+        padded
         meta={
           <span className="atlas-tree-controls">
             <button type="button" className="btn-ghost" onClick={() => onSetAll(true)}>
@@ -392,7 +393,7 @@ function ReadinessView({ atlas, copy }: Readonly<{ atlas: AtlasResponse; copy: A
   const overlay = atlas.company;
   if (!overlay) {
     return (
-      <CabinetPanel eyebrow="readiness" title={copy.coverage.title}>
+      <CabinetPanel eyebrow="readiness" title={copy.coverage.title} padded>
         <p>{copy.coverage.noCompany}</p>
         <p className="atlas-tools-hint">{copy.companyHint}</p>
       </CabinetPanel>
@@ -433,6 +434,7 @@ function ReadinessView({ atlas, copy }: Readonly<{ atlas: AtlasResponse; copy: A
       <CabinetPanel
         eyebrow={overlay.code}
         title={`${overlay.name} ${copy.coverage.title}`}
+        padded
         meta={
           overlay.demo_only ? (
             <span className="meta-chip meta-chip--muted">{copy.demoBadge}</span>
@@ -483,6 +485,7 @@ function ReadinessView({ atlas, copy }: Readonly<{ atlas: AtlasResponse; copy: A
       <CabinetPanel
         eyebrow="relevant"
         title={copy.familiesTitle}
+        padded
         meta={<span className="cabinet-panel__meta">{relevant.length}</span>}
       >
         {relevant.length === 0 ? (
@@ -499,6 +502,7 @@ function ReadinessView({ atlas, copy }: Readonly<{ atlas: AtlasResponse; copy: A
       <CabinetPanel
         eyebrow="tasks"
         title={copy.coverage.problemsTitle}
+        padded
         meta={<span className="cabinet-panel__meta">{problems.length}</span>}
       >
         {problems.length === 0 ? (

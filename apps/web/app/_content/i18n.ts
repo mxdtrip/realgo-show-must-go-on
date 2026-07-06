@@ -650,7 +650,7 @@ const ru = {
           session: "Повторить слабые места",
         },
         learn: {
-          title: "Learn",
+          title: "Методика",
           whatItIs: "Что это",
           mentalModel: "Как думать",
           recognitionCues: "Признаки в условии",
@@ -677,7 +677,7 @@ const ru = {
           },
         },
         practice: {
-          title: "General Practice",
+          title: "Общая практика",
           empty: "К этому субпаттерну задачи ещё не привязаны.",
           tiers: {
             foundational: "foundational",
@@ -693,12 +693,12 @@ const ru = {
           },
         },
         companyPractice: {
-          title: "Company Practice",
+          title: "Задачи компаний",
           empty: "Задач с привязкой к компаниям для этого субпаттерна пока нет.",
           evidenceUnit: ["упоминание", "упоминания", "упоминаний"],
         },
         relevantCompanies: {
-          title: "Relevant companies",
+          title: "Релевантные компании",
           empty: "Данных о компаниях по этому субпаттерну пока нет.",
           relevance: "relevance",
           confidence: "confidence",

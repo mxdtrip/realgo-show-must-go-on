@@ -1972,6 +1972,23 @@ h3 {
   margin-bottom: 16px;
 }
 
+.cabinet-panel__body {
+  padding: 14px 16px 16px;
+}
+
+/* Bare paragraphs dropped into a body are empty states / helper notes;
+   :where keeps specificity at zero so block-specific classes still win. */
+.cabinet-panel__body > :where(p) {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--text-dim);
+}
+
+.cabinet-panel__body > :where(p:not(:last-child)) {
+  margin-bottom: 10px;
+}
+
 .cabinet-panel__head {
   display: flex;
   align-items: baseline;
@@ -7799,6 +7816,11 @@ a.cabinet-panel__meta:hover {
 .atlas-companies li {
   display: grid;
   gap: 6px;
+}
+
+.atlas-companies li + li {
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
 }
 
 .atlas-companies strong {
