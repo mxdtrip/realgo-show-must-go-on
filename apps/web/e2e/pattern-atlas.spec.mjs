@@ -147,13 +147,16 @@ test.describe("subpattern detail", () => {
     await expect(page.getByText("Что это", { exact: true })).toBeVisible();
     await expect(page.getByText("Когда не подходит", { exact: true })).toBeVisible();
 
-    // Content is not written yet — sections show an honest pending state.
-    await expect(page.locator(".pattern-profile__pending").first()).toBeVisible();
+    // Methodology copy from pattern-profiles.ts fills the sections.
+    await expect(page.getByText("Сокращает пространство поиска примерно вдвое")).toBeVisible();
+    await expect(page.locator(".pattern-profile__pending")).toHaveCount(0);
 
-    // Subpatterns come from the API and link to their own pages.
+    // Subpatterns come from the API, link to their own pages and carry
+    // the one-line differentiation note keyed by subpattern code.
     const subLink = page.locator('a[href="/patterns/binary_search_on_answer"]');
     await expect(subLink).toBeVisible();
     await expect(subLink).toContainText("Binary Search on Answer");
+    await expect(subLink).toContainText("монотонный предикат");
   });
 
   test("unknown node shows not-found state", async ({ page }) => {
