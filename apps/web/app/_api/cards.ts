@@ -12,6 +12,8 @@ export type SessionSourceCard = {
   sourceLabel: string;
   front: string;
   back: string;
+  /** Optional until the backend ships it (issue #227); absent = not AI-generated. */
+  createdByAi?: boolean;
   reviewState: {
     attempts: number;
     lastRating: CardRating | null;
@@ -53,5 +55,6 @@ export function toReviewCards(cards: readonly SessionSourceCard[]) {
     source: card.sourceLabel,
     front: card.front,
     back: card.back,
+    createdByAi: card.createdByAi === true,
   }));
 }

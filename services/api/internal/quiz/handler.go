@@ -3,6 +3,7 @@ package quiz
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"net/http"
 	"strconv"
 
@@ -40,12 +41,14 @@ func RegisterRoutes(r chi.Router, h *Handler) {
 func (h *Handler) session(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.UserIDFromContext(r.Context())
 	if !ok {
+		slog.Warn("quiz: session failed")
 		response.Fail(w, http.StatusUnauthorized, "UNAUTHORIZED", "user not authenticated")
 		return
 	}
 
 	rows, err := h.repo.ListQuizSession(r.Context(), userID, sessionLimit(r))
 	if err != nil {
+		slog.Error("quiz: session failed", slog.Any("err", err), slog.Int64("user_id", userID))
 		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", "could not load quiz session")
 		return
 	}
@@ -65,12 +68,14 @@ func (h *Handler) session(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) answer(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.UserIDFromContext(r.Context())
 	if !ok {
+		slog.Warn("quiz: answer failed")
 		response.Fail(w, http.StatusUnauthorized, "UNAUTHORIZED", "user not authenticated")
 		return
 	}
 
 	questionID, err := strconv.ParseInt(chi.URLParam(r, "questionId"), 10, 64)
 	if err != nil {
+		slog.Warn("quiz: answer failed", slog.Any("err", err), slog.Int64("user_id", userID))
 		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "invalid questionId")
 		return
 	}
@@ -82,10 +87,12 @@ func (h *Handler) answer(w http.ResponseWriter, r *http.Request) {
 
 	detail, err := h.repo.GetQuizQuestion(r.Context(), questionID, userID)
 	if errors.Is(err, errNotFound) {
+		slog.Warn("quiz: answer failed", slog.Any("err", err), slog.Int64("user_id", userID), slog.Int64("question_id", questionID))
 		response.Fail(w, http.StatusNotFound, "NOT_FOUND", "question not found")
 		return
 	}
 	if err != nil {
+		slog.Error("quiz: answer failed", slog.Any("err", err), slog.Int64("user_id", userID), slog.Int64("question_id", questionID))
 		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", "could not fetch question")
 		return
 	}

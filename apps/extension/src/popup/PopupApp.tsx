@@ -2,10 +2,14 @@ import { useState } from "react";
 
 import type {
   DetectedSubmission,
+  ExtensionEventResult,
+  ProblemCardsResult,
   SubmissionPayload,
   UserDifficulty,
 } from "../lib/types";
+import { DEFAULT_WEB_BASE_URL, REVIEW_PATH } from "../lib/types";
 import { POPUP_CSS } from "./popup.styles";
+import { useProblemCards, type CardsUiState } from "./useProblemCards";
 
 const BRAND_LOGO_URL = new URL("../../assets/icon.png", import.meta.url).href;
 
@@ -16,13 +20,26 @@ export interface PopupAppProps {
    * object    → show the rating form.
    */
   submission: DetectedSubmission | null | undefined;
-  /** Persists the rated submission. Rejects with an Error on failure. */
-  onSave: (payload: SubmissionPayload) => Promise<void>;
   /**
-   * "Свернуть" on the success screen — hides the extension UI until the next
+   * Persists the rated submission. Rejects with an Error on failure. The
+   * resolved event result feeds the cards-readiness poll (its `problemId`);
+   * `null` simply means "no polling" — the success screen stays as before.
+   */
+  onSave: (payload: SubmissionPayload) => Promise<ExtensionEventResult | null>;
+  /**
+   * One poll tick of the task's cards readiness. Injected by the host (the
+   * extension routes it through the background worker; the preview mocks it)
+   * so PopupApp itself stays a pure view with no chrome.* access. Absent →
+   * the cards block never renders.
+   */
+  onFetchCards?: (problemId: number) => Promise<ProblemCardsResult | null>;
+  /**
+   * "Скрыть" on the success screen — hides the extension UI until the next
    * solved task (overlay: removes itself; toolbar popup: closes the window).
    */
   onClose?: () => void;
+  /** Optional collapse handler for the success state, without forcing a header X. */
+  onCollapse?: () => void;
   /** "К повторению" on the success screen — opens the web app's review cards. */
   onReview?: () => void;
   /** Optional bug-report handler; falls back to opening a GitHub issue. */
@@ -47,13 +64,28 @@ const REPORT_ISSUE_URL =
   encodeURIComponent("Расширение: не распознана задача") +
   "&body=" +
   encodeURIComponent("Страница: \nЧто ожидали: \nЧто произошло: ");
+const REVIEWS_URL = DEFAULT_WEB_BASE_URL + REVIEW_PATH;
 
 type Status = "form" | "saving" | "success" | "error";
 
-export function PopupApp({ submission, onSave, onClose, onReview, onReport }: PopupAppProps) {
+export function PopupApp({
+  submission,
+  onSave,
+  onFetchCards,
+  onClose,
+  onCollapse,
+  onReview,
+  onReport,
+}: PopupAppProps) {
   const [difficulty, setDifficulty] = useState<UserDifficulty | null>(null);
   const [status, setStatus] = useState<Status>("form");
   const [errorMsg, setErrorMsg] = useState("");
+  // The saved event's problemId; set on success, drives the cards poll.
+  const [problemId, setProblemId] = useState<number | null>(null);
+  const cardsState = useProblemCards(
+    status === "success" ? problemId : null,
+    onFetchCards
+  );
 
   function handleReport() {
     if (onReport) {
@@ -61,6 +93,33 @@ export function PopupApp({ submission, onSave, onClose, onReview, onReport }: Po
       return;
     }
     window.open(REPORT_ISSUE_URL, "_blank", "noopener,noreferrer");
+  }
+
+  function handleCollapse() {
+    if (onCollapse) {
+      onCollapse();
+      return;
+    }
+    if (onClose) {
+      onClose();
+      return;
+    }
+    window.close();
+  }
+
+  function handleGoToReviews() {
+    // Prefer the host's review handler (toolbar popup opens the web app's cards
+    // via getReviewUrl and closes itself); fall back to a direct URL otherwise.
+    if (onReview) {
+      onReview();
+      return;
+    }
+    window.open(REVIEWS_URL, "_blank", "noopener,noreferrer");
+    if (onCollapse) {
+      onCollapse();
+    } else if (onClose) {
+      onClose();
+    }
   }
 
   if (submission === undefined) {
@@ -108,33 +167,32 @@ export function PopupApp({ submission, onSave, onClose, onReview, onReport }: Po
               Задача добавлена в очередь повторений.
             </p>
           </div>
-          {(onClose || onReview) && (
-            <div className="realgo-state__actions">
-              {onClose && (
-                <button
-                  type="button"
-                  className="realgo-btn realgo-btn--ghost realgo-btn--state"
-                  onClick={onClose}
-                >
-                  Свернуть
-                </button>
-              )}
-              {onReview && (
-                <button
-                  type="button"
-                  className="realgo-btn realgo-btn--primary realgo-btn--state"
-                  onClick={onReview}
-                >
-                  К повторению
-                </button>
-              )}
-            </div>
+          {cardsState !== "hidden" && (
+            <CardsStatusRow state={cardsState} onOpen={handleGoToReviews} />
           )}
+          <div className="realgo-state__actions">
+            <button
+              type="button"
+              className="realgo-btn realgo-btn--ghost realgo-btn--state"
+              onClick={handleCollapse}
+            >
+              Свернуть
+            </button>
+            <button
+              type="button"
+              className="realgo-btn realgo-btn--primary realgo-btn--state"
+              onClick={handleGoToReviews}
+            >
+              К повторению
+            </button>
+          </div>
         </div>
       </Shell>
     );
   }
 
+  // A dedicated screen (like success) keeps the popup size fixed: an inline
+  // banner would not fit into the fixed-height form layout.
   if (status === "error") {
     return (
       <Shell onClose={onClose}>
@@ -142,9 +200,14 @@ export function PopupApp({ submission, onSave, onClose, onReview, onReport }: Po
           <div className="realgo-state__icon realgo-state__icon--danger" aria-hidden="true">
             <IconAlert size={20} />
           </div>
-          <p className="realgo-state__error" role="alert">
-            {errorMsg}
-          </p>
+          <div>
+            <p className="realgo-state__title realgo-state__title--danger">
+              Не удалось сохранить
+            </p>
+            <p className="realgo-muted" style={{ marginTop: 4 }}>
+              {errorMsg}
+            </p>
+          </div>
           <div className="realgo-state__actions">
             <button
               type="button"
@@ -156,7 +219,7 @@ export function PopupApp({ submission, onSave, onClose, onReview, onReport }: Po
             <button
               type="button"
               className="realgo-btn realgo-btn--primary realgo-btn--state"
-              onClick={handleSave}
+              onClick={() => difficulty && handlePick(difficulty)}
             >
               Повторить
             </button>
@@ -167,18 +230,26 @@ export function PopupApp({ submission, onSave, onClose, onReview, onReport }: Po
   }
 
   const saving = status === "saving";
-  const canSave = difficulty !== null && !saving;
 
-  async function handleSave() {
-    if (difficulty === null || submission == null) return;
+  // Picking a difficulty is the save action — there is no separate button.
+  async function handlePick(value: UserDifficulty) {
+    if (saving || submission == null) return;
+    setDifficulty(value);
     setStatus("saving");
     setErrorMsg("");
     const payload: SubmissionPayload = {
       ...submission,
-      userDifficulty: difficulty,
+      userDifficulty: value,
     };
     try {
-      await onSave(payload);
+      const result = await onSave(payload);
+      // A malformed/absent problemId only disables the cards poll — the save
+      // itself succeeded and the success screen must not depend on it.
+      setProblemId(
+        typeof result?.problemId === "number" && result.problemId > 0
+          ? result.problemId
+          : null
+      );
       setStatus("success");
     } catch (e) {
       setStatus("error");
@@ -189,34 +260,68 @@ export function PopupApp({ submission, onSave, onClose, onReview, onReport }: Po
   return (
     <Shell task={submission} onClose={onClose}>
       <div className="realgo-body">
-        <div className="realgo-body__center">
-          <ChoiceGroup
-            title="Как далась задача?"
-            options={DIFFICULTY_OPTIONS}
-            value={difficulty}
-            onChange={setDifficulty}
-            disabled={saving}
-          />
-        </div>
-
-        <div className="realgo-foot">
-          <button
-            type="button"
-            className="realgo-btn realgo-btn--primary realgo-btn--block realgo-btn--lg"
-            disabled={!canSave}
-            onClick={handleSave}
-          >
-            {saving ? (
+        <ChoiceGroup
+          title="Как далась задача?"
+          options={DIFFICULTY_OPTIONS}
+          value={difficulty}
+          onPick={handlePick}
+          disabled={saving}
+        />
+        <p className="realgo-hint" role="status">
+          {saving ? (
+            <>
               <span
                 className="realgo-spinner"
-                style={{ width: 14, height: 14, borderWidth: 2 }}
+                style={{ width: 13, height: 13, borderWidth: 2 }}
               />
-            ) : null}
-            {saving ? "Сохраняю…" : "Сохранить"}
-          </button>
-        </div>
+              сохраняю…
+            </>
+          ) : (
+            "Выберите сложность — realgo сохранит результат"
+          )}
+        </p>
       </div>
     </Shell>
+  );
+}
+
+/**
+ * One-line cards readiness on the success screen. Colors follow the project
+ * rule: the working indicator is accent-blue, green marks success only.
+ * The "hidden" state never reaches here — the caller skips rendering.
+ */
+function CardsStatusRow({
+  state,
+  onOpen,
+}: {
+  state: Exclude<CardsUiState, "hidden">;
+  onOpen: () => void;
+}) {
+  return (
+    <p className={`realgo-cards realgo-cards--${state}`} role="status">
+      {state === "generating" && (
+        <>
+          <span
+            className="realgo-spinner"
+            style={{ width: 13, height: 13, borderWidth: 2 }}
+            aria-hidden="true"
+          />
+          Генерируем карточки по задаче…
+        </>
+      )}
+      {state === "ready" && (
+        <>
+          <span className="realgo-cards__check" aria-hidden="true">
+            <IconCheck size={13} />
+          </span>
+          Карточки готовы
+          <button type="button" className="realgo-link realgo-cards__open" onClick={onOpen}>
+            открыть
+          </button>
+        </>
+      )}
+      {state === "none" && <>Карточки к задаче пока не готовы</>}
+    </p>
   );
 }
 
@@ -283,7 +388,7 @@ interface ChoiceGroupProps<T extends string> {
   title: string;
   options: { value: T; label: string; icon: "easy" | "normal" | "hard" }[];
   value: T | null;
-  onChange: (value: T) => void;
+  onPick: (value: T) => void;
   disabled?: boolean;
 }
 
@@ -291,7 +396,7 @@ function ChoiceGroup<T extends string>({
   title,
   options,
   value,
-  onChange,
+  onPick,
   disabled,
 }: ChoiceGroupProps<T>) {
   return (
@@ -310,7 +415,8 @@ function ChoiceGroup<T extends string>({
               data-difficulty={opt.icon}
               aria-pressed={active}
               disabled={disabled}
-              onClick={() => onChange(opt.value)}
+              // Clicking a difficulty is the save action (no separate button).
+              onClick={() => onPick(opt.value)}
             >
               <span className="realgo-choice__icon" aria-hidden="true">
                 <IconDifficulty kind={opt.icon} />
@@ -339,9 +445,9 @@ function BrandMark({ size = 16 }: { size?: number }) {
   );
 }
 
-function IconCheck() {
+function IconCheck({ size = 18 }: { size?: number }) {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
       strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M20 6 9 17l-5-5" />
     </svg>

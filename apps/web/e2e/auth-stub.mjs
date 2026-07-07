@@ -22,6 +22,7 @@ const USER = {
   plan: "free",
   interview_date: null,
   created_at: "2026-01-01T00:00:00Z",
+  onboarding_completed: true,
 };
 
 const tokens = (kind) => ({

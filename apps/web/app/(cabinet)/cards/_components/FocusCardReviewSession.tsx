@@ -23,6 +23,7 @@ type FocusCopy = {
   sessionCompleteBody: string;
   sessionCompleteTitle: string;
   focus: {
+    aiBadgeTitle: string;
     answerPrompt: string;
     completedDescription: string;
     completedEyebrow: string;
@@ -179,6 +180,11 @@ export function FocusCardReviewSession({ brand, cards, copy }: Readonly<FocusCar
               <div className="focus-card__face focus-card__face--front" aria-hidden={session.isFlipped}>
                 <div className="focus-card__meta">
                   <span>{session.currentCard.type}</span>
+                  {session.currentCard.createdByAi ? (
+                    <b className="card-ai-badge" title={copy.focus.aiBadgeTitle}>
+                      AI
+                    </b>
+                  ) : null}
                   <em>{session.currentCard.source}</em>
                 </div>
 
@@ -199,6 +205,11 @@ export function FocusCardReviewSession({ brand, cards, copy }: Readonly<FocusCar
               <div className="focus-card__face focus-card__face--back" aria-hidden={!session.isFlipped}>
                 <div className="focus-card__meta">
                   <span>{session.currentCard.type}</span>
+                  {session.currentCard.createdByAi ? (
+                    <b className="card-ai-badge" title={copy.focus.aiBadgeTitle}>
+                      AI
+                    </b>
+                  ) : null}
                   <em>{session.currentCard.source}</em>
                 </div>
 

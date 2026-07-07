@@ -232,6 +232,23 @@ h3 {
   background: var(--accent-bright);
 }
 
+/* Shown instead of the log in / sign up pair once the visitor is authed. */
+.site-auth .site-auth__dashboard {
+  font-family: var(--font-stack-mono);
+  font-size: 12.5px;
+  padding: 9px 16px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #ffffff;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.18s ease;
+}
+
+.site-auth .site-auth__dashboard:hover {
+  background: var(--accent-bright);
+}
+
 /* ============================================================
    HERO SCENE
    ============================================================ */
@@ -4000,6 +4017,63 @@ a.cabinet-panel__meta:hover {
   white-space: nowrap;
 }
 
+/* AI-generated card marker (issue #228). margin-right:auto keeps it glued to
+   the type label inside space-between meta rows. */
+.card-ai-badge {
+  flex-shrink: 0;
+  margin-right: auto;
+  padding: 1px 6px;
+  border: 1px solid var(--accent-line);
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-bright);
+  font-family: var(--font-stack-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  cursor: help;
+}
+
+/* Card generation status for a problem (GET /me/problems/{id}/cards). */
+.ai-cards-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-stack-mono);
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
+.ai-cards-status--generating {
+  color: var(--accent-bright);
+}
+
+.ai-cards-status--ready {
+  color: var(--success-fg);
+}
+
+.ai-cards-status__spinner {
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
+  border: 1.5px solid var(--accent-line);
+  border-top-color: var(--accent-bright);
+  border-radius: 50%;
+  animation: ai-cards-spin 0.8s linear infinite;
+}
+
+@keyframes ai-cards-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-cards-status__spinner {
+    animation: none;
+  }
+}
+
 .focus-card__content {
   min-width: 0;
   min-height: 0;
@@ -6457,5 +6531,563 @@ a.cabinet-panel__meta:hover {
     .reveal-ready [data-reveal="right"] {
       transform: translateY(28px);
     }
+  }
+}
+
+/* ============================================================
+   S9 CABINET SHELL UX — transitions (#117), hotkeys (#118),
+   report-a-problem (#119), welcome tour (#122)
+   ============================================================ */
+
+/* --- #117: страничный вход; template.tsx ремоунтится на каждой навигации --- */
+.cabinet-page-in {
+  animation: cabinet-page-in 0.18s ease-out both;
+}
+
+@keyframes cabinet-page-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* --- общий слой модалок оболочки --- */
+.shell-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 260;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(1, 4, 9, 0.62);
+  backdrop-filter: blur(2px);
+  animation: shell-fade-in 0.15s ease-out both;
+}
+
+@keyframes shell-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.shell-dialog {
+  width: min(460px, 100%);
+  max-height: calc(100dvh - 48px);
+  overflow-y: auto;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 18px 18px;
+  box-shadow: 0 18px 48px rgba(1, 4, 9, 0.55);
+  animation: shell-dialog-in 0.18s ease-out both;
+}
+
+.shell-dialog:focus {
+  outline: none;
+}
+
+@keyframes shell-dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.shell-dialog__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.shell-dialog__head strong {
+  font-family: var(--font-stack-mono);
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+
+.shell-dialog__close {
+  border: 0;
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 18px;
+  line-height: 1;
+  padding: 2px 6px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.shell-dialog__close:hover {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.shell-dialog__note {
+  margin: 0 0 12px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+
+.shell-dialog__note--warn {
+  margin: 10px 0 0;
+  color: var(--accent-bright);
+}
+
+.shell-dialog__actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+
+.shell-btn {
+  font-family: var(--font-stack-mono);
+  font-size: 12px;
+  padding: 7px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition:
+    background 0.16s ease,
+    color 0.16s ease,
+    border-color 0.16s ease;
+}
+
+.shell-btn--primary {
+  border: 1px solid var(--accent-line);
+  background: var(--accent-soft);
+  color: var(--accent-bright);
+}
+
+.shell-btn--primary:hover:not(:disabled) {
+  background: rgba(56, 139, 253, 0.28);
+}
+
+.shell-btn--primary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.shell-btn--ghost {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-dim);
+}
+
+.shell-btn--ghost:hover {
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+
+/* --- #118: справка по хоткеям --- */
+.hotkeys-group {
+  margin-bottom: 12px;
+}
+
+.hotkeys-group__label {
+  display: block;
+  margin-bottom: 6px;
+  font-family: var(--font-stack-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.hotkeys-list {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+}
+
+.hotkeys-list > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.hotkeys-list dt {
+  display: flex;
+  gap: 4px;
+}
+
+.hotkeys-list dd {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.hotkeys-list kbd {
+  font-family: var(--font-stack-mono);
+  font-size: 11px;
+  min-width: 22px;
+  text-align: center;
+  padding: 2px 6px;
+  border: 1px solid var(--border-strong);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  background: var(--panel-strong);
+  color: var(--text);
+}
+
+.hotkeys-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--text-dim);
+  cursor: pointer;
+  user-select: none;
+}
+
+.hotkeys-toggle input {
+  accent-color: var(--accent);
+}
+
+/* --- #119: сообщить о проблеме --- */
+.cabinet-topbar__iconbtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition:
+    color 0.16s ease,
+    border-color 0.16s ease;
+}
+
+.cabinet-topbar__iconbtn:hover {
+  color: var(--accent-bright);
+  border-color: var(--accent-line);
+}
+
+.report-textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 96px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-stack-sans);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+.report-textarea:focus {
+  outline: none;
+  border-color: var(--accent-line);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.report-context {
+  display: grid;
+  gap: 3px;
+  margin-top: 12px;
+}
+
+.report-context__label {
+  font-family: var(--font-stack-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin-bottom: 3px;
+}
+
+.report-context code {
+  font-family: var(--font-stack-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* --- #122: welcome-тур --- */
+.shell-overlay--tour {
+  background: transparent;
+  backdrop-filter: none;
+  padding: 0;
+}
+
+.shell-overlay--tour.is-dim {
+  background: rgba(1, 4, 9, 0.62);
+}
+
+.tour-spotlight {
+  position: fixed;
+  pointer-events: none;
+  border: 1px solid var(--accent-line);
+  border-radius: 10px;
+  /* огромный spread рисует затемнение вокруг «выреза» одним элементом */
+  box-shadow: 0 0 0 200vmax rgba(1, 4, 9, 0.62);
+  transition:
+    top 0.22s ease,
+    left 0.22s ease,
+    width 0.22s ease,
+    height 0.22s ease;
+}
+
+.tour-card {
+  position: fixed;
+  display: grid;
+  gap: 6px;
+  padding: 14px 16px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 18px 48px rgba(1, 4, 9, 0.55);
+  animation: shell-dialog-in 0.18s ease-out both;
+  transition:
+    top 0.22s ease,
+    left 0.22s ease;
+}
+
+.tour-card--centered {
+  position: relative;
+  width: min(340px, calc(100vw - 32px));
+}
+
+.tour-card__badge {
+  font-family: var(--font-stack-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent-bright);
+}
+
+.tour-card strong {
+  font-size: 14px;
+  color: var(--text);
+}
+
+.tour-card p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+
+.tour-card__actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+/* --- reduced motion: вся секция S9 без анимаций --- */
+@media (prefers-reduced-motion: reduce) {
+  .cabinet-page-in,
+  .shell-overlay,
+  .shell-dialog,
+  .tour-card {
+    animation: none;
+  }
+
+  .tour-spotlight,
+  .tour-card {
+    transition: none;
+  }
+}
+
+/* ---------- #114 account security panel ---------- */
+
+.security-panel {
+  display: grid;
+  gap: 0;
+}
+
+.security-panel .settings-profile-field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.security-panel .settings-profile-field:last-of-type {
+  border-bottom: 0;
+}
+
+.security-panel .profile-settings-actions {
+  padding: 12px 16px 0;
+}
+
+.security-panel__error {
+  padding: 0 16px 8px;
+  color: var(--danger-bright, #ffa198);
+  font-family: var(--font-stack-mono);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.security-panel__divider {
+  height: 1px;
+  margin: 12px 16px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.security-panel__revoke {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 16px 14px;
+}
+
+.security-panel__revoke > div {
+  display: grid;
+  gap: 4px;
+}
+
+.security-panel__revoke strong {
+  font-family: var(--font-stack-mono);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.security-panel__revoke p {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 11.5px;
+  line-height: 1.5;
+}
+
+.security-panel__revoke-btn {
+  flex-shrink: 0;
+  border: 1px solid rgba(248, 81, 73, 0.38);
+  border-radius: 8px;
+  padding: 9px 13px;
+  background: rgba(248, 81, 73, 0.08);
+  color: var(--danger-bright, #f85149);
+  font-family: var(--font-stack-mono);
+  font-size: 12px;
+  font-weight: 600;
+  transition:
+    background 0.16s ease,
+    color 0.16s ease,
+    border-color 0.16s ease;
+}
+
+.security-panel__revoke-btn:not(:disabled):hover {
+  border-color: rgba(248, 81, 73, 0.6);
+  background: rgba(248, 81, 73, 0.16);
+  color: #ffa198;
+}
+
+.security-panel__revoke-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
+}
+
+.security-panel--soon {
+  padding: 14px 16px;
+}
+
+.security-panel--soon p {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+
+/* ---------- #62 onboarding API wiring ---------- */
+
+.onboarding-input textarea {
+  width: 100%;
+  min-height: 80px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 13px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  font-family: var(--font-stack-sans);
+  font-size: 14px;
+  letter-spacing: normal;
+  text-transform: none;
+  outline: none;
+  resize: vertical;
+  transition:
+    border-color 0.16s ease,
+    background 0.16s ease,
+    box-shadow 0.16s ease;
+}
+
+.onboarding-input textarea::placeholder {
+  color: var(--text-faint);
+}
+
+.onboarding-input textarea:focus {
+  border-color: var(--accent-line);
+  background: rgba(255, 255, 255, 0.055);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.onboarding-input select {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0 13px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  font-family: var(--font-stack-sans);
+  font-size: 14px;
+  letter-spacing: normal;
+  text-transform: none;
+  outline: none;
+  cursor: pointer;
+  color-scheme: dark;
+  transition:
+    border-color 0.16s ease,
+    background 0.16s ease,
+    box-shadow 0.16s ease;
+}
+
+.onboarding-input select:focus {
+  border-color: var(--accent-line);
+  background: rgba(255, 255, 255, 0.055);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.onboarding-save-error {
+  margin: 0;
+  padding: 8px 24px;
+  color: var(--danger-bright, #ffa198);
+  font-family: var(--font-stack-mono);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+/* ---------- #208 resize animation fix: reduced-motion override ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .word-letter {
+    transition:
+      color 0.2s ease,
+      text-shadow 0.2s ease;
   }
 }

@@ -1,21 +1,23 @@
 /*
  * realgo popup styles as a string so they can be injected via a <style> tag.
  *
- * Why a string and not a .css import: the popup is reused in three hosts —
- * the toolbar popup (light DOM), the Vite preview (light DOM) and the in-page
+ * Why a string and not a .css import: the popup is reused in three hosts:
+ * the toolbar popup (light DOM), the Vite preview (light DOM), and the in-page
  * fallback overlay (shadow DOM). Injecting <style> from the component keeps a
  * single source that also works inside a shadow root.
  *
  * Design tokens are scoped to `.realgo-popup` / `:host` (NOT `:root`) so the
  * custom properties cascade correctly inside a shadow root too.
  *
- * Visual system: compact terminal-grade panel using the same dark cabinet
- * palette. Keep the token set close to apps/web/app/globals.css.
+ * Visual system: "terminal-grade" — the same GitHub Primer dark palette,
+ * mono labels and dense typography as the realgo cabinet (apps/web globals.css,
+ * section PERSONAL CABINET). Keep the two token sets in sync by hand.
  */
 export const POPUP_CSS = `
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap");
 
 :host, .realgo-popup {
+  /* surfaces — GitHub Primer dark */
   --bg: #0d1117;
   --bg-2: #010409;
   --panel: #161b22;
@@ -25,14 +27,19 @@ export const POPUP_CSS = `
   --surface: rgba(22, 27, 34, 0.66);
   --line: rgba(255, 255, 255, 0.06);
   --line-strong: rgba(255, 255, 255, 0.1);
+
+  /* text */
   --text: #e6edf3;
   --text-dim: #7d8590;
   --text-faint: #6e7681;
+
+  /* accent — GitHub blue */
   --accent: #2f81f7;
   --accent-bright: #58a6ff;
-  --accent-active: #1f6feb;
   --accent-soft: rgba(56, 139, 253, 0.15);
   --accent-line: rgba(56, 139, 253, 0.4);
+
+  /* semantic tones (Primer scale); green = success only */
   --success: #238636;
   --success-fg: #3fb950;
   --success-soft: rgba(46, 160, 67, 0.15);
@@ -41,10 +48,10 @@ export const POPUP_CSS = `
   --warning-bright: #e3b341;
   --warning-soft: rgba(210, 153, 34, 0.12);
   --danger: #f85149;
-  --danger-fg: #f85149;
   --danger-bright: #ff7b72;
   --danger-soft: rgba(248, 81, 73, 0.1);
   --danger-line: rgba(248, 81, 73, 0.4);
+
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Space Grotesk", "Inter", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
@@ -52,7 +59,7 @@ export const POPUP_CSS = `
 
 .realgo-popup, .realgo-popup * { box-sizing: border-box; }
 
-/* Panel: one fixed compact size for every popup state. */
+/* Panel: fixed size for every state; the form screen is the reference */
 .realgo-popup {
   width: 400px;
   height: 372px;
@@ -74,6 +81,7 @@ export const POPUP_CSS = `
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
 }
+
 /* Options page is a full tab, not a fixed-size popup. */
 .realgo-popup--wide {
   width: 440px;
@@ -83,7 +91,7 @@ export const POPUP_CSS = `
 }
 .realgo-popup--wide .realgo-body { padding: 20px; }
 
-/* Header */
+/* Header bar: brand + blinking terminal path, status on the right */
 .realgo-header {
   min-height: 52px;
   display: flex;
@@ -130,9 +138,12 @@ export const POPUP_CSS = `
 .realgo-header__right {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   min-width: 0;
 }
+
+/* status chip — like the cabinet due-chip */
 .realgo-status {
   display: inline-flex;
   align-items: center;
@@ -163,6 +174,7 @@ export const POPUP_CSS = `
   background: var(--success-soft);
   color: var(--success-fg);
 }
+
 .realgo-iconbtn {
   display: grid;
   place-items: center;
@@ -204,9 +216,9 @@ export const POPUP_CSS = `
   margin: 0;
   color: var(--text);
   font-family: var(--font-display);
-  font-size: 20px;
+  font-size: 17px;
   font-weight: 600;
-  line-height: 1.2;
+  line-height: 1.25;
   letter-spacing: -0.01em;
   overflow-wrap: anywhere;
 }
@@ -218,8 +230,7 @@ export const POPUP_CSS = `
   gap: 6px;
   margin: 0;
 }
-.realgo-tag,
-.realgo-chip {
+.realgo-tag {
   display: inline-flex;
   align-items: center;
   max-width: 160px;
@@ -235,44 +246,41 @@ export const POPUP_CSS = `
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.realgo-chip--accent {
-  color: var(--accent-bright);
-  border-color: var(--accent);
-  background: var(--accent-soft);
-}
-.realgo-chip--success {
-  color: var(--success-fg);
-  border-color: var(--success);
-  background: var(--success-soft);
-}
 
-/* Body / question groups */
+/* Body / question groups.
+   Pinned toward the bottom (align-content:end) so the difficulty block sits
+   lower in the card, closer to where the cursor lands after a submit. */
 .realgo-body {
   flex: 1;
   min-height: 0;
   display: grid;
-  grid-template-rows: 1fr auto;
-  gap: 14px;
-  padding: 18px 20px 20px;
+  align-content: end;
+  gap: 16px;
+  padding: 18px 20px 22px;
 }
-.realgo-body__center {
-  display: grid;
-  /* Sit the rating block low in its row — closer to the cursor right after a
-     submit — rather than dead-centre. Popup size is unchanged. */
-  align-items: end;
-  min-height: 0;
+
+/* Save hint / saving indicator — sits where the button used to be. */
+.realgo-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 18px;
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  line-height: 1.3;
+  color: var(--text-faint);
+  text-align: center;
 }
-.realgo-foot { align-self: end; }
+
+/* Section */
 .realgo-section {
   width: 100%;
   display: grid;
   gap: 20px;
 }
-.realgo-section__head {
-  display: flex;
-  align-items: baseline;
-  justify-content: center;
-}
+.realgo-section__head { display: flex; align-items: baseline; justify-content: center; }
 .realgo-section__title {
   margin: 0;
   font-family: var(--font-mono);
@@ -281,25 +289,31 @@ export const POPUP_CSS = `
   letter-spacing: normal;
   color: var(--text);
 }
+
+/* difficulty: segmented mono control */
 .realgo-choices {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 .realgo-choice {
   min-width: 0;
-  min-height: 76px;
+  min-height: 84px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-direction: column;
-  gap: 7px;
+  gap: 8px;
   appearance: none;
-  border: 1px solid var(--border);
-  background: var(--surface);
+  border: 0;
+  border-right: 1px solid var(--line);
+  background: transparent;
   color: var(--text-dim);
-  border-radius: 8px;
-  padding: 11px 8px 10px;
+  padding: 13px 8px 12px;
   font-family: var(--font-mono);
   font-size: 12px;
   font-weight: 600;
@@ -307,26 +321,23 @@ export const POPUP_CSS = `
   cursor: pointer;
   transition:
     background 0.16s ease,
-    border-color 0.16s ease,
     color 0.16s ease;
 }
+.realgo-choice:last-child { border-right: 0; }
 .realgo-choice__icon {
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   display: grid;
   place-items: center;
   border: 1.5px solid var(--text-faint);
   border-radius: 50%;
   color: var(--text-faint);
   transition:
+    background 0.16s ease,
     border-color 0.16s ease,
     color 0.16s ease;
 }
-.realgo-choice__icon svg {
-  width: 15px;
-  height: 15px;
-  display: block;
-}
+.realgo-choice__icon svg { width: 15px; height: 15px; display: block; }
 .realgo-choice__label {
   max-width: 100%;
   white-space: nowrap;
@@ -343,7 +354,6 @@ export const POPUP_CSS = `
 }
 .realgo-choice[aria-pressed="true"] { color: var(--text); }
 .realgo-choice[data-difficulty="easy"][aria-pressed="true"] {
-  border-color: var(--success-line);
   background: var(--success-soft);
   color: var(--success-fg);
 }
@@ -352,7 +362,6 @@ export const POPUP_CSS = `
   color: var(--success-fg);
 }
 .realgo-choice[data-difficulty="normal"][aria-pressed="true"] {
-  border-color: rgba(210, 153, 34, 0.42);
   background: var(--warning-soft);
   color: var(--warning-bright);
 }
@@ -361,7 +370,6 @@ export const POPUP_CSS = `
   color: var(--warning-bright);
 }
 .realgo-choice[data-difficulty="hard"][aria-pressed="true"] {
-  border-color: var(--danger-line);
   background: var(--danger-soft);
   color: var(--danger-bright);
 }
@@ -371,17 +379,17 @@ export const POPUP_CSS = `
 }
 .realgo-choice:disabled { cursor: not-allowed; opacity: 0.6; }
 
-/* Buttons */
+/* Buttons — mono command buttons, as in the cabinet */
 .realgo-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   border: 0;
-  border-radius: 7px;
-  padding: 8px 13px;
+  border-radius: 8px;
+  padding: 9px 14px;
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 600;
   line-height: 1.2;
   white-space: nowrap;
@@ -394,26 +402,24 @@ export const POPUP_CSS = `
     opacity 0.16s ease;
 }
 .realgo-btn--block { width: 100%; }
-.realgo-btn--lg { min-height: 38px; font-size: 12.5px; }
+.realgo-btn--lg { min-height: 42px; font-size: 13px; }
 .realgo-btn--state { min-height: 38px; }
 .realgo-btn:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--accent-line); }
-
 .realgo-btn--primary {
   background: var(--accent);
-  color: #fff;
+  color: #ffffff;
 }
 .realgo-btn--primary:hover:not(:disabled) {
   background: var(--accent-bright);
   transform: translateY(-1px);
 }
-.realgo-btn--primary:active:not(:disabled) { background: var(--accent-active); transform: none; }
+.realgo-btn--primary:active:not(:disabled) { background: #1f6feb; transform: none; }
 .realgo-btn--primary:disabled {
   background: var(--panel-strong);
   color: var(--text-faint);
   opacity: 1;
   cursor: not-allowed;
 }
-
 .realgo-btn--ghost {
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.04);
@@ -433,12 +439,20 @@ export const POPUP_CSS = `
 }
 .realgo-btn--danger:hover { background: rgba(248, 81, 73, 0.18); }
 
-/* ── Inputs (options) ─────────────────────────────────────────────────── */
+/* Inputs (options) */
 .realgo-field { display: flex; flex-direction: column; gap: 6px; }
 .realgo-field__label {
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--text-dim);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.realgo-form-title {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
 }
 .realgo-row { display: flex; gap: 8px; }
 .realgo-row > .realgo-input { flex: 1; }
@@ -459,10 +473,9 @@ export const POPUP_CSS = `
   border-color: var(--accent);
   box-shadow: 0 0 0 2px var(--accent-soft);
 }
-
 .realgo-divider { height: 1px; background: var(--line); border: 0; margin: 4px 0; }
 
-/* ── Account row (options, logged in) ─────────────────────────────────── */
+/* Account row (options, logged in) */
 .realgo-account {
   display: flex;
   align-items: center;
@@ -493,7 +506,7 @@ export const POPUP_CSS = `
   color: var(--text-faint);
 }
 
-/* Centered states */
+/* Centered states (loading / no-task / success) fill the fixed panel */
 .realgo-state {
   flex: 1;
   min-height: 0;
@@ -538,19 +551,11 @@ export const POPUP_CSS = `
   color: var(--text);
 }
 .realgo-state__title--success { color: var(--success-fg); }
-.realgo-state__error {
-  max-width: 300px;
-  margin: 0;
-  color: var(--danger-bright);
-  font-family: var(--font-mono);
-  font-size: 16px;
-  font-weight: 600;
-  line-height: 1.35;
-}
+.realgo-state__title--danger { color: var(--danger-bright); }
 .realgo-state__text {
   max-width: 300px;
   margin: 0;
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.55;
   color: var(--text-dim);
 }
@@ -562,6 +567,9 @@ export const POPUP_CSS = `
   margin-top: 10px;
 }
 .realgo-state--loading-scene { gap: 14px; padding: 40px 26px; }
+/* Success / error screens: the actions row is pinned to the bottom edge with
+   a bottom inset equal to the side inset (20px); the two auto margins split
+   the leftover space, so the icon+text block stays visually centered. */
 .realgo-state--success-scene,
 .realgo-state--error-scene {
   gap: 12px;
@@ -580,6 +588,26 @@ export const POPUP_CSS = `
   font-family: var(--font-mono);
   font-size: 12px;
 }
+
+/* Cards readiness row on the success screen. One quiet line between the text
+   and the pinned actions; blue = working, green = success only, faint = stub. */
+.realgo-cards {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 18px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-dim);
+}
+.realgo-cards__check {
+  display: inline-flex;
+  color: var(--success-fg);
+}
+.realgo-cards--none { color: var(--text-faint); }
+.realgo-cards__open { font-size: 12px; }
 
 .realgo-link {
   background: none;
@@ -608,7 +636,7 @@ export const POPUP_CSS = `
 }
 @keyframes realgo-spin { to { transform: rotate(360deg); } }
 
-/* Error banner (options page) */
+/* Error banner */
 .realgo-error {
   display: flex;
   align-items: flex-start;
@@ -644,26 +672,15 @@ export const POPUP_CSS = `
   text-underline-offset: 3px;
 }
 
-/* In-page fallback overlay. Host positioning/isolation lives in contents/realgo.ts. */
+/* In-page fallback overlay (shadow DOM host content).
+   Positioning + isolation live on the light-DOM host (see contents/realgo.ts,
+   which sets all:initial to stop the page CSS leaking a frame around us). */
 .realgo-overlay {
   overflow: hidden;
   border-radius: 12px;
   box-shadow: 0 24px 72px rgba(1, 4, 9, 0.7);
 }
 .realgo-overlay .realgo-popup { border-radius: 12px; }
-.realgo-overlay-close {
-  position: absolute;
-  top: 13px;
-  right: 14px;
-  background: none;
-  border: 0;
-  color: var(--text-dim);
-  font-size: 16px;
-  line-height: 1;
-  cursor: pointer;
-  z-index: 1;
-}
-.realgo-overlay-close:hover { color: var(--text); }
 
 @media (prefers-reduced-motion: reduce) {
   .realgo-spinner { animation: none; }

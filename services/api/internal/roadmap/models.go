@@ -10,7 +10,6 @@ type Response struct {
 }
 
 type Target struct {
-	// TODO(S4): fill company when profile/onboarding stores target company.
 	Company       *string `json:"company"`
 	InterviewDate *string `json:"interviewDate"`
 }

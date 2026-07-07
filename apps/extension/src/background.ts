@@ -1,6 +1,11 @@
-import { ApiError, saveSubmission } from "./lib/api";
+import { ApiError, getProblemCards, saveSubmission } from "./lib/api";
 import { clearLastSubmission, setLastSubmission } from "./lib/storage";
-import type { DetectedSubmission, RuntimeMessage, SaveResponse } from "./lib/types";
+import type {
+  CardsResponse,
+  DetectedSubmission,
+  RuntimeMessage,
+  SaveResponse,
+} from "./lib/types";
 
 /**
  * Background service worker.
@@ -37,6 +42,23 @@ chrome.runtime.onMessage.addListener(
           sendResponse({ ok: true, result } satisfies SaveResponse);
         })
         .catch((e) => sendResponse(toErrorResponse(e)))
+        .catch(() => {
+          /* sendResponse can throw if the channel closed; nothing to do */
+        });
+      return true;
+    }
+
+    if (message.type === "REALGO_GET_PROBLEM_CARDS") {
+      // One poll tick of the cards readiness. Same CORS rationale as the save:
+      // only the background worker can talk to the API from an overlay context.
+      // getProblemCards never throws — `ok: false` simply means "no usable
+      // answer" and the UI stays silent (the endpoint may not exist yet).
+      getProblemCards(message.problemId)
+        .then((result) =>
+          sendResponse(
+            (result ? { ok: true, result } : { ok: false }) satisfies CardsResponse
+          )
+        )
         .catch(() => {
           /* sendResponse can throw if the channel closed; nothing to do */
         });

@@ -190,6 +190,9 @@ services:
       AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:?AUTH_JWT_SECRET must be set}
       AUTH_ACCESS_TTL: ${AUTH_ACCESS_TTL:-15m}
       AUTH_REFRESH_TTL: ${AUTH_REFRESH_TTL:-720h}
+      # Optional: without a key the api still boots, AI card generation is
+      # just disabled. Prod gets it from the GEMINI_API_KEY GitHub secret.
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       # In this stack the api is reachable only through the caddy container, so
       # X-Forwarded-For from the docker network is trustworthy. Without this the
       # auth rate limiter keys every request to caddy's container IP — one

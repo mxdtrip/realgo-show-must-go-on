@@ -43,6 +43,7 @@ const ru = {
       auth: {
         login: "Log in",
         signup: "Sign up",
+        dashboard: "Dashboard",
         createAccount: "Create account",
         continue: "Continue",
         email: "Email",
@@ -306,6 +307,7 @@ const ru = {
           ["build", "v0.4.2 · fsrs-6"],
         ],
         menuSettings: "settings",
+        menuReport: "report a problem",
         menuLogout: "log out",
         logoutPending: "logging out…",
       },
@@ -316,6 +318,89 @@ const ru = {
           past: "passed",
           missing: "not set",
         },
+      },
+    },
+    shell: {
+      hotkeys: {
+        title: "горячие клавиши",
+        description: "Работают на страницах кабинета, вне полей ввода.",
+        disableLabel: "отключить горячие клавиши",
+        disabledNote: "Хоткеи отключены — работает только «?».",
+        close: "закрыть",
+        groups: [
+          {
+            title: "навигация",
+            items: [
+              ["g d", "dashboard"],
+              ["g r", "reviews"],
+              ["g p", "problems"],
+              ["g c", "cards"],
+              ["g t", "patterns"],
+              ["g s", "settings"],
+            ],
+          },
+          {
+            title: "действия",
+            items: [
+              ["s", "начать сессию повторений"],
+              ["?", "эта справка"],
+              ["esc", "закрыть диалог"],
+            ],
+          },
+          {
+            title: "онбординги (для тестов)",
+            items: [
+              ["g w", "welcome-тур заново"],
+              ["g o", "полевой онбординг заново"],
+            ],
+          },
+        ],
+      },
+      report: {
+        triggerAria: "Сообщить о проблеме",
+        title: "сообщить о проблеме",
+        description:
+          "Опиши, что пошло не так и что ожидалось. К отчёту добавится технический контекст страницы — без личных данных.",
+        placeholder: "Что случилось?",
+        contextLabel: "будет приложено",
+        send: "отправить письмо",
+        copy: "скопировать отчёт",
+        copied: "скопировано ✓",
+        copyFailed: "не вышло — скопируй текст вручную",
+        sentTitle: "почтовый клиент открыт",
+        sentNote:
+          "Если письмо не создалось — нажми «скопировать отчёт» и пришли текст в любой канал команды.",
+        close: "закрыть",
+        email: "support@realgo.dev",
+      },
+      tour: {
+        badge: "welcome",
+        stepOf: "из",
+        next: "дальше",
+        done: "понятно, поехали",
+        skip: "пропустить",
+        steps: [
+          {
+            target: "nav",
+            title: "разделы кабинета",
+            text: "В навигации — вся подготовка: dashboard с планом на сегодня, очередь повторений, задачи и карточки.",
+          },
+          {
+            target: "due",
+            title: "очередь на сегодня",
+            text: "Счётчик due today показывает, сколько повторений ждут прямо сейчас. Клик ведёт к списку.",
+          },
+          {
+            target: "content",
+            title: "рабочая область",
+            text: "Здесь живут страницы разделов. Начни с dashboard — блок next up подскажет первый шаг.",
+          },
+          {
+            target: "",
+            title: "горячие клавиши",
+            text: "Нажми «?» в любой момент — откроется справка: g d / g r — навигация, s — старт сессии повторений.",
+          },
+        ],
       },
     },
     common: {
@@ -420,6 +505,11 @@ const ru = {
           ["reviewing", "повторяется", "accent"],
           ["mastered", "освоена", "success"],
         ],
+        aiCards: {
+          generating: "Карточки генерируются…",
+          ready: "Карточки готовы",
+          none: "Карточек по задаче пока нет",
+        },
       },
       roadmap: {
         eyebrow: "/roadmap",
@@ -530,6 +620,7 @@ const ru = {
           sessionCompleteTitle: "realgo cards complete",
           sessionCompleteBody: "Карточки на сегодня разобраны. Завтра вернём нужные паттерны.",
           focus: {
+            aiBadgeTitle: "Карточка сгенерирована ИИ — возможны неточности",
             exit: "Exit session",
             progress: "Card",
             of: "of",
@@ -1052,3 +1143,48 @@ export function getDictionary(locale: Locale = defaultLocale) {
 export function isSupportedLocale(value: string): value is Locale {
   return supportedLocales.includes(value as Locale);
 }
+
+// ===== #114 account security panel =====
+export const accountSecurityCopy = {
+  panelEyebrow: "security",
+  panelTitle: "Password & sessions",
+  currentPasswordLabel: "current password",
+  newPasswordLabel: "new password",
+  confirmPasswordLabel: "confirm password",
+  passwordPlaceholder: "••••••••",
+  save: "change password",
+  saved: "password changed",
+  saveFailed: "password change failed",
+  tooShort: "Минимум 8 символов",
+  mismatch: "Пароли не совпадают",
+  soon: "Смена пароля скоро будет доступна.",
+  revokeTitle: "Выйти со всех устройств",
+  revokeDescription:
+    "Завершит все активные сессии, кроме текущей. Потребуется заново войти на других устройствах.",
+  revokeAction: "log out everywhere",
+  revokeConfirm: "Выйти со всех устройств? Это действие нельзя отменить.",
+  revokeDone: "all sessions revoked",
+  revokeFallback: "Серверная заглушка — текущая сессия завершена локально.",
+  revokeFailed: "revoke failed",
+} as const;
+
+// ===== #62 onboarding API wiring =====
+export const onboardingApiCopy = {
+  positionLabel: "target position",
+  positionPlaceholder: "Например, Senior Backend Engineer",
+  goal: {
+    title: "Цель подготовки",
+    description:
+      "Расскажи, к чему готовишься. Это поможет подобрать план повторения и карточки под твою цель.",
+    prepGoalLabel: "цель",
+    prepGoalPlaceholder: "Например: пройти интервью в Google через 2 месяца",
+    gradeLabel: "уровень",
+    grades: ["junior", "middle", "senior", "staff", "principal"],
+  },
+  saving: "Сохраняем…",
+  saveFailed: "Не удалось сохранить профиль. Попробуйте ещё раз.",
+  companiesSearchFailed: "Не удалось загрузить подсказки компаний.",
+  summaryPosition: "позиция",
+  summaryGoal: "цель",
+  summaryGrade: "уровень",
+} as const;
