@@ -101,6 +101,7 @@ type PatternLearningMaterial struct {
 	// JSON array of {"title","note"} contrast pairs.
 	DontConfuseWith []byte
 	UpdatedAt       pgtype.Timestamptz
+	MiniExample     string
 }
 
 type Platform struct {

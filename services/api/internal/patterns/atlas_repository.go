@@ -365,6 +365,7 @@ func (r *pgRepository) learningMaterial(ctx context.Context, patternID int64) (*
 		CanonicalSkeleton: row.CanonicalSkeleton,
 		CommonMistakes:    orEmpty(row.CommonMistakes),
 		DontConfuseWith:   pairs,
+		MiniExample:       row.MiniExample,
 	}, nil
 }
 

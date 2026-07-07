@@ -162,6 +162,7 @@ type LearningMaterial struct {
 	CanonicalSkeleton string         `json:"canonical_skeleton"`
 	CommonMistakes    []string       `json:"common_mistakes"`
 	DontConfuseWith   []ContrastPair `json:"dont_confuse_with"`
+	MiniExample       string         `json:"mini_example"`
 }
 
 type CardSummary struct {

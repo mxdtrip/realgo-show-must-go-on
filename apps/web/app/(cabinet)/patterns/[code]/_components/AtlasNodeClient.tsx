@@ -217,13 +217,6 @@ function LearnPanel({ detail, copy }: Readonly<{ detail: NodeDetail; copy: NodeC
           <h3>{copy.learn.whatItIs}</h3>
           <p>{material.what_it_is}</p>
 
-          {material.mental_model ? (
-            <>
-              <h3>{copy.learn.mentalModel}</h3>
-              <p>{material.mental_model}</p>
-            </>
-          ) : null}
-
           {material.recognition_cues.length > 0 ? (
             <>
               <h3>{copy.learn.recognitionCues}</h3>
@@ -232,6 +225,13 @@ function LearnPanel({ detail, copy }: Readonly<{ detail: NodeDetail; copy: NodeC
                   <li key={cue}>{cue}</li>
                 ))}
               </ul>
+            </>
+          ) : null}
+
+          {material.mental_model ? (
+            <>
+              <h3>{copy.learn.mentalModel}</h3>
+              <p>{material.mental_model}</p>
             </>
           ) : null}
 
@@ -259,6 +259,13 @@ function LearnPanel({ detail, copy }: Readonly<{ detail: NodeDetail; copy: NodeC
               <pre className="atlas-skeleton">
                 <code>{material.canonical_skeleton}</code>
               </pre>
+            </>
+          ) : null}
+
+          {material.mini_example ? (
+            <>
+              <h3>{copy.learn.miniExample}</h3>
+              <p>{material.mini_example}</p>
             </>
           ) : null}
 

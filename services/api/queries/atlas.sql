@@ -192,7 +192,8 @@ SELECT
     core_invariant,
     canonical_skeleton,
     common_mistakes,
-    dont_confuse_with
+    dont_confuse_with,
+    mini_example
 FROM pattern_learning_materials
 WHERE pattern_id = $1;
 
