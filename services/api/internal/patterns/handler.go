@@ -29,6 +29,9 @@ type repository interface {
 	List(ctx context.Context, userID int64) ([]Pattern, error)
 	ListWeak(ctx context.Context, userID int64, limit int32) ([]WeakPattern, error)
 	GetByCode(ctx context.Context, code string) (PatternDetail, error)
+	GetAtlas(ctx context.Context, userID int64, companyCode string) (AtlasResponse, error)
+	ListCompanies(ctx context.Context) ([]AtlasCompany, error)
+	GetAtlasNode(ctx context.Context, userID int64, code string) (NodeDetail, error)
 }
 
 func NewHandler(repo repository) *Handler {
@@ -38,6 +41,10 @@ func NewHandler(repo repository) *Handler {
 func RegisterRoutes(r chi.Router, h *Handler) {
 	r.Get("/", h.List)
 	r.Get("/weak", h.ListWeak)
+	// Pattern Atlas: static segments win over the /{code} param in chi.
+	r.Get("/atlas", h.GetAtlas)
+	r.Get("/atlas/companies", h.ListAtlasCompanies)
+	r.Get("/atlas/{code}", h.GetAtlasNode)
 	r.Get("/{code}", h.GetDetail)
 }
 

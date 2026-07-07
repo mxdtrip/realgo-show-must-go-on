@@ -1,5 +1,5 @@
 import { getDictionary } from "../../../_content/i18n";
-import { PatternDetailPageClient } from "./_components/PatternDetailPageClient";
+import { AtlasNodeClient } from "./_components/AtlasNodeClient";
 
 export default async function PatternDetailPage({
   params,
@@ -7,7 +7,7 @@ export default async function PatternDetailPage({
   params: Promise<{ code: string }>;
 }) {
   const { code } = await params;
-  const copy = getDictionary().cabinet.pages.patternDetail;
+  const { pages } = getDictionary().cabinet;
 
-  return <PatternDetailPageClient code={code} copy={copy} />;
+  return <AtlasNodeClient code={code} copy={pages.atlasNode} atlasCopy={pages.atlas} />;
 }

@@ -1,0 +1,392 @@
+# Realgo Taxonomy v1: problem <-> subpattern practice links.
+# Curated mapping of the NeetCode 150 catalog onto taxonomy subpatterns.
+# A problem may practice several subpatterns (many-to-many); tier is the
+# practice ladder: foundational -> core -> advanced.
+# Subpatterns without links here render an honest "no problems yet" state.
+code: realgo_atlas_problem_links
+title: Realgo Atlas Problem Links
+links:
+  # Hashing / Frequency
+  - problem_slug: valid-anagram
+    subpatterns: [{ code: frequency_map_counting, tier: foundational }]
+  - problem_slug: group-anagrams
+    subpatterns: [{ code: frequency_map_counting, tier: core }]
+  - problem_slug: top-k-frequent-elements
+    subpatterns:
+      - { code: frequency_map_counting, tier: core }
+      - { code: top_k_bounded_heap, tier: core }
+  - problem_slug: contains-duplicate
+    subpatterns: [{ code: membership_deduplication, tier: foundational }]
+  - problem_slug: valid-sudoku
+    subpatterns: [{ code: membership_deduplication, tier: core }]
+  - problem_slug: longest-consecutive-sequence
+    subpatterns: [{ code: membership_deduplication, tier: advanced }]
+  - problem_slug: two-sum
+    subpatterns: [{ code: complement_lookup, tier: foundational }]
+  - problem_slug: detect-squares
+    subpatterns: [{ code: frequency_map_counting, tier: advanced }]
+
+  # Two Pointers
+  - problem_slug: valid-palindrome
+    subpatterns: [{ code: opposite_direction_pointers, tier: foundational }]
+  - problem_slug: two-sum-ii-input-array-is-sorted
+    subpatterns: [{ code: opposite_direction_pointers, tier: core }]
+  - problem_slug: 3sum
+    subpatterns: [{ code: opposite_direction_pointers, tier: core }]
+  - problem_slug: container-with-most-water
+    subpatterns: [{ code: opposite_direction_pointers, tier: core }]
+  - problem_slug: trapping-rain-water
+    subpatterns:
+      - { code: opposite_direction_pointers, tier: advanced }
+      - { code: monotonic_stack, tier: advanced }
+  - problem_slug: best-time-to-buy-and-sell-stock
+    subpatterns:
+      - { code: same_direction_read_write, tier: foundational }
+      - { code: local_choice_invariant, tier: foundational }
+  - problem_slug: linked-list-cycle
+    subpatterns: [{ code: fast_slow_pointers, tier: foundational }]
+  - problem_slug: happy-number
+    subpatterns: [{ code: fast_slow_pointers, tier: core }]
+  - problem_slug: find-the-duplicate-number
+    subpatterns:
+      - { code: fast_slow_pointers, tier: advanced }
+      - { code: sign_marking_index_encoding, tier: advanced }
+
+  # Sliding Window
+  - problem_slug: permutation-in-string
+    subpatterns:
+      - { code: fixed_size_window, tier: core }
+      - { code: frequency_coverage_window, tier: core }
+  - problem_slug: longest-substring-without-repeating-characters
+    subpatterns: [{ code: longest_valid_window, tier: core }]
+  - problem_slug: longest-repeating-character-replacement
+    subpatterns:
+      - { code: longest_valid_window, tier: advanced }
+      - { code: frequency_coverage_window, tier: advanced }
+  - problem_slug: minimum-window-substring
+    subpatterns:
+      - { code: shortest_valid_window, tier: advanced }
+      - { code: frequency_coverage_window, tier: advanced }
+  - problem_slug: sliding-window-maximum
+    subpatterns: [{ code: monotonic_deque, tier: advanced }]
+
+  # Prefix & Cumulative State
+  - problem_slug: product-of-array-except-self
+    subpatterns: [{ code: prefix_sum_range_query, tier: core }]
+
+  # Binary Search
+  - problem_slug: binary-search
+    subpatterns: [{ code: exact_search_monotone, tier: foundational }]
+  - problem_slug: search-a-2d-matrix
+    subpatterns: [{ code: exact_search_monotone, tier: core }]
+  - problem_slug: time-based-key-value-store
+    subpatterns: [{ code: lower_upper_bound, tier: core }]
+  - problem_slug: koko-eating-bananas
+    subpatterns: [{ code: binary_search_on_answer, tier: core }]
+  - problem_slug: find-minimum-in-rotated-sorted-array
+    subpatterns: [{ code: rotated_peak_search, tier: core }]
+  - problem_slug: search-in-rotated-sorted-array
+    subpatterns: [{ code: rotated_peak_search, tier: core }]
+  - problem_slug: median-of-two-sorted-arrays
+    subpatterns: [{ code: recursive_partition_search, tier: advanced }]
+
+  # Intervals & Sweep
+  - problem_slug: meeting-rooms
+    subpatterns: [{ code: merge_overlapping_intervals, tier: foundational }]
+  - problem_slug: merge-intervals
+    subpatterns: [{ code: merge_overlapping_intervals, tier: core }]
+  - problem_slug: insert-interval
+    subpatterns: [{ code: interval_insertion_intersection, tier: core }]
+  - problem_slug: meeting-rooms-ii
+    subpatterns: [{ code: sweep_line_event_counting, tier: core }]
+  - problem_slug: minimum-interval-to-include-each-query
+    subpatterns: [{ code: sweep_line_event_counting, tier: advanced }]
+  - problem_slug: non-overlapping-intervals
+    subpatterns: [{ code: greedy_scheduling, tier: core }]
+
+  # Stack & Monotonic Structures
+  - problem_slug: valid-parentheses
+    subpatterns: [{ code: matching_nesting_stack, tier: foundational }]
+  - problem_slug: evaluate-reverse-polish-notation
+    subpatterns: [{ code: expression_evaluation_stack, tier: foundational }]
+  - problem_slug: min-stack
+    subpatterns: [{ code: expression_evaluation_stack, tier: core }]
+  - problem_slug: daily-temperatures
+    subpatterns: [{ code: monotonic_stack, tier: core }]
+  - problem_slug: largest-rectangle-in-histogram
+    subpatterns: [{ code: monotonic_stack, tier: advanced }]
+  - problem_slug: car-fleet
+    subpatterns:
+      - { code: sort_then_greedy, tier: advanced }
+      - { code: monotonic_stack, tier: advanced }
+
+  # Heap / Priority Queue
+  - problem_slug: kth-largest-element-in-a-stream
+    subpatterns: [{ code: top_k_bounded_heap, tier: foundational }]
+  - problem_slug: last-stone-weight
+    subpatterns: [{ code: top_k_bounded_heap, tier: foundational }]
+  - problem_slug: k-closest-points-to-origin
+    subpatterns: [{ code: top_k_bounded_heap, tier: core }]
+  - problem_slug: kth-largest-element-in-an-array
+    subpatterns:
+      - { code: top_k_bounded_heap, tier: core }
+      - { code: quickselect_order_statistics, tier: core }
+  - problem_slug: find-median-from-data-stream
+    subpatterns: [{ code: two_heaps_streaming_median, tier: core }]
+  - problem_slug: merge-k-sorted-lists
+    subpatterns: [{ code: k_way_merge_best_first, tier: core }]
+  - problem_slug: design-twitter
+    subpatterns: [{ code: k_way_merge_best_first, tier: advanced }]
+  - problem_slug: task-scheduler
+    subpatterns:
+      - { code: greedy_scheduling, tier: advanced }
+      - { code: top_k_bounded_heap, tier: advanced }
+
+  # Linked List Techniques
+  - problem_slug: reverse-linked-list
+    subpatterns: [{ code: in_place_reversal, tier: foundational }]
+  - problem_slug: merge-two-sorted-lists
+    subpatterns:
+      - { code: merge_split_reconnect, tier: foundational }
+      - { code: dummy_node_rewiring, tier: foundational }
+  - problem_slug: reorder-list
+    subpatterns:
+      - { code: fast_slow_pointers, tier: core }
+      - { code: in_place_reversal, tier: core }
+      - { code: merge_split_reconnect, tier: core }
+  - problem_slug: remove-nth-node-from-end-of-list
+    subpatterns:
+      - { code: dummy_node_rewiring, tier: core }
+      - { code: fast_slow_pointers, tier: core }
+  - problem_slug: add-two-numbers
+    subpatterns: [{ code: dummy_node_rewiring, tier: core }]
+  - problem_slug: lru-cache
+    subpatterns: [{ code: dummy_node_rewiring, tier: advanced }]
+  - problem_slug: reverse-nodes-in-k-group
+    subpatterns: [{ code: in_place_reversal, tier: advanced }]
+
+  # Tree Traversal & Structure
+  - problem_slug: invert-binary-tree
+    subpatterns: [{ code: dfs_path_subtree_aggregation, tier: foundational }]
+  - problem_slug: maximum-depth-of-binary-tree
+    subpatterns: [{ code: dfs_path_subtree_aggregation, tier: foundational }]
+  - problem_slug: same-tree
+    subpatterns: [{ code: dfs_path_subtree_aggregation, tier: foundational }]
+  - problem_slug: diameter-of-binary-tree
+    subpatterns: [{ code: dfs_path_subtree_aggregation, tier: core }]
+  - problem_slug: balanced-binary-tree
+    subpatterns: [{ code: dfs_path_subtree_aggregation, tier: core }]
+  - problem_slug: subtree-of-another-tree
+    subpatterns: [{ code: dfs_path_subtree_aggregation, tier: core }]
+  - problem_slug: count-good-nodes-in-binary-tree
+    subpatterns: [{ code: dfs_path_subtree_aggregation, tier: core }]
+  - problem_slug: binary-tree-maximum-path-sum
+    subpatterns: [{ code: dfs_path_subtree_aggregation, tier: advanced }]
+  - problem_slug: serialize-and-deserialize-binary-tree
+    subpatterns: [{ code: dfs_path_subtree_aggregation, tier: advanced }]
+  - problem_slug: binary-tree-level-order-traversal
+    subpatterns: [{ code: bfs_level_order, tier: foundational }]
+  - problem_slug: binary-tree-right-side-view
+    subpatterns: [{ code: bfs_level_order, tier: core }]
+  - problem_slug: lowest-common-ancestor-of-a-binary-search-tree
+    subpatterns: [{ code: bst_ordering_bounds, tier: core }]
+  - problem_slug: validate-binary-search-tree
+    subpatterns: [{ code: bst_ordering_bounds, tier: core }]
+  - problem_slug: kth-smallest-element-in-a-bst
+    subpatterns: [{ code: bst_ordering_bounds, tier: core }]
+  - problem_slug: construct-binary-tree-from-preorder-and-inorder-traversal
+    subpatterns: [{ code: recursive_partition_search, tier: core }]
+
+  # Graph Traversal
+  - problem_slug: number-of-islands
+    subpatterns: [{ code: connected_components_flood_fill, tier: foundational }]
+  - problem_slug: max-area-of-island
+    subpatterns: [{ code: connected_components_flood_fill, tier: core }]
+  - problem_slug: clone-graph
+    subpatterns: [{ code: connected_components_flood_fill, tier: core }]
+  - problem_slug: surrounded-regions
+    subpatterns: [{ code: connected_components_flood_fill, tier: core }]
+  - problem_slug: pacific-atlantic-water-flow
+    subpatterns: [{ code: connected_components_flood_fill, tier: advanced }]
+  - problem_slug: number-of-connected-components-in-an-undirected-graph
+    subpatterns:
+      - { code: connected_components_flood_fill, tier: core }
+      - { code: online_connectivity, tier: core }
+  - problem_slug: walls-and-gates
+    subpatterns: [{ code: multi_source_bfs, tier: core }]
+  - problem_slug: rotting-oranges
+    subpatterns: [{ code: multi_source_bfs, tier: core }]
+  - problem_slug: graph-valid-tree
+    subpatterns:
+      - { code: cycle_detection_traversal, tier: core }
+      - { code: online_connectivity, tier: core }
+  - problem_slug: word-ladder
+    subpatterns:
+      - { code: state_space_graph_search, tier: advanced }
+      - { code: unweighted_shortest_path_bfs, tier: advanced }
+
+  # Topological Ordering
+  - problem_slug: course-schedule
+    subpatterns:
+      - { code: kahn_in_degree_bfs, tier: core }
+      - { code: cycle_detection_traversal, tier: core }
+  - problem_slug: course-schedule-ii
+    subpatterns:
+      - { code: kahn_in_degree_bfs, tier: core }
+      - { code: dependency_scheduling, tier: core }
+  - problem_slug: alien-dictionary
+    subpatterns:
+      - { code: kahn_in_degree_bfs, tier: advanced }
+      - { code: dependency_scheduling, tier: advanced }
+  - problem_slug: reconstruct-itinerary
+    subpatterns: [{ code: dfs_postorder_toposort, tier: advanced }]
+
+  # Union Find / Connectivity
+  - problem_slug: redundant-connection
+    subpatterns: [{ code: dsu_cycle_detection, tier: core }]
+  - problem_slug: min-cost-to-connect-all-points
+    subpatterns: [{ code: kruskal_connectivity, tier: core }]
+
+  # Shortest Paths
+  - problem_slug: network-delay-time
+    subpatterns: [{ code: dijkstra_nonnegative, tier: core }]
+  - problem_slug: swim-in-rising-water
+    subpatterns:
+      - { code: dijkstra_nonnegative, tier: advanced }
+      - { code: binary_search_on_answer, tier: advanced }
+  - problem_slug: cheapest-flights-within-k-stops
+    subpatterns: [{ code: relaxation_based_paths, tier: advanced }]
+
+  # Backtracking & Search
+  - problem_slug: subsets
+    subpatterns: [{ code: subsets_combinations, tier: foundational }]
+  - problem_slug: subsets-ii
+    subpatterns: [{ code: subsets_combinations, tier: core }]
+  - problem_slug: combination-sum
+    subpatterns: [{ code: subsets_combinations, tier: core }]
+  - problem_slug: combination-sum-ii
+    subpatterns: [{ code: subsets_combinations, tier: core }]
+  - problem_slug: letter-combinations-of-a-phone-number
+    subpatterns: [{ code: subsets_combinations, tier: core }]
+  - problem_slug: palindrome-partitioning
+    subpatterns: [{ code: subsets_combinations, tier: advanced }]
+  - problem_slug: permutations
+    subpatterns: [{ code: permutations_used_state, tier: foundational }]
+  - problem_slug: generate-parentheses
+    subpatterns: [{ code: constraint_placement, tier: core }]
+  - problem_slug: n-queens
+    subpatterns: [{ code: constraint_placement, tier: advanced }]
+  - problem_slug: word-search
+    subpatterns: [{ code: path_construction_word_search, tier: core }]
+  - problem_slug: word-search-ii
+    subpatterns:
+      - { code: path_construction_word_search, tier: advanced }
+      - { code: trie_prefix_search, tier: advanced }
+
+  # Greedy
+  - problem_slug: maximum-subarray
+    subpatterns:
+      - { code: local_choice_invariant, tier: core }
+      - { code: dp_1d_linear, tier: core }
+  - problem_slug: jump-game
+    subpatterns: [{ code: local_choice_invariant, tier: core }]
+  - problem_slug: jump-game-ii
+    subpatterns: [{ code: local_choice_invariant, tier: advanced }]
+  - problem_slug: gas-station
+    subpatterns: [{ code: local_choice_invariant, tier: core }]
+  - problem_slug: merge-triplets-to-form-target-triplet
+    subpatterns: [{ code: local_choice_invariant, tier: core }]
+  - problem_slug: partition-labels
+    subpatterns: [{ code: local_choice_invariant, tier: core }]
+  - problem_slug: valid-parenthesis-string
+    subpatterns: [{ code: local_choice_invariant, tier: advanced }]
+  - problem_slug: hand-of-straights
+    subpatterns:
+      - { code: sort_then_greedy, tier: core }
+      - { code: frequency_map_counting, tier: core }
+
+  # Dynamic Programming
+  - problem_slug: climbing-stairs
+    subpatterns: [{ code: dp_1d_linear, tier: foundational }]
+  - problem_slug: min-cost-climbing-stairs
+    subpatterns: [{ code: dp_1d_linear, tier: foundational }]
+  - problem_slug: house-robber
+    subpatterns: [{ code: dp_1d_linear, tier: core }]
+  - problem_slug: house-robber-ii
+    subpatterns: [{ code: dp_1d_linear, tier: core }]
+  - problem_slug: decode-ways
+    subpatterns: [{ code: dp_1d_linear, tier: core }]
+  - problem_slug: maximum-product-subarray
+    subpatterns: [{ code: dp_1d_linear, tier: advanced }]
+  - problem_slug: word-break
+    subpatterns: [{ code: dp_1d_linear, tier: core }]
+  - problem_slug: counting-bits
+    subpatterns:
+      - { code: bit_tricks_submask, tier: core }
+      - { code: dp_1d_linear, tier: core }
+  - problem_slug: unique-paths
+    subpatterns: [{ code: dp_2d_grid, tier: foundational }]
+  - problem_slug: interleaving-string
+    subpatterns: [{ code: dp_2d_grid, tier: advanced }]
+  - problem_slug: longest-increasing-path-in-a-matrix
+    subpatterns: [{ code: dp_2d_grid, tier: advanced }]
+  - problem_slug: regular-expression-matching
+    subpatterns: [{ code: dp_2d_grid, tier: advanced }]
+  - problem_slug: partition-equal-subset-sum
+    subpatterns: [{ code: dp_01_knapsack, tier: core }]
+  - problem_slug: target-sum
+    subpatterns: [{ code: dp_01_knapsack, tier: core }]
+  - problem_slug: coin-change
+    subpatterns: [{ code: dp_unbounded_knapsack, tier: core }]
+  - problem_slug: coin-change-ii
+    subpatterns: [{ code: dp_unbounded_knapsack, tier: core }]
+  - problem_slug: longest-increasing-subsequence
+    subpatterns: [{ code: dp_sequence_lis_lcs, tier: core }]
+  - problem_slug: longest-common-subsequence
+    subpatterns: [{ code: dp_sequence_lis_lcs, tier: core }]
+  - problem_slug: distinct-subsequences
+    subpatterns: [{ code: dp_sequence_lis_lcs, tier: advanced }]
+  - problem_slug: edit-distance
+    subpatterns: [{ code: dp_sequence_lis_lcs, tier: advanced }]
+  - problem_slug: best-time-to-buy-and-sell-stock-with-cooldown
+    subpatterns: [{ code: dp_state_machine_interval, tier: advanced }]
+  - problem_slug: burst-balloons
+    subpatterns: [{ code: dp_state_machine_interval, tier: advanced }]
+  - problem_slug: longest-palindromic-substring
+    subpatterns: [{ code: dp_state_machine_interval, tier: core }]
+  - problem_slug: palindromic-substrings
+    subpatterns: [{ code: dp_state_machine_interval, tier: core }]
+
+  # Trie & String Search
+  - problem_slug: implement-trie-prefix-tree
+    subpatterns: [{ code: trie_prefix_search, tier: foundational }]
+  - problem_slug: design-add-and-search-words-data-structure
+    subpatterns: [{ code: trie_prefix_search, tier: core }]
+
+  # Bit Manipulation
+  - problem_slug: single-number
+    subpatterns: [{ code: xor_cancellation, tier: foundational }]
+  - problem_slug: missing-number
+    subpatterns:
+      - { code: xor_cancellation, tier: core }
+      - { code: cyclic_sort_placement, tier: core }
+  - problem_slug: number-of-1-bits
+    subpatterns: [{ code: bit_tricks_submask, tier: foundational }]
+  - problem_slug: reverse-bits
+    subpatterns: [{ code: bit_tricks_submask, tier: core }]
+  - problem_slug: sum-of-two-integers
+    subpatterns: [{ code: bit_tricks_submask, tier: advanced }]
+
+  # Matrix & Grid
+  - problem_slug: spiral-matrix
+    subpatterns: [{ code: directional_traversal_simulation, tier: core }]
+  - problem_slug: rotate-image
+    subpatterns: [{ code: in_place_transform_boundary, tier: core }]
+  - problem_slug: set-matrix-zeroes
+    subpatterns:
+      - { code: in_place_transform_boundary, tier: core }
+      - { code: sign_marking_index_encoding, tier: core }
+
+  # Divide & Conquer / Selection
+  - problem_slug: powx-n
+    subpatterns: [{ code: recursive_partition_search, tier: core }]

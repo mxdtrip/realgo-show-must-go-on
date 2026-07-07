@@ -10,8 +10,8 @@ import { defineConfig, devices } from "@playwright/test";
 // Do not default to the app's normal docker-compose ports. With reuse enabled,
 // Playwright can otherwise attach to a developer's already-running stack and run
 // against stale env/config instead of the stubbed production build under test.
-const WEB_PORT = Number(process.env.WEB_PORT ?? 3300);
-const STUB_PORT = Number(process.env.STUB_PORT ?? 38080);
+const WEB_PORT = Number(process.env.E2E_WEB_PORT ?? process.env.WEB_PORT ?? 3300);
+const STUB_PORT = Number(process.env.E2E_STUB_PORT ?? process.env.STUB_PORT ?? 38080);
 const REUSE_SERVERS = process.env.PLAYWRIGHT_REUSE_SERVERS === "1";
 
 export default defineConfig({

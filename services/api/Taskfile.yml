@@ -86,6 +86,11 @@ tasks:
     cmds:
       - "{{.COMPOSE}} run --rm seed-cards"
 
+  seed-atlas:
+    desc: Seed Pattern Atlas materials, problem links and demo company fixtures
+    cmds:
+      - "{{.COMPOSE}} run --rm seed-atlas"
+
   seed-users:
     desc: Seed demo users and review data inside the compose network
     cmds:

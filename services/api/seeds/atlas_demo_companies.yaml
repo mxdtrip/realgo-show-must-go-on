@@ -1,0 +1,89 @@
+# DEMO FIXTURES — NOT REAL INTERVIEW DATA.
+#
+# Каждая строка получает source_type: demo; UI обязан показывать бейдж
+# «demo data» рядом с любой цифрой из этого файла. Никакие значения здесь
+# не являются утверждением о реальных интервью названных компаний —
+# это правдоподобные примеры для демонстрации механики Company Overlay.
+# Реальный dataset (source_type: dataset/community/manual) загружается
+# отдельным пайплайном, когда появится проверяемый источник.
+code: realgo_atlas_demo_companies
+title: Realgo Atlas Demo Company Fixtures
+source_type: demo
+companies:
+  - code: cmp_yandex
+    name: Yandex
+    problems:
+      - { slug: koko-eating-bananas, evidence_count: 4, last_seen: 2026-05-14 }
+      - { slug: rotting-oranges, evidence_count: 3, last_seen: 2026-04-02 }
+      - { slug: longest-substring-without-repeating-characters, evidence_count: 6, last_seen: 2026-06-01 }
+      - { slug: minimum-window-substring, evidence_count: 2, last_seen: 2026-03-19 }
+      - { slug: two-sum, evidence_count: 7, last_seen: 2026-06-12 }
+      - { slug: course-schedule, evidence_count: 3, last_seen: 2026-04-27 }
+      - { slug: daily-temperatures, evidence_count: 2, last_seen: 2026-01-30 }
+      - { slug: top-k-frequent-elements, evidence_count: 3, last_seen: 2026-05-03 }
+    relevance:
+      - { subpattern: binary_search_on_answer, relevance: high, confidence: medium, evidence_count: 7, last_seen: 2026-05-14 }
+      - { subpattern: multi_source_bfs, relevance: high, confidence: medium, evidence_count: 6, last_seen: 2026-04-02 }
+      - { subpattern: longest_valid_window, relevance: high, confidence: high, evidence_count: 9, last_seen: 2026-06-01 }
+      - { subpattern: frequency_coverage_window, relevance: medium, confidence: medium, evidence_count: 4, last_seen: 2026-03-19 }
+      - { subpattern: prefix_balance_hashmap, relevance: medium, confidence: low, evidence_count: 3, last_seen: 2026-02-11 }
+      - { subpattern: kahn_in_degree_bfs, relevance: medium, confidence: medium, evidence_count: 5, last_seen: 2026-04-27 }
+      - { subpattern: monotonic_stack, relevance: medium, confidence: low, evidence_count: 3, last_seen: 2026-01-30 }
+      - { subpattern: dp_state_machine_interval, relevance: low, confidence: low, evidence_count: 1, last_seen: 2025-11-08 }
+      - { subpattern: complement_lookup, relevance: high, confidence: high, evidence_count: 11, last_seen: 2026-06-12 }
+      - { subpattern: top_k_bounded_heap, relevance: medium, confidence: medium, evidence_count: 4, last_seen: 2026-05-03 }
+      - { subpattern: dijkstra_nonnegative, relevance: insufficient_evidence, confidence: low, evidence_count: 1, last_seen: 2025-09-17 }
+  - code: cmp_tbank
+    name: T-Bank
+    problems:
+      - { slug: two-sum, evidence_count: 4, last_seen: 2026-05-22 }
+      - { slug: longest-substring-without-repeating-characters, evidence_count: 3, last_seen: 2026-04-14 }
+      - { slug: linked-list-cycle, evidence_count: 2, last_seen: 2026-02-06 }
+      - { slug: house-robber, evidence_count: 3, last_seen: 2026-05-30 }
+      - { slug: coin-change, evidence_count: 2, last_seen: 2026-03-11 }
+      - { slug: binary-tree-level-order-traversal, evidence_count: 2, last_seen: 2026-03-08 }
+    relevance:
+      - { subpattern: complement_lookup, relevance: high, confidence: medium, evidence_count: 6, last_seen: 2026-05-22 }
+      - { subpattern: longest_valid_window, relevance: medium, confidence: medium, evidence_count: 4, last_seen: 2026-04-14 }
+      - { subpattern: fast_slow_pointers, relevance: medium, confidence: low, evidence_count: 2, last_seen: 2026-02-06 }
+      - { subpattern: dp_1d_linear, relevance: high, confidence: medium, evidence_count: 5, last_seen: 2026-05-30 }
+      - { subpattern: bfs_level_order, relevance: medium, confidence: low, evidence_count: 3, last_seen: 2026-03-08 }
+      - { subpattern: merge_overlapping_intervals, relevance: low, confidence: low, evidence_count: 1, last_seen: 2025-12-15 }
+  - code: cmp_google
+    name: Google
+    problems:
+      - { slug: word-ladder, evidence_count: 3, last_seen: 2026-05-18 }
+      - { slug: longest-increasing-path-in-a-matrix, evidence_count: 2, last_seen: 2026-04-09 }
+      - { slug: word-search-ii, evidence_count: 2, last_seen: 2026-01-21 }
+      - { slug: meeting-rooms-ii, evidence_count: 3, last_seen: 2026-04-30 }
+      - { slug: koko-eating-bananas, evidence_count: 2, last_seen: 2026-03-25 }
+    relevance:
+      - { subpattern: binary_search_on_answer, relevance: medium, confidence: medium, evidence_count: 4, last_seen: 2026-03-25 }
+      - { subpattern: state_space_graph_search, relevance: high, confidence: medium, evidence_count: 6, last_seen: 2026-05-18 }
+      - { subpattern: dp_2d_grid, relevance: high, confidence: medium, evidence_count: 5, last_seen: 2026-04-09 }
+      - { subpattern: trie_prefix_search, relevance: medium, confidence: low, evidence_count: 2, last_seen: 2026-01-21 }
+      - { subpattern: sweep_line_event_counting, relevance: medium, confidence: medium, evidence_count: 4, last_seen: 2026-04-30 }
+      - { subpattern: constraint_placement, relevance: low, confidence: low, evidence_count: 1, last_seen: 2025-10-03 }
+  - code: cmp_ozon
+    name: Ozon
+    problems:
+      - { slug: valid-anagram, evidence_count: 3, last_seen: 2026-05-11 }
+      - { slug: 3sum, evidence_count: 2, last_seen: 2026-03-29 }
+      - { slug: valid-parentheses, evidence_count: 2, last_seen: 2026-02-17 }
+      - { slug: number-of-islands, evidence_count: 1, last_seen: 2025-12-01 }
+    relevance:
+      - { subpattern: frequency_map_counting, relevance: high, confidence: medium, evidence_count: 5, last_seen: 2026-05-11 }
+      - { subpattern: opposite_direction_pointers, relevance: medium, confidence: medium, evidence_count: 3, last_seen: 2026-03-29 }
+      - { subpattern: matching_nesting_stack, relevance: medium, confidence: low, evidence_count: 2, last_seen: 2026-02-17 }
+      - { subpattern: connected_components_flood_fill, relevance: low, confidence: low, evidence_count: 1, last_seen: 2025-12-01 }
+  - code: cmp_avito
+    name: Avito
+    problems:
+      - { slug: longest-repeating-character-replacement, evidence_count: 2, last_seen: 2026-06-05 }
+      - { slug: two-sum, evidence_count: 2, last_seen: 2026-04-22 }
+      - { slug: coin-change, evidence_count: 1, last_seen: 2026-01-15 }
+    relevance:
+      - { subpattern: longest_valid_window, relevance: high, confidence: medium, evidence_count: 5, last_seen: 2026-06-05 }
+      - { subpattern: complement_lookup, relevance: medium, confidence: medium, evidence_count: 3, last_seen: 2026-04-22 }
+      - { subpattern: dp_unbounded_knapsack, relevance: medium, confidence: low, evidence_count: 2, last_seen: 2026-01-15 }
+      - { subpattern: in_place_reversal, relevance: insufficient_evidence, confidence: low, evidence_count: 1, last_seen: 2025-08-28 }
