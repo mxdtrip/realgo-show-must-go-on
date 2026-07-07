@@ -7,6 +7,7 @@ import type {
   SubmissionPayload,
   UserDifficulty,
 } from "../lib/types";
+import { DEFAULT_WEB_BASE_URL, REVIEW_PATH } from "../lib/types";
 import { POPUP_CSS } from "./popup.styles";
 import { useProblemCards, type CardsUiState } from "./useProblemCards";
 
@@ -63,7 +64,7 @@ const REPORT_ISSUE_URL =
   encodeURIComponent("Расширение: не распознана задача") +
   "&body=" +
   encodeURIComponent("Страница: \nЧто ожидали: \nЧто произошло: ");
-const REVIEWS_URL = "http://localhost:3000/cabinet/reviews";
+const REVIEWS_URL = DEFAULT_WEB_BASE_URL + REVIEW_PATH;
 
 type Status = "form" | "saving" | "success" | "error";
 

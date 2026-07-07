@@ -81,7 +81,14 @@ func (r *pgRepository) target(ctx context.Context, userID int64) (Target, error)
 		}
 		return Target{}, fmt.Errorf("roadmap: get user target: %w", err)
 	}
-	return Target{InterviewDate: datePtr(row)}, nil
+	return targetFromRow(row), nil
+}
+
+func targetFromRow(row db.GetRoadmapUserTargetRow) Target {
+	return Target{
+		Company:       textPtr(row.TargetCompany),
+		InterviewDate: datePtr(row.InterviewDate),
+	}
 }
 
 func buildResponse(target Target, items []roadmapItem) Response {

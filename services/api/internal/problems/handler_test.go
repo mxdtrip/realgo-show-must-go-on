@@ -99,13 +99,13 @@ func TestListPaginatesWithNextCursor(t *testing.T) {
 	if err := json.Unmarshal(w.Body.Bytes(), &body); err != nil {
 		t.Fatalf("invalid json: %v", err)
 	}
-	if len(body.Data.Data) != 2 {
-		t.Fatalf("expected 2 visible items, got %d", len(body.Data.Data))
+	if len(body.Data) != 2 {
+		t.Fatalf("expected 2 visible items, got %d", len(body.Data))
 	}
-	if body.Data.Meta.NextCursor == nil {
+	if body.Meta.NextCursor == nil {
 		t.Fatal("nextCursor must be set when another page exists")
 	}
-	cursor, err := decodeCursor(*body.Data.Meta.NextCursor)
+	cursor, err := decodeCursor(*body.Meta.NextCursor)
 	if err != nil {
 		t.Fatalf("nextCursor must be decodable: %v", err)
 	}
@@ -146,13 +146,13 @@ func TestListEmptyStateUsesEmptyArray(t *testing.T) {
 	if err := json.Unmarshal(w.Body.Bytes(), &body); err != nil {
 		t.Fatalf("invalid json: %v", err)
 	}
-	if body.Data.Data == nil {
+	if body.Data == nil {
 		t.Fatal("data must be an empty array, not null")
 	}
-	if len(body.Data.Data) != 0 {
-		t.Fatalf("expected empty data, got %d items", len(body.Data.Data))
+	if len(body.Data) != 0 {
+		t.Fatalf("expected empty data, got %d items", len(body.Data))
 	}
-	if body.Data.Meta.NextCursor != nil {
+	if body.Meta.NextCursor != nil {
 		t.Fatal("nextCursor must be null on the last page")
 	}
 }
@@ -190,5 +190,6 @@ func (f *fakeRepository) Save(_ context.Context, _, _ int64) (string, error) {
 }
 
 type listEnvelope struct {
-	Data ListResponse `json:"data"`
+	Data []Problem `json:"data"`
+	Meta ListMeta  `json:"meta"`
 }

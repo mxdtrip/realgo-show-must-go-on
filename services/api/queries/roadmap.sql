@@ -1,5 +1,5 @@
 -- name: GetRoadmapUserTarget :one
-SELECT interview_date
+SELECT target_company, interview_date
 FROM users
 WHERE id = $1;
 
