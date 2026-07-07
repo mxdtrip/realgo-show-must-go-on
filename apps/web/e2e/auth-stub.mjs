@@ -206,7 +206,12 @@ const ATLAS_NODES = {
       common_mistakes: ["hi = mid - 1 при поиске минимума"],
       dont_confuse_with: [{ title: "Exact Binary Search", note: "ищет элемент, а не границу" }],
     },
-    stats: stubStats({ problem_count: 12, solved_count: 3, due_count: 1 }),
+    stats: stubStats({
+      problem_count: 12,
+      solved_count: 3,
+      due_count: 1,
+      difficulty_counts: { easy: 2, medium: 7, hard: 3 },
+    }),
     mastery: stubMastery("unstable", 41),
     cards: [],
     practice: [

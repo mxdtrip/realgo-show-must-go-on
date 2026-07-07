@@ -521,6 +521,46 @@ func (q *Queries) ListSubpatternCompanyProblems(ctx context.Context, arg ListSub
 	return items, nil
 }
 
+const listSubpatternDifficultyCounts = `-- name: ListSubpatternDifficultyCounts :many
+SELECT
+    sp.code,
+    COALESCE(pr.difficulty, 'unknown')::text AS difficulty,
+    COUNT(*)::integer AS problem_count
+FROM patterns sp
+JOIN problem_subpatterns ps ON ps.subpattern_id = sp.id
+JOIN problems pr ON pr.id = ps.problem_id
+WHERE sp.kind = 'subpattern'
+GROUP BY sp.code, COALESCE(pr.difficulty, 'unknown')
+`
+
+type ListSubpatternDifficultyCountsRow struct {
+	Code         string
+	Difficulty   string
+	ProblemCount int32
+}
+
+// Catalog-wide difficulty distribution of each subpattern's practice set
+// (not user-specific; merged into the same stats struct for the tree view).
+func (q *Queries) ListSubpatternDifficultyCounts(ctx context.Context) ([]ListSubpatternDifficultyCountsRow, error) {
+	rows, err := q.db.Query(ctx, listSubpatternDifficultyCounts)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListSubpatternDifficultyCountsRow
+	for rows.Next() {
+		var i ListSubpatternDifficultyCountsRow
+		if err := rows.Scan(&i.Code, &i.Difficulty, &i.ProblemCount); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listSubpatternFamilies = `-- name: ListSubpatternFamilies :many
 SELECT f.code, f.name
 FROM pattern_family_subpatterns e

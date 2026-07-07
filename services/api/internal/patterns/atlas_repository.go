@@ -235,6 +235,19 @@ func (r *pgRepository) userSubpatternStats(ctx context.Context, userID int64) (m
 		stats[row.Code] = s
 	}
 
+	difficultyRows, err := r.q.ListSubpatternDifficultyCounts(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("atlas: list difficulty counts: %w", err)
+	}
+	for _, row := range difficultyRows {
+		s := stats[row.Code]
+		if s.DifficultyCounts == nil {
+			s.DifficultyCounts = map[string]int{}
+		}
+		s.DifficultyCounts[row.Difficulty] = int(row.ProblemCount)
+		stats[row.Code] = s
+	}
+
 	attemptRows, err := r.q.ListUserSubpatternAttemptStats(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("atlas: list attempt stats: %w", err)

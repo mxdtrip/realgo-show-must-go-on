@@ -8228,6 +8228,27 @@ a.cabinet-panel__meta:hover {
   color: var(--accent-bright);
 }
 
+/* кнопка разворота длинного корпусного списка задач */
+.pattern-profile__more {
+  margin-top: 14px;
+  padding: 10px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 8px;
+  background: transparent;
+  font-family: var(--font-stack-mono);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--text-faint);
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.pattern-profile__more:hover,
+.pattern-profile__more:focus-visible {
+  border-color: rgba(255, 255, 255, 0.4);
+  color: var(--accent-bright);
+}
+
 @media (max-width: 860px) {
   .pattern-profile__section {
     grid-template-columns: 1fr;

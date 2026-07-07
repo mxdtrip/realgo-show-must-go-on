@@ -713,6 +713,9 @@ const ru = {
           title: "Задачи",
           hint: "Практика по субпаттерну — с компаниями, где задачу реально спрашивали.",
           companiesNone: "компании не отмечены",
+          difficultyLabel: "difficulty",
+          showAll: "показать все",
+          showLess: "свернуть",
         },
         cards: {
           title: "Карточки",

@@ -132,6 +132,11 @@ test.describe("subpattern detail", () => {
     await expect(cta).toBeVisible();
     await expect(cta).toContainText("Порешать карточки");
 
+    // Catalog-wide difficulty distribution of the practice set in the hero.
+    await expect(page.locator(".pattern-profile__mastery", { hasText: "difficulty" })).toContainText(
+      "easy 2 · medium 7 · hard 3",
+    );
+
     // Problem cards: index, external link and the interviewing company.
     const problem = page.locator(".pattern-profile__subs a", { hasText: "Koko Eating Bananas" });
     await expect(problem).toBeVisible();

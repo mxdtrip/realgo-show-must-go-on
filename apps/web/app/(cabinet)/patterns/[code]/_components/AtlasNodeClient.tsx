@@ -34,6 +34,18 @@ function paragraphs(text: string): string[] {
     .filter(Boolean);
 }
 
+// Каталожное распределение сложности практики: "easy 4 · medium 8 · hard 3".
+function difficultySummary(counts: Record<string, number> | undefined): string {
+  if (!counts) return "";
+  return ["easy", "medium", "hard", "unknown"]
+    .filter((key) => (counts[key] ?? 0) > 0)
+    .map((key) => `${key} ${counts[key]}`)
+    .join(" · ");
+}
+
+// Длинные корпусные списки сворачиваем: сначала витрина, дальше по кнопке.
+const PROBLEMS_PREVIEW_COUNT = 24;
+
 export function AtlasNodeClient({
   code,
   copy,
@@ -123,6 +135,12 @@ function SubpatternProfile({
   const mastery = detail.mastery;
   const stats = detail.stats;
   const problems = detail.practice;
+  const [problemsExpanded, setProblemsExpanded] = useState(false);
+  const visibleProblems =
+    problemsExpanded || problems.length <= PROBLEMS_PREVIEW_COUNT
+      ? problems
+      : problems.slice(0, PROBLEMS_PREVIEW_COUNT);
+  const difficultyLine = difficultySummary(stats?.difficulty_counts);
 
   // problem id -> названия компаний, у которых задача встречалась в собесах.
   const companiesByProblem = new Map<number, string[]>();
@@ -163,6 +181,11 @@ function SubpatternProfile({
               ) : null}
               {" · "}
               {copy.nextReviewLabel}: {formatReview(stats.next_review_at, copy)}
+            </p>
+          ) : null}
+          {difficultyLine ? (
+            <p className="pattern-profile__mastery">
+              {copy.problems.difficultyLabel}: <em>{difficultyLine}</em>
             </p>
           ) : null}
         </div>
@@ -325,7 +348,7 @@ function SubpatternProfile({
         pendingBadge={copy.profile.pendingBadge}
       >
         <ul className="pattern-profile__subs">
-          {problems.map((problem, index) => (
+          {visibleProblems.map((problem, index) => (
             <ProblemCard
               key={problem.id}
               problem={problem}
@@ -336,6 +359,17 @@ function SubpatternProfile({
             />
           ))}
         </ul>
+        {problems.length > PROBLEMS_PREVIEW_COUNT ? (
+          <button
+            className="pattern-profile__more"
+            type="button"
+            onClick={() => setProblemsExpanded((value) => !value)}
+          >
+            {problemsExpanded
+              ? copy.problems.showLess
+              : `${copy.problems.showAll} · ${problems.length}`}
+          </button>
+        ) : null}
       </ProfileSection>
     </article>
   );
