@@ -7947,20 +7947,20 @@ a.cabinet-panel__meta:hover {
 
 /* ---------- pattern profile: страница паттерна (семейства) ---------- */
 
-/* Чёрный холст без рамки: отрицательные поля гасят паддинги .cabinet-page,
-   чтобы фон доходил до краёв контентной колонки и низа страницы. */
-.pattern-profile {
+/* Чёрный холст = вся контентная область страницы (включая полосу с кнопкой
+   «← атлас паттернов»), а не прямоугольник внутри неё. */
+.cabinet-content:has(.cabinet-page--pattern) {
+  min-height: 100%;
+  background: #000;
+}
+
+.cabinet-page--pattern {
   position: relative;
-  overflow: hidden;
-  margin: 14px calc(-1 * clamp(20px, 4vw, 44px)) calc(-1 * clamp(32px, 4vw, 48px));
-  padding: clamp(28px, 4vw, 48px) clamp(22px, 4vw, 52px) clamp(30px, 4vw, 52px);
-  background:
-    radial-gradient(90% 55% at 85% -12%, rgba(56, 139, 253, 0.09) 0%, transparent 62%),
-    #000;
+  background: radial-gradient(90% 55% at 85% -12%, rgba(56, 139, 253, 0.09) 0%, transparent 62%);
 }
 
 /* фоновая координатная сетка, тает книзу */
-.pattern-profile::before {
+.cabinet-page--pattern::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -7972,8 +7972,12 @@ a.cabinet-panel__meta:hover {
   pointer-events: none;
 }
 
-.pattern-profile > * {
+.cabinet-page--pattern > * {
   position: relative;
+}
+
+.pattern-profile {
+  margin-top: clamp(12px, 2vw, 20px);
 }
 
 .pattern-profile__hero {
@@ -8043,6 +8047,12 @@ a.cabinet-panel__meta:hover {
   color: var(--text);
 }
 
+/* Абзацы («Что это») стоят вровень с ТЕКСТОМ списков соседних секций,
+   а не с их маркерами: тот же отступ 28px, что и у li. */
+.pattern-profile__body > p:not(.pattern-profile__pending) {
+  padding-left: 28px;
+}
+
 .pattern-profile__body > p + p {
   margin-top: 12px;
 }
@@ -8070,23 +8080,21 @@ a.cabinet-panel__meta:hover {
   font-family: var(--font-stack-mono);
   font-size: 18px;
   line-height: 1.2;
+  color: #ffffff;
 }
 
 .pattern-profile__list--cues li::before {
   content: "›";
-  color: var(--accent-bright);
 }
 
 .pattern-profile__list--mechanics li::before {
   content: "▸";
   font-size: 15px;
   top: 1px;
-  color: var(--text-faint);
 }
 
 .pattern-profile__list--misfits li::before {
   content: "×";
-  color: var(--danger-bright);
 }
 
 .pattern-profile__pending {

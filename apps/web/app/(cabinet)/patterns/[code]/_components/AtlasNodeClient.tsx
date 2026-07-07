@@ -76,8 +76,10 @@ export function AtlasNodeClient({
     return () => controller.abort();
   }, [code, copy.errorTitle, reloadVersion]);
 
+  const isFamilyProfile = loadState === "loaded" && detail?.kind === "family";
+
   return (
-    <main className="cabinet-page">
+    <main className={isFamilyProfile ? "cabinet-page cabinet-page--pattern" : "cabinet-page"}>
       <Link className="cabinet-ghost-link" href="/patterns">
         {copy.backLink}
       </Link>
