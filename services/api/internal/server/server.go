@@ -75,7 +75,9 @@ func New(deps Deps) http.Handler {
 	companiesHandler := companies.NewHandler()
 	dashboardHandler := dashboard.NewHandler(dashboard.NewService(dashboard.NewRepository(deps.Postgres.Pool), patterns.NewRepository(deps.Postgres.Pool)))
 	cardsHandler := cards.NewHandler(cardsSvc)
-	quizHandler := quiz.NewHandler(quiz.NewRepository(deps.Postgres.Pool))
+	quizRepo := quiz.NewRepository(deps.Postgres.Pool)
+	quizSvc := quiz.NewService(quizRepo, reviewRepo) // reviewRepo удовлетворяет quiz.ConfidenceUpdater
+	quizHandler := quiz.NewHandler(quizSvc)
 	aiHandler := ai.NewHandler(ai.NewRepository(deps.Postgres.Pool))
 
 	// Browser-extension ingest: FSRS scheduler behind the Scheduler interface,
