@@ -2226,9 +2226,9 @@ a.cabinet-panel__meta:hover {
   flex-direction: column;
   justify-content: center;
   gap: 14px;
-  min-width: 264px;
+  min-width: 292px;
   width: calc(100% - 16px);
-  max-width: 560px;
+  max-width: 600px;
   justify-self: end;
   margin: 14px 16px 14px 0;
   padding: 18px;
@@ -2284,7 +2284,7 @@ a.cabinet-panel__meta:hover {
 
 .heatmap__week {
   display: grid;
-  grid-template-columns: repeat(7, auto);
+  grid-template-columns: repeat(14, auto);
   gap: 7px;
 }
 
