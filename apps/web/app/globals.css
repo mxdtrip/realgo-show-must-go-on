@@ -3884,15 +3884,6 @@ a.cabinet-panel__meta:hover {
   font-family: var(--font-stack-mono);
 }
 
-/* Completion screen is the sole in-flow child (the gradient layer is
-   absolutely positioned) — collapse the header/footer row template so it
-   centers in the full viewport instead of sitting in the auto-sized header
-   row. */
-.focus-session:has(> .focus-complete) {
-  grid-template-rows: 1fr;
-  place-items: center;
-}
-
 .focus-gradient {
   position: absolute;
   inset: -35%;
@@ -4337,51 +4328,34 @@ a.cabinet-panel__meta:hover {
   text-align: center;
 }
 
-/* Success moment framed as a liquid-glass card, matching the account popup:
-   blurred glass, light top edge, deep drop shadow. */
 .focus-complete {
-  position: relative;
-  width: min(100%, 640px);
+  width: min(100%, 720px);
+  align-self: center;
+  justify-self: center;
   display: grid;
   justify-items: center;
   gap: 18px;
-  padding: clamp(32px, 6vw, 64px) clamp(24px, 5vw, 56px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 24px;
-  background: rgba(13, 17, 24, 0.5);
-  backdrop-filter: blur(24px) saturate(1.5);
-  -webkit-backdrop-filter: blur(24px) saturate(1.5);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.03),
-    0 32px 64px -24px rgba(1, 4, 9, 0.85);
   text-align: center;
-}
-
-.focus-complete::before {
-  content: "✓";
-  display: grid;
-  place-items: center;
-  width: 52px;
-  height: 52px;
-  margin-bottom: 4px;
-  border: 1px solid rgba(63, 185, 80, 0.4);
-  border-radius: 50%;
-  background: radial-gradient(circle at 32% 28%, rgba(63, 185, 80, 0.28), rgba(63, 185, 80, 0.06));
-  box-shadow: 0 0 24px -6px rgba(63, 185, 80, 0.5);
-  color: var(--success-fg);
-  font-family: var(--font-stack-mono);
-  font-size: 22px;
-  font-weight: 700;
+  /* liquid glass, same recipe as the account popup */
+  padding: clamp(28px, 5vw, 48px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 20px;
+  background: rgba(13, 17, 24, 0.55);
+  -webkit-backdrop-filter: blur(22px) saturate(1.6);
+  backdrop-filter: blur(22px) saturate(1.6);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.04),
+    0 24px 48px -16px rgba(1, 4, 9, 0.85);
 }
 
 .focus-complete h1 {
-  font-size: clamp(34px, 6vw, 58px);
-  line-height: 1.05;
+  font-size: clamp(40px, 7vw, 76px);
+  line-height: 0.98;
 }
 
 .focus-complete p {
-  max-width: 46ch;
+  max-width: 620px;
   margin: 0;
   color: var(--text-dim);
 }
@@ -5303,17 +5277,6 @@ a.cabinet-panel__meta:hover {
 
   .focus-rating__button {
     min-height: 60px;
-  }
-
-  .focus-complete {
-    padding: 32px 22px;
-    border-radius: 18px;
-  }
-
-  .focus-complete::before {
-    width: 44px;
-    height: 44px;
-    font-size: 18px;
   }
 
   .focus-complete__actions {
