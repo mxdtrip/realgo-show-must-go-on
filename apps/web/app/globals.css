@@ -7947,13 +7947,13 @@ a.cabinet-panel__meta:hover {
 
 /* ---------- pattern profile: страница паттерна (семейства) ---------- */
 
+/* Чёрный холст без рамки: отрицательные поля гасят паддинги .cabinet-page,
+   чтобы фон доходил до краёв контентной колонки и низа страницы. */
 .pattern-profile {
   position: relative;
   overflow: hidden;
-  margin-top: 14px;
+  margin: 14px calc(-1 * clamp(20px, 4vw, 44px)) calc(-1 * clamp(32px, 4vw, 48px));
   padding: clamp(28px, 4vw, 48px) clamp(22px, 4vw, 52px) clamp(30px, 4vw, 52px);
-  border: 1px solid var(--border);
-  border-radius: 12px;
   background:
     radial-gradient(90% 55% at 85% -12%, rgba(56, 139, 253, 0.09) 0%, transparent 62%),
     #000;
@@ -8014,9 +8014,12 @@ a.cabinet-panel__meta:hover {
   border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+/* Заголовок рейла выравнивается по первой строке текста в соседней колонке:
+   16px × 1.49 ≈ 14px × 1.7 (высота строки текста). */
 .pattern-profile__rail h2 {
-  margin: 6px 0 0;
+  margin: 0;
   font-size: 16px;
+  line-height: 1.49;
   font-weight: 600;
   letter-spacing: -0.01em;
 }
@@ -8026,13 +8029,6 @@ a.cabinet-panel__meta:hover {
   font-size: 12px;
   line-height: 1.55;
   color: var(--text-faint);
-}
-
-.pattern-profile__index {
-  font-family: var(--font-stack-mono);
-  font-size: 11px;
-  letter-spacing: 0.1em;
-  color: var(--accent);
 }
 
 .pattern-profile__body {
@@ -8061,7 +8057,7 @@ a.cabinet-panel__meta:hover {
 
 .pattern-profile__list li {
   position: relative;
-  padding-left: 22px;
+  padding-left: 28px;
   font-size: 14px;
   line-height: 1.6;
   color: var(--text);
@@ -8072,7 +8068,8 @@ a.cabinet-panel__meta:hover {
   left: 0;
   top: 0;
   font-family: var(--font-stack-mono);
-  font-size: 13px;
+  font-size: 18px;
+  line-height: 1.2;
 }
 
 .pattern-profile__list--cues li::before {
@@ -8082,8 +8079,8 @@ a.cabinet-panel__meta:hover {
 
 .pattern-profile__list--mechanics li::before {
   content: "▸";
-  font-size: 11px;
-  top: 2px;
+  font-size: 15px;
+  top: 1px;
   color: var(--text-faint);
 }
 
@@ -8189,11 +8186,5 @@ a.cabinet-panel__meta:hover {
   .pattern-profile__section {
     grid-template-columns: 1fr;
     gap: 12px;
-  }
-
-  .pattern-profile__rail h2 {
-    display: inline;
-    margin: 0 0 0 10px;
-    vertical-align: baseline;
   }
 }

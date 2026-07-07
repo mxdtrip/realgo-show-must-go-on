@@ -36,7 +36,6 @@ export function PatternProfile({
       </header>
 
       <ProfileSection
-        index="01"
         title={copy.sections.what.title}
         empty={!content.what?.length}
         pendingNote={copy.sections.what.pending}
@@ -46,7 +45,6 @@ export function PatternProfile({
       </ProfileSection>
 
       <ProfileSection
-        index="02"
         title={copy.sections.recognize.title}
         hint={copy.sections.recognize.hint}
         empty={recognize.length === 0}
@@ -61,7 +59,6 @@ export function PatternProfile({
       </ProfileSection>
 
       <ProfileSection
-        index="03"
         title={copy.sections.mechanics.title}
         hint={copy.sections.mechanics.hint}
         empty={!content.mechanics?.length}
@@ -76,7 +73,6 @@ export function PatternProfile({
       </ProfileSection>
 
       <ProfileSection
-        index="04"
         title={copy.sections.misfits.title}
         hint={copy.sections.misfits.hint}
         empty={!content.misfits?.length}
@@ -91,7 +87,6 @@ export function PatternProfile({
       </ProfileSection>
 
       <ProfileSection
-        index="05"
         title={copy.subpatterns.title}
         hint={copy.subpatterns.hint}
         empty={subs.length === 0}
@@ -130,7 +125,6 @@ export function PatternProfile({
 }
 
 function ProfileSection({
-  index,
   title,
   hint,
   empty,
@@ -138,7 +132,6 @@ function ProfileSection({
   pendingBadge,
   children,
 }: Readonly<{
-  index: string;
   title: string;
   hint?: string;
   empty: boolean;
@@ -149,7 +142,6 @@ function ProfileSection({
   return (
     <section className="pattern-profile__section">
       <header className="pattern-profile__rail">
-        <span className="pattern-profile__index">{index}</span>
         <h2>{title}</h2>
         {hint ? <p>{hint}</p> : null}
       </header>
