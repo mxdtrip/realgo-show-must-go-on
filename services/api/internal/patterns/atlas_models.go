@@ -3,9 +3,9 @@ package patterns
 import "time"
 
 // TaxonomyVersion is the currently served taxonomy release. Bumping it (and
-// shipping the matching nodes/edges) is how realgo-v2 rolls out without
-// rewriting the atlas API.
-const TaxonomyVersion = "realgo-v1"
+// shipping the matching nodes/edges, migration 000014) is how a new taxonomy
+// rolls out without rewriting the atlas API.
+const TaxonomyVersion = "realgo-v2"
 
 // Mastery statuses, ordered from "never touched" to "fully retained".
 const (

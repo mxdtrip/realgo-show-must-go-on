@@ -1,9 +1,10 @@
-# Realgo Taxonomy v1: методический материал субпаттернов.
-# Канон = realgo_72_subpatterns_full_methodology.md (структура:
-# что это -> как распознать -> ключевая механика -> инвариант ->
-# canonical skeleton -> мини-пример). Файл генерируется из методички,
-# extra-секции (anti_cues/common_mistakes/dont_confuse_with) добавляются
-# руками и переживают перегенерацию.
+# Realgo Taxonomy: методический материал субпаттернов.
+# Канон v1 = realgo_72_subpatterns_full_methodology.md; 44 записи v2
+# (потомки расформированных лейблов + gap-fill) = раздел 10 файла
+# realgo_taxonomy_v2_22x111_gap_audit.md. Структура: что это -> как
+# распознать -> ключевая механика -> инвариант -> canonical skeleton ->
+# мини-пример. Extra-секции (anti_cues/common_mistakes/dont_confuse_with)
+# добавляются руками и переживают перегенерацию.
 code: realgo_atlas_content
 title: Realgo Atlas Learning Materials
 materials:
@@ -1767,3 +1768,839 @@ materials:
         return combine(results)
   mini_example: |-
     В Maximum Subarray divide-and-conquer вариант сравнивает лучший ответ слева, справа и лучший подмассив, пересекающий середину.
+- code: frequency_counting
+  what_it_is: |-
+    Храним число появлений каждого ключа и строим решение из этих счётчиков. Это базовый механизм для multiset-сравнения, подсчёта пар и frequency-based aggregation.
+  mental_model: |-
+    За один проход обновляем `count[x]`; затем вычисляем ответ либо поддерживаем его online.
+  recognition_cues:
+  - ответ зависит от кратности, а не только от факта присутствия
+  - нужно найти most/least frequent или сравнить мультимножества
+  - один проход может накопить достаточную статистику
+  core_invariant: |-
+    После обработки префикса `a[0..i]` значение `count[x]` точно равно числу появлений `x` в этом префиксе.
+  canonical_skeleton: |-
+    for x in items:
+        count[x] += 1
+    answer = derive(count)
+  mini_example: |-
+    Valid Anagram: сравниваются частоты символов; порядок несущественен, кратности существенны.
+- code: grouping_canonical_signature
+  what_it_is: |-
+    Объекты приводятся к канонической подписи. Равная подпись означает принадлежность одной группе эквивалентности.
+  mental_model: |-
+    Проектируем `signature(x)`, уничтожающую несущественные различия и сохраняющую существенные; затем hash-grouping.
+  recognition_cues:
+  - нужно сгруппировать объекты «одинаковые по структуре»
+  - "часть различий несущественна: порядок, сдвиг, нормализация"
+  - можно построить tuple/string signature
+  core_invariant: |-
+    `signature(a) == signature(b)` тогда и только тогда, когда `a` и `b` эквивалентны по условию.
+  canonical_skeleton: |-
+    groups = {}
+    for x in items:
+        key = signature(x)
+        groups[key].append(x)
+  mini_example: |-
+    Group Anagrams: подпись — tuple частот 26 букв.
+- code: frequency_of_frequency_buckets
+  what_it_is: |-
+    Храним второй уровень статистики: сколько ключей имеют частоту `f` или какие ключи лежат в frequency bucket.
+  mental_model: |-
+    Поддерживаем `freq[x]` и `bucket[f]`/`countOfFreq[f]`; при изменении ключ переносится между bucket'ами.
+  recognition_cues:
+  - нужен min/max frequency online
+  - частоты динамически меняются
+  - есть запросы о существовании элемента с частотой f
+  core_invariant: |-
+    Каждый активный ключ находится ровно в bucket своей текущей частоты; агрегаты по частотам синхронизированы.
+  canonical_skeleton: |-
+    old = freq[x]
+    remove(x, bucket[old])
+    freq[x] += delta
+    add(x, bucket[freq[x]])
+  mini_example: |-
+    Maximum Frequency Stack: pop берёт элемент из максимального frequency bucket.
+- code: sorted_pair_triplet_search
+  what_it_is: |-
+    После сортировки два указателя монотонно изменяют pair/triplet expression и отсекают квадратичное пространство кандидатов.
+  mental_model: |-
+    Фиксируем внешние параметры; если выражение мало — двигаем левую границу, если велико — правую.
+  recognition_cues:
+  - массив отсортирован или сортировка допустима
+  - ищется сумма/разность пары или тройки
+  - движение `l`/`r` предсказуемо меняет выражение
+  core_invariant: |-
+    Все отброшенные пары доказуемо не могут улучшить ответ из-за монотонности порядка.
+  canonical_skeleton: |-
+    sort(a)
+    for i in outer_choices:
+        l, r = i+1, n-1
+        while l < r:
+            v = expr(a[i], a[l], a[r])
+            move l or r by monotone rule
+  mini_example: |-
+    3Sum: фиксируем первый элемент, остаток ищем двумя указателями с пропуском дубликатов.
+- code: converging_validation_palindrome
+  what_it_is: |-
+    Два указателя сходятся к центру и проверяют симметричное условие, иногда с ограниченным числом локальных пропусков.
+  mental_model: |-
+    Сравниваем `a[l]` и `a[r]`; при успехе двигаем оба, при mismatch проверяем только доказуемо необходимые альтернативы.
+  recognition_cues:
+  - сравниваются начало и конец
+  - palindrome-like property
+  - после mismatch допустимо одно-два строго ограниченных ветвления
+  core_invariant: |-
+    Вся уже отброшенная внешняя часть удовлетворяет условию и больше не нуждается в пересмотре.
+  canonical_skeleton: |-
+    l, r = 0, n-1
+    while l < r:
+        if compatible(a[l],a[r]):
+            l += 1; r -= 1
+        else:
+            handle bounded mismatch
+  mini_example: |-
+    Valid Palindrome II: при первом mismatch достаточно проверить удаление слева или справа.
+- code: root_to_leaf_path_state
+  what_it_is: |-
+    DFS несёт вниз состояние текущего пути: сумму, остаток цели, строку, min/max или набор признаков.
+  mental_model: |-
+    Перед входом в детей обновляем state текущим узлом; mutable state откатываем при backtrack.
+  recognition_cues:
+  - ответ формулируется для путей root→node/leaf
+  - состояние зависит от предков
+  - ветви должны получать независимые path states
+  core_invariant: |-
+    Перед обработкой узла state описывает путь до родителя; после update — ровно путь до текущего узла.
+  canonical_skeleton: |-
+    dfs(node, state):
+        if not node: return
+        s2 = extend(state,node)
+        if leaf(node): consume(s2)
+        dfs(node.left,s2)
+        dfs(node.right,s2)
+  mini_example: |-
+    Path Sum: вниз передаётся остаток target.
+- code: postorder_subtree_aggregation
+  what_it_is: |-
+    Каждый DFS-вызов возвращает компактную summary поддерева; родитель объединяет summaries детей.
+  mental_model: |-
+    Задаём контракт `dfs(node) -> summary`, затем `combine(left,right,node)`.
+  recognition_cues:
+  - ответ узла зависит от height/size/balance/best child value
+  - "естественный порядок: дети перед родителем"
+  - нужно различать returned summary и global answer
+  core_invariant: |-
+    Возвращаемая summary полностью описывает всё, что предку разрешено знать о поддереве.
+  canonical_skeleton: |-
+    dfs(node):
+        if not node: return base
+        L = dfs(node.left)
+        R = dfs(node.right)
+        update_global(L,R,node)
+        return combine(L,R,node)
+  mini_example: |-
+    Diameter of Binary Tree: вызов возвращает height, глобальный ответ обновляется через `L+R`.
+- code: tree_construction_serialization
+  what_it_is: |-
+    Строим, восстанавливаем, клонируем или сериализуем дерево, строго сохраняя структуру и границы поддеревьев.
+  mental_model: |-
+    Рекурсивный вызов потребляет ровно segment/tokens своего поддерева; reconstruction использует index map корня.
+  recognition_cues:
+  - даны traversals или tokens с null markers
+  - нужно clone/deserialize
+  - ключевой вопрос — где заканчивается поддерево
+  core_invariant: |-
+    Каждый вызов создаёт ровно одно поддерево из строго определённого сегмента входа.
+  canonical_skeleton: |-
+    build(segment):
+        if empty: return null
+        root = choose_root(segment)
+        root.left = build(left_segment)
+        root.right = build(right_segment)
+        return root
+  mini_example: |-
+    Preorder + Inorder: позиция корня в inorder делит левое и правое поддеревья.
+- code: greedy_pairing_matching
+  what_it_is: |-
+    После упорядочивания элементы сопоставляются парами так, чтобы экстремальный локальный выбор не ухудшал существование оптимального решения.
+  mental_model: |-
+    Сортируем, затем сопоставляем экстремальные элементы или двигаем два указателя по двум наборам.
+  recognition_cues:
+  - нужно разбить на пары или сопоставить demand/supply
+  - есть smallest/largest candidate
+  - доказательство строится exchange argument
+  core_invariant: |-
+    После каждой зафиксированной пары существует оптимальное решение, согласованное со всеми уже сделанными pairing decisions.
+  canonical_skeleton: |-
+    sort(A); sort(B)
+    i=j=0
+    while i<len(A) and j<len(B):
+        if feasible(A[i],B[j]): match; i+=1; j+=1
+        else: advance proven-unusable side
+  mini_example: |-
+    Assign Cookies: минимальному неудовлетворённому ребёнку отдаём минимальное подходящее печенье.
+- code: resource_assignment
+  what_it_is: |-
+    Ресурсы назначаются запросам/задачам в порядке, минимизирующем потерю будущих возможностей.
+  mental_model: |-
+    Сортируем события, поддерживаем available resources в heap/ordered set, освобождаем завершённые и выбираем лучший допустимый.
+  recognition_cues:
+  - jobs, machines, rooms, capacities
+  - ресурс после назначения занят или изменяет состояние
+  - нужен smallest/cheapest feasible resource
+  core_invariant: |-
+    Структура доступности перед текущим событием содержит ровно свободные ресурсы; выбор минимально ограничивает будущее.
+  canonical_skeleton: |-
+    sort(events)
+    for e in events:
+        release_finished()
+        add_newly_available()
+        r = best_feasible_resource()
+        assign(e,r)
+  mini_example: |-
+    Meeting Rooms III: комнаты освобождаются по времени и выбираются по заданному приоритету.
+- code: exchange_argument_ordering
+  what_it_is: |-
+    Выводим pairwise правило порядка: если соседняя инверсия всегда может быть обменена без ухудшения, оптимум допускает сортировку по этому правилу.
+  mental_model: |-
+    Доказываем, когда `a` должно идти перед `b`, сортируем по comparator/ключу, затем вычисляем ответ.
+  recognition_cues:
+  - главная свобода — порядок обработки
+  - objective можно сравнить для двух соседних элементов
+  - есть comparator, вытекающий из доказательства
+  core_invariant: |-
+    В оптимальном решении нет инверсий относительно доказанного pairwise order.
+  canonical_skeleton: |-
+    define better_before(a,b)
+    sort(items, comparator=better_before)
+    return evaluate(items)
+  mini_example: |-
+    Largest Number: `a` перед `b`, если `ab > ba`.
+- code: dp_take_skip
+  what_it_is: |-
+    В позиции есть выбор взять объект или пропустить; взятие меняет совместимость ближайших состояний.
+  mental_model: |-
+    Сравниваем skip с take + лучшее совместимое предыдущее состояние.
+  recognition_cues:
+  - choose/skip formulation
+  - локальный выбор конфликтует с соседями
+  - состояние префикса мало
+  core_invariant: |-
+    `dp[i]` оптимален для заявленного префикса/режима; переход рассматривает все варианты последнего решения.
+  canonical_skeleton: |-
+    skip = dp[i-1]
+    take = value[i] + dp[prev_compatible(i)]
+    dp[i] = best(skip,take)
+  mini_example: |-
+    House Robber: `max(dp[i-1], nums[i]+dp[i-2])`.
+- code: dp_prefix_partition
+  what_it_is: |-
+    Состояние решает префикс, а последняя часть отделяется некоторой границей `j`.
+  mental_model: |-
+    Для каждого `i` перебираем `j<i`, проверяем сегмент `[j,i)` и объединяем с `dp[j]`.
+  recognition_cues:
+  - ответ строится разбиением sequence на сегменты
+  - нужно выбрать последнюю границу
+  - переход перебирает предыдущий prefix state
+  core_invariant: |-
+    `dp[i]` полностью решает первые `i` элементов; каждый допустимый последний сегмент рассмотрен ровно через свою границу `j`.
+  canonical_skeleton: |-
+    dp[0]=base
+    for i in 1..n:
+        for j in candidates_before(i):
+            if valid(j,i):
+                dp[i] = combine(dp[i],dp[j],segment(j,i))
+  mini_example: |-
+    Word Break: ищем `j`, где `dp[j]` истинно и `s[j:i]` в словаре.
+- code: dp_counting_ways
+  what_it_is: |-
+    DP считает число способов достичь состояния, а не лучший score. Порядок переходов критичен.
+  mental_model: |-
+    Перечисляем взаимно исчерпывающие последние переходы и суммируем counts.
+  recognition_cues:
+  - вопрос «сколько способов»
+  - один state достижим многими путями
+  - нужны modulo и суммирование predecessors
+  core_invariant: |-
+    `dp[state]` равно числу различных допустимых построений, заканчивающихся ровно в state; каждый способ учтён один раз.
+  canonical_skeleton: |-
+    dp[start]=1
+    for state in order:
+        for nxt in transitions(state):
+            dp[nxt] += dp[state]
+  mini_example: |-
+    Climbing Stairs: любой путь к `i` заканчивается шагом из `i-1` или `i-2`.
+- code: linear_string_scan_parsing
+  what_it_is: |-
+    Однопроходный разбор строки с малым состоянием: token, run length, граница слова, escape flag или накопитель числа.
+  mental_model: |-
+    На каждом символе обновляем parser state; при границе выпускаем token/result.
+  recognition_cues:
+  - достаточно читать слева направо
+  - назад возвращаться не требуется
+  - state O(1) или мал
+  core_invariant: |-
+    После позиции `i` state полностью описывает всё необходимое о префиксе; будущие символы не требуют перечитывания.
+  canonical_skeleton: |-
+    state=init
+    for ch in s:
+        state=step(state,ch)
+        if emits(state): output(token(state))
+  mini_example: |-
+    Length of Last Word: достаточно найти границы последнего непустого token.
+- code: finite_state_parser
+  what_it_is: |-
+    Валидность строки определяется конечным набором режимов и допустимых переходов.
+  mental_model: |-
+    Проектируем `state × char_class -> next_state/reject`; отдельно задаём accepting states.
+  recognition_cues:
+  - sign/dot/exponent/quotes/escapes/comments
+  - regex становится непрозрачным
+  - важны разные режимы чтения
+  core_invariant: |-
+    После каждого символа текущий state точно кодирует класс всех допустимых продолжений префикса.
+  canonical_skeleton: |-
+    state=START
+    for ch in s:
+        cls=classify(ch)
+        if (state,cls) not in T: reject
+        state=T[state,cls]
+    return state in accepting
+  mini_example: |-
+    Valid Number: отдельные states для sign, integer digits, decimal point, exponent.
+- code: process_event_simulation
+  what_it_is: |-
+    Явно воспроизводим изменение системы во времени или по последовательности событий, сохраняя минимальное состояние процесса.
+  mental_model: |-
+    События сортируются или уже хронологичны; перед событием state продвигается до его времени, затем применяется transition.
+  recognition_cues:
+  - arrival/service times, queues, cyclic turns
+  - важен event order
+  - ответ из timeline/final state
+  core_invariant: |-
+    Перед текущим событием state соответствует системе после всех более ранних событий.
+  canonical_skeleton: |-
+    state=init
+    for e in chronological(events):
+        advance(state,e.time)
+        apply(state,e)
+        collect(state)
+  mini_example: |-
+    Average Waiting Time: `finish=max(finish,arrival)+service`.
+- code: direct_construction_formatting
+  what_it_is: |-
+    Ответ строится непосредственно из условий и локальных правил без отдельного поискового/оптимизационного ядра.
+  mental_model: |-
+    Определяем порядок выпуска элементов и аккуратно обрабатываем boundaries/padding.
+  recognition_cues:
+  - сформировать строку/массив/раскладку
+  - каждый кусок ответа однозначно следует из входа
+  - центральны индексы, separators, остатки
+  core_invariant: |-
+    Построенный префикс ответа окончателен и уже соответствует спецификации; будущие шаги его не меняют.
+  canonical_skeleton: |-
+    ans=[]
+    for unit in construction_order(input):
+        ans.append(render(unit))
+    return finalize(ans)
+  mini_example: |-
+    Reformat Phone Number: группы по 3, остаток 4 делится на 2+2.
+- code: digit_arithmetic_base_conversion
+  what_it_is: |-
+    Число обрабатывается по цифрам: carry/borrow, извлечение digits, перевод основания, цифровое представление.
+  mental_model: |-
+    Идём от младших цифр для carry arithmetic либо повторяем division/modulo по основанию.
+  recognition_cues:
+  - операции над digits или string-number
+  - есть carry/borrow/base
+  - big integer не нужен или запрещён
+  core_invariant: |-
+    Обработанная часть представлена корректно; `carry` содержит ровно перенос в необработанную часть.
+  canonical_skeleton: |-
+    carry=initial
+    for digit from least_significant:
+        x=digit+carry
+        output(x%base)
+        carry=x//base
+  mini_example: |-
+    Plus One: справа налево распространяем carry.
+- code: number_theory_gcd_factorization
+  what_it_is: |-
+    Используем структуру делителей: gcd/lcm, prime factors, divisor enumeration и критерии делимости.
+  mental_model: |-
+    Выбираем Euclid, sieve/SPF, trial division до `sqrt(n)` или factor-counting.
+  recognition_cues:
+  - общие делители, кратность, сокращение дробей
+  - перебор до n слишком дорог
+  - видны prime-factor constraints
+  core_invariant: |-
+    `gcd(a,b)=gcd(b,a mod b)`; после factorization произведение prime powers восстанавливает число.
+  canonical_skeleton: |-
+    gcd(a,b):
+        while b:
+            a,b=b,a%b
+        return a
+
+    factorize(n):
+        for p up to sqrt(n): consume p repeatedly
+  mini_example: |-
+    Fraction Addition: знаменатели объединяются, результат сокращается через gcd.
+- code: modular_arithmetic_fast_pow
+  what_it_is: |-
+    Вычисления идут по модулю; большие степени строятся binary exponentiation, произведения редуцируются на каждом шаге.
+  mental_model: |-
+    Разлагаем exponent по битам/цифрам; применяем свойства modular multiplication и squaring.
+  recognition_cues:
+  - огромная степень
+  - answer modulo m
+  - exponent задан цифрами или слишком велик
+  core_invariant: |-
+    После обработанной части exponent `result` равен нужной степени по модулю, `base` представляет следующий power block.
+  canonical_skeleton: |-
+    res=1
+    while e>0:
+        if e&1: res=res*a%mod
+        a=a*a%mod
+        e>>=1
+  mini_example: |-
+    Super Pow: exponent обрабатывается по цифрам с композиционным правилом степеней.
+- code: dp_digit_positional
+  what_it_is: |-
+    Считаем числа в диапазоне по позициям цифр, сохраняя `pos`, `tight`, `started` и дополнительные свойства.
+  mental_model: |-
+    DFS/DP выбирает цифру до текущего limit, обновляет tight/started/extra-state и memoize'ит повторяющиеся состояния.
+  recognition_cues:
+  - посчитать числа ≤N с digit constraint
+  - N велико, число цифр мало
+  - прямой перебор невозможен
+  core_invariant: |-
+    State полностью описывает ограничения на оставшийся суффикс; одинаковые states имеют одинаковое число продолжений.
+  canonical_skeleton: |-
+    dfs(pos,tight,started,extra):
+        if pos==len(digits): return terminal
+        limit=digits[pos] if tight else 9
+        return sum(dfs(next_state) for d in 0..limit if allowed)
+  mini_example: |-
+    Count Digit One: positional state считает вклад единиц без перебора всех чисел.
+- code: combinatorial_counting
+  what_it_is: |-
+    Считаем объекты формулами, binomial coefficients, stars-and-bars, разбиением на непересекающиеся случаи или принципом включения–исключения.
+  mental_model: |-
+    Определяем universe, события ограничений и способ компенсации пересечений; для IE перебираем subset ограничений.
+  recognition_cues:
+  - нужно число конфигураций без генерации
+  - ограничения симметричны
+  - bad sets пересекаются и возникает double counting
+  core_invariant: |-
+    Каждый допустимый объект имеет итоговый коэффициент 1, недопустимый — 0; ни одна конфигурация не теряется и не учитывается дважды.
+  canonical_skeleton: |-
+    ans=0
+    for mask over constraints:
+        term=count_objects_satisfying(mask)
+        ans += (-1)**popcount(mask) * term
+  mini_example: |-
+    При подсчёте строк, содержащих все обязательные классы символов, удобно вычитать строки, где отсутствуют отдельные классы, и возвращать пересечения.
+- code: probability_expected_value
+  what_it_is: |-
+    State хранит вероятность, математическое ожидание или выигрышность позиции; переход следует закону полной вероятности/ожидания либо win–lose инварианту.
+  mental_model: |-
+    Формулируем state equation и вычисляем DP/recursion; для impartial game определяем выигрыш через существование хода в losing state.
+  recognition_cues:
+  - ответ probability/expected value/win-lose
+  - случайные переходы имеют известные вероятности
+  - линейность ожидания или game-state recursion снимает перебор всех сценариев
+  core_invariant: |-
+    Значение state равно условному ответу при точном знании этого state; вероятностные веса исходящих переходов корректно нормированы.
+  canonical_skeleton: |-
+    value[s] = sum(p(s->t)*value[t])
+    # или
+    win[s] = exists(t in moves(s): not win[t])
+  mini_example: |-
+    New 21 Game: вероятность каждой суммы получается из распределения предыдущих состояний.
+- code: orientation_cross_product
+  what_it_is: |-
+    Знак cross product определяет левый/правый поворот и коллинеарность трёх точек без floating-point slope.
+  mental_model: |-
+    Используем `cross(B-A, C-A)`. Для hull поддерживаем стек и удаляем точки, нарушающие требуемый turn.
+  recognition_cues:
+  - точки, повороты, convexity, segment relations
+  - нужно избежать ошибок float
+  - важен порядок обхода границы
+  core_invariant: |-
+    Знак cross product точно кодирует ориентацию; hull stack после каждого шага сохраняет требуемую выпуклость.
+  canonical_skeleton: |-
+    cross(a,b,c)=(b.x-a.x)*(c.y-a.y)-(b.y-a.y)*(c.x-a.x)
+    while len(hull)>=2 and bad_turn(...):
+        hull.pop()
+    hull.append(p)
+  mini_example: |-
+    Erect the Fence: monotone chain использует cross product для фильтрации внутренних поворотов.
+- code: slope_normalization_geo_hashing
+  what_it_is: |-
+    Геометрические отношения переводятся в канонические дискретные ключи: сокращённый slope, нормализованная линия, vector/distance signature.
+  mental_model: |-
+    Нормализуем знак, делим `dy/dx` на gcd, отдельно обрабатываем vertical/horizontal/duplicates.
+  recognition_cues:
+  - группировка точек по направлению/линии
+  - floating-point slope опасен
+  - одинаковые геометрические отношения должны совпадать в hash map
+  core_invariant: |-
+    Геометрически эквивалентные отношения получают одинаковый key, неэквивалентные — разные, без ошибок округления.
+  canonical_skeleton: |-
+    dy=y2-y1; dx=x2-x1
+    g=gcd(abs(dy),abs(dx))
+    key=normalize_sign(dy//g,dx//g)
+    count[key]+=1
+  mini_example: |-
+    Max Points on a Line: для каждой anchor-point считаем normalized slopes до остальных.
+- code: area_rectangle_overlap
+  what_it_is: |-
+    Вычисляем площади, пересечения и покрытия фигур через их границы, clamp и inclusion–exclusion.
+  mental_model: |-
+    Сначала вычисляем extents пересечения с clamp к нулю; затем складываем/вычитаем площади или подключаем sweep line для множества фигур.
+  recognition_cues:
+  - rectangles/boxes/overlap/union area
+  - координаты задают границы
+  - intersection через max(left), min(right)
+  core_invariant: |-
+    Ширина и высота intersection неотрицательны и соответствуют общей части; double counting компенсирован явно.
+  canonical_skeleton: |-
+    w=max(0,min(r1,r2)-max(l1,l2))
+    h=max(0,min(t1,t2)-max(b1,b2))
+    intersection=w*h
+  mini_example: |-
+    Rectangle Area: `areaA + areaB - intersection`.
+- code: geometric_distance_optimization
+  what_it_is: |-
+    Objective выражается через Manhattan/Euclidean/Chebyshev distance; оптимум ищется через median, projection, baseline+delta или геометрический candidate search.
+  mental_model: |-
+    Выбираем правильную метрику, преобразуем objective и оцениваем candidates через delta либо структурное свойство median/extreme.
+  recognition_cues:
+  - coordinates и distances входят прямо в objective
+  - есть выбор точки/порядка
+  - стоимость удобно сравнивать относительно baseline
+  core_invariant: |-
+    Baseline cost вычислен точно; каждый candidate оценивается полным эквивалентным delta без скрытого double counting.
+  canonical_skeleton: |-
+    baseline=total_cost(reference)
+    for candidate in candidates:
+        ans=min(ans, baseline+delta(candidate))
+  mini_example: |-
+    Squirrel Simulation: базовая стоимость — путь tree↔nuts, затем выбирается лучший первый маршрут по delta.
+- code: fenwick_tree_bit
+  what_it_is: |-
+    Динамическая структура для prefix aggregate и point update; типично prefix sum/count и order statistics по cumulative frequencies.
+  mental_model: |-
+    Индексы Fenwick покрывают интервалы длины `lowbit(i)`. Update идёт вверх `i += lowbit(i)`, query — вниз.
+  recognition_cues:
+  - много обновлений и prefix/range queries
+  - операция допускает prefix decomposition
+  - нужна O(log n) вместо O(n)
+  core_invariant: |-
+    `tree[i]` хранит aggregate фиксированного блока; query-разложение покрывает `[1..i]` без пересечений.
+  canonical_skeleton: |-
+    add(i,delta):
+        while i<=n:
+            bit[i]+=delta
+            i+=i&-i
+
+    sum(i):
+        s=0
+        while i>0:
+            s+=bit[i]
+            i-=i&-i
+        return s
+  mini_example: |-
+    Range Sum Query — Mutable: point update и prefix sums дают range sum за O(log n).
+- code: segment_tree_lazy
+  what_it_is: |-
+    Иерархически хранит aggregate интервалов и поддерживает range queries; lazy tags откладывают массовые updates.
+  mental_model: |-
+    Каждый node представляет segment. Query раскладывает диапазон на O(log n) nodes; lazy tag проталкивается только при необходимости.
+  recognition_cues:
+  - mutable range min/max/sum/count
+  - range updates
+  - Fenwick недостаточен из-за aggregate/update
+  core_invariant: |-
+    Значение node равно combine children с учётом уже семантически применённого lazy state.
+  canonical_skeleton: |-
+    query(node,L,R,qL,qR)
+    update(node,L,R,uL,uR,delta):
+        if fully_covered: apply_lazy(node)
+        else: push(node); recurse; pull(node)
+  mini_example: |-
+    Falling Squares: после coordinate compression range maximum задаёт высоту падения, затем выполняется range update.
+- code: ordered_set_sorted_map
+  what_it_is: |-
+    Поддерживает динамический упорядоченный набор с predecessor/successor, lower_bound, min/max и корректной кратностью.
+  mental_model: |-
+    При update синхронизируем ordered container; запросы используют lower_bound/predecessor или extremes.
+  recognition_cues:
+  - нужно ближайшее значение слева/справа
+  - данные меняются online
+  - hash set не умеет order queries
+  core_invariant: |-
+    Контейнер содержит ровно активные элементы с правильной multiplicity и comparator order.
+  canonical_skeleton: |-
+    S=ordered_multiset()
+    for op in ops:
+        if add: S.insert(x)
+        if remove: S.erase_one(x)
+        if query: use lower_bound/predecessor/min/max
+  mini_example: |-
+    Contains Duplicate III: в текущем окне ищем значение внутри `[x-t, x+t]`.
+- code: coordinate_compression_offline
+  what_it_is: |-
+    Большие/разреженные координаты заменяются rank'ами; queries можно сортировать offline, чтобы активировать элементы монотонно.
+  mental_model: |-
+    Собираем значимые coordinates, сортируем unique, строим `value→rank`; offline queries сортируем по threshold/endpoint.
+  recognition_cues:
+  - координаты до 1e9, unique O(n)
+  - BIT/segment tree требуют компактного индекса
+  - queries разрешено переставить
+  core_invariant: |-
+    Ranks сохраняют порядок и равенство; активная структура содержит ровно элементы, допустимые текущим threshold.
+  canonical_skeleton: |-
+    xs=sorted(unique(values))
+    rank(x)=lower_bound(xs,x)
+
+    sort(items); sort(queries)
+    activate items monotonically while answering
+  mini_example: |-
+    Maximum Sum Queries: points и queries сортируются по `x`; активные `y` индексируются после compression.
+- code: eulerian_path_circuit
+  what_it_is: |-
+    Ищет маршрут, использующий каждое ребро ровно один раз; канонический механизм — Hierholzer.
+  mental_model: |-
+    DFS потребляет edges; вершина добавляется в route после исчерпания outgoing edges; затем route разворачивается.
+  recognition_cues:
+  - использовать все tickets/edges ровно один раз
+  - важна edge multiplicity
+  - visited vertices недостаточен
+  core_invariant: |-
+    Когда вершина помещается в output, все доступные из неё ещё неиспользованные edges уже потреблены.
+  canonical_skeleton: |-
+    dfs(v):
+        while outgoing_edge_exists(v):
+            e=take_one_edge(v)
+            dfs(to(e))
+        route.append(v)
+    return reversed(route)
+  mini_example: |-
+    Reconstruct Itinerary: tickets — multiset directed edges; lexical order задаёт выбор next edge.
+- code: low_link_bridges_articulation
+  what_it_is: |-
+    DFS вычисляет earliest reachable discovery time из subtree без parent edge; это выявляет bridges и articulation points.
+  mental_model: |-
+    Храним `tin[v]` и `low[v]`; после child DFS, если `low[to] > tin[v]`, edge — bridge.
+  recognition_cues:
+  - critical connections/vertices
+  - удаление edge меняет connectivity
+  - обычный visited DFS недостаточен
+  core_invariant: |-
+    `low[v]` — минимальный discovery time, достижимый из subtree(v) tree-edges и back-edge переходом.
+  canonical_skeleton: |-
+    dfs(v,parent_edge):
+        tin[v]=low[v]=timer++
+        for edge v->to:
+            if edge==parent_edge: continue
+            if visited[to]: low[v]=min(low[v],tin[to])
+            else:
+                dfs(to,edge)
+                low[v]=min(low[v],low[to])
+                if low[to]>tin[v]: bridge(v,to)
+  mini_example: |-
+    Critical Connections in a Network — каноническая bridge-задача.
+- code: bipartite_coloring
+  what_it_is: |-
+    Вершины окрашиваются в два цвета так, чтобы каждое edge соединяло разные цвета; конфликт означает нечётный cycle.
+  mental_model: |-
+    Запускаем BFS/DFS из каждой component; сосед получает противоположный color.
+  recognition_cues:
+  - разделить на две несовместимые группы
+  - relations = must-differ
+  - вопрос о bipartite graph
+  core_invariant: |-
+    Для каждого обработанного edge `color[u] != color[v]`; uncolored vertex получает единственно требуемый цвет относительно parent.
+  canonical_skeleton: |-
+    for each uncolored start:
+        color[start]=0
+        BFS:
+            for v in adj[u]:
+                if uncolored: color[v]=1-color[u]
+                elif color[v]==color[u]: reject
+  mini_example: |-
+    Possible Bipartition: dislike edges должны соединять разные группы.
+- code: strongly_connected_components
+  what_it_is: |-
+    Сжимает directed graph в maximal components взаимной достижимости; condensation graph всегда DAG.
+  mental_model: |-
+    Используем Tarjan с `disc/low/stack` либо Kosaraju с finish order и transpose.
+  recognition_cues:
+  - направленный граф
+  - нужно найти взаимно достижимые группы
+  - после группировки задача упрощается на DAG
+  core_invariant: |-
+    Внутри SCC каждая пара вершин взаимно достижима; две разные SCC нельзя объединить без нарушения maximality.
+  canonical_skeleton: |-
+    TarjanDFS(v):
+        disc[v]=low[v]=time++
+        push v; onstack[v]=true
+        for to in adj[v]: update low
+        if low[v]==disc[v]: pop one SCC
+  mini_example: |-
+    После SCC condensation многие directed dependency задачи сводятся к DAG.
+- code: binary_lifting_jump_pointers
+  what_it_is: |-
+    Предвычисляет `2^j`-го предка/переход, чтобы выполнять длинные jumps по двоичному разложению.
+  mental_model: |-
+    `up[v][j] = up[ up[v][j-1] ][j-1]`; query разбирает `k` по bits.
+  recognition_cues:
+  - много kth ancestor queries
+  - нужен LCA или jump along functional graph/tree
+  - O(k) на query слишком дорого
+  core_invariant: |-
+    `up[v][j]` всегда указывает ровно на вершину после `2^j` parent-steps либо sentinel.
+  canonical_skeleton: |-
+    build:
+        up[v][0]=parent[v]
+        for j>0: up[v][j]=up[up[v][j-1]][j-1]
+
+    jump(v,k):
+        for set bit j in k: v=up[v][j]
+  mini_example: |-
+    Kth Ancestor of a Tree Node: query за O(log n).
+- code: cache_eviction_design
+  what_it_is: |-
+    Сочетает O(1)-lookup с явным ordering/priority для удаления least/most recently/frequently used элемента.
+  mental_model: |-
+    Разделяем index `key→node` и ordering structure; каждая операция синхронно обновляет обе.
+  recognition_cues:
+  - LRU/LFU/cache capacity
+  - get/put должны быть быстрыми
+  - при переполнении удаление по policy
+  core_invariant: |-
+    Каждый key присутствует ровно один раз в index и ordering; ordering точно отражает eviction priority.
+  canonical_skeleton: |-
+    get(key):
+        node=index.get(key)
+        if node: promote(node)
+    put(key,val):
+        update_or_insert_and_promote()
+        if size>cap: remove(victim) from both structures
+  mini_example: |-
+    LRU Cache: hash map + doubly linked list.
+- code: composite_o1_structures
+  what_it_is: |-
+    Комбинирует несколько структур, чтобы API-операции имели требуемую амортизированную/expected O(1) сложность.
+  mental_model: |-
+    Для каждой mutation задаём атомарный update всех индексов; типичны swap-with-last, auxiliary stack и linked buckets.
+  recognition_cues:
+  - Design X with O(1) operations
+  - одной структуры недостаточно
+  - нужно синхронизировать array/list/map/stack/buckets
+  core_invariant: |-
+    Все representations описывают один набор объектов; indices/pointers не устаревают после mutation.
+  canonical_skeleton: |-
+    mutate(x):
+        update primary storage
+        update index map
+        update auxiliary aggregate
+        assert consistency
+  mini_example: |-
+    Insert Delete GetRandom O(1): dynamic array + value→index; delete через swap-with-last.
+- code: iterator_stream_snapshot
+  what_it_is: |-
+    Объект хранит компактное состояние между вызовами API и выдаёт sequence, stream aggregate или versioned view.
+  mental_model: |-
+    State включает cursor, buffer, version id, pending items или monotone summary; каждый вызов продолжает с прошлого состояния.
+  recognition_cues:
+  - hasNext/next/read4/snapshot/history/streaming API
+  - вызовы приходят по одному
+  - нельзя пересчитывать всё с начала
+  core_invariant: |-
+    После API-вызова state эквивалентен обработке ровно уже потреблённого префикса; элементы не теряются и не дублируются.
+  canonical_skeleton: |-
+    class X:
+        state=...
+        next_or_op(input):
+            consume only necessary new data
+            update persistent state
+            return answer
+  mini_example: |-
+    Snapshot Array: изменения привязываются к version id, `get` ищет последнее значение не позже snap_id.
+- code: randomized_sampling_reservoir
+  what_it_is: |-
+    Генерирует выборку с доказанным распределением: uniform, weighted, reservoir или rejection sampling.
+  mental_model: |-
+    Выбираем scheme: prefix weights, reservoir, remapping или rejection; распределение доказывается отдельно от реализации.
+  recognition_cues:
+  - нужен random element/index/point
+  - данные потоковые
+  - доступен ограниченный RNG primitive
+  - нужно доказать отсутствие bias
+  core_invariant: |-
+    Каждый допустимый исход имеет требуемую probability; rejected outcomes не искажают conditional distribution принятых.
+  canonical_skeleton: |-
+    reservoir=first
+    for i,x in enumerate(stream,start=1):
+        with probability 1/i:
+            reservoir=x
+  mini_example: |-
+    Rand10 Using Rand7: принимаем только равномерный поддиапазон пространства пар вызовов.
+- code: interactive_query_strategy
+  what_it_is: |-
+    Алгоритм адаптивно выбирает следующий oracle query по предыдущим ответам и укладывается в query budget.
+  mental_model: |-
+    Храним candidate set, кэшируем ответы, выбираем query с хорошим разделением кандидатов.
+  recognition_cues:
+  - hidden structure/API oracle
+  - ответы частичные
+  - число запросов ограничено
+  - нужно сначала собирать информацию
+  core_invariant: |-
+    После каждого ответа candidates содержат все и только объекты, согласованные со всей query history.
+  canonical_skeleton: |-
+    candidates=initial
+    while not solved and budget_left:
+        q=choose_query(candidates)
+        r=oracle(q)
+        candidates=filter_consistent(candidates,q,r)
+  mini_example: |-
+    Guess the Word: следующий guess выбирается для сокращения candidate set.
+- code: palindrome_expansion_manacher
+  what_it_is: |-
+    Палиндромы ищутся через centers; Manacher переиспользует radius зеркального центра и достигает O(n).
+  mental_model: |-
+    Для простого случая расширяем odd/even centers; для Manacher поддерживаем rightmost palindrome и mirrored initial radius.
+  recognition_cues:
+  - maximum/count palindromic substrings
+  - симметрия вокруг center
+  - O(n²) center expansion может быть слишком медленным
+  core_invariant: |-
+    Внутри текущей right boundary начальный radius не меньше гарантированного mirrored overlap; дальнейшее расширение проверяется явно.
+  canonical_skeleton: |-
+    for center in centers:
+        radius=initial_from_mirror(center)
+        while characters_match(center,radius): radius+=1
+        update_rightmost(center,radius)
+  mini_example: |-
+    Longest Palindromic Substring: center expansion — базовый вариант; Manacher нужен при строгом O(n).
+- code: suffix_structures
+  what_it_is: |-
+    Структуры по всем suffixes — suffix array, LCP, suffix automaton/tree — решают задачи о повторяющихся и общих substrings.
+  mental_model: |-
+    Выбираем suffix array + LCP для упорядочивания suffixes либо suffix automaton для множества substrings и online extension.
+  recognition_cues:
+  - много substring comparisons
+  - longest repeated/common substring
+  - rolling hash нежелателен из-за collisions или недостаточной функциональности
+  core_invariant: |-
+    Структура представляет все suffixes/substrings в сжатом виде; LCP соседних suffixes отражает общую prefix length.
+  canonical_skeleton: |-
+    build_suffix_array(s)
+    build_lcp(s,sa)
+    answer=derive_from_adjacent_suffixes(sa,lcp)
+  mini_example: |-
+    Longest Duplicate Substring: максимум LCP соседних suffixes.

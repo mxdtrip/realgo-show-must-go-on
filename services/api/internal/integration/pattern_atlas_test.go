@@ -12,7 +12,7 @@ import (
 )
 
 // TestPatternAtlasTaxonomyIntegrity is the acceptance criterion for
-// Realgo Taxonomy v1: exactly 13 tools, 22 pattern families and 72
+// Realgo Taxonomy v2: exactly 13 tools, 22 pattern families and 111
 // subpatterns, with every subpattern attached to at least one family and at
 // least one tool prerequisite.
 func TestPatternAtlasTaxonomyIntegrity(t *testing.T) {
@@ -20,7 +20,7 @@ func TestPatternAtlasTaxonomyIntegrity(t *testing.T) {
 
 	counts := map[string]int{}
 	rows, err := h.pg.Pool.Query(h.ctx,
-		`SELECT kind, COUNT(*) FROM patterns WHERE taxonomy_version = 'realgo-v1' GROUP BY kind`)
+		`SELECT kind, COUNT(*) FROM patterns WHERE taxonomy_version = 'realgo-v2' GROUP BY kind`)
 	require.NoError(t, err)
 	defer rows.Close()
 	for rows.Next() {
@@ -33,12 +33,12 @@ func TestPatternAtlasTaxonomyIntegrity(t *testing.T) {
 
 	require.Equal(t, 13, counts["tool"], "tools")
 	require.Equal(t, 22, counts["family"], "pattern families")
-	require.Equal(t, 72, counts["subpattern"], "subpatterns")
+	require.Equal(t, 111, counts["subpattern"], "subpatterns")
 
 	var orphanFamilies int
 	require.NoError(t, h.pg.Pool.QueryRow(h.ctx, `
 		SELECT COUNT(*) FROM patterns p
-		WHERE p.kind = 'subpattern' AND p.taxonomy_version = 'realgo-v1'
+		WHERE p.kind = 'subpattern' AND p.taxonomy_version = 'realgo-v2'
 		  AND NOT EXISTS (SELECT 1 FROM pattern_family_subpatterns e WHERE e.subpattern_id = p.id)
 	`).Scan(&orphanFamilies))
 	require.Zero(t, orphanFamilies, "every subpattern must belong to a family")
@@ -46,7 +46,7 @@ func TestPatternAtlasTaxonomyIntegrity(t *testing.T) {
 	var orphanTools int
 	require.NoError(t, h.pg.Pool.QueryRow(h.ctx, `
 		SELECT COUNT(*) FROM patterns p
-		WHERE p.kind = 'subpattern' AND p.taxonomy_version = 'realgo-v1'
+		WHERE p.kind = 'subpattern' AND p.taxonomy_version = 'realgo-v2'
 		  AND NOT EXISTS (SELECT 1 FROM subpattern_prerequisites sp WHERE sp.subpattern_id = p.id)
 	`).Scan(&orphanTools))
 	require.Zero(t, orphanTools, "every subpattern must have at least one tool prerequisite")
@@ -108,10 +108,10 @@ func TestPatternAtlasEndpoints(t *testing.T) {
 	resp := h.request(t, http.MethodGet, "/api/v1/me/patterns/atlas", tokens.access, nil)
 	require.Equal(t, http.StatusOK, resp.status, resp.raw)
 	data := resp.body["data"].(map[string]any)
-	require.Equal(t, "realgo-v1", data["taxonomy_version"])
+	require.Equal(t, "realgo-v2", data["taxonomy_version"])
 	require.Len(t, data["tools"].([]any), 13)
 	require.Len(t, data["families"].([]any), 22)
-	require.Len(t, data["subpatterns"].([]any), 72)
+	require.Len(t, data["subpatterns"].([]any), 111)
 	require.Nil(t, data["company"])
 
 	// 2. Companies list contains the fixture company.

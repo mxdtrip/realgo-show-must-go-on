@@ -39,9 +39,11 @@ export const patternProfiles: Record<string, PatternProfileContent> = {
       "Задача требует состояния непрерывного окна.",
     ],
     subpatternNotes: {
-      frequency_map_counting: "Подсчёт частот.",
       membership_deduplication: "Наличие, уникальность, повторы.",
       complement_lookup: "Поиск связанного значения, например target − x.",
+      frequency_counting: "Храним число появлений каждого ключа и строим решение из этих счётчиков.",
+      grouping_canonical_signature: "Объекты приводятся к канонической подписи.",
+      frequency_of_frequency_buckets: "Храним второй уровень статистики: сколько ключей имеют частоту `f` или какие ключи лежат в frequency bucket.",
     },
   },
 
@@ -66,9 +68,10 @@ export const patternProfiles: Record<string, PatternProfileContent> = {
       "Нет порядка или иной структуры, оправдывающей направление движения.",
     ],
     subpatternNotes: {
-      opposite_direction_pointers: "Движение навстречу.",
       same_direction_read_write: "Чтение и запись.",
       fast_slow_pointers: "Разная скорость движения.",
+      sorted_pair_triplet_search: "После сортировки два указателя монотонно изменяют pair/triplet expression и отсекают квадратичное пространство кандидатов.",
+      converging_validation_palindrome: "Два указателя сходятся к центру и проверяют симметричное условие, иногда с ограниченным числом локальных пропусков.",
     },
   },
 
@@ -124,6 +127,10 @@ export const patternProfiles: Record<string, PatternProfileContent> = {
       prefix_sum_range_query: "Быстрые запросы по отрезкам.",
       prefix_balance_hashmap: "Связанные префиксные состояния.",
       difference_array: "Массовые изменения диапазонов.",
+      fenwick_tree_bit: "Динамическая структура для prefix aggregate и point update; типично prefix sum/count и order statistics по cumulative frequencies.",
+      segment_tree_lazy: "Иерархически хранит aggregate интервалов и поддерживает range queries; lazy tags откладывают массовые updates.",
+      ordered_set_sorted_map: "Поддерживает динамический упорядоченный набор с predecessor/successor, lower_bound, min/max и корректной кратностью.",
+      coordinate_compression_offline: "Большие/разреженные координаты заменяются rank'ами; queries можно сортировать offline, чтобы активировать элементы монотонно.",
     },
   },
 
@@ -261,6 +268,9 @@ export const patternProfiles: Record<string, PatternProfileContent> = {
       dummy_node_rewiring: "Sentinel-узел для единообразных правок.",
       in_place_reversal: "Разворот ссылок на месте.",
       merge_split_reconnect: "Слияние, разрезание и пересборка списков.",
+      cache_eviction_design: "Сочетает O(1)-lookup с явным ordering/priority для удаления least/most recently/frequently used элемента.",
+      composite_o1_structures: "Комбинирует несколько структур, чтобы API-операции имели требуемую амортизированную/expected O(1) сложность.",
+      iterator_stream_snapshot: "Объект хранит компактное состояние между вызовами API и выдаёт sequence, stream aggregate или versioned view.",
     },
   },
 
@@ -283,9 +293,12 @@ export const patternProfiles: Record<string, PatternProfileContent> = {
       "Дерево лишь формат хранения, а задача проще решается без явного обхода.",
     ],
     subpatternNotes: {
-      dfs_path_subtree_aggregation: "Рекурсивная агрегация по поддеревьям и путям.",
       bfs_level_order: "Обход по уровням.",
       bst_ordering_bounds: "Инвариант порядка BST и границы значений.",
+      root_to_leaf_path_state: "DFS несёт вниз состояние текущего пути: сумму, остаток цели, строку, min/max или набор признаков.",
+      postorder_subtree_aggregation: "Каждый DFS-вызов возвращает компактную summary поддерева; родитель объединяет summaries детей.",
+      tree_construction_serialization: "Строим, восстанавливаем, клонируем или сериализуем дерево, строго сохраняя структуру и границы поддеревьев.",
+      binary_lifting_jump_pointers: "Предвычисляет `2^j`-го предка/переход, чтобы выполнять длинные jumps по двоичному разложению.",
     },
   },
 
@@ -314,6 +327,10 @@ export const patternProfiles: Record<string, PatternProfileContent> = {
       cycle_detection_traversal: "Поиск цикла обходом.",
       multi_source_bfs: "Волна сразу из нескольких источников.",
       state_space_graph_search: "Граф скрыт в состояниях и переходах.",
+      eulerian_path_circuit: "Ищет маршрут, использующий каждое ребро ровно один раз; канонический механизм — Hierholzer.",
+      low_link_bridges_articulation: "DFS вычисляет earliest reachable discovery time из subtree без parent edge; это выявляет bridges и articulation points.",
+      bipartite_coloring: "Вершины окрашиваются в два цвета так, чтобы каждое edge соединяло разные цвета; конфликт означает нечётный cycle.",
+      strongly_connected_components: "Сжимает directed graph в maximal components взаимной достижимости; condensation graph всегда DAG.",
     },
   },
 
@@ -422,6 +439,8 @@ export const patternProfiles: Record<string, PatternProfileContent> = {
       permutations_used_state: "Перестановки с отметкой использованных.",
       constraint_placement: "Расстановка под ограничениями.",
       path_construction_word_search: "Построение путей, поиск слов в сетке.",
+      randomized_sampling_reservoir: "Генерирует выборку с доказанным распределением: uniform, weighted, reservoir или rejection sampling.",
+      interactive_query_strategy: "Алгоритм адаптивно выбирает следующий oracle query по предыдущим ответам и укладывается в query budget.",
     },
   },
 
@@ -446,9 +465,11 @@ export const patternProfiles: Record<string, PatternProfileContent> = {
       "Присутствуют повторяющиеся подзадачи.",
     ],
     subpatternNotes: {
-      sort_then_greedy: "Сортировка, затем жадный проход.",
       local_choice_invariant: "Локальный выбор, обоснованный инвариантом.",
       greedy_scheduling: "Планирование и выбор интервалов.",
+      greedy_pairing_matching: "После упорядочивания элементы сопоставляются парами так, чтобы экстремальный локальный выбор не ухудшал существование оптимального решения.",
+      resource_assignment: "Ресурсы назначаются запросам/задачам в порядке, минимизирующем потерю будущих возможностей.",
+      exchange_argument_ordering: "Выводим pairwise правило порядка: если соседняя инверсия всегда может быть обменена без ухудшения, оптимум допускает сортировку по этому правилу.",
     },
   },
 
@@ -473,12 +494,15 @@ export const patternProfiles: Record<string, PatternProfileContent> = {
       "Состояние почти равно полному перебору; задача решается обычным обходом графа.",
     ],
     subpatternNotes: {
-      dp_1d_linear: "Линейное состояние по префиксу.",
       dp_2d_grid: "Состояние по клеткам сетки.",
       dp_01_knapsack: "Взять или не взять каждый предмет один раз.",
       dp_unbounded_knapsack: "Предметы без ограничения количества.",
       dp_sequence_lis_lcs: "Состояния по подпоследовательностям: LIS, LCS.",
       dp_state_machine_interval: "Машина состояний и интервальные DP.",
+      dp_take_skip: "В позиции есть выбор взять объект или пропустить; взятие меняет совместимость ближайших состояний.",
+      dp_prefix_partition: "Состояние решает префикс, а последняя часть отделяется некоторой границей `j`.",
+      dp_counting_ways: "DP считает число способов достичь состояния, а не лучший score.",
+      dp_digit_positional: "Считаем числа в диапазоне по позициям цифр, сохраняя `pos`, `tight`, `started` и дополнительные свойства.",
     },
   },
 
@@ -507,6 +531,10 @@ export const patternProfiles: Record<string, PatternProfileContent> = {
       trie_prefix_search: "Префиксное дерево для словарных запросов.",
       rolling_hash_rabin_karp: "Сравнение подстрок через хеши.",
       kmp_prefix_function: "Префикс-функция без повторного сканирования.",
+      linear_string_scan_parsing: "Однопроходный разбор строки с малым состоянием: token, run length, граница слова, escape flag или накопитель числа.",
+      finite_state_parser: "Валидность строки определяется конечным набором режимов и допустимых переходов.",
+      palindrome_expansion_manacher: "Палиндромы ищутся через centers; Manacher переиспользует radius зеркального центра и достигает O(n).",
+      suffix_structures: "Структуры по всем suffixes — suffix array, LCP, suffix automaton/tree — решают задачи о повторяющихся и общих substrings.",
     },
   },
 
@@ -558,6 +586,8 @@ export const patternProfiles: Record<string, PatternProfileContent> = {
     subpatternNotes: {
       directional_traversal_simulation: "Направленный обход и симуляция движения.",
       in_place_transform_boundary: "Преобразования на месте, слои и границы.",
+      process_event_simulation: "Явно воспроизводим изменение системы во времени или по последовательности событий, сохраняя минимальное состояние процесса.",
+      direct_construction_formatting: "Ответ строится непосредственно из условий и локальных правил без отдельного поискового/оптимизационного ядра.",
     },
   },
 
@@ -584,6 +614,15 @@ export const patternProfiles: Record<string, PatternProfileContent> = {
     subpatternNotes: {
       cyclic_sort_placement: "Каждое значение — на свой индекс.",
       sign_marking_index_encoding: "Кодирование посещения знаком элемента.",
+      digit_arithmetic_base_conversion: "Число обрабатывается по цифрам: carry/borrow, извлечение digits, перевод основания, цифровое представление.",
+      number_theory_gcd_factorization: "Используем структуру делителей: gcd/lcm, prime factors, divisor enumeration и критерии делимости.",
+      modular_arithmetic_fast_pow: "Вычисления идут по модулю; большие степени строятся binary exponentiation, произведения редуцируются на каждом шаге.",
+      combinatorial_counting: "Считаем объекты формулами, binomial coefficients, stars-and-bars, разбиением на непересекающиеся случаи или принципом включения–исключения.",
+      probability_expected_value: "State хранит вероятность, математическое ожидание или выигрышность позиции; переход следует закону полной вероятности/ожидания либо win–lose инварианту.",
+      orientation_cross_product: "Знак cross product определяет левый/правый поворот и коллинеарность трёх точек без floating-point slope.",
+      slope_normalization_geo_hashing: "Геометрические отношения переводятся в канонические дискретные ключи: сокращённый slope, нормализованная линия, vector/distance signature.",
+      area_rectangle_overlap: "Вычисляем площади, пересечения и покрытия фигур через их границы, clamp и inclusion–exclusion.",
+      geometric_distance_optimization: "Objective выражается через Manhattan/Euclidean/Chebyshev distance; оптимум ищется через median, projection, baseline+delta или геометрический candidate search.",
     },
   },
 
