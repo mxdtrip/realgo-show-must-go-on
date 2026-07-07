@@ -21,6 +21,8 @@ export default function RoadmapPage() {
     return { name: status, label: statuses[status] };
   };
 
+  const isDoneStatus = (status: string) => status === "done";
+
   return (
     <main className="cabinet-page">
       <section className="cabinet-page-head">
@@ -51,13 +53,16 @@ export default function RoadmapPage() {
         <ol className="roadmap-track">
           {roadmapWeeks.map((week, index) => {
             const state = stateOf(week.status);
+            const isLocked = roadmapWeeks
+              .slice(0, index)
+              .some((previousWeek) => !isDoneStatus(previousWeek.status));
             return (
               <li className={`roadmap-step roadmap-step--${state.name}`} key={week.id}>
                 <div className="roadmap-step__rail">
                   <span className="roadmap-step__node">{String(index + 1).padStart(2, "0")}</span>
                 </div>
-                <details className="roadmap-step__body" open={state.name === "active"}>
-                  <summary className="roadmap-step__summary">
+                <div className="roadmap-step__body">
+                  <div className="roadmap-step__main">
                     <div className="roadmap-step__head">
                       <span className="roadmap-step__week">{week.week}</span>
                       <span className="roadmap-step__state">{state.label}</span>
@@ -71,37 +76,27 @@ export default function RoadmapPage() {
                       <ProgressBar value={week.progress} label={`${week.title} progress`} />
                       <strong>{week.progress}%</strong>
                     </div>
-                  </summary>
-
-                  <div className="roadmap-step__details">
-                    <div className="roadmap-step__details-head">
-                      <span>{page.remainingTitle}</span>
-                      <span>
-                        {week.items.length} {page.subpatternsLabel}
-                      </span>
-                    </div>
-                    <div className="roadmap-subpatterns">
-                      {week.items.map((item) => (
-                        <article className="roadmap-subpattern" key={item.code}>
-                          <div className="roadmap-subpattern__main">
-                            <div>
-                              <Link href={`/patterns/${item.code}`}>{item.name}</Link>
-                              <span>{item.state}</span>
-                            </div>
-                            <p>{item.remaining}</p>
-                          </div>
-                          <div className="roadmap-subpattern__actions">
-                            <span className="roadmap-subpattern__score">{item.confidence}%</span>
-                            <Link className="roadmap-subpattern__practice" href={`/patterns/${item.code}/session`}>
-                              {page.practiceCta}
-                              <CabinetIcon name="arrow" />
-                            </Link>
-                          </div>
-                        </article>
-                      ))}
-                    </div>
                   </div>
-                </details>
+                  {isLocked ? (
+                    <div className="roadmap-step__practice-card roadmap-step__practice-card--locked">
+                      <span className="roadmap-step__practice-eyebrow">{page.lockedEyebrow}</span>
+                      <strong>{page.lockedTitle}</strong>
+                      <span>{page.lockedDescription}</span>
+                    </div>
+                  ) : (
+                    <Link className="roadmap-step__practice-card" href={week.practiceHref}>
+                      <span className="roadmap-step__practice-eyebrow">{page.practiceEyebrow}</span>
+                      <strong>{page.practiceCta}</strong>
+                      <span>
+                        {week.items.length} {page.subpatternsLabel} · {week.practiceMeta}
+                      </span>
+                      <em>
+                        {page.practiceAction}
+                        <CabinetIcon name="arrow" />
+                      </em>
+                    </Link>
+                  )}
+                </div>
               </li>
             );
           })}

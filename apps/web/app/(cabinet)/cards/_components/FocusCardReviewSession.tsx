@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
   getNotificationPermission,
@@ -58,7 +58,12 @@ const ratings = [
   { key: "hard", shortcut: "3" },
 ] as const;
 
+const cardExitMs = 420;
+
 export function FocusCardReviewSession({ brand, cards, copy }: Readonly<FocusCardReviewSessionProps>) {
+  const [advanceRating, setAdvanceRating] = useState<ReviewRating | null>(null);
+  const advanceTimeoutRef = useRef<number | null>(null);
+
   const notifyComplete = useCallback(() => {
     const settings = readNotificationSettings();
     if (!settings.enabled || !settings.cardReviewReminder || getNotificationPermission() !== "granted") return;
@@ -71,6 +76,32 @@ export function FocusCardReviewSession({ brand, cards, copy }: Readonly<FocusCar
 
   const session = useCardReviewSession(cards, copy.nextReview, notifyComplete);
   const currentPosition = Math.min(session.completedUnique + 1, session.totalCards);
+  const isAdvancing = advanceRating !== null;
+
+  const advanceCard = useCallback(
+    (rating: ReviewRating) => {
+      if (!session.isFlipped || advanceRating !== null || advanceTimeoutRef.current !== null) return;
+
+      setAdvanceRating(rating);
+      const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const delay = prefersReducedMotion ? 0 : cardExitMs;
+
+      advanceTimeoutRef.current = window.setTimeout(() => {
+        session.rate(rating);
+        setAdvanceRating(null);
+        advanceTimeoutRef.current = null;
+      }, delay);
+    },
+    [advanceRating, session],
+  );
+
+  useEffect(() => {
+    return () => {
+      if (advanceTimeoutRef.current !== null) {
+        window.clearTimeout(advanceTimeoutRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -81,6 +112,8 @@ export function FocusCardReviewSession({ brand, cards, copy }: Readonly<FocusCar
         return;
       }
 
+      if (isAdvancing) return;
+
       if (event.code === "Space" || event.code === "Enter") {
         // Space/Enter toggles the card both ways (reveal answer ↔ back to front).
         event.preventDefault();
@@ -89,14 +122,14 @@ export function FocusCardReviewSession({ brand, cards, copy }: Readonly<FocusCar
       }
 
       if (!session.isFlipped) return;
-      if (event.key === "1") session.rate("easy");
-      if (event.key === "2") session.rate("normal");
-      if (event.key === "3") session.rate("hard");
+      if (event.key === "1") advanceCard("easy");
+      if (event.key === "2") advanceCard("normal");
+      if (event.key === "3") advanceCard("hard");
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [session]);
+  }, [advanceCard, isAdvancing, session]);
 
   if (!session.isReady) {
     return <main className="focus-session focus-session--loading">{copy.loading}</main>;
@@ -157,7 +190,9 @@ export function FocusCardReviewSession({ brand, cards, copy }: Readonly<FocusCar
       </header>
 
       <section
-        className={`focus-card-stack ${session.isFlipped ? "focus-card-stack--answer" : ""}`}
+        className={`focus-card-stack ${session.isFlipped ? "focus-card-stack--answer" : ""} ${
+          isAdvancing ? "focus-card-stack--advancing" : ""
+        }`}
         aria-live="polite"
       >
         <div className="focus-card-stack__edge focus-card-stack__edge--back" aria-hidden="true" />
@@ -165,9 +200,12 @@ export function FocusCardReviewSession({ brand, cards, copy }: Readonly<FocusCar
 
         <div className="focus-card-stage">
           <article
-            className={`focus-card ${session.isFlipped ? "focus-card--answer" : ""}`}
+            className={`focus-card ${session.isFlipped ? "focus-card--answer" : ""} ${
+              isAdvancing ? "focus-card--advancing" : ""
+            }`}
             key={session.currentCard.id}
             onClick={(event) => {
+              if (isAdvancing) return;
               // Clicking the card flips it both ways, but let inner controls
               // (reveal / rating buttons) handle their own clicks.
               if (event.target instanceof Element && event.target.closest("a, button, kbd")) {
@@ -194,7 +232,7 @@ export function FocusCardReviewSession({ brand, cards, copy }: Readonly<FocusCar
 
                 <button
                   className="focus-reveal"
-                  disabled={session.isFlipped}
+                  disabled={session.isFlipped || isAdvancing}
                   type="button"
                   onClick={() => session.setIsFlipped(true)}
                 >
@@ -224,10 +262,10 @@ export function FocusCardReviewSession({ brand, cards, copy }: Readonly<FocusCar
                     {ratings.map(({ key, shortcut }) => (
                       <button
                         className={`focus-rating__button focus-rating__button--${key}`}
-                        disabled={!session.isFlipped}
+                        disabled={!session.isFlipped || isAdvancing}
                         key={key}
                         type="button"
-                        onClick={() => session.rate(key)}
+                        onClick={() => advanceCard(key)}
                       >
                         <kbd>{shortcut}</kbd>
                         <strong>{ratingLabels[key].label}</strong>
