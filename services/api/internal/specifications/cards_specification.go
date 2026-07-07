@@ -7,20 +7,23 @@ package specifications
 
 import (
 	"testing"
+	"time"
 )
 
 // CardInfo содержит минимум информации о карточке, достаточный
 // для acceptance-тестов. Спецификация оперирует только тем, что видит
 // потребитель API, не зная о внутренних структурах.
 type CardInfo struct {
-	ID     int64
-	Front  string
-	Back   string
-	Type   string
-	Status string
+	ID        int64
+	Front     string
+	Back      string
+	Type      string
+	Status    string
+	ProblemID *int64
 }
 
 // SessionInfo содержит информацию о запущенной сессии повторения.
+// Для quiz-сессии Cards заполняется вопросами (поле Front несёт текст вопроса).
 type SessionInfo struct {
 	SessionID string
 	Cards     []CardInfo
@@ -33,6 +36,50 @@ type RateInfo struct {
 	RepeatInCurrentSession bool
 	Reviewed               int
 	Remaining              int
+}
+
+// AnswerResult содержит результат ответа на вопрос викторины.
+type AnswerResult struct {
+	Correct       bool
+	CorrectOption int
+}
+
+// QuizProvider даёт спецификации доступ к пользовательским операциям викторины
+// поверх HTTP (только то, что умеет реальный клиент).
+type QuizProvider interface {
+	HarnessProvider
+	QuizUser(user AuthenticatedUser) QuizUser
+}
+
+// QuizUser — HTTP-операции викторины. Seed/Probe вынесены в отдельные
+// test-only интерфейсы, чтобы QuizUser оставался чистым black-box контрактом.
+type QuizUser interface {
+	AuthenticatedUser
+	GetSession(t *testing.T, limit int32) SessionInfo
+	AnswerQuestion(t *testing.T, questionID int64, option int) AnswerResult
+	// AnswerQuestionAgain повторяет ответ; true означает, что система отклонила
+	// его как накрутку (анти-чит). Реализация ожидает конфликт.
+	AnswerQuestionAgain(t *testing.T, questionID int64, option int) bool
+}
+
+// QuizSeeder — test-only: создаёт задачи и вопросы напрямую в БД.
+// HTTP-endpoint'ов для этого пока нет (AI-генерация отложена), поэтому
+// без посева спецификации нечем было бы отвечать.
+type QuizSeeder interface {
+	CreateProblem(t *testing.T, ownerUserID int64, title, url, difficulty, slug string) int64
+	CreateQuizQuestion(t *testing.T, userID, problemID int64, question string, options []string, correctOption int, explanation string) int64
+}
+
+// QuizProbe — test-only read-helper: читает состояние задачи напрямую из БД,
+// т.к. API read-path для confidence и FSRS-расписания отсутствует. Когда
+// «Этап 4» откроет их через dashboard/GET /me/problems/{id} — заменить на HTTP-read.
+type QuizProbe interface {
+	// Confidence возвращает confidence пользователя по задаче или nil,
+	// если строки прогресса нет либо confidence IS NULL.
+	Confidence(t *testing.T, userID, problemID int64) *int
+	// NextReviewAt возвращает запланированную дату ближайшего повторения задачи
+	// или nil, если расписания (review_schedules) для задачи нет.
+	NextReviewAt(t *testing.T, userID, problemID int64) *time.Time
 }
 
 // CardsProvider расширяет HarnessProvider: помимо Register, драйвер

@@ -109,6 +109,25 @@ func (q *Queries) GetReviewScheduleByID(ctx context.Context, arg GetReviewSchedu
 	return i, err
 }
 
+const getReviewScheduleIDByProblem = `-- name: GetReviewScheduleIDByProblem :one
+SELECT id FROM review_schedules
+WHERE user_id = $1 AND problem_id = $2
+`
+
+type GetReviewScheduleIDByProblemParams struct {
+	UserID    int64
+	ProblemID pgtype.Int8
+}
+
+// Возвращает id расписания задачи для пользователя. Вызывается после
+// CreateProblemScheduleIfAbsent, поэтому строка гарантированно существует.
+func (q *Queries) GetReviewScheduleIDByProblem(ctx context.Context, arg GetReviewScheduleIDByProblemParams) (int64, error) {
+	row := q.db.QueryRow(ctx, getReviewScheduleIDByProblem, arg.UserID, arg.ProblemID)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
 const getReviewStats = `-- name: GetReviewStats :one
 SELECT
     COUNT(*)::integer AS total_reviews,

@@ -23,4 +23,8 @@ type ReviewRepository interface {
 
 	// UpdateProgressConfidence обновляет confidence по задаче.
 	UpdateProgressConfidence(ctx context.Context, userID, problemID int64, rating string) error
+
+	// EnsureScheduleForProblem гарантирует наличие расписания для задачи
+	// (создаёт при отсутствии, идемпотентно) и возвращает его id.
+	EnsureScheduleForProblem(ctx context.Context, userID, problemID int64) (int64, error)
 }
