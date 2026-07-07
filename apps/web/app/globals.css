@@ -7281,7 +7281,43 @@ a.cabinet-panel__meta:hover {
   min-width: 0;
 }
 
-.atlas-family__disclosure {
+/* имя семейства = ссылка на страницу паттерна, каретка = отдельная кнопка раскрытия */
+.atlas-table__cell--name {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.atlas-family__toggle {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin-left: -5px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.14s ease;
+}
+
+.atlas-family__toggle:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.atlas-family__toggle:hover .atlas-caret {
+  border-left-color: var(--text);
+}
+
+.atlas-family__toggle:focus-visible {
+  outline: 2px solid var(--accent-line);
+  outline-offset: 1px;
+}
+
+.atlas-family__name {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -7296,22 +7332,19 @@ a.cabinet-panel__meta:hover {
   text-align: left;
   cursor: pointer;
   border-radius: 6px;
+  text-decoration: none;
 }
 
-.atlas-family__disclosure:hover {
+.atlas-family__name:hover {
   color: var(--accent-bright);
 }
 
-.atlas-family__disclosure:hover .atlas-caret {
-  border-left-color: var(--accent-bright);
-}
-
-.atlas-family__disclosure:focus-visible {
+.atlas-family__name:focus-visible {
   outline: 2px solid var(--accent-line);
   outline-offset: 4px;
 }
 
-.atlas-family__name {
+.atlas-family__name span {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -7909,5 +7942,258 @@ a.cabinet-panel__meta:hover {
     flex-direction: column;
     align-items: flex-start;
     gap: 6px;
+  }
+}
+
+/* ---------- pattern profile: страница паттерна (семейства) ---------- */
+
+.pattern-profile {
+  position: relative;
+  overflow: hidden;
+  margin-top: 14px;
+  padding: clamp(28px, 4vw, 48px) clamp(22px, 4vw, 52px) clamp(30px, 4vw, 52px);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background:
+    radial-gradient(90% 55% at 85% -12%, rgba(56, 139, 253, 0.09) 0%, transparent 62%),
+    #000;
+}
+
+/* фоновая координатная сетка, тает книзу */
+.pattern-profile::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.9), transparent 46%);
+  pointer-events: none;
+}
+
+.pattern-profile > * {
+  position: relative;
+}
+
+.pattern-profile__hero {
+  max-width: 76ch;
+  padding-bottom: clamp(24px, 3.5vw, 38px);
+}
+
+.pattern-profile__code {
+  font-family: var(--font-stack-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent-bright);
+}
+
+.pattern-profile__hero h1 {
+  margin: 10px 0 0;
+  font-family: var(--font-stack-display);
+  font-size: clamp(26px, 3.4vw, 34px);
+  line-height: 1.12;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+
+.pattern-profile__lead {
+  max-width: 70ch;
+  margin: 12px 0 0;
+  color: var(--text-dim);
+  font-size: 14.5px;
+  line-height: 1.65;
+}
+
+.pattern-profile__section {
+  display: grid;
+  grid-template-columns: 170px minmax(0, 1fr);
+  gap: 14px clamp(22px, 3.5vw, 46px);
+  padding: clamp(20px, 3vw, 28px) 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.pattern-profile__rail h2 {
+  margin: 6px 0 0;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.pattern-profile__rail p {
+  margin: 7px 0 0;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--text-faint);
+}
+
+.pattern-profile__index {
+  font-family: var(--font-stack-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+}
+
+.pattern-profile__body {
+  max-width: 74ch;
+  align-self: start;
+}
+
+.pattern-profile__body > p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text);
+}
+
+.pattern-profile__body > p + p {
+  margin-top: 12px;
+}
+
+.pattern-profile__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 10px;
+}
+
+.pattern-profile__list li {
+  position: relative;
+  padding-left: 22px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text);
+}
+
+.pattern-profile__list li::before {
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-family: var(--font-stack-mono);
+  font-size: 13px;
+}
+
+.pattern-profile__list--cues li::before {
+  content: "›";
+  color: var(--accent-bright);
+}
+
+.pattern-profile__list--mechanics li::before {
+  content: "▸";
+  font-size: 11px;
+  top: 2px;
+  color: var(--text-faint);
+}
+
+.pattern-profile__list--misfits li::before {
+  content: "×";
+  color: var(--danger-bright);
+}
+
+.pattern-profile__pending {
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+  margin: 0;
+  padding: 14px 16px;
+  border: 1px dashed rgba(255, 255, 255, 0.16);
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text-faint);
+}
+
+.pattern-profile__pending span {
+  font-family: var(--font-stack-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.pattern-profile__subs {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 12px;
+}
+
+/* карточки подпаттернов шире текстовой колонки — на всю секцию */
+.pattern-profile__section:has(.pattern-profile__subs) .pattern-profile__body {
+  max-width: none;
+}
+
+.pattern-profile__subs a {
+  display: grid;
+  gap: 7px;
+  height: 100%;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text);
+  text-decoration: none;
+  transition: border-color 0.16s ease, background 0.16s ease, transform 0.16s ease;
+}
+
+.pattern-profile__subs a:hover {
+  border-color: var(--accent-line);
+  background: rgba(56, 139, 253, 0.06);
+  transform: translateY(-1px);
+}
+
+.pattern-profile__subs a:focus-visible {
+  outline: 2px solid var(--accent-line);
+  outline-offset: 2px;
+}
+
+.pattern-profile__sub-head {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-stack-mono);
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
+.pattern-profile__sub-arrow {
+  transition: transform 0.16s ease, color 0.16s ease;
+}
+
+.pattern-profile__subs a:hover .pattern-profile__sub-arrow {
+  color: var(--accent-bright);
+  transform: translateX(2px);
+}
+
+.pattern-profile__sub-name {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.pattern-profile__sub-note {
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--text-dim);
+}
+
+.pattern-profile__sub-note.is-pending {
+  color: var(--text-faint);
+  font-style: italic;
+}
+
+@media (max-width: 860px) {
+  .pattern-profile__section {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .pattern-profile__rail h2 {
+    display: inline;
+    margin: 0 0 0 10px;
+    vertical-align: baseline;
   }
 }
