@@ -7767,6 +7767,8 @@ a.cabinet-panel__meta:hover {
   font-size: 13.5px;
   line-height: 1.65;
   color: var(--text);
+  /* what_it_is из методички приходит с абзацами через \n\n */
+  white-space: pre-line;
 }
 
 .atlas-anti-cues li {
