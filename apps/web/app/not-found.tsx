@@ -15,7 +15,7 @@ export default function NotFound() {
         <p className="error-screen-kicker">404</p>
         <h1 id="not-found-title">Такого экрана нет</h1>
         <p className="error-screen-copy">
-          Ссылка могла устареть или маршрут ещё не добавлен в realgo. Вернитесь в кабинет или на
+          Ссылка могла устареть или маршрут ещё не добавлен в ReAlgo. Вернитесь в кабинет или на
           главную страницу.
         </p>
         <div className="error-screen-actions">

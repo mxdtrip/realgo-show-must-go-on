@@ -6,14 +6,14 @@ export const defaultLocale: Locale = "ru";
 
 const ru = {
   common: {
-    brand: "realgo",
+    brand: "ReAlgo",
     metadata: {
-      title: "realgo — Memory layer for interview prep",
+      title: "ReAlgo — Memory layer for interview prep",
       description:
-        "realgo помогает не забывать решённые задачи, вовремя возвращает их к повторению и складывает понятный план подготовки к интервью.",
-      applicationName: "realgo",
+        "ReAlgo помогает не забывать решённые задачи, вовремя возвращает их к повторению и складывает понятный план подготовки к интервью.",
+      applicationName: "ReAlgo",
       siteUrl: "https://realgo.dev",
-      ogImageAlt: "realgo interview prep memory layer preview",
+      ogImageAlt: "ReAlgo interview prep memory layer preview",
       ogEyebrow: "/memory /roadmap /reviews",
       ogHeadline: "«Solved» ещё не значит «запомнил»",
       ogFooter: "LeetCode solved tasks -> spaced repetition -> interview roadmap",
@@ -30,14 +30,14 @@ const ru = {
     },
   },
   pwa: {
-    name: "realgo — Memory layer for interview prep",
-    shortName: "realgo",
+    name: "ReAlgo — Memory layer for interview prep",
+    shortName: "ReAlgo",
     description:
-      "realgo помогает не забывать решённые задачи, вовремя возвращает их к повторению и складывает понятный план подготовки к интервью.",
+      "ReAlgo помогает не забывать решённые задачи, вовремя возвращает их к повторению и складывает понятный план подготовки к интервью.",
   },
   marketing: {
     hero: {
-      homeAria: "realgo home",
+      homeAria: "ReAlgo home",
       navAria: "Site sections",
       nav: ["Memory", "Roadmap", "Reviews", "Pricing", "FAQ"],
       auth: {
@@ -59,12 +59,12 @@ const ru = {
       sortingCodeAria: "Sorting code",
       eyebrow: "// spaced repetition for technical interviews",
       tagline:
-        "«Solved» ещё не значит «запомнил». realgo — память твоей подготовки к собеседованиям: расширение фиксирует каждую решённую задачу прямо из браузера, а интервальные повторения возвращают её ровно перед тем, как она забудется. Ты решаешь — очередь повторов, карточки и слабые паттерны собираются сами.",
+        "«Solved» ещё не значит «запомнил». ReAlgo — память твоей подготовки к собеседованиям: расширение фиксирует каждую решённую задачу прямо из браузера, а интервальные повторения возвращают её ровно перед тем, как она забудется. Ты решаешь — очередь повторов, карточки и слабые паттерны собираются сами.",
       sortingControlsAria: "Sorting controls",
       wordAria: "realgo",
       chaos: "Chaos",
       sort: "Sort",
-      codeError: "Код не компилируется — realgo не смог его выполнить. Проверь синтаксис.",
+      codeError: "Код не компилируется — ReAlgo не смог его выполнить. Проверь синтаксис.",
     },
     memoryTasks: [
       ["Two Sum II", "Two Pointers", "повторить", "завтра"],
@@ -122,9 +122,9 @@ const ru = {
     sections: {
       memory: {
         kicker: "Memory",
-        title: "Решай задачи где удобно. realgo запомнит, что важно повторить.",
+        title: "Решай задачи где удобно. ReAlgo запомнит, что важно повторить.",
         description:
-          "Один клик после решения — и realgo превращает твою честную оценку в расписание повторений, возвращая точно те темы, которые иначе всплывут забытыми на самом интервью.",
+          "Один клик после решения — и ReAlgo превращает твою честную оценку в расписание повторений, возвращая точно те темы, которые иначе всплывут забытыми на самом интервью.",
         demoUrl: "leetcode.com/problems/two-sum-ii",
         demoStatus: "Saved",
         ratingAria: "Difficulty rating",
@@ -136,13 +136,13 @@ const ru = {
         readiness: "68% готовность",
         title: "План подготовки под твою цель и дату собеседования — без гадания, что учить дальше.",
         description:
-          "Укажи роль, компанию и сколько времени осталось. realgo соберёт маршрут по темам, задачам и повторениям — так у каждого дня подготовки один понятный шаг, а не список из сотен нерассортированных задач.",
+          "Укажи роль, компанию и сколько времени осталось. ReAlgo соберёт маршрут по темам, задачам и повторениям — так у каждого дня подготовки один понятный шаг, а не список из сотен нерассортированных задач.",
       },
       reviews: {
         kicker: "Reviews",
         title: "Повторяй паттерны так, чтобы вспомнить их на интервью.",
         description:
-          "realgo создаёт короткие карточки по подходу, механике решения и граничным случаям. Вместо длинных конспектов, которые никто не перечитывает, — вопросы, которые тренируют вспомнить, а не просто узнать при взгляде на старый код.",
+          "ReAlgo создаёт короткие карточки по подходу, механике решения и граничным случаям. Вместо длинных конспектов, которые никто не перечитывает, — вопросы, которые тренируют вспомнить, а не просто узнать при взгляде на старый код.",
       },
       pricing: {
         kicker: "Pricing",
@@ -152,14 +152,14 @@ const ru = {
       },
       faq: {
         kicker: "FAQ",
-        title: "Коротко о том, как realgo встраивается в подготовку — без лишних обещаний.",
+        title: "Коротко о том, как ReAlgo встраивается в подготовку — без лишних обещаний.",
         description:
           "FAQ закрывает практические вопросы: что сохраняет расширение, как работают повторения и можно ли начать без полного перехода на новый инструмент.",
         items: [
           {
-            question: "realgo сам решает задачи или только помогает повторять?",
+            question: "ReAlgo сам решает задачи или только помогает повторять?",
             answer:
-              "realgo не подменяет практику. Ты решаешь задачи на LeetCode или NeetCode, отмечаешь уверенность, а сервис возвращает нужные задачи, паттерны и карточки в расписание повторений.",
+              "ReAlgo не подменяет практику. Ты решаешь задачи на LeetCode или NeetCode, отмечаешь уверенность, а сервис возвращает нужные задачи, паттерны и карточки в расписание повторений.",
           },
           {
             question: "Что именно сохраняет браузерное расширение?",
@@ -169,7 +169,7 @@ const ru = {
           {
             question: "Чем это отличается от обычного списка решённых задач?",
             answer:
-              "Список показывает, что уже было сделано. realgo планирует, когда к этому вернуться, превращает решение в короткие карточки и подсвечивает паттерны, которые чаще всего забываются — как правило, ровно перед интервью.",
+              "Список показывает, что уже было сделано. ReAlgo планирует, когда к этому вернуться, превращает решение в короткие карточки и подсвечивает паттерны, которые чаще всего забываются — как правило, ровно перед интервью.",
           },
           {
             question: "Можно пользоваться бесплатно?",
@@ -211,7 +211,7 @@ const ru = {
           ],
         },
       ],
-      copyright: "© 2026 realgo. All rights reserved.",
+      copyright: "© 2026 ReAlgo. All rights reserved.",
       tagline: "built by devs who bombed a few interviews first",
       poweredBy: "powered by",
     },
@@ -225,7 +225,7 @@ const ru = {
       company: {
         title: "В какие компании хочешь устроиться?",
         description:
-          "Назови компании — realgo будет рекомендовать задачи и темы, которые именно эти компании реально спрашивают на интервью.",
+          "Назови компании — ReAlgo будет рекомендовать задачи и темы, которые именно эти компании реально спрашивают на интервью.",
         label: "компании",
         placeholder: "Например, Google, Amazon, Yandex…",
         selectedLabel: "Выбранные компании",
@@ -251,7 +251,7 @@ const ru = {
       },
       welcome: {
         eyebrow: "setup complete",
-        title: "Добро пожаловать в realgo",
+        title: "Добро пожаловать в ReAlgo",
         description:
           "Мы сохранили стартовые настройки локально. Теперь можно перейти в кабинет и начать повторение без лишнего шума.",
         action: "Перейти в Dashboard",
@@ -420,7 +420,7 @@ const ru = {
         eyebrow: "/dashboard",
         title: "Сегодня повторяем то, что может забыться.",
         description:
-          "realgo собирает короткую очередь повторений и подсвечивает слабые темы — чтобы решённое не терялось до собеседования.",
+          "ReAlgo собирает короткую очередь повторений и подсвечивает слабые темы — чтобы решённое не терялось до собеседования.",
         nextLabel: "next",
         nextTitle: "Longest Substring",
         nextMeta: "hard · 09:30",
@@ -460,7 +460,7 @@ const ru = {
         eyebrow: "/reviews",
         title: "Очередь повторений",
         description:
-          "Всё, что realgo советует повторить сегодня: задачи, карточки и паттерны, у которых подошёл срок.",
+          "Всё, что ReAlgo советует повторить сегодня: задачи, карточки и паттерны, у которых подошёл срок.",
         summaryUnit: "повторений сегодня",
         filterAll: "all",
         types: [
@@ -488,7 +488,7 @@ const ru = {
         eyebrow: "/problems",
         title: "Личная база задач",
         description:
-          "Задачи, сохранённые расширением из браузера или вручную. Отсюда realgo планирует повторения.",
+          "Задачи, сохранённые расширением из браузера или вручную. Отсюда ReAlgo планирует повторения.",
         summaryUnit: "задач в библиотеке",
         panelEyebrow: "library",
         panelTitle: "Saved problems",
@@ -516,7 +516,7 @@ const ru = {
       },
       roadmap: {
         eyebrow: "/roadmap",
-        title: "realgo Core Roadmap",
+        title: "ReAlgo Core Roadmap",
         description:
           "План на 21 день: от базовых паттернов до формата интервью. Прогресс недель считается по закрытым повторениям.",
         panelEyebrow: "plan",
@@ -533,7 +533,7 @@ const ru = {
         eyebrow: "/patterns",
         title: "Паттерны и уверенность",
         description:
-          "Темы, где уверенность проседает: realgo показывает не «реши ещё», а что именно закрепить в первую очередь.",
+          "Темы, где уверенность проседает: ReAlgo показывает не «реши ещё», а что именно закрепить в первую очередь.",
         summaryUnit: "паттерна требуют внимания",
         panelEyebrow: "weak spots",
         panelTitle: "Pattern confidence",
@@ -569,7 +569,7 @@ const ru = {
         eyebrow: "/patterns",
         title: "Pattern Atlas",
         description:
-          "Карта знаний Realgo Taxonomy: инструменты, семейства паттернов и субпаттерны с твоим прогрессом. Выбери компанию — карта подсветит, что она реально спрашивает.",
+          "Карта знаний ReAlgo Taxonomy: инструменты, семейства паттернов и субпаттерны с твоим прогрессом. Выбери компанию — карта подсветит, что она реально спрашивает.",
         taxonomyLabel: "taxonomy",
         loading: "Загружаем атлас…",
         errorTitle: "Не удалось загрузить атлас",
@@ -809,7 +809,7 @@ const ru = {
             easy: "через 7 дней",
           },
           emptyHistory: "Оценок пока нет — открой ответ и выбери сложность.",
-          sessionCompleteTitle: "realgo cards complete",
+          sessionCompleteTitle: "ReAlgo cards complete",
           sessionCompleteBody: "Карточки на сегодня разобраны. Завтра вернём нужные паттерны.",
           focus: {
             aiBadgeTitle: "Карточка сгенерирована ИИ — возможны неточности",
@@ -874,7 +874,7 @@ const ru = {
         profileEyebrow: "profile",
         profileTitle: "Preparation settings",
         installEyebrow: "pwa",
-        installTitle: "Install realgo",
+        installTitle: "Install ReAlgo",
         notificationsEyebrow: "notifications",
         notificationsTitle: "Review reminders",
         privacyEyebrow: "privacy",
@@ -884,7 +884,7 @@ const ru = {
         exportProgress: "export data",
         exportRequested: "export request accepted",
         deleteAccount: "delete account",
-        deleteConfirm: "Удалить аккаунт realgo? Это действие нельзя отменить.",
+        deleteConfirm: "Удалить аккаунт ReAlgo? Это действие нельзя отменить.",
         deletePasswordPrompt: "Введите пароль, чтобы удалить аккаунт",
         deleteDone: "account deleted",
         actionFailed: "action failed",
@@ -905,10 +905,10 @@ const ru = {
         },
         install: {
           description:
-            "Сохрани realgo как приложение, чтобы открывать кабинет и карточки с домашнего экрана.",
+            "Сохрани ReAlgo как приложение, чтобы открывать кабинет и карточки с домашнего экрана.",
           install: "install app",
           installed: "installed",
-          manualSupport: "realgo поддерживает установку как PWA-приложение.",
+          manualSupport: "ReAlgo поддерживает установку как PWA-приложение.",
           manualHint: "Используй меню браузера: Share → Add to Home Screen.",
           ready: "ready to install",
         },
@@ -927,7 +927,7 @@ const ru = {
           reminderTime: "reminder time",
           sendTest: "send test",
           syncFailed: "notification settings sync failed",
-          testTitle: "realgo review reminder",
+          testTitle: "ReAlgo review reminder",
           testBody: "Карточки ждут короткого повторения.",
           testSent: "test notification sent",
         },

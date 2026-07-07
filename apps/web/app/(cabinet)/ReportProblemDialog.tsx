@@ -36,7 +36,10 @@ function pageContextLines(): string[] {
   ];
 }
 
-export function ReportProblemLauncher({ copy }: Readonly<{ copy: ReportCopy }>) {
+export function ReportProblemLauncher({
+  copy,
+  showTrigger = true,
+}: Readonly<{ copy: ReportCopy; showTrigger?: boolean }>) {
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
   const [phase, setPhase] = useState<"edit" | "sent">("edit");
@@ -101,15 +104,17 @@ export function ReportProblemLauncher({ copy }: Readonly<{ copy: ReportCopy }>) 
 
   return (
     <>
-      <button
-        className="cabinet-topbar__iconbtn"
-        type="button"
-        aria-label={copy.triggerAria}
-        title={copy.triggerAria}
-        onClick={() => setOpen(true)}
-      >
-        <CabinetIcon name="megaphone" width="16" height="16" />
-      </button>
+      {showTrigger ? (
+        <button
+          className="cabinet-topbar__iconbtn"
+          type="button"
+          aria-label={copy.triggerAria}
+          title={copy.triggerAria}
+          onClick={() => setOpen(true)}
+        >
+          <CabinetIcon name="megaphone" width="16" height="16" />
+        </button>
+      ) : null}
 
       {open ? (
         <div className="shell-overlay" data-shell-overlay role="presentation" onClick={close}>

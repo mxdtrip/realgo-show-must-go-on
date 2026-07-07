@@ -98,7 +98,13 @@ test.describe("bug #2 — cabinet logo & session hardening", () => {
     const dash = page.locator(".site-auth .site-auth__dashboard");
     await expect(dash).toBeVisible({ timeout: 15_000 });
     await expect(dash).toHaveAttribute("href", "/dashboard");
-    await expect(page.locator(".site-auth button")).toHaveCount(0);
+    await expect(page.locator(".site-auth > button")).toHaveCount(0);
+
+    const account = page.getByRole("button", { name: /e2e/i });
+    await expect(account).toBeVisible();
+    await account.click();
+    await expect(page.locator(".site-auth .user-menu")).toBeVisible();
+    await expect(page.locator(".site-auth .user-menu")).toContainText("log out");
   });
 
   test("revoked session (refresh 401) clears tokens", async ({ page }) => {
