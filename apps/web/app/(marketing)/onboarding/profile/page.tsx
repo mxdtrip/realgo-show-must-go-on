@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 
 import { updateProfile } from "../../../_api/account";
@@ -22,34 +23,34 @@ const fallbackCompanies = [
   "Yandex",
 ] as const;
 
+// Координаты x/y раскидывают темы по полю: клик «притягивает» тему в центр
+// (CSS-переход --topic-x/y → --topic-center-x/y).
 const algorithmTopics = [
-  { id: "arrays", label: "Arrays & Hashing" },
-  { id: "two-pointers", label: "Two Pointers" },
-  { id: "sliding-window", label: "Sliding Window" },
-  { id: "stack", label: "Stack" },
-  { id: "binary-search", label: "Binary Search" },
-  { id: "linked-list", label: "Linked List" },
-  { id: "trees", label: "Trees" },
-  { id: "graphs", label: "Graphs" },
-  { id: "heap", label: "Heap / Priority Queue" },
-  { id: "backtracking", label: "Backtracking" },
-  { id: "dp", label: "Dynamic Programming" },
-  { id: "greedy", label: "Greedy" },
-  { id: "intervals", label: "Intervals" },
-  { id: "tries", label: "Tries" },
-  { id: "bit", label: "Bit Manipulation" },
+  { id: "arrays", label: "Arrays & Hashing", x: 8, y: 16 },
+  { id: "two-pointers", label: "Two Pointers", x: 72, y: 12 },
+  { id: "sliding-window", label: "Sliding Window", x: 5, y: 42 },
+  { id: "stack", label: "Stack", x: 78, y: 38 },
+  { id: "binary-search", label: "Binary Search", x: 13, y: 72 },
+  { id: "linked-list", label: "Linked List", x: 70, y: 68 },
+  { id: "trees", label: "Trees", x: 23, y: 9 },
+  { id: "graphs", label: "Graphs", x: 82, y: 82 },
+  { id: "heap", label: "Heap / Priority Queue", x: 2, y: 88 },
+  { id: "backtracking", label: "Backtracking", x: 84, y: 58 },
+  { id: "dp", label: "Dynamic Programming", x: 16, y: 55 },
+  { id: "greedy", label: "Greedy", x: 75, y: 24 },
+  { id: "intervals", label: "Intervals", x: 27, y: 84 },
+  { id: "tries", label: "Tries", x: 63, y: 7 },
+  { id: "bit", label: "Bit Manipulation", x: 88, y: 6 },
 ] as const;
-
-type CalendarDay = {
-  iso: string;
-  label: number;
-  weekday: string;
-};
 
 type OnboardingStep = "company" | "date" | "topics" | "goal" | "welcome";
 
 const steps: OnboardingStep[] = ["company", "date", "topics", "goal"];
 const onboardingStorageKey = "realgo:onboarding-profile:v1";
+
+const WHEEL_ITEM_HEIGHT = 44;
+
+type WheelItem = Readonly<{ key: string; label: string }>;
 
 function toDateInputValue(date: Date) {
   const year = date.getFullYear();
@@ -58,8 +59,8 @@ function toDateInputValue(date: Date) {
   return `${year}-${month}-${day}`;
 }
 
-function monthLabel(date: Date, locale = "ru-RU") {
-  return new Intl.DateTimeFormat(locale, { month: "long", year: "numeric" }).format(date);
+function monthKeyOf(date: Date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
 }
 
 function fullDateLabel(iso: string, locale = "ru-RU") {
@@ -68,24 +69,19 @@ function fullDateLabel(iso: string, locale = "ru-RU") {
   return new Intl.DateTimeFormat(locale, { day: "numeric", month: "long", year: "numeric" }).format(date);
 }
 
-function buildCalendarMonth(monthDate: Date, weekdays: readonly string[]) {
-  const firstDay = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
-  const lastDay = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0);
-  const mondayBasedOffset = (firstDay.getDay() + 6) % 7;
-  const days: Array<CalendarDay | null> = Array.from({ length: mondayBasedOffset }, () => null);
-
-  for (let day = 1; day <= lastDay.getDate(); day += 1) {
-    const date = new Date(monthDate.getFullYear(), monthDate.getMonth(), day);
-    const weekdayIndex = (date.getDay() + 6) % 7;
-
-    days.push({
-      iso: toDateInputValue(date),
-      label: day,
-      weekday: weekdays[weekdayIndex] ?? "",
-    });
-  }
-
-  return days;
+function getCenterPosition(index: number) {
+  const positions = [
+    [50, 47],
+    [37, 42],
+    [63, 42],
+    [42, 57],
+    [58, 57],
+    [50, 32],
+    [50, 66],
+    [31, 54],
+    [69, 54],
+  ];
+  return positions[index % positions.length] ?? [50, 50];
 }
 
 function splitCompanies(value: string) {
@@ -106,6 +102,73 @@ function replaceActiveCompany(value: string, suggestion: string) {
   return parts.map((part) => part.trim()).filter(Boolean).join(", ");
 }
 
+// Вертикальное «колесо»: активно значение, остановившееся по центру.
+// scroll-snap держит элемент в центре, settle-таймер коммитит выбор.
+function WheelColumn({
+  items,
+  value,
+  onChange,
+  ariaLabel,
+}: Readonly<{
+  items: readonly WheelItem[];
+  value: string;
+  onChange: (key: string) => void;
+  ariaLabel: string;
+}>) {
+  const listRef = useRef<HTMLDivElement | null>(null);
+  const settleTimer = useRef(0);
+  const [centered, setCentered] = useState(value);
+
+  useEffect(() => {
+    setCentered(value);
+    const el = listRef.current;
+    if (!el) return;
+    const index = Math.max(
+      0,
+      items.findIndex((item) => item.key === value),
+    );
+    const target = index * WHEEL_ITEM_HEIGHT;
+    if (Math.abs(el.scrollTop - target) > 1) el.scrollTo({ top: target });
+  }, [value, items]);
+
+  useEffect(() => () => window.clearTimeout(settleTimer.current), []);
+
+  const handleScroll = useCallback(() => {
+    const el = listRef.current;
+    if (!el) return;
+    const index = Math.min(
+      items.length - 1,
+      Math.max(0, Math.round(el.scrollTop / WHEEL_ITEM_HEIGHT)),
+    );
+    const item = items[index];
+    if (item) setCentered(item.key);
+    window.clearTimeout(settleTimer.current);
+    settleTimer.current = window.setTimeout(() => {
+      if (item && item.key !== value) onChange(item.key);
+    }, 120);
+  }, [items, onChange, value]);
+
+  return (
+    <div className="onboarding-wheel" role="listbox" aria-label={ariaLabel}>
+      <div className="onboarding-wheel__band" aria-hidden="true" />
+      <div className="onboarding-wheel__list" ref={listRef} onScroll={handleScroll}>
+        {items.map((item) => (
+          <button
+            key={item.key}
+            type="button"
+            role="option"
+            aria-selected={item.key === value}
+            className={item.key === centered ? "is-active" : undefined}
+            onClick={() => onChange(item.key)}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function OnboardingProfilePage() {
   const router = useRouter();
   const { user, status } = useAuth();
@@ -114,14 +177,12 @@ export default function OnboardingProfilePage() {
 
   const [companySuggestions, setCompanySuggestions] = useState<string[]>([...fallbackCompanies]);
   const [companyInput, setCompanyInput] = useState("");
-  const [targetPosition, setTargetPosition] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
   const [prepGoal, setPrepGoal] = useState("");
   const [grade, setGrade] = useState("");
+  const [referralSource, setReferralSource] = useState("");
   const [step, setStep] = useState<OnboardingStep>("company");
-  const [customCalendarOpen, setCustomCalendarOpen] = useState(false);
-  const [customMonthOffset, setCustomMonthOffset] = useState(3);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
 
@@ -145,15 +206,66 @@ export default function OnboardingProfilePage() {
     (step === "topics" && selectedTopics.length > 0) ||
     step === "goal";
 
-  const months = useMemo(() => {
-    const today = new Date();
-    return [0, 1, 2].map((offset) => new Date(today.getFullYear(), today.getMonth() + offset, 1));
-  }, []);
+  const today = useMemo(() => new Date(), []);
+  const selected = useMemo(
+    () => (selectedDate ? new Date(`${selectedDate}T00:00:00`) : null),
+    [selectedDate],
+  );
 
-  const customMonth = useMemo(() => {
-    const today = new Date();
-    return new Date(today.getFullYear(), today.getMonth() + customMonthOffset, 1);
-  }, [customMonthOffset]);
+  // Колёса всегда показывают какую-то дату в центре, поэтому при входе на шаг
+  // подставляем стартовую (~2 недели), если дата ещё не выбрана.
+  useEffect(() => {
+    if (step !== "date" || selectedDate) return;
+    const start = new Date();
+    start.setDate(start.getDate() + 14);
+    setSelectedDate(toDateInputValue(start));
+  }, [step, selectedDate]);
+
+  const monthItems = useMemo(() => {
+    return Array.from({ length: 12 }, (_, offset) => {
+      const date = new Date(today.getFullYear(), today.getMonth() + offset, 1);
+      const name = new Intl.DateTimeFormat("ru-RU", { month: "long" }).format(date);
+      const label =
+        date.getFullYear() === today.getFullYear() ? name : `${name} ${date.getFullYear()}`;
+      return { key: monthKeyOf(date), label };
+    });
+  }, [today]);
+
+  const dayItems = useMemo(() => {
+    if (!selected) return [];
+    const year = selected.getFullYear();
+    const month = selected.getMonth();
+    const isCurrentMonth = year === today.getFullYear() && month === today.getMonth();
+    const first = isCurrentMonth ? today.getDate() : 1;
+    const last = new Date(year, month + 1, 0).getDate();
+    return Array.from({ length: last - first + 1 }, (_, i) => {
+      const day = first + i;
+      return { key: String(day), label: String(day).padStart(2, "0") };
+    });
+  }, [selected, today]);
+
+  const changeDay = useCallback(
+    (key: string) => {
+      if (!selected) return;
+      setSelectedDate(
+        toDateInputValue(new Date(selected.getFullYear(), selected.getMonth(), Number(key))),
+      );
+    },
+    [selected],
+  );
+
+  const changeMonth = useCallback(
+    (key: string) => {
+      if (!selected) return;
+      const [year, month] = key.split("-").map(Number);
+      const isCurrentMonth = year === today.getFullYear() && month - 1 === today.getMonth();
+      const minDay = isCurrentMonth ? today.getDate() : 1;
+      const lastDay = new Date(year, month, 0).getDate();
+      const day = Math.min(Math.max(selected.getDate(), minDay), lastDay);
+      setSelectedDate(toDateInputValue(new Date(year, month - 1, day)));
+    },
+    [selected, today],
+  );
 
   const suggestions = useMemo(() => {
     const query = activeCompanyQuery(companyInput).toLowerCase();
@@ -197,7 +309,7 @@ export default function OnboardingProfilePage() {
   }, []);
 
   const saveProfile = useCallback(
-    async (topics = selectedTopics) => {
+    async (topics = selectedTopics, referral = referralSource) => {
       setSaving(true);
       setSaveError("");
       try {
@@ -205,17 +317,16 @@ export default function OnboardingProfilePage() {
           Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
         await updateProfile({
           target_company: selectedCompanies[0] ?? "",
-          target_position: targetPosition.trim() || undefined,
           interview_date: selectedDate ? `${selectedDate}T09:00:00Z` : undefined,
           prep_goal: prepGoal.trim() || undefined,
           grade: grade || undefined,
           timezone,
           onboarding_completed: true,
         });
-        // Topics have no backend field — keep them in localStorage.
+        // Topics and referral have no backend field — keep them in localStorage.
         window.localStorage.setItem(
           onboardingStorageKey,
-          JSON.stringify({ topics, savedAt: new Date().toISOString() }),
+          JSON.stringify({ topics, referral: referral || null, savedAt: new Date().toISOString() }),
         );
         setStep("welcome");
       } catch (e) {
@@ -224,7 +335,7 @@ export default function OnboardingProfilePage() {
         setSaving(false);
       }
     },
-    [grade, prepGoal, selectedCompanies, selectedDate, selectedTopics, targetPosition],
+    [grade, prepGoal, referralSource, selectedCompanies, selectedDate, selectedTopics],
   );
 
   const goNext = useCallback(() => {
@@ -261,7 +372,6 @@ export default function OnboardingProfilePage() {
 
     if (step === "date") {
       setSelectedDate("");
-      setCustomCalendarOpen(false);
       setStep("topics");
     }
 
@@ -273,36 +383,10 @@ export default function OnboardingProfilePage() {
     if (step === "goal") {
       setPrepGoal("");
       setGrade("");
-      void saveProfile([]);
+      setReferralSource("");
+      void saveProfile([], "");
     }
   }, [saveProfile, step]);
-
-  const selectDate = useCallback((date: string) => {
-    setSelectedDate(date);
-  }, []);
-
-  const renderCalendarMonth = (month: Date) => (
-    <article className="onboarding-month" key={month.toISOString()}>
-      <h3>{monthLabel(month)}</h3>
-      <div>
-        {buildCalendarMonth(month, copy.date.weekdays).map((day, index) =>
-          day ? (
-            <button
-              className={selectedDate === day.iso ? "selected" : ""}
-              key={day.iso}
-              type="button"
-              onClick={() => selectDate(day.iso)}
-            >
-              <span>{day.weekday}</span>
-              <strong>{day.label}</strong>
-            </button>
-          ) : (
-            <i aria-hidden="true" key={`${month.toISOString()}-${index}`} />
-          ),
-        )}
-      </div>
-    </article>
-  );
 
   // While auth status is being determined, render nothing.
   if (status === "loading") {
@@ -334,10 +418,6 @@ export default function OnboardingProfilePage() {
               <div>
                 <dt>{summary.companies}</dt>
                 <dd>{selectedCompanies.length > 0 ? selectedCompanies.join(", ") : summary.empty}</dd>
-              </div>
-              <div>
-                <dt>{onboardingApiCopy.summaryPosition}</dt>
-                <dd>{targetPosition.trim() || summary.empty}</dd>
               </div>
               <div>
                 <dt>{summary.date}</dt>
@@ -445,64 +525,58 @@ export default function OnboardingProfilePage() {
                   ))}
                 </div>
               ) : null}
-              <label className="onboarding-input">
-                {onboardingApiCopy.positionLabel}
-                <input
-                  autoComplete="organization-title"
-                  placeholder={onboardingApiCopy.positionPlaceholder}
-                  value={targetPosition}
-                  onChange={(event) => setTargetPosition(event.target.value)}
-                />
-              </label>
             </div>
           ) : null}
 
           {step === "date" ? (
             <div className="onboarding-main">
-              <div className="onboarding-calendar" aria-label={copy.date.calendarLabel}>
-                <div className="onboarding-months">{months.map((month) => renderCalendarMonth(month))}</div>
+              <div className="onboarding-wheels" role="group" aria-label={copy.date.wheelsLabel}>
+                <WheelColumn
+                  items={dayItems}
+                  value={selected ? String(selected.getDate()) : ""}
+                  onChange={changeDay}
+                  ariaLabel={copy.date.dayAria}
+                />
+                <WheelColumn
+                  items={monthItems}
+                  value={selected ? monthKeyOf(selected) : ""}
+                  onChange={changeMonth}
+                  ariaLabel={copy.date.monthAria}
+                />
               </div>
-              <div className="onboarding-custom-date">
-                <button
-                  className={customCalendarOpen ? "active" : ""}
-                  type="button"
-                  onClick={() => setCustomCalendarOpen((value) => !value)}
-                >
-                  {copy.date.customLabel}
-                </button>
-                {customCalendarOpen ? (
-                  <div className="onboarding-custom-calendar">
-                    <div className="onboarding-custom-calendar__head">
-                      <button type="button" onClick={() => setCustomMonthOffset((value) => Math.max(3, value - 1))}>
-                        ←
-                      </button>
-                      <span>{monthLabel(customMonth)}</span>
-                      <button type="button" onClick={() => setCustomMonthOffset((value) => value + 1)}>
-                        →
-                      </button>
-                    </div>
-                    {renderCalendarMonth(customMonth)}
-                  </div>
-                ) : null}
-              </div>
+              <p className="onboarding-wheels-result">
+                {copy.date.resultLabel}: <em>{selectedDate ? fullDateLabel(selectedDate) : "—"}</em>
+              </p>
             </div>
           ) : null}
 
           {step === "topics" ? (
             <div className="onboarding-main">
-              <div className="onboarding-topics-grid" role="group" aria-label={copy.topics.fieldLabel}>
+              <div className="onboarding-topic-field" role="group" aria-label={copy.topics.fieldLabel}>
+                <div className="onboarding-topic-center" aria-hidden="true">
+                  <span>{selectedTopics.length > 0 ? copy.topics.selected : copy.topics.empty}</span>
+                </div>
                 {algorithmTopics.map((topic) => {
-                  const selected = selectedTopics.includes(topic.id);
+                  const selectedIndex = selectedTopics.indexOf(topic.id);
+                  const isSelected = selectedIndex >= 0;
+                  const [centerX, centerY] = isSelected ? getCenterPosition(selectedIndex) : [50, 50];
 
                   return (
                     <button
-                      aria-pressed={selected}
-                      className={selected ? "selected" : ""}
+                      aria-pressed={isSelected}
+                      className={isSelected ? "selected" : ""}
                       key={topic.id}
+                      style={
+                        {
+                          "--topic-x": `${topic.x}%`,
+                          "--topic-y": `${topic.y}%`,
+                          "--topic-center-x": `${centerX}%`,
+                          "--topic-center-y": `${centerY}%`,
+                        } as CSSProperties
+                      }
                       type="button"
                       onClick={() => toggleTopic(topic.id)}
                     >
-                      <i aria-hidden="true" />
                       {topic.label}
                     </button>
                   );
@@ -531,6 +605,17 @@ export default function OnboardingProfilePage() {
                 <select value={grade} onChange={(event) => setGrade(event.target.value)}>
                   <option value="">—</option>
                   {onboardingApiCopy.goal.grades.map((item) => (
+                    <option key={item} value={item}>
+                      {item}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="onboarding-input">
+                {onboardingApiCopy.goal.referralLabel}
+                <select value={referralSource} onChange={(event) => setReferralSource(event.target.value)}>
+                  <option value="">—</option>
+                  {onboardingApiCopy.goal.referralOptions.map((item) => (
                     <option key={item} value={item}>
                       {item}
                     </option>

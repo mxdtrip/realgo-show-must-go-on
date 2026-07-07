@@ -4574,212 +4574,164 @@ a.cabinet-panel__meta:hover {
   color: var(--text);
 }
 
-/* ---------- step 02: date ---------- */
+/* ---------- step 02: date wheels ---------- */
 
-.onboarding-calendar {
-  min-width: 0;
+.onboarding-wheels {
+  --wheel-item: 44px;
   display: grid;
-  gap: 12px;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  gap: 10px;
+  max-width: 420px;
 }
 
-.onboarding-months {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.onboarding-month {
-  min-width: 0;
-  display: grid;
-  align-content: start;
-  gap: 10px;
+.onboarding-wheel {
+  position: relative;
+  height: calc(var(--wheel-item) * 5);
+  overflow: hidden;
   border: 1px solid var(--border);
   border-radius: 10px;
-  padding: 12px;
   background: rgba(255, 255, 255, 0.02);
 }
 
-.onboarding-month h3 {
+.onboarding-wheel__band {
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  top: 50%;
+  height: var(--wheel-item);
+  transform: translateY(-50%);
+  border: 1px solid var(--accent-line);
+  border-radius: 8px;
+  background: var(--accent-soft);
+  pointer-events: none;
+}
+
+.onboarding-wheel__list {
+  height: 100%;
+  overflow-y: auto;
+  padding: calc(var(--wheel-item) * 2) 0;
+  scroll-snap-type: y mandatory;
+  scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 22%, #000 78%, transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 22%, #000 78%, transparent);
+}
+
+.onboarding-wheel__list::-webkit-scrollbar {
+  display: none;
+}
+
+.onboarding-wheel__list button {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: var(--wheel-item);
+  scroll-snap-align: center;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--text-faint);
+  font-family: var(--font-stack-mono);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  text-transform: lowercase;
+  transition: color 0.16s ease;
+}
+
+.onboarding-wheel__list button:hover {
+  color: var(--text-dim);
+}
+
+.onboarding-wheel__list button.is-active {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.onboarding-wheels-result {
   margin: 0;
+  font-family: var(--font-stack-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.onboarding-wheels-result em {
+  font-style: normal;
+  color: var(--accent-bright);
+}
+
+/* ---------- step 03: topics field ---------- */
+
+.onboarding-topic-field {
+  position: relative;
+  height: clamp(300px, 42dvh, 400px);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background:
+    radial-gradient(circle at 50% 50%, var(--accent-soft), transparent 34%),
+    rgba(255, 255, 255, 0.02);
+}
+
+.onboarding-topic-center {
+  position: absolute;
+  inset: 26% 22%;
+  display: grid;
+  place-items: center;
+  border: 1px dashed var(--border-strong);
+  border-radius: 12px;
+  background: rgba(1, 4, 9, 0.35);
+  pointer-events: none;
+}
+
+.onboarding-topic-center span {
+  max-width: 18ch;
+  color: var(--text-faint);
+  font-family: var(--font-stack-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  line-height: 1.45;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.onboarding-topic-field button {
+  position: absolute;
+  left: var(--topic-x);
+  top: var(--topic-y);
+  z-index: 2;
+  min-height: 34px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 7px 11px;
+  background: rgba(13, 17, 23, 0.82);
   color: var(--text-dim);
   font-family: var(--font-stack-mono);
   font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.onboarding-month > div {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 3px;
-}
-
-.onboarding-month button,
-.onboarding-month i {
-  aspect-ratio: 1;
-  min-width: 0;
-  border-radius: 6px;
-}
-
-.onboarding-month button {
-  display: grid;
-  place-items: center;
-  gap: 1px;
-  border: 1px solid transparent;
-  padding: 0;
-  background: rgba(255, 255, 255, 0.03);
-  color: var(--text-dim);
-  font-family: var(--font-stack-mono);
-  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  transform: translate(-50%, -50%);
   transition:
+    left 0.5s cubic-bezier(0.2, 0.72, 0.22, 1),
+    top 0.5s cubic-bezier(0.2, 0.72, 0.22, 1),
     border-color 0.16s ease,
     background 0.16s ease,
-    color 0.16s ease;
+    color 0.16s ease,
+    transform 0.5s cubic-bezier(0.2, 0.72, 0.22, 1);
 }
 
-.onboarding-month button span {
-  font-size: 8px;
-  letter-spacing: 0.05em;
-  line-height: 1;
-  color: var(--text-faint);
-  text-transform: uppercase;
-}
-
-.onboarding-month button strong {
-  min-width: 2ch;
-  font-size: 12px;
-  line-height: 1;
-  font-weight: 600;
-  text-align: center;
-}
-
-.onboarding-month button:hover {
+.onboarding-topic-field button:hover {
   border-color: var(--border-strong);
   color: var(--text);
 }
 
-.onboarding-month button.selected {
-  border-color: var(--accent-bright);
-  background: var(--accent);
-  color: #ffffff;
-}
-
-.onboarding-month button.selected span {
-  color: rgba(255, 255, 255, 0.75);
-}
-
-.onboarding-custom-date {
-  display: grid;
-  gap: 12px;
-}
-
-.onboarding-custom-date > button {
-  width: fit-content;
-  min-height: 34px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 7px 12px;
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--text-dim);
-  font-family: var(--font-stack-mono);
-  font-size: 12px;
-  transition:
-    border-color 0.16s ease,
-    background 0.16s ease,
-    color 0.16s ease;
-}
-
-.onboarding-custom-date > button.active,
-.onboarding-custom-date > button:hover {
+.onboarding-topic-field button.selected {
+  left: var(--topic-center-x);
+  top: var(--topic-center-y);
   border-color: var(--accent-line);
   background: var(--accent-soft);
   color: var(--accent-bright);
-}
-
-.onboarding-custom-calendar {
-  display: grid;
-  gap: 10px;
-  max-width: 340px;
-  animation: onboarding-step-in 0.28s ease both;
-}
-
-.onboarding-custom-calendar__head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  color: var(--text-dim);
-  font-family: var(--font-stack-mono);
-  font-size: 12px;
-  text-transform: capitalize;
-}
-
-.onboarding-custom-calendar__head button {
-  width: 30px;
-  height: 30px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--text);
-  transition: border-color 0.16s ease;
-}
-
-.onboarding-custom-calendar__head button:hover {
-  border-color: var(--border-strong);
-}
-
-/* ---------- step 03: topics ---------- */
-
-.onboarding-topics-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-content: start;
-}
-
-.onboarding-topics-grid button {
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
-  min-height: 36px;
-  padding: 8px 13px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.03);
-  color: var(--text-dim);
-  font-family: var(--font-stack-mono);
-  font-size: 12px;
-  transition:
-    border-color 0.16s ease,
-    background 0.16s ease,
-    color 0.16s ease;
-}
-
-.onboarding-topics-grid button i {
-  width: 10px;
-  height: 10px;
-  border: 1px solid var(--border-strong);
-  border-radius: 3px;
-  transition:
-    border-color 0.16s ease,
-    background 0.16s ease;
-}
-
-.onboarding-topics-grid button:hover {
-  border-color: var(--border-strong);
-  color: var(--text);
-}
-
-.onboarding-topics-grid button.selected {
-  border-color: var(--accent-line);
-  background: var(--accent-soft);
-  color: var(--accent-bright);
-}
-
-.onboarding-topics-grid button.selected i {
-  border-color: var(--accent-bright);
-  background: var(--accent);
+  transform: translate(-50%, -50%) scale(1.04);
 }
 
 .onboarding-topics-count {
@@ -4958,8 +4910,7 @@ a.cabinet-panel__meta:hover {
 
   .section-grid,
   .pricing-grid,
-  .onboarding-body,
-  .onboarding-months {
+  .onboarding-body {
     grid-template-columns: 1fr;
   }
 
@@ -5292,6 +5243,23 @@ a.cabinet-panel__meta:hover {
   .onboarding-actions button {
     width: 100%;
   }
+
+  .onboarding-topic-field {
+    height: 420px;
+  }
+
+  .onboarding-topic-center {
+    inset: 32% 10%;
+  }
+
+  .onboarding-topic-field button {
+    max-width: min(210px, 46vw);
+    white-space: normal;
+  }
+
+  .onboarding-wheels {
+    max-width: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -5311,6 +5279,7 @@ a.cabinet-panel__meta:hover {
   .onboarding-window,
   .onboarding-body,
   .onboarding-welcome,
+  .onboarding-topic-field button,
   .focus-rating__button {
     animation: none;
     transition: none;
@@ -7220,6 +7189,12 @@ a.cabinet-panel__meta:hover {
   color: var(--accent-bright);
 }
 
+.atlas-view-toggle button:disabled {
+  color: var(--text-faint);
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .atlas-view-toggle button:focus-visible {
   outline: 2px solid var(--accent-line);
   outline-offset: -2px;
@@ -7865,38 +7840,6 @@ a.cabinet-panel__meta:hover {
 
 .atlas-difficulty {
   text-transform: lowercase;
-}
-
-.atlas-companies {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: grid;
-  gap: 12px;
-}
-
-.atlas-companies li {
-  display: grid;
-  gap: 6px;
-}
-
-.atlas-companies li + li {
-  padding-top: 12px;
-  border-top: 1px solid var(--border);
-}
-
-.atlas-companies strong {
-  font-size: 13.5px;
-}
-
-.atlas-companies__meta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 14px;
-  font-family: var(--font-stack-mono);
-  font-size: 11px;
-  color: var(--text-dim);
 }
 
 .atlas-company-groups {
