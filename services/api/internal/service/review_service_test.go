@@ -244,5 +244,10 @@ func (m *mockReviewRepository) UpdateProgressConfidence(ctx context.Context, use
 	return m.err
 }
 
+func (m *mockReviewRepository) EnsureScheduleForProblem(ctx context.Context, userID, problemID int64) (int64, error) {
+	m.called = true
+	return 1, m.err
+}
+
 // Убеждаемся, что mock реализует интерфейс
 var _ repo.ReviewRepository = (*mockReviewRepository)(nil)

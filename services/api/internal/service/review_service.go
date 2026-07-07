@@ -25,6 +25,10 @@ var (
 type ReviewService interface {
 	GetQueue(ctx context.Context, userID int64, status string, cursor entity.ReviewQueueCursor, limit int32) (response.QueueResponse, error)
 	RateReview(ctx context.Context, reviewID, userID int64, rating string, reviewedAt time.Time) (response.RateReviewData, error)
+	// RateByProblemID оценивает задачу в FSRS по problem_id (без expose schedule
+	// id): гарантирует наличие расписания и делегирует в RateReview. Используется
+	// викториной, у которой есть только problem_id.
+	RateByProblemID(ctx context.Context, userID, problemID int64, rating string, reviewedAt time.Time) error
 	GetStats(ctx context.Context, userID int64) (response.StatsResponse, error)
 }
 
@@ -131,6 +135,20 @@ func (s *reviewService) RateReview(ctx context.Context, reviewID, userID int64, 
 		NextReviewAt: next.NextReviewAt,
 		Status:       "completed",
 	}, nil
+}
+
+// RateByProblemID оценивает задачу в FSRS, отправленную на оценку по problem_id
+// (а не по schedule id): гарантирует наличие расписания и переиспользует
+// RateReview, который прогоняет FSRS, сохраняет результат и обновляет confidence.
+func (s *reviewService) RateByProblemID(ctx context.Context, userID, problemID int64, rating string, reviewedAt time.Time) error {
+	scheduleID, err := s.repo.EnsureScheduleForProblem(ctx, userID, problemID)
+	if err != nil {
+		return fmt.Errorf("reviews: RateByProblemID: %w", err)
+	}
+	if _, err := s.RateReview(ctx, scheduleID, userID, rating, reviewedAt); err != nil {
+		return fmt.Errorf("reviews: RateByProblemID: %w", err)
+	}
+	return nil
 }
 
 func (s *reviewService) GetStats(ctx context.Context, userID int64) (response.StatsResponse, error) {

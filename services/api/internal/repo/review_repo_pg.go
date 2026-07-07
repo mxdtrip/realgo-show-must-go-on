@@ -142,6 +142,27 @@ func (r *pgReviewRepository) Stats(ctx context.Context, userID int64) (entity.St
 	}, nil
 }
 
+// EnsureScheduleForProblem создаёт расписание задачи, если его ещё нет
+// (CreateProblemScheduleIfAbsent идемпотентен благодаря ON CONFLICT DO NOTHING),
+// и возвращает id расписания. Используется сервисом викторины, чтобы оценить
+// задачу в FSRS по problem_id (у quiz есть только problem_id, не schedule id).
+func (r *pgReviewRepository) EnsureScheduleForProblem(ctx context.Context, userID, problemID int64) (int64, error) {
+	if err := r.q.CreateProblemScheduleIfAbsent(ctx, db.CreateProblemScheduleIfAbsentParams{
+		UserID:    userID,
+		ProblemID: problemID,
+	}); err != nil {
+		return 0, fmt.Errorf("reviews: ensure schedule create: %w", err)
+	}
+	id, err := r.q.GetReviewScheduleIDByProblem(ctx, db.GetReviewScheduleIDByProblemParams{
+		UserID:    userID,
+		ProblemID: pgtype.Int8{Int64: problemID, Valid: true},
+	})
+	if err != nil {
+		return 0, fmt.Errorf("reviews: ensure schedule lookup: %w", err)
+	}
+	return id, nil
+}
+
 // UpdateProgressConfidence обновляет confidence по задаче.
 func (r *pgReviewRepository) UpdateProgressConfidence(ctx context.Context, userID, problemID int64, rating string) error {
 	delta := confidenceDelta(rating)

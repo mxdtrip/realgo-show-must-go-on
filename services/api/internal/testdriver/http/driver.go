@@ -43,7 +43,7 @@ var (
 	_ specifications.CardsProvider   = (*Driver)(nil)
 	_ specifications.QuizProvider    = (*Driver)(nil)
 	_ specifications.QuizSeeder      = (*Driver)(nil)
-	_ specifications.ConfidenceProbe = (*Driver)(nil)
+	_ specifications.QuizProbe       = (*Driver)(nil)
 )
 
 const testJWTSecret = "acceptance-test-jwt-secret-32-bytes"
@@ -235,7 +235,7 @@ func (d *Driver) CreateQuizQuestion(t *testing.T, userID, problemID int64, quest
 	return id
 }
 
-// --- ConfidenceProbe (test-only read) ---
+// --- QuizProbe (test-only read) ---
 
 // Confidence возвращает confidence пользователя по задаче или nil, если строки
 // прогресса нет либо confidence IS NULL.
@@ -256,6 +256,28 @@ func (d *Driver) Confidence(t *testing.T, userID, problemID int64) *int {
 		return nil
 	}
 	v := int(conf.Int32)
+	return &v
+}
+
+// NextReviewAt возвращает запланированную дату повторения задачи или nil,
+// если расписания (review_schedules) для задачи нет.
+func (d *Driver) NextReviewAt(t *testing.T, userID, problemID int64) *time.Time {
+	t.Helper()
+	var due pgtype.Timestamptz
+	err := d.pg.Pool.QueryRow(context.Background(),
+		`SELECT next_review_at FROM review_schedules WHERE user_id = $1 AND problem_id = $2`,
+		userID, problemID,
+	).Scan(&due)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil
+	}
+	if err != nil {
+		t.Fatalf("driver: read next_review_at: %v", err)
+	}
+	if !due.Valid {
+		return nil
+	}
+	v := due.Time.UTC()
 	return &v
 }
 

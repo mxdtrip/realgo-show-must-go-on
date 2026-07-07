@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 )
 
 // Эти тесты — белым ящиком (package quiz), чтобы фейки могли реализовать
-// непубличные consumer-side интерфейсы Service (repository, ConfidenceUpdater)
+// непубличные consumer-side интерфейсы Service (repository, ProblemRater)
 // и работать с непубличными типами (questionDetail, recordAnswerParams).
 
 // --- fakes ---
@@ -41,19 +42,19 @@ func (f *fakeRepo) RecordAnswer(_ context.Context, p recordAnswerParams) (int64,
 	return f.rows, f.recordErr
 }
 
-type fakeConfidence struct {
-	calls []fakeConfidenceCall
+type fakeRater struct {
+	calls []fakeRaterCall
 	err   error
 }
 
-type fakeConfidenceCall struct {
+type fakeRaterCall struct {
 	UserID    int64
 	ProblemID int64
 	Rating    string
 }
 
-func (f *fakeConfidence) UpdateProgressConfidence(_ context.Context, userID, problemID int64, rating string) error {
-	f.calls = append(f.calls, fakeConfidenceCall{UserID: userID, ProblemID: problemID, Rating: rating})
+func (f *fakeRater) RateByProblemID(_ context.Context, userID, problemID int64, rating string, _ time.Time) error {
+	f.calls = append(f.calls, fakeRaterCall{UserID: userID, ProblemID: problemID, Rating: rating})
 	return f.err
 }
 
@@ -61,14 +62,14 @@ func int64Ptr(v int64) *int64 { return &v }
 
 // --- tests ---
 
-// 1. ProblemID задан, верный ответ → Correct=true, confidence обновлён как "easy".
-func TestRecordAnswer_CorrectAnswer_UpdatesConfidenceEasy(t *testing.T) {
+// 1. ProblemID задан, верный ответ → Correct=true, FSRS-рейтинг "normal" (fsrs.Good).
+func TestRecordAnswer_CorrectAnswer_RatesNormal(t *testing.T) {
 	repo := &fakeRepo{
 		question: questionDetail{CorrectOption: 1, ProblemID: int64Ptr(42)},
 		rows:     1,
 	}
-	conf := &fakeConfidence{}
-	svc := NewService(repo, conf)
+	rater := &fakeRater{}
+	svc := NewService(repo, rater)
 
 	res, err := svc.RecordAnswer(context.Background(), 7, 100, 1)
 	if err != nil {
@@ -80,28 +81,28 @@ func TestRecordAnswer_CorrectAnswer_UpdatesConfidenceEasy(t *testing.T) {
 	if res.CorrectOption != 1 {
 		t.Fatalf("expected CorrectOption=1, got %d", res.CorrectOption)
 	}
-	if len(conf.calls) != 1 {
-		t.Fatalf("expected 1 confidence call, got %d", len(conf.calls))
+	if len(rater.calls) != 1 {
+		t.Fatalf("expected 1 rater call, got %d", len(rater.calls))
 	}
-	if conf.calls[0].Rating != "easy" {
-		t.Fatalf("expected rating easy, got %q", conf.calls[0].Rating)
+	if rater.calls[0].Rating != "normal" {
+		t.Fatalf("expected rating normal (fsrs.Good), got %q", rater.calls[0].Rating)
 	}
-	if conf.calls[0].ProblemID != 42 || conf.calls[0].UserID != 7 {
-		t.Fatalf("unexpected confidence call: %+v", conf.calls[0])
+	if rater.calls[0].ProblemID != 42 || rater.calls[0].UserID != 7 {
+		t.Fatalf("unexpected rater call: %+v", rater.calls[0])
 	}
 	if repo.lastRecord.WasCorrect != true {
 		t.Fatal("expected answer recorded as correct")
 	}
 }
 
-// 2. ProblemID задан, неверный ответ → Correct=false, confidence обновлён как "hard".
-func TestRecordAnswer_IncorrectAnswer_UpdatesConfidenceHard(t *testing.T) {
+// 2. ProblemID задан, неверный ответ → Correct=false, FSRS-рейтинг "hard".
+func TestRecordAnswer_IncorrectAnswer_RatesHard(t *testing.T) {
 	repo := &fakeRepo{
 		question: questionDetail{CorrectOption: 1, ProblemID: int64Ptr(42)},
 		rows:     1,
 	}
-	conf := &fakeConfidence{}
-	svc := NewService(repo, conf)
+	rater := &fakeRater{}
+	svc := NewService(repo, rater)
 
 	res, err := svc.RecordAnswer(context.Background(), 7, 100, 0) // option 0 ≠ correct 1
 	if err != nil {
@@ -110,39 +111,39 @@ func TestRecordAnswer_IncorrectAnswer_UpdatesConfidenceHard(t *testing.T) {
 	if res.Correct {
 		t.Fatal("expected Correct=false")
 	}
-	if len(conf.calls) != 1 || conf.calls[0].Rating != "hard" {
-		t.Fatalf("expected 1 hard confidence call, got %+v", conf.calls)
+	if len(rater.calls) != 1 || rater.calls[0].Rating != "hard" {
+		t.Fatalf("expected 1 hard rater call, got %+v", rater.calls)
 	}
 	if repo.lastRecord.WasCorrect != false {
 		t.Fatal("expected answer recorded as incorrect")
 	}
 }
 
-// 3. ProblemID=nil (вопрос по pattern) → confidence не обновляется.
-func TestRecordAnswer_PatternOnly_SkipsConfidence(t *testing.T) {
+// 3. ProblemID=nil (вопрос по pattern) → FSRS не вызывается.
+func TestRecordAnswer_PatternOnly_SkipsRating(t *testing.T) {
 	repo := &fakeRepo{
 		question: questionDetail{CorrectOption: 1, ProblemID: nil}, // pattern-only
 		rows:     1,
 	}
-	conf := &fakeConfidence{}
-	svc := NewService(repo, conf)
+	rater := &fakeRater{}
+	svc := NewService(repo, rater)
 
 	if _, err := svc.RecordAnswer(context.Background(), 7, 100, 1); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if len(conf.calls) != 0 {
-		t.Fatalf("expected no confidence calls for pattern-only question, got %d", len(conf.calls))
+	if len(rater.calls) != 0 {
+		t.Fatalf("expected no rater calls for pattern-only question, got %d", len(rater.calls))
 	}
 }
 
-// 4. Вопрос не найден → ErrQuestionNotFound; ответ и confidence не вызываются.
+// 4. Вопрос не найден → ErrQuestionNotFound; ответ и FSRS не вызываются.
 func TestRecordAnswer_QuestionNotFound(t *testing.T) {
 	repo := &fakeRepo{
 		getErr: errNotFound,
 		rows:   1,
 	}
-	conf := &fakeConfidence{}
-	svc := NewService(repo, conf)
+	rater := &fakeRater{}
+	svc := NewService(repo, rater)
 
 	_, err := svc.RecordAnswer(context.Background(), 7, 100, 1)
 	if !errors.Is(err, ErrQuestionNotFound) {
@@ -151,47 +152,47 @@ func TestRecordAnswer_QuestionNotFound(t *testing.T) {
 	if repo.recordCalls != 0 {
 		t.Fatalf("expected RecordAnswer not called, got %d calls", repo.recordCalls)
 	}
-	if len(conf.calls) != 0 {
-		t.Fatalf("expected no confidence calls, got %d", len(conf.calls))
+	if len(rater.calls) != 0 {
+		t.Fatalf("expected no rater calls, got %d", len(rater.calls))
 	}
 }
 
-// 5. Повторный ответ (rows=0) → ErrAlreadyAnswered; confidence не вызывается.
+// 5. Повторный ответ (rows=0) → ErrAlreadyAnswered; FSRS не вызывается.
 func TestRecordAnswer_AlreadyAnswered(t *testing.T) {
 	repo := &fakeRepo{
 		question: questionDetail{CorrectOption: 1, ProblemID: int64Ptr(42)},
 		rows:     0, // анти-чит: пара уже существует
 	}
-	conf := &fakeConfidence{}
-	svc := NewService(repo, conf)
+	rater := &fakeRater{}
+	svc := NewService(repo, rater)
 
 	_, err := svc.RecordAnswer(context.Background(), 7, 100, 1)
 	if !errors.Is(err, ErrAlreadyAnswered) {
 		t.Fatalf("expected ErrAlreadyAnswered, got %v", err)
 	}
-	if len(conf.calls) != 0 {
-		t.Fatalf("expected no confidence calls on replay, got %d", len(conf.calls))
+	if len(rater.calls) != 0 {
+		t.Fatalf("expected no rater calls on replay, got %d", len(rater.calls))
 	}
 }
 
-// 6. Confidence-обновление упало — это non-fatal: ответ всё равно успешен.
-func TestRecordAnswer_ConfidenceErrorIsNonFatal(t *testing.T) {
+// 6. FSRS-рейтинг упал — это non-fatal: ответ всё равно успешен.
+func TestRecordAnswer_RatingErrorIsNonFatal(t *testing.T) {
 	repo := &fakeRepo{
 		question: questionDetail{CorrectOption: 1, ProblemID: int64Ptr(42)},
 		rows:     1,
 	}
-	conf := &fakeConfidence{err: errors.New("db down")}
-	svc := NewService(repo, conf)
+	rater := &fakeRater{err: errors.New("fsrs down")}
+	svc := NewService(repo, rater)
 
 	res, err := svc.RecordAnswer(context.Background(), 7, 100, 1)
 	if err != nil {
-		t.Fatalf("confidence failure must be non-fatal, got error: %v", err)
+		t.Fatalf("rating failure must be non-fatal, got error: %v", err)
 	}
 	if !res.Correct {
-		t.Fatal("expected Correct=true despite confidence error")
+		t.Fatal("expected Correct=true despite rating error")
 	}
-	if len(conf.calls) != 1 {
-		t.Fatalf("expected confidence to be attempted, got %d calls", len(conf.calls))
+	if len(rater.calls) != 1 {
+		t.Fatalf("expected rater to be attempted, got %d calls", len(rater.calls))
 	}
 }
 
@@ -202,8 +203,8 @@ func TestRecordAnswer_CorrectnessBoundary(t *testing.T) {
 		question: questionDetail{CorrectOption: correctOption, ProblemID: int64Ptr(42)},
 		rows:     1,
 	}
-	conf := &fakeConfidence{}
-	svc := NewService(repo, conf)
+	rater := &fakeRater{}
+	svc := NewService(repo, rater)
 
 	// Ровно правильный индекс.
 	res, err := svc.RecordAnswer(context.Background(), 7, 100, correctOption)

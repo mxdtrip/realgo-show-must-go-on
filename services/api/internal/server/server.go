@@ -76,7 +76,7 @@ func New(deps Deps) http.Handler {
 	dashboardHandler := dashboard.NewHandler(dashboard.NewService(dashboard.NewRepository(deps.Postgres.Pool), patterns.NewRepository(deps.Postgres.Pool)))
 	cardsHandler := cards.NewHandler(cardsSvc)
 	quizRepo := quiz.NewRepository(deps.Postgres.Pool)
-	quizSvc := quiz.NewService(quizRepo, reviewRepo) // reviewRepo удовлетворяет quiz.ConfidenceUpdater
+	quizSvc := quiz.NewService(quizRepo, reviewService) // reviewService удовлетворяет quiz.ProblemRater (RateByProblemID)
 	quizHandler := quiz.NewHandler(quizSvc)
 	aiHandler := ai.NewHandler(ai.NewRepository(deps.Postgres.Pool))
 

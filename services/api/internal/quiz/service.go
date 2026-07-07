@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"time"
 )
 
 var (
@@ -23,12 +24,13 @@ type repository interface {
 	RecordAnswer(ctx context.Context, p recordAnswerParams) (int64, error)
 }
 
-// ConfidenceUpdater обновляет user_problem_progress.confidence по рейтингу.
-// Удовлетворяется структурно repo.ReviewRepository (метод UpdateProgressConfidence),
-// поэтому формулы confidence (LEAST/GREATEST/COALESCE NULL→50) и маппинг
-// rating→delta не дублируются внутри викторины.
-type ConfidenceUpdater interface {
-	UpdateProgressConfidence(ctx context.Context, userID, problemID int64, rating string) error
+// ProblemRater оценивает задачу в FSRS по problem_id. Удовлетворяется
+// структурно service.ReviewService (метод RateByProblemID): FSRS-движок,
+// сохранение расписания и обновление confidence инкапсулированы в review,
+// поэтому викторина не дублирует ни того, ни другого (и не делает двойной
+// confidence-delta — см. RateReview, который сам зовёт UpdateProgressConfidence).
+type ProblemRater interface {
+	RateByProblemID(ctx context.Context, userID, problemID int64, rating string, reviewedAt time.Time) error
 }
 
 type recordAnswerParams struct {
@@ -40,12 +42,12 @@ type recordAnswerParams struct {
 
 // Service — бизнес-логика викторины.
 type Service struct {
-	repo       repository
-	confidence ConfidenceUpdater
+	repo  repository
+	rater ProblemRater
 }
 
-func NewService(repo repository, confidence ConfidenceUpdater) *Service {
-	return &Service{repo: repo, confidence: confidence}
+func NewService(repo repository, rater ProblemRater) *Service {
+	return &Service{repo: repo, rater: rater}
 }
 
 // ListSession отдаёт вопросы сессии (делегирует репозиторию).
@@ -58,8 +60,8 @@ func (s *Service) ListSession(ctx context.Context, userID int64, limit int32) ([
 }
 
 // RecordAnswer проверяет корректность ответа, фиксирует его (анти-чит), затем
-// обновляет confidence задачи. FSRS-планирование по problem_id пока отсутствует
-// (см. TODO «Этап 4»).
+// засчитывает ответ в spaced-repetition: задача оценивается в FSRS через
+// review-сервис. Верный ответ → "normal" (fsrs.Good), неверный → "hard".
 func (s *Service) RecordAnswer(ctx context.Context, userID, questionID int64, option int) (answerResult, error) {
 	q, err := s.repo.GetQuizQuestion(ctx, questionID, userID)
 	if errors.Is(err, errNotFound) {
@@ -85,27 +87,25 @@ func (s *Service) RecordAnswer(ctx context.Context, userID, questionID int64, op
 		return answerResult{}, ErrAlreadyAnswered
 	}
 
-	// Confidence обновляем только для вопросов, привязанных к problem. Не атомарно
-	// с insert'ом ответа — сознательно, по образцу ReviewService.RateReview, где
-	// confidence-обновление после транзакционного SaveReview тоже non-fatal.
+	// Засчитываем ответ в FSRS только для вопросов, привязанных к problem.
+	// Non-fatal: неудача review-рейтинга не должна обнулять зафиксированный
+	// ответ (по образцу ReviewService.RateReview, где confidence-обновление
+	// после SaveReview тоже non-fatal). Confidence обновляется внутри RateReview,
+	// поэтому отдельного вызова здесь нет — иначе delta применилась бы дважды.
 	if q.ProblemID != nil {
-		// normal→0 (не двигает confidence), поэтому используем easy/hard.
 		rating := "hard"
 		if correct {
-			rating = "easy"
+			rating = "normal" // fsrs.Good
 		}
-		if err := s.confidence.UpdateProgressConfidence(ctx, userID, *q.ProblemID, rating); err != nil {
-			slog.Warn("quiz: confidence update failed (non-fatal)",
+		if err := s.rater.RateByProblemID(ctx, userID, *q.ProblemID, rating, time.Now().UTC()); err != nil {
+			slog.Warn("quiz: FSRS rate failed (non-fatal)",
 				slog.Int64("user_id", userID),
 				slog.Int64("problem_id", *q.ProblemID),
+				slog.String("rating", rating),
 				slog.Any("err", err),
 			)
 		}
 	}
-
-	// TODO(Этап 4): заменить заглушку на FSRS-планирование по problem_id
-	//   (RateByProblemID: найти/создать review_schedule → FSRS). Сейчас
-	//   намеренно отсутствует — инициализация FSRS по рейтингу не реализована.
 
 	return answerResult{
 		Correct:       correct,

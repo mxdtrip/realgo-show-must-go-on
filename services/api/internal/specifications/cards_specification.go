@@ -7,6 +7,7 @@ package specifications
 
 import (
 	"testing"
+	"time"
 )
 
 // CardInfo содержит минимум информации о карточке, достаточный
@@ -69,11 +70,16 @@ type QuizSeeder interface {
 	CreateQuizQuestion(t *testing.T, userID, problemID int64, question string, options []string, correctOption int, explanation string) int64
 }
 
-// ConfidenceProbe — test-only read-helper: API read-path для confidence
-// отсутствует (GetUserProblem его не возвращает), поэтому состояние читается
-// напрямую. Когда «Этап 4» откроет confidence через API — заменить на HTTP-read.
-type ConfidenceProbe interface {
+// QuizProbe — test-only read-helper: читает состояние задачи напрямую из БД,
+// т.к. API read-path для confidence и FSRS-расписания отсутствует. Когда
+// «Этап 4» откроет их через dashboard/GET /me/problems/{id} — заменить на HTTP-read.
+type QuizProbe interface {
+	// Confidence возвращает confidence пользователя по задаче или nil,
+	// если строки прогресса нет либо confidence IS NULL.
 	Confidence(t *testing.T, userID, problemID int64) *int
+	// NextReviewAt возвращает запланированную дату ближайшего повторения задачи
+	// или nil, если расписания (review_schedules) для задачи нет.
+	NextReviewAt(t *testing.T, userID, problemID int64) *time.Time
 }
 
 // CardsProvider расширяет HarnessProvider: помимо Register, драйвер

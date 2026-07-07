@@ -52,6 +52,12 @@ SELECT id, user_id, problem_id, pattern_id, card_id, next_review_at,
 FROM review_schedules
 WHERE id = $1 AND user_id = $2;
 
+-- name: GetReviewScheduleIDByProblem :one
+-- Возвращает id расписания задачи для пользователя. Вызывается после
+-- CreateProblemScheduleIfAbsent, поэтому строка гарантированно существует.
+SELECT id FROM review_schedules
+WHERE user_id = $1 AND problem_id = $2;
+
 -- name: UpdateReviewSchedule :one
 UPDATE review_schedules
 SET next_review_at = $2, interval_days = $3, stability = $4, difficulty = $5,
