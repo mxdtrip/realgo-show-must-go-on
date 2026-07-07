@@ -2218,7 +2218,7 @@ a.cabinet-panel__meta:hover {
 
 .heatmap-layout {
   display: grid;
-  grid-template-columns: auto auto minmax(0, 1fr);
+  grid-template-columns: auto minmax(0, 1fr) 340px;
   gap: 0 clamp(20px, 3vw, 40px);
   align-items: center;
 }
@@ -2228,6 +2228,7 @@ a.cabinet-panel__meta:hover {
   gap: 16px;
   align-content: center;
   justify-items: start;
+  justify-self: end;
   padding: 14px 16px 14px 0;
 }
 
@@ -2259,8 +2260,6 @@ a.cabinet-panel__meta:hover {
   justify-content: center;
   gap: 14px;
   min-width: 264px;
-  width: calc(100% - 16px);
-  max-width: 560px;
   justify-self: end;
   margin: 14px 16px 14px 0;
   padding: 18px;
@@ -3959,7 +3958,7 @@ a.cabinet-panel__meta:hover {
 
 .focus-card-stack {
   position: relative;
-  width: min(100%, 980px);
+  width: min(100%, 780px);
   min-width: 0;
   height: min(66dvh, 660px);
   min-height: min(66dvh, 660px);
@@ -3999,6 +3998,11 @@ a.cabinet-panel__meta:hover {
   border-color: rgba(63, 185, 80, 0.18);
 }
 
+.focus-card-stack--advancing .focus-card-stack__edge {
+  opacity: 0.18;
+  transition: opacity 0.28s ease;
+}
+
 .focus-card-stage {
   position: relative;
   z-index: 1;
@@ -4035,6 +4039,25 @@ a.cabinet-panel__meta:hover {
 
 .focus-card--answer {
   animation-name: none;
+}
+
+.focus-card--advancing {
+  pointer-events: none;
+  animation: focus-card-advance 0.42s cubic-bezier(0.64, 0.02, 0.4, 1) both;
+}
+
+@keyframes focus-card-advance {
+  from {
+    opacity: 1;
+    filter: blur(0);
+    transform: translate3d(0, 0, 0) rotateY(180deg) rotateZ(0) scale(1);
+  }
+
+  to {
+    opacity: 0;
+    filter: blur(2px);
+    transform: translate3d(66vw, -10px, 120px) rotateY(180deg) rotateZ(8deg) scale(0.92);
+  }
 }
 
 .focus-card__inner {
@@ -4924,13 +4947,8 @@ a.cabinet-panel__meta:hover {
 
   .next-up {
     grid-column: 1 / -1;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    gap: 18px;
-    width: auto;
-    max-width: none;
-    justify-self: stretch;
+    max-width: 340px;
+    justify-self: end;
     margin: 0 16px 16px;
   }
 }
