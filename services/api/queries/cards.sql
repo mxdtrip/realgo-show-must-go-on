@@ -74,7 +74,23 @@ LEFT JOIN problems p ON p.id = c.problem_id
 LEFT JOIN patterns cpt ON cpt.id = c.pattern_id
 LEFT JOIN roadmap_items ri ON ri.problem_id = c.problem_id AND ri.roadmap_code = 'neetcode_150'
 LEFT JOIN patterns rpt ON rpt.id = ri.pattern_id
-WHERE (c.user_id = sqlc.arg(user_id)::bigint OR c.user_id IS NULL OR rs.id IS NOT NULL)
+WHERE (
+    c.user_id = sqlc.arg(user_id)::bigint
+    OR (
+        c.user_id IS NULL
+        AND (
+            c.created_by_ai IS NOT TRUE
+            OR c.problem_id IS NULL
+            OR EXISTS (
+                SELECT 1 FROM user_problem_progress upp
+                WHERE upp.user_id = sqlc.arg(user_id)::bigint
+                  AND upp.problem_id = c.problem_id
+                  AND upp.status IN ('solved', 'reviewing')
+            )
+        )
+    )
+    OR rs.id IS NOT NULL
+  )
   AND (sqlc.arg(card_type)::text = '' OR c.type = sqlc.arg(card_type)::text)
   AND (
     sqlc.arg(pattern_code)::text = ''
@@ -153,7 +169,23 @@ LEFT JOIN problems p ON p.id = c.problem_id
 LEFT JOIN patterns cpt ON cpt.id = c.pattern_id
 LEFT JOIN roadmap_items ri ON ri.problem_id = c.problem_id AND ri.roadmap_code = 'neetcode_150'
 LEFT JOIN patterns rpt ON rpt.id = ri.pattern_id
-WHERE (c.user_id = sqlc.arg(user_id)::bigint OR c.user_id IS NULL OR rs.id IS NOT NULL)
+WHERE (
+    c.user_id = sqlc.arg(user_id)::bigint
+    OR (
+        c.user_id IS NULL
+        AND (
+            c.created_by_ai IS NOT TRUE
+            OR c.problem_id IS NULL
+            OR EXISTS (
+                SELECT 1 FROM user_problem_progress upp
+                WHERE upp.user_id = sqlc.arg(user_id)::bigint
+                  AND upp.problem_id = c.problem_id
+                  AND upp.status IN ('solved', 'reviewing')
+            )
+        )
+    )
+    OR rs.id IS NOT NULL
+  )
   AND (
     sqlc.arg(pattern_code)::text = ''
     OR cpt.code = sqlc.arg(pattern_code)::text
