@@ -11,6 +11,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"sync"
 	"testing"
 	"time"
@@ -327,4 +328,173 @@ func TestExtensionSolvedCreatesSchedule(t *testing.T) {
 	)
 
 	require.Equal(t, int32(0), schedule.RemainingSteps)
+}
+
+// TestExtensionDuplicateSelfHealsMissingSchedule models the legacy partial state
+// from issue #144: an extension_events row exists for a solved problem, but the
+// review_schedules (and user_problem_progress) rows were lost. Replaying the
+// same event must self-heal — recreate the schedule and progress — and return a
+// non-empty status/nextReviewAt/reviewId so the problem re-enters the review
+// queue. A healthy duplicate (schedule present) must not advance the schedule.
+func TestExtensionDuplicateSelfHealsMissingSchedule(t *testing.T) {
+	ctx := context.Background()
+
+	pg, err := postgres.New(ctx, &config.Database{
+		Host:            "localhost",
+		Port:            5432,
+		User:            "postgres",
+		Password:        "postgres",
+		DBName:          "freeburger",
+		SSLMode:         "disable",
+		MaxConns:        16,
+		MaxConnLifetime: time.Hour,
+		MaxConnIdleTime: time.Minute,
+	})
+	require.NoError(t, err)
+
+	rdb, err := redis.New(ctx, &config.Redis{Host: "localhost", Port: "6379"})
+	require.NoError(t, err)
+
+	authSvc := auth.NewService(db.New(pg.Pool), rdb.Client, auth.Config{
+		JWTSecret:  []byte("integration-secret-with-more-than-32-bytes"),
+		AccessTTL:  time.Hour,
+		RefreshTTL: time.Hour,
+		Issuer:     "freeburger",
+	})
+	h := server.New(server.Deps{
+		Logger:   slog.New(slog.NewTextHandler(io.Discard, nil)),
+		Postgres: pg,
+		Redis:    rdb,
+		Auth:     authSvc,
+	})
+
+	suffix := time.Now().UTC().Format("20060102150405.000000000")
+	email := "extension-heal-" + suffix + "@example.test"
+	eventID := "extension-heal-" + suffix
+	slug := "extension-heal-two-sum-" + suffix
+
+	defer func() {
+		_, _ = pg.Pool.Exec(ctx, "DELETE FROM extension_events WHERE idempotency_key = $1", eventID)
+		_, _ = pg.Pool.Exec(ctx, "DELETE FROM review_schedules WHERE user_id IN (SELECT id FROM users WHERE email = $1)", email)
+		_, _ = pg.Pool.Exec(ctx, "DELETE FROM user_problem_progress WHERE user_id IN (SELECT id FROM users WHERE email = $1)", email)
+		_, _ = pg.Pool.Exec(ctx, "DELETE FROM problems WHERE external_slug = $1", slug)
+		_, _ = pg.Pool.Exec(ctx, "DELETE FROM users WHERE email = $1", email)
+		_ = rdb.Close()
+		pg.Close()
+	}()
+
+	token := register(t, h, email)
+	user, err := db.New(pg.Pool).GetUserByEmail(ctx, email)
+	require.NoError(t, err)
+
+	// 48h-old solve mirrors the contract core-loop test: with rating "hard" the
+	// FSRS interval keeps next_review_at in the past, so the healed schedule is
+	// immediately "due" and reappears in the queue (AC4).
+	occurredAt := time.Now().UTC().Add(-48 * time.Hour).Truncate(time.Second)
+	payload := map[string]any{
+		"eventId":          eventID,
+		"source":           "leetcode",
+		"event":            "problem_solved",
+		"occurredAt":       occurredAt.Format(time.RFC3339),
+		"rating":           "hard",
+		"extensionVersion": "integration",
+		"problem": map[string]any{
+			"externalId": slug,
+			"title":      "Heal Two Sum",
+			"url":        "https://leetcode.com/problems/two-sum/",
+			"difficulty": "easy",
+		},
+	}
+
+	// First solve: schedule + progress created.
+	first, status, err := postJSONConcurrent(h, "/api/v1/extension/events", token, payload)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, status)
+	require.Equal(t, true, first["data"].(map[string]any)["accepted"])
+
+	var problemID int64
+	require.NoError(t, pg.Pool.QueryRow(ctx,
+		`SELECT id FROM problems WHERE external_slug=$1`, slug,
+	).Scan(&problemID))
+
+	require.Equal(t, int64(1), countRows(t, ctx, pg,
+		`SELECT COUNT(*) FROM review_schedules WHERE user_id=$1 AND problem_id=$2`,
+		user.ID, problemID))
+
+	// Simulate the legacy partial state (#144): the event row stays, but the
+	// schedule and progress rows vanish.
+	_, err = pg.Pool.Exec(ctx,
+		`DELETE FROM review_schedules WHERE user_id=$1 AND problem_id=$2`,
+		user.ID, problemID)
+	require.NoError(t, err)
+	_, err = pg.Pool.Exec(ctx,
+		`DELETE FROM user_problem_progress WHERE user_id=$1 AND problem_id=$2`,
+		user.ID, problemID)
+	require.NoError(t, err)
+
+	require.Equal(t, int64(0), countRows(t, ctx, pg,
+		`SELECT COUNT(*) FROM review_schedules WHERE user_id=$1 AND problem_id=$2`,
+		user.ID, problemID), "precondition: schedule removed to model broken state")
+
+	// Replay the same event (same eventId) — must self-heal.
+	healed, status, err := postJSONConcurrent(h, "/api/v1/extension/events", token, payload)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, status)
+	healedData := healed["data"].(map[string]any)
+	require.Equal(t, true, healedData["accepted"])
+	require.Equal(t, true, healedData["duplicate"], "replay must be flagged as a duplicate")
+	require.Equal(t, "reviewing", healedData["status"], "self-heal must restore a non-empty status")
+	require.NotNil(t, healedData["nextReviewAt"], "self-heal must restore nextReviewAt")
+	require.NotEmpty(t, healedData["nextReviewAt"], "self-heal must restore a non-empty nextReviewAt")
+	reviewID, ok := healedData["reviewId"].(float64)
+	require.True(t, ok && reviewID > 0, "self-heal must return a real reviewId, got %#v", healedData["reviewId"])
+
+	// AC1: schedule and progress recreated by the replay.
+	require.Equal(t, int64(1), countRows(t, ctx, pg,
+		`SELECT COUNT(*) FROM review_schedules WHERE user_id=$1 AND problem_id=$2`,
+		user.ID, problemID), "self-heal must recreate the schedule")
+	require.Equal(t, int64(1), countRows(t, ctx, pg,
+		`SELECT COUNT(*) FROM user_problem_progress WHERE user_id=$1 AND problem_id=$2`,
+		user.ID, problemID), "self-heal must recreate progress")
+
+	// AC3: the healed schedule must be a fresh create, not an advance —
+	// review_count is 1 (not 2), proving no counter was bumped.
+	var reviewCount int32
+	require.NoError(t, pg.Pool.QueryRow(ctx,
+		`SELECT review_count FROM review_schedules WHERE user_id=$1 AND problem_id=$2`,
+		user.ID, problemID,
+	).Scan(&reviewCount))
+	require.Equal(t, int32(1), reviewCount, "self-heal must create (review_count=1), not advance an existing schedule")
+
+	// AC4 + AC5: the healed schedule is due, so it reappears in the queue with a
+	// real review_schedules.id that /rate accepts.
+	queue := getJSON(t, h, "/api/v1/me/reviews/queue?status=due&limit=50", token)
+	items, ok := queue["data"].([]any)
+	require.True(t, ok, "queue data must be an array, got %#v", queue["data"])
+
+	var queued map[string]any
+	for _, raw := range items {
+		item, ok := raw.(map[string]any)
+		if !ok {
+			continue
+		}
+		if title, _ := item["title"].(string); title == "Heal Two Sum" {
+			queued = item
+			break
+		}
+	}
+	require.NotNil(t, queued, "healed schedule must reappear in the due queue")
+	require.Equal(t, "problem", queued["entityType"])
+	require.Equal(t, "due", queued["status"])
+	require.Equal(t, int64(reviewID), int64(queued["id"].(float64)),
+		"queue item id must match the healed reviewId (review_schedules.id)")
+
+	// POST /me/reviews/{reviewId}/rate with the schedule id succeeds (never problemId).
+	rated := postJSON(t, h,
+		"/api/v1/me/reviews/"+strconv.FormatInt(int64(reviewID), 10)+"/rate",
+		token, map[string]any{
+			"rating":     "normal",
+			"reviewedAt": time.Now().UTC().Format(time.RFC3339),
+		})
+	require.Equal(t, "completed", rated["data"].(map[string]any)["status"])
 }
