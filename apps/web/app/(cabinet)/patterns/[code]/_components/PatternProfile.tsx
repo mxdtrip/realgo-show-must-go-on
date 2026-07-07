@@ -124,7 +124,7 @@ export function PatternProfile({
   );
 }
 
-function ProfileSection({
+export function ProfileSection({
   title,
   hint,
   empty,

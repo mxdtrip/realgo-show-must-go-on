@@ -8134,7 +8134,8 @@ a.cabinet-panel__meta:hover {
   max-width: none;
 }
 
-.pattern-profile__subs a {
+.pattern-profile__subs a,
+.pattern-profile__cta {
   display: grid;
   gap: 7px;
   height: 100%;
@@ -8147,13 +8148,15 @@ a.cabinet-panel__meta:hover {
   transition: border-color 0.16s ease, background 0.16s ease, transform 0.16s ease;
 }
 
-.pattern-profile__subs a:hover {
+.pattern-profile__subs a:hover,
+.pattern-profile__cta:hover {
   border-color: var(--accent-line);
   background: rgba(56, 139, 253, 0.06);
   transform: translateY(-1px);
 }
 
-.pattern-profile__subs a:focus-visible {
+.pattern-profile__subs a:focus-visible,
+.pattern-profile__cta:focus-visible {
   outline: 2px solid var(--accent-line);
   outline-offset: 2px;
 }
@@ -8170,7 +8173,8 @@ a.cabinet-panel__meta:hover {
   transition: transform 0.16s ease, color 0.16s ease;
 }
 
-.pattern-profile__subs a:hover .pattern-profile__sub-arrow {
+.pattern-profile__subs a:hover .pattern-profile__sub-arrow,
+.pattern-profile__cta:hover .pattern-profile__sub-arrow {
   color: var(--accent-bright);
   transform: translateX(2px);
 }
@@ -8192,9 +8196,49 @@ a.cabinet-panel__meta:hover {
   font-style: italic;
 }
 
+/* субпаттерн: hero c CTA-карточкой «порешать карточки» вровень с заголовком */
+.pattern-profile__hero--split {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: clamp(20px, 3vw, 44px);
+  max-width: none;
+}
+
+.pattern-profile__hero-main {
+  max-width: 76ch;
+}
+
+.pattern-profile__cta {
+  flex-shrink: 0;
+  width: min(300px, 34%);
+  margin-top: 4px;
+}
+
+.pattern-profile__mastery {
+  margin: 14px 0 0;
+  font-family: var(--font-stack-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  color: var(--text-faint);
+}
+
+.pattern-profile__mastery em {
+  font-style: normal;
+  color: var(--accent-bright);
+}
+
 @media (max-width: 860px) {
   .pattern-profile__section {
     grid-template-columns: 1fr;
     gap: 12px;
+  }
+
+  .pattern-profile__hero--split {
+    flex-direction: column;
+  }
+
+  .pattern-profile__cta {
+    width: 100%;
   }
 }

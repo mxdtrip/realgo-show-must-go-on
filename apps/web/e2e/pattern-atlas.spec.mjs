@@ -116,30 +116,29 @@ test.describe("pattern atlas tree", () => {
 });
 
 test.describe("subpattern detail", () => {
-  test("shows learn material, practice and companies", async ({ page }) => {
+  test("renders the profile canvas with methodology and problem cards", async ({ page }) => {
     await openAtlas(page);
     await page.goto("/patterns/binary_search_on_answer");
 
-    await expect(page.locator("h1")).toContainText("Binary Search on Answer");
-    await expect(page.locator(".atlas-learn")).toContainText("поиск по пространству ответов");
+    // Same black profile canvas as the family page.
+    await expect(page.locator(".pattern-profile h1")).toContainText("Binary Search on Answer");
+    await expect(page.locator(".cabinet-page--pattern")).toBeVisible();
+    await expect(page.locator(".pattern-profile")).toContainText("поиск по пространству ответов");
     await expect(page.locator(".atlas-skeleton")).toContainText("while lo < hi");
     await expect(page.locator(".atlas-contrast")).toContainText("Exact Binary Search");
 
-    // Practice list with tiers and states.
-    await expect(page.getByText("Koko Eating Bananas").first()).toBeVisible();
-    await expect(page.locator(".atlas-problem").first()).toContainText("core");
+    // Hero CTA invites to practice cards for this subpattern.
+    const cta = page.locator('a.pattern-profile__cta[href="/patterns/binary_search_on_answer/session"]');
+    await expect(cta).toBeVisible();
+    await expect(cta).toContainText("Порешать карточки");
 
-    // Company practice grouped by company, marked as demo.
-    const companyGroups = page.locator(".atlas-company-groups");
-    await expect(companyGroups).toContainText("Stub Corp");
-    await expect(companyGroups.locator(".meta-chip--muted").first()).toContainText("demo");
-
-    // Anchor row and the relevant-companies panel are gone.
-    await expect(page.locator(".atlas-node-actions a")).toHaveCount(1);
-    await expect(page.locator(".atlas-companies")).toHaveCount(0);
-
-    // Cards empty state is honest.
-    await expect(page.getByText("Карточек по этому субпаттерну пока нет.")).toBeVisible();
+    // Problem cards: index, external link and the interviewing company.
+    const problem = page.locator(".pattern-profile__subs a", { hasText: "Koko Eating Bananas" });
+    await expect(problem).toBeVisible();
+    await expect(problem).toHaveAttribute("href", /koko/);
+    await expect(problem).toContainText("01");
+    await expect(problem).toContainText("core");
+    await expect(problem).toContainText("Stub Corp");
   });
 
   test("not-studied subpattern shows preparing/empty states", async ({ page }) => {
@@ -149,7 +148,6 @@ test.describe("subpattern detail", () => {
     await expect(page.locator("h1")).toContainText("Fixed-Size Window");
     await expect(page.getByText("Методический материал готовится")).toBeVisible();
     await expect(page.getByText("К этому субпаттерну задачи ещё не привязаны.")).toBeVisible();
-    await expect(page.getByText("Задач с привязкой к компаниям для этого субпаттерна пока нет.")).toBeVisible();
   });
 
   test("family page renders the pattern profile", async ({ page }) => {
