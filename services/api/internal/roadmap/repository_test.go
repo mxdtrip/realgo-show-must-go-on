@@ -1,6 +1,28 @@
 package roadmap
 
-import "testing"
+import (
+	"testing"
+	"time"
+
+	"github.com/jackc/pgx/v5/pgtype"
+
+	"github.com/mxdtrip/freeburger/services/api/internal/storage/postgres/db"
+)
+
+func TestTargetFromRow_IncludesCompanyAndInterviewDate(t *testing.T) {
+	interviewAt := time.Date(2026, 7, 21, 10, 0, 0, 0, time.UTC)
+	target := targetFromRow(db.GetRoadmapUserTargetRow{
+		TargetCompany: pgtype.Text{String: "Google", Valid: true},
+		InterviewDate: pgtype.Timestamptz{Time: interviewAt, Valid: true},
+	})
+
+	if target.Company == nil || *target.Company != "Google" {
+		t.Fatalf("company = %v, want Google", target.Company)
+	}
+	if target.InterviewDate == nil || *target.InterviewDate != "2026-07-21" {
+		t.Fatalf("interviewDate = %v, want 2026-07-21", target.InterviewDate)
+	}
+}
 
 func TestBuildResponse_EmptyAccount(t *testing.T) {
 	resp := buildResponse(Target{}, nil)

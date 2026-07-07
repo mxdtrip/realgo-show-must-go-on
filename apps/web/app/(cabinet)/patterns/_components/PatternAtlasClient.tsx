@@ -50,12 +50,6 @@ function writeStored(key: string, value: string | null) {
   }
 }
 
-const difficultyWeights = {
-  easy: 1,
-  medium: 2,
-  hard: 3,
-} as const;
-
 function familyStats(subs: readonly AtlasSubpattern[]) {
   return {
     problemCount: subs.reduce((sum, sub) => sum + sub.stats.problem_count, 0),
@@ -64,22 +58,24 @@ function familyStats(subs: readonly AtlasSubpattern[]) {
 }
 
 function familyDifficulty(subs: readonly AtlasSubpattern[], copy: AtlasCopy) {
-  let known = 0;
-  let weighted = 0;
-  const counts = { easy: 0, medium: 0, hard: 0 };
+  const counts = { easy: 0, medium: 0, hard: 0, unknown: 0 };
 
   for (const sub of subs) {
     const byDifficulty = sub.stats.difficulty_counts;
-    if (!byDifficulty) continue;
+    if (!byDifficulty) {
+      counts.unknown += sub.stats.problem_count;
+      continue;
+    }
 
-    for (const key of Object.keys(difficultyWeights) as (keyof typeof difficultyWeights)[]) {
+    for (const key of ["easy", "medium", "hard"] as const) {
       const count = byDifficulty[key] ?? 0;
       counts[key] += count;
-      known += count;
-      weighted += count * difficultyWeights[key];
     }
+    const knownForSub = (byDifficulty.easy ?? 0) + (byDifficulty.medium ?? 0) + (byDifficulty.hard ?? 0);
+    counts.unknown += Math.max(0, sub.stats.problem_count - knownForSub);
   }
 
+  const known = counts.easy + counts.medium + counts.hard;
   if (known === 0) {
     return {
       label: copy.familyDifficultyUnknown,
@@ -89,11 +85,12 @@ function familyDifficulty(subs: readonly AtlasSubpattern[], copy: AtlasCopy) {
     };
   }
 
-  const avg = weighted / known;
-  const label = avg < 1.5 ? "easy" : avg < 2.35 ? "medium" : "hard";
+  const parts = [`easy ${counts.easy}`, `medium ${counts.medium}`, `hard ${counts.hard}`];
+  if (counts.unknown > 0) parts.push(`unknown ${counts.unknown}`);
+
   return {
-    label,
-    detail: `easy ${counts.easy} · medium ${counts.medium} · hard ${counts.hard}`,
+    label: copy.familyDifficultyDistribution,
+    detail: parts.join(" · "),
     title: copy.familyDifficultyHint,
     known: true,
   };
@@ -328,7 +325,7 @@ function TreeView({
         {visibleFamilies.length === 0 ? (
           <p>{copy.searchEmpty}</p>
         ) : (
-          <div className="atlas-tree atlas-table" role="table" aria-label={copy.familiesTitle}>
+          <div className="atlas-tree" role="table" aria-label={copy.familiesTitle}>
             <div className="atlas-table__head" role="row">
               <span role="columnheader">{copy.familyColumns.pattern}</span>
               <span role="columnheader">{copy.familyColumns.difficulty}</span>
@@ -346,21 +343,15 @@ function TreeView({
                     <span className="atlas-table__cell atlas-table__cell--name" role="cell">
                       <button
                         type="button"
-                        className="atlas-family__toggle"
+                        className="atlas-family__disclosure"
                         aria-expanded={isOpen}
                         aria-controls={subpatternsId}
                         aria-label={`${isOpen ? copy.collapseAria : copy.expandAria}: ${family.name}`}
                         onClick={() => onToggle(family.code)}
                       >
                         <i className={isOpen ? "atlas-caret is-open" : "atlas-caret"} aria-hidden="true" />
+                        <span className="atlas-family__name">{family.name}</span>
                       </button>
-                      <Link
-                        href={`/patterns/${family.code}`}
-                        className="atlas-family__name"
-                        title={copy.openPattern}
-                      >
-                        <span>{family.name}</span>
-                      </Link>
                     </span>
                     <span className="atlas-table__cell atlas-family__difficulty" role="cell" title={difficulty.title}>
                       <strong className={difficulty.known ? undefined : "is-muted"}>{difficulty.label}</strong>

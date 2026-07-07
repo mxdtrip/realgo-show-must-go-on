@@ -12,16 +12,21 @@ import (
 )
 
 const getRoadmapUserTarget = `-- name: GetRoadmapUserTarget :one
-SELECT interview_date
+SELECT target_company, interview_date
 FROM users
 WHERE id = $1
 `
 
-func (q *Queries) GetRoadmapUserTarget(ctx context.Context, id int64) (pgtype.Timestamptz, error) {
+type GetRoadmapUserTargetRow struct {
+	TargetCompany pgtype.Text
+	InterviewDate pgtype.Timestamptz
+}
+
+func (q *Queries) GetRoadmapUserTarget(ctx context.Context, id int64) (GetRoadmapUserTargetRow, error) {
 	row := q.db.QueryRow(ctx, getRoadmapUserTarget, id)
-	var interview_date pgtype.Timestamptz
-	err := row.Scan(&interview_date)
-	return interview_date, err
+	var i GetRoadmapUserTargetRow
+	err := row.Scan(&i.TargetCompany, &i.InterviewDate)
+	return i, err
 }
 
 const listUserRoadmapItems = `-- name: ListUserRoadmapItems :many

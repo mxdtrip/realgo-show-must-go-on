@@ -6,10 +6,13 @@ import { defineConfig, devices } from "@playwright/test";
 // server's HMR socket fails under headless Chrome and blocks hydration, so the
 // page never becomes interactive. NEXT_PUBLIC_* are baked at build time, hence
 // they are passed to the build command below.
-// Overridable so a local run can dodge ports already taken by other dev
-// servers (reuseExistingServer would otherwise silently test a stale build).
-const WEB_PORT = Number(process.env.E2E_WEB_PORT ?? 3000);
-const STUB_PORT = Number(process.env.E2E_STUB_PORT ?? 8080);
+//
+// Do not default to the app's normal docker-compose ports. With reuse enabled,
+// Playwright can otherwise attach to a developer's already-running stack and run
+// against stale env/config instead of the stubbed production build under test.
+const WEB_PORT = Number(process.env.E2E_WEB_PORT ?? process.env.WEB_PORT ?? 3300);
+const STUB_PORT = Number(process.env.E2E_STUB_PORT ?? process.env.STUB_PORT ?? 38080);
+const REUSE_SERVERS = process.env.PLAYWRIGHT_REUSE_SERVERS === "1";
 
 export default defineConfig({
   testDir: "./e2e",
@@ -30,7 +33,7 @@ export default defineConfig({
       command: "node e2e/auth-stub.mjs",
       env: { STUB_PORT: String(STUB_PORT) },
       url: `http://127.0.0.1:${STUB_PORT}/healthz`,
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: REUSE_SERVERS,
       timeout: 30_000,
     },
     {
@@ -48,7 +51,7 @@ export default defineConfig({
         NEXT_PUBLIC_AUTH_BYPASS: "1",
       },
       url: `http://127.0.0.1:${WEB_PORT}`,
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: REUSE_SERVERS,
       timeout: 240_000,
     },
   ],

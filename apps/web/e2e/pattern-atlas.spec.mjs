@@ -30,9 +30,11 @@ test.describe("pattern atlas tree", () => {
 
     await expect(page.locator(".atlas-tree")).toBeVisible();
     await expect(page.getByText("Binary Search", { exact: true })).toBeVisible();
-    await expect(page.getByText("сложность", { exact: true })).toBeVisible();
+    await expect(page.getByText("задачи по сложности", { exact: true })).toBeVisible();
     await expect(page.getByText("подпаттерны", { exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: "развернуть всё" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "свернуть всё" })).toHaveCount(0);
+    await expect(page.locator(".atlas-tree.atlas-table")).toHaveCount(0);
 
     // Progressive disclosure: subpatterns hidden until expanded.
     await expect(page.locator(".atlas-sub:visible")).toHaveCount(0);
@@ -40,8 +42,8 @@ test.describe("pattern atlas tree", () => {
     await expect(page).toHaveURL(/\/patterns$/);
     await expect(page.getByText("Binary Search on Answer")).toBeVisible();
     await expect(page.locator(".atlas-sub:visible")).toHaveCount(2);
-    // The family name itself links to the pattern profile page.
-    await expect(page.locator('a[href="/patterns/binary_search"]')).toBeVisible();
+    await expect(page.locator('a[href="/patterns/binary_search"]')).toHaveCount(0);
+    await expect(page.locator('a[href="/patterns/binary_search_on_answer"]')).toBeVisible();
 
     // Mastery state is text, not colour alone.
     await expect(page.locator(".atlas-status--unstable")).toContainText("нестабильный");
@@ -139,24 +141,12 @@ test.describe("subpattern detail", () => {
     await expect(page.getByText("Данных о компаниях по этому субпаттерну пока нет.")).toBeVisible();
   });
 
-  test("family page renders the pattern profile", async ({ page }) => {
+  test("family code does not render a standalone pattern page", async ({ page }) => {
     await openAtlas(page);
     await page.goto("/patterns/binary_search");
 
-    await expect(page.locator(".pattern-profile h1")).toContainText("Binary Search");
-    await expect(page.getByText("Что это", { exact: true })).toBeVisible();
-    await expect(page.getByText("Когда не подходит", { exact: true })).toBeVisible();
-
-    // Methodology copy from pattern-profiles.ts fills the sections.
-    await expect(page.getByText("Сокращает пространство поиска примерно вдвое")).toBeVisible();
-    await expect(page.locator(".pattern-profile__pending")).toHaveCount(0);
-
-    // Subpatterns come from the API, link to their own pages and carry
-    // the one-line differentiation note keyed by subpattern code.
-    const subLink = page.locator('a[href="/patterns/binary_search_on_answer"]');
-    await expect(subLink).toBeVisible();
-    await expect(subLink).toContainText("Binary Search on Answer");
-    await expect(subLink).toContainText("монотонный предикат");
+    await expect(page.getByText("Такого узла в атласе нет").first()).toBeVisible();
+    await expect(page.locator(".pattern-profile")).toHaveCount(0);
   });
 
   test("unknown node shows not-found state", async ({ page }) => {
