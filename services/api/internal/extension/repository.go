@@ -138,10 +138,41 @@ func (r *pgRepository) Ingest(ctx context.Context, in IngestInput) (out IngestOu
 		})
 		switch {
 		case e == nil:
+			// Healthy duplicate: the schedule exists. Return current state
+			// read-only — a replay must never advance the schedule or bump the
+			// review counters.
 			out.Status = "reviewing"
 			out.ReviewID = sched.ID
 			out.NextReviewAt = timePtr(sched.NextReviewAt)
-		case !errors.Is(e, pgx.ErrNoRows):
+		case errors.Is(e, pgx.ErrNoRows):
+			// Self-heal (issue #144): the event was recorded earlier but its
+			// review_schedules row is missing — legacy partial state left by an
+			// older ingest path. Re-running the solved-restore brings the
+			// problem back into the review queue instead of returning an empty
+			// status and a null nextReviewAt. upsertSchedule re-queries and,
+			// still finding no row within this transaction, takes its create
+			// branch (Next + CreateProblemReviewSchedule) — it creates, never
+			// advances an existing schedule.
+			if in.Solved {
+				if perr := q.UpsertSolvedProgress(ctx, db.UpsertSolvedProgressParams{
+					UserID:      in.UserID,
+					ProblemID:   problemID,
+					Rating:      optText(in.Rating),
+					FirstSeenAt: toTimestamptz(in.EventTime),
+				}); perr != nil {
+					return IngestOutput{}, fmt.Errorf("extension: heal progress: %w", perr)
+				}
+				reviewID, nextReviewAt, serr := r.upsertSchedule(ctx, q, in, problemID)
+				if serr != nil {
+					return IngestOutput{}, serr
+				}
+				out.Status = "reviewing"
+				out.ReviewID = reviewID
+				out.NextReviewAt = &nextReviewAt
+			} else {
+				out.Status = "saved"
+			}
+		default:
 			slog.Error("extension: lookup review schedule failed", slog.String("layer", "repo"), slog.String("module", "extension"), slog.Any("err", e), slog.Int64("user_id", in.UserID), slog.Int64("problem_id", problemID))
 		}
 		if err := tx.Commit(ctx); err != nil {
