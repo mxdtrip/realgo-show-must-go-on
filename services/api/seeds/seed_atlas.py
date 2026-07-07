@@ -70,6 +70,7 @@ def load_materials(path):
             "mental_model": item.get("mental_model", ""),
             "core_invariant": item.get("core_invariant", ""),
             "canonical_skeleton": item.get("canonical_skeleton", ""),
+            "mini_example": item.get("mini_example", ""),
             "dont_confuse_with": json.dumps(pairs, ensure_ascii=False),
             **lists,
         })
@@ -152,8 +153,9 @@ def upsert_materials(cur, rows):
             """
             INSERT INTO pattern_learning_materials (
                 pattern_id, what_it_is, mental_model, recognition_cues, anti_cues,
-                core_invariant, canonical_skeleton, common_mistakes, dont_confuse_with, updated_at
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP)
+                core_invariant, canonical_skeleton, common_mistakes, dont_confuse_with,
+                mini_example, updated_at
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP)
             ON CONFLICT (pattern_id) DO UPDATE SET
                 what_it_is = EXCLUDED.what_it_is,
                 mental_model = EXCLUDED.mental_model,
@@ -163,12 +165,14 @@ def upsert_materials(cur, rows):
                 canonical_skeleton = EXCLUDED.canonical_skeleton,
                 common_mistakes = EXCLUDED.common_mistakes,
                 dont_confuse_with = EXCLUDED.dont_confuse_with,
+                mini_example = EXCLUDED.mini_example,
                 updated_at = CURRENT_TIMESTAMP
             """,
             (
                 ids[row["code"]], row["what_it_is"], row["mental_model"],
                 row["recognition_cues"], row["anti_cues"], row["core_invariant"],
                 row["canonical_skeleton"], row["common_mistakes"], row["dont_confuse_with"],
+                row["mini_example"],
             ),
         )
 

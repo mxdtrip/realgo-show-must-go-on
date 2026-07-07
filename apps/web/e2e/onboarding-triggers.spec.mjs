@@ -61,7 +61,7 @@ test.describe("field onboarding re-triggers", () => {
     await page.waitForURL("**/dashboard", { timeout: 15_000 });
 
     await page.goto("/onboarding/profile?force=1");
-    await expect(page.getByText("Компания мечты")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText("В какие компании хочешь устроиться?")).toBeVisible({ timeout: 15_000 });
   });
 
   test("hotkey g o opens the forced field onboarding", async ({ page }) => {
@@ -70,6 +70,6 @@ test.describe("field onboarding re-triggers", () => {
     await page.keyboard.press("g");
     await page.keyboard.press("o");
     await page.waitForURL("**/onboarding/profile?force=1", { timeout: 15_000 });
-    await expect(page.getByText("Компания мечты")).toBeVisible();
+    await expect(page.getByText("В какие компании хочешь устроиться?")).toBeVisible();
   });
 });

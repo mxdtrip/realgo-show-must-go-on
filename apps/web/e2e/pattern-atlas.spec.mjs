@@ -42,7 +42,8 @@ test.describe("pattern atlas tree", () => {
     await expect(page).toHaveURL(/\/patterns$/);
     await expect(page.getByText("Binary Search on Answer")).toBeVisible();
     await expect(page.locator(".atlas-sub:visible")).toHaveCount(2);
-    await expect(page.locator('a[href="/patterns/binary_search"]')).toHaveCount(0);
+    // The family name itself links to the pattern profile page.
+    await expect(page.locator('a[href="/patterns/binary_search"]')).toBeVisible();
     await expect(page.locator('a[href="/patterns/binary_search_on_answer"]')).toBeVisible();
 
     // Mastery state is text, not colour alone.
@@ -86,18 +87,25 @@ test.describe("pattern atlas tree", () => {
     await expect(windowRow.locator(".atlas-relevance")).toHaveCount(0);
   });
 
-  test("readiness view shows coverage and top gaps", async ({ page }) => {
+  test("readiness view is locked without a company and shows coverage with one", async ({ page }) => {
     await openAtlas(page);
     await expect(page.locator(".atlas-tree")).toBeVisible();
 
-    // Without a company the readiness view explains itself.
-    await page.click(".atlas-view-toggle button:nth-child(2)");
-    await expect(page.getByText("Выбери компанию, чтобы увидеть готовность")).toBeVisible();
+    // Without a company the readiness mode is disabled.
+    const readinessTab = page.locator(".atlas-view-toggle button:nth-child(2)");
+    await expect(readinessTab).toBeDisabled();
 
     await page.selectOption(".atlas-company select", "cmp_stub");
+    await expect(readinessTab).toBeEnabled();
+    await readinessTab.click();
     await expect(page.locator(".atlas-coverage")).toBeVisible();
     await expect(page.locator(".atlas-gaps li")).toHaveCount(1);
     await expect(page.locator(".atlas-gaps")).toContainText("Binary Search on Answer");
+
+    // Сброс компании возвращает дерево и снова блокирует readiness.
+    await page.selectOption(".atlas-company select", "");
+    await expect(page.locator(".atlas-tree")).toBeVisible();
+    await expect(readinessTab).toBeDisabled();
   });
 
   test("API failure shows error state with retry", async ({ page }) => {
@@ -108,27 +116,34 @@ test.describe("pattern atlas tree", () => {
 });
 
 test.describe("subpattern detail", () => {
-  test("shows learn material, practice and companies", async ({ page }) => {
+  test("renders the profile canvas with methodology and problem cards", async ({ page }) => {
     await openAtlas(page);
     await page.goto("/patterns/binary_search_on_answer");
 
-    await expect(page.locator("h1")).toContainText("Binary Search on Answer");
-    await expect(page.locator(".atlas-learn")).toContainText("поиск по пространству ответов");
+    // Same black profile canvas as the family page.
+    await expect(page.locator(".pattern-profile h1")).toContainText("Binary Search on Answer");
+    await expect(page.locator(".cabinet-page--pattern")).toBeVisible();
+    await expect(page.locator(".pattern-profile")).toContainText("поиск по пространству ответов");
     await expect(page.locator(".atlas-skeleton")).toContainText("while lo < hi");
     await expect(page.locator(".atlas-contrast")).toContainText("Exact Binary Search");
 
-    // Practice list with tiers and states.
-    await expect(page.getByText("Koko Eating Bananas").first()).toBeVisible();
-    await expect(page.locator(".atlas-problem").first()).toContainText("core");
+    // Hero CTA invites to practice cards for this subpattern.
+    const cta = page.locator('a.pattern-profile__cta[href="/patterns/binary_search_on_answer/session"]');
+    await expect(cta).toBeVisible();
+    await expect(cta).toContainText("Порешать карточки");
 
-    // Relevant companies with evidence, marked as demo.
-    const companies = page.locator(".atlas-companies");
-    await expect(companies).toContainText("Stub Corp");
-    await expect(companies).toContainText("evidence: 7");
-    await expect(companies.locator(".meta-chip--muted")).toContainText("demo");
+    // Catalog-wide difficulty distribution of the practice set in the hero.
+    await expect(page.locator(".pattern-profile__mastery", { hasText: "difficulty" })).toContainText(
+      "easy 2 · medium 7 · hard 3",
+    );
 
-    // Cards empty state is honest.
-    await expect(page.getByText("Карточек по этому субпаттерну пока нет.")).toBeVisible();
+    // Problem cards: index, external link and the interviewing company.
+    const problem = page.locator(".pattern-profile__subs a", { hasText: "Koko Eating Bananas" });
+    await expect(problem).toBeVisible();
+    await expect(problem).toHaveAttribute("href", /koko/);
+    await expect(problem).toContainText("01");
+    await expect(problem).toContainText("core");
+    await expect(problem).toContainText("Stub Corp");
   });
 
   test("not-studied subpattern shows preparing/empty states", async ({ page }) => {
@@ -138,15 +153,26 @@ test.describe("subpattern detail", () => {
     await expect(page.locator("h1")).toContainText("Fixed-Size Window");
     await expect(page.getByText("Методический материал готовится")).toBeVisible();
     await expect(page.getByText("К этому субпаттерну задачи ещё не привязаны.")).toBeVisible();
-    await expect(page.getByText("Данных о компаниях по этому субпаттерну пока нет.")).toBeVisible();
   });
 
-  test("family code does not render a standalone pattern page", async ({ page }) => {
+  test("family page renders the pattern profile", async ({ page }) => {
     await openAtlas(page);
     await page.goto("/patterns/binary_search");
 
-    await expect(page.getByText("Такого узла в атласе нет").first()).toBeVisible();
-    await expect(page.locator(".pattern-profile")).toHaveCount(0);
+    await expect(page.locator(".pattern-profile h1")).toContainText("Binary Search");
+    await expect(page.getByText("Что это", { exact: true })).toBeVisible();
+    await expect(page.getByText("Когда не подходит", { exact: true })).toBeVisible();
+
+    // Methodology copy from pattern-profiles.ts fills the sections.
+    await expect(page.getByText("Сокращает пространство поиска примерно вдвое")).toBeVisible();
+    await expect(page.locator(".pattern-profile__pending")).toHaveCount(0);
+
+    // Subpatterns come from the API, link to their own pages and carry
+    // the one-line differentiation note keyed by subpattern code.
+    const subLink = page.locator('a[href="/patterns/binary_search_on_answer"]');
+    await expect(subLink).toBeVisible();
+    await expect(subLink).toContainText("Binary Search on Answer");
+    await expect(subLink).toContainText("монотонный предикат");
   });
 
   test("unknown node shows not-found state", async ({ page }) => {

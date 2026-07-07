@@ -3,9 +3,9 @@ package patterns
 import "time"
 
 // TaxonomyVersion is the currently served taxonomy release. Bumping it (and
-// shipping the matching nodes/edges) is how realgo-v2 rolls out without
-// rewriting the atlas API.
-const TaxonomyVersion = "realgo-v1"
+// shipping the matching nodes/edges, migration 000014) is how a new taxonomy
+// rolls out without rewriting the atlas API.
+const TaxonomyVersion = "realgo-v2"
 
 // Mastery statuses, ordered from "never touched" to "fully retained".
 const (
@@ -57,15 +57,18 @@ type AtlasSubpattern struct {
 // derived from. Kept separate from Mastery so the calculation can evolve
 // (recognition/transfer/retention components) without an API break.
 type SubpatternStats struct {
-	ProblemCount    int        `json:"problem_count"`
-	SolvedCount     int        `json:"solved_count"`
-	InProgressCount int        `json:"in_progress_count"`
-	DueCount        int        `json:"due_count"`
-	CardCount       int        `json:"card_count"`
-	AttemptCount    int        `json:"attempt_count"`
-	HardCount       int        `json:"hard_count"`
-	NextReviewAt    *time.Time `json:"next_review_at,omitempty"`
-	LastSolvedAt    *time.Time `json:"last_solved_at,omitempty"`
+	ProblemCount    int `json:"problem_count"`
+	SolvedCount     int `json:"solved_count"`
+	InProgressCount int `json:"in_progress_count"`
+	DueCount        int `json:"due_count"`
+	CardCount       int `json:"card_count"`
+	AttemptCount    int `json:"attempt_count"`
+	HardCount       int `json:"hard_count"`
+	// DifficultyCounts is the catalog-wide easy/medium/hard/unknown split of
+	// the subpattern's practice set (same for every user).
+	DifficultyCounts map[string]int `json:"difficulty_counts,omitempty"`
+	NextReviewAt     *time.Time     `json:"next_review_at,omitempty"`
+	LastSolvedAt     *time.Time     `json:"last_solved_at,omitempty"`
 }
 
 type Mastery struct {
@@ -162,6 +165,7 @@ type LearningMaterial struct {
 	CanonicalSkeleton string         `json:"canonical_skeleton"`
 	CommonMistakes    []string       `json:"common_mistakes"`
 	DontConfuseWith   []ContrastPair `json:"dont_confuse_with"`
+	MiniExample       string         `json:"mini_example"`
 }
 
 type CardSummary struct {

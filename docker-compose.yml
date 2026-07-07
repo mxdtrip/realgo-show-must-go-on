@@ -117,7 +117,7 @@ services:
       - ./services/api/seeds:/seeds:ro
     environment:
       DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-freeburger}?sslmode=disable
-    command: sh -c "pip install --no-cache-dir -r requirements.txt && python seed_atlas.py atlas_content.yaml atlas_problem_links.yaml atlas_demo_companies.yaml"
+    command: sh -c "pip install --no-cache-dir -r requirements.txt && python seed_atlas.py atlas_content.yaml atlas_problem_links.yaml atlas_demo_companies.yaml && python seed_atlas_corpus.py atlas_corpus_problems.yaml && python seed_atlas_corpus.py atlas_gap_ledger_problems.yaml"
     restart: "no"
 
   seed-users:

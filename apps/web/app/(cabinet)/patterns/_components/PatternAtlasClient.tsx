@@ -111,8 +111,11 @@ export function PatternAtlasClient({ copy }: Readonly<{ copy: AtlasCopy }>) {
 
   // Restore persisted selection before the first fetch.
   useEffect(() => {
-    setCompany(readStored(COMPANY_KEY) ?? "");
-    setView(readStored(VIEW_KEY) === "readiness" ? "readiness" : "tree");
+    const storedCompany = readStored(COMPANY_KEY) ?? "";
+    setCompany(storedCompany);
+    // Readiness имеет смысл только относительно компании: без неё режим
+    // заблокирован, поэтому сохранённый выбор восстанавливаем условно.
+    setView(storedCompany && readStored(VIEW_KEY) === "readiness" ? "readiness" : "tree");
     try {
       const raw = readStored(EXPANDED_KEY);
       if (raw) setExpanded(new Set(JSON.parse(raw) as string[]));
@@ -149,6 +152,8 @@ export function PatternAtlasClient({ copy }: Readonly<{ copy: AtlasCopy }>) {
           // Компания пропала из данных — сбрасываем выбор, не пугаем ошибкой.
           setCompany("");
           writeStored(COMPANY_KEY, null);
+          setView("tree");
+          writeStored(VIEW_KEY, "tree");
           return;
         }
         setError(e instanceof ApiError ? e.message : copy.errorTitle);
@@ -161,6 +166,10 @@ export function PatternAtlasClient({ copy }: Readonly<{ copy: AtlasCopy }>) {
   const selectCompany = useCallback((code: string) => {
     setCompany(code);
     writeStored(COMPANY_KEY, code || null);
+    if (!code) {
+      setView("tree");
+      writeStored(VIEW_KEY, "tree");
+    }
   }, []);
 
   const selectView = useCallback((next: AtlasView) => {
@@ -240,18 +249,23 @@ export function PatternAtlasClient({ copy }: Readonly<{ copy: AtlasCopy }>) {
         </label>
 
         <div className="atlas-view-toggle" role="tablist" aria-label={copy.viewAria}>
-          {(["tree", "readiness"] as const).map((item) => (
-            <button
-              key={item}
-              type="button"
-              role="tab"
-              aria-selected={view === item}
-              className={view === item ? "is-active" : undefined}
-              onClick={() => selectView(item)}
-            >
-              {copy.views[item]}
-            </button>
-          ))}
+          {(["tree", "readiness"] as const).map((item) => {
+            const locked = item === "readiness" && !company;
+            return (
+              <button
+                key={item}
+                type="button"
+                role="tab"
+                aria-selected={view === item}
+                className={view === item ? "is-active" : undefined}
+                disabled={locked}
+                title={locked ? copy.companyHint : undefined}
+                onClick={() => selectView(item)}
+              >
+                {copy.views[item]}
+              </button>
+            );
+          })}
         </div>
 
         <input
@@ -343,15 +357,21 @@ function TreeView({
                     <span className="atlas-table__cell atlas-table__cell--name" role="cell">
                       <button
                         type="button"
-                        className="atlas-family__disclosure"
+                        className="atlas-family__toggle"
                         aria-expanded={isOpen}
                         aria-controls={subpatternsId}
                         aria-label={`${isOpen ? copy.collapseAria : copy.expandAria}: ${family.name}`}
                         onClick={() => onToggle(family.code)}
                       >
                         <i className={isOpen ? "atlas-caret is-open" : "atlas-caret"} aria-hidden="true" />
-                        <span className="atlas-family__name">{family.name}</span>
                       </button>
+                      <Link
+                        href={`/patterns/${family.code}`}
+                        className="atlas-family__name"
+                        title={copy.openPattern}
+                      >
+                        <span>{family.name}</span>
+                      </Link>
                     </span>
                     <span className="atlas-table__cell atlas-family__difficulty" role="cell" title={difficulty.title}>
                       <strong className={difficulty.known ? undefined : "is-muted"}>{difficulty.label}</strong>

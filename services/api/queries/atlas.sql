@@ -73,6 +73,19 @@ LEFT JOIN review_schedules rs
 WHERE sp.kind = 'subpattern'
 GROUP BY sp.code;
 
+-- Catalog-wide difficulty distribution of each subpattern's practice set
+-- (not user-specific; merged into the same stats struct for the tree view).
+-- name: ListSubpatternDifficultyCounts :many
+SELECT
+    sp.code,
+    COALESCE(pr.difficulty, 'unknown')::text AS difficulty,
+    COUNT(*)::integer AS problem_count
+FROM patterns sp
+JOIN problem_subpatterns ps ON ps.subpattern_id = sp.id
+JOIN problems pr ON pr.id = ps.problem_id
+WHERE sp.kind = 'subpattern'
+GROUP BY sp.code, COALESCE(pr.difficulty, 'unknown');
+
 -- Review attempts mapped onto subpatterns through any of the three review
 -- targets: the subpattern's problems, the subpattern node itself, or cards
 -- attached to the subpattern node.
@@ -192,7 +205,8 @@ SELECT
     core_invariant,
     canonical_skeleton,
     common_mistakes,
-    dont_confuse_with
+    dont_confuse_with,
+    mini_example
 FROM pattern_learning_materials
 WHERE pattern_id = $1;
 

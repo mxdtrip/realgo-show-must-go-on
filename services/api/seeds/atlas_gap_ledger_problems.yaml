@@ -1,0 +1,286 @@
+# Realgo gap-audit ledger: задачи из бывших v1 gap-бакетов, размеченные
+# по Taxonomy v2 (source: realgo_taxonomy_v2_22x111_gap_audit.md, раздел 7,
+# snapshot 2026-07-07). AUDIT_REQUIRED и domain-exclusions не включены.
+# Метаданные (slug/title/difficulty) — из публичного каталога LeetCode.
+code: realgo_gap_ledger
+title: Realgo Gap-Audit Ledger
+snapshot: "2026-07-07"
+subpatterns:
+  - code: frequency_counting
+    problems:
+      - { id: 1370, slug: "increasing-decreasing-string", title: "Increasing Decreasing String", difficulty: easy }
+      - { id: 1417, slug: "reformat-the-string", title: "Reformat The String", difficulty: easy }
+      - { id: 1700, slug: "number-of-students-unable-to-eat-lunch", title: "Number of Students Unable to Eat Lunch", difficulty: easy }
+      - { id: 1429, slug: "first-unique-number", title: "First Unique Number", difficulty: medium }
+      - { id: 1540, slug: "can-convert-string-in-k-moves", title: "Can Convert String in K Moves", difficulty: medium }
+  - code: grouping_canonical_signature
+    problems:
+      - { id: 288, slug: "unique-word-abbreviation", title: "Unique Word Abbreviation", difficulty: medium }
+  - code: frequency_of_frequency_buckets
+    problems:
+      - { id: 432, slug: "all-oone-data-structure", title: "All O`one Data Structure", difficulty: hard }
+      - { id: 895, slug: "maximum-frequency-stack", title: "Maximum Frequency Stack", difficulty: hard }
+  - code: same_direction_read_write
+    problems:
+      - { id: 1826, slug: "faulty-sensor", title: "Faulty Sensor", difficulty: easy }
+  - code: fixed_size_window
+    problems:
+      - { id: 1550, slug: "three-consecutive-odds", title: "Three Consecutive Odds", difficulty: easy }
+      - { id: 1852, slug: "distinct-numbers-in-each-subarray", title: "Distinct Numbers in Each Subarray", difficulty: medium }
+  - code: longest_valid_window
+    problems:
+      - { id: 2968, slug: "apply-operations-to-maximize-frequency-score", title: "Apply Operations to Maximize Frequency Score", difficulty: hard }
+  - code: prefix_sum_range_query
+    problems:
+      - { id: 1894, slug: "find-the-student-that-will-replace-the-chalk", title: "Find the Student that Will Replace the Chalk", difficulty: medium }
+      - { id: 2219, slug: "maximum-sum-score-of-array", title: "Maximum Sum Score of Array", difficulty: medium }
+  - code: matching_nesting_stack
+    problems:
+      - { id: 1544, slug: "make-the-string-great", title: "Make The String Great", difficulty: easy }
+  - code: dummy_node_rewiring
+    problems:
+      - { id: 707, slug: "design-linked-list", title: "Design Linked List", difficulty: medium }
+  - code: tree_construction_serialization
+    problems:
+      - { id: 919, slug: "complete-binary-tree-inserter", title: "Complete Binary Tree Inserter", difficulty: medium }
+      - { id: 1490, slug: "clone-n-ary-tree", title: "Clone N-ary Tree", difficulty: medium }
+      - { id: 1600, slug: "throne-inheritance", title: "Throne Inheritance", difficulty: medium }
+  - code: greedy_pairing_matching
+    problems:
+      - { id: 1913, slug: "maximum-product-difference-between-two-pairs", title: "Maximum Product Difference Between Two Pairs", difficulty: easy }
+  - code: dp_counting_ways
+    problems:
+      - { id: 1641, slug: "count-sorted-vowel-strings", title: "Count Sorted Vowel Strings", difficulty: medium }
+  - code: trie_prefix_search
+    problems:
+      - { id: 1166, slug: "design-file-system", title: "Design File System", difficulty: medium }
+      - { id: 588, slug: "design-in-memory-file-system", title: "Design In-Memory File System", difficulty: hard }
+  - code: bit_tricks_submask
+    problems:
+      - { id: 2166, slug: "design-bitset", title: "Design Bitset", difficulty: medium }
+  - code: linear_string_scan_parsing
+    problems:
+      - { id: 14, slug: "longest-common-prefix", title: "Longest Common Prefix", difficulty: easy }
+      - { id: 58, slug: "length-of-last-word", title: "Length of Last Word", difficulty: easy }
+      - { id: 709, slug: "to-lower-case", title: "To Lower Case", difficulty: easy }
+      - { id: 1119, slug: "remove-vowels-from-a-string", title: "Remove Vowels from a String", difficulty: easy }
+      - { id: 1455, slug: "check-if-a-word-occurs-as-a-prefix-of-any-word-in-a-sentence", title: "Check If a Word Occurs As a Prefix of Any Word in a Sentence", difficulty: easy }
+      - { id: 1629, slug: "slowest-key", title: "Slowest Key", difficulty: easy }
+      - { id: 1816, slug: "truncate-sentence", title: "Truncate Sentence", difficulty: easy }
+      - { id: 1903, slug: "largest-odd-number-in-string", title: "Largest Odd Number in String", difficulty: easy }
+      - { id: 537, slug: "complex-number-multiplication", title: "Complex Number Multiplication", difficulty: medium }
+      - { id: 1513, slug: "number-of-substrings-with-only-1s", title: "Number of Substrings With Only 1s", difficulty: medium }
+  - code: finite_state_parser
+    problems:
+      - { id: 1309, slug: "decrypt-string-from-alphabet-to-integer-mapping", title: "Decrypt String from Alphabet to Integer Mapping", difficulty: easy }
+      - { id: 722, slug: "remove-comments", title: "Remove Comments", difficulty: medium }
+      - { id: 1410, slug: "html-entity-parser", title: "HTML Entity Parser", difficulty: medium }
+      - { id: 65, slug: "valid-number", title: "Valid Number", difficulty: hard }
+  - code: process_event_simulation
+    problems:
+      - { id: 359, slug: "logger-rate-limiter", title: "Logger Rate Limiter", difficulty: easy }
+      - { id: 1701, slug: "average-waiting-time", title: "Average Waiting Time", difficulty: medium }
+      - { id: 1797, slug: "design-authentication-manager", title: "Design Authentication Manager", difficulty: medium }
+      - { id: 1806, slug: "minimum-number-of-operations-to-reinitialize-a-permutation", title: "Minimum Number of Operations to Reinitialize a Permutation", difficulty: medium }
+      - { id: 1823, slug: "find-the-winner-of-the-circular-game", title: "Find the Winner of the Circular Game", difficulty: medium }
+      - { id: 1860, slug: "incremental-memory-leak", title: "Incremental Memory Leak", difficulty: medium }
+      - { id: 1904, slug: "the-number-of-full-rounds-you-have-played", title: "The Number of Full Rounds You Have Played", difficulty: medium }
+  - code: direct_construction_formatting
+    problems:
+      - { id: 492, slug: "construct-the-rectangle", title: "Construct the Rectangle", difficulty: easy }
+      - { id: 1108, slug: "defanging-an-ip-address", title: "Defanging an IP Address", difficulty: easy }
+      - { id: 1304, slug: "find-n-unique-integers-sum-up-to-zero", title: "Find N Unique Integers Sum up to Zero", difficulty: easy }
+      - { id: 1313, slug: "decompress-run-length-encoded-list", title: "Decompress Run-Length Encoded List", difficulty: easy }
+      - { id: 1317, slug: "convert-integer-to-the-sum-of-two-no-zero-integers", title: "Convert Integer to the Sum of Two No-Zero Integers", difficulty: easy }
+      - { id: 1374, slug: "generate-a-string-with-characters-that-have-odd-counts", title: "Generate a String With Characters That Have Odd Counts", difficulty: easy }
+      - { id: 1389, slug: "create-target-array-in-the-given-order", title: "Create Target Array in the Given Order", difficulty: easy }
+      - { id: 1431, slug: "kids-with-the-greatest-number-of-candies", title: "Kids With the Greatest Number of Candies", difficulty: easy }
+      - { id: 1576, slug: "replace-all-s-to-avoid-consecutive-repeating-characters", title: "Replace All ?'s to Avoid Consecutive Repeating Characters", difficulty: easy }
+      - { id: 1694, slug: "reformat-phone-number", title: "Reformat Phone Number", difficulty: easy }
+      - { id: 1716, slug: "calculate-money-in-leetcode-bank", title: "Calculate Money in Leetcode Bank", difficulty: easy }
+      - { id: 1736, slug: "latest-time-by-replacing-hidden-digits", title: "Latest Time by Replacing Hidden Digits", difficulty: easy }
+      - { id: 1812, slug: "determine-color-of-a-chessboard-square", title: "Determine Color of a Chessboard Square", difficulty: easy }
+      - { id: 1844, slug: "replace-all-digits-with-characters", title: "Replace All Digits with Characters", difficulty: easy }
+      - { id: 1859, slug: "sorting-the-sentence", title: "Sorting the Sentence", difficulty: easy }
+      - { id: 12, slug: "integer-to-roman", title: "Integer to Roman", difficulty: medium }
+      - { id: 271, slug: "encode-and-decode-strings", title: "Encode and Decode Strings", difficulty: medium }
+      - { id: 553, slug: "optimal-division", title: "Optimal Division", difficulty: medium }
+      - { id: 1324, slug: "print-words-vertically", title: "Print Words Vertically", difficulty: medium }
+      - { id: 1451, slug: "rearrange-words-in-a-sentence", title: "Rearrange Words in a Sentence", difficulty: medium }
+  - code: digit_arithmetic_base_conversion
+    problems:
+      - { id: 9, slug: "palindrome-number", title: "Palindrome Number", difficulty: easy }
+      - { id: 66, slug: "plus-one", title: "Plus One", difficulty: easy }
+      - { id: 168, slug: "excel-sheet-column-title", title: "Excel Sheet Column Title", difficulty: easy }
+      - { id: 171, slug: "excel-sheet-column-number", title: "Excel Sheet Column Number", difficulty: easy }
+      - { id: 258, slug: "add-digits", title: "Add Digits", difficulty: easy }
+      - { id: 504, slug: "base-7", title: "Base 7", difficulty: easy }
+      - { id: 1271, slug: "hexspeak", title: "Hexspeak", difficulty: easy }
+      - { id: 1281, slug: "subtract-the-product-and-sum-of-digits-of-an-integer", title: "Subtract the Product and Sum of Digits of an Integer", difficulty: easy }
+      - { id: 1295, slug: "find-numbers-with-even-number-of-digits", title: "Find Numbers with Even Number of Digits", difficulty: easy }
+      - { id: 1880, slug: "check-if-word-equals-summation-of-two-words", title: "Check if Word Equals Summation of Two Words", difficulty: easy }
+      - { id: 7, slug: "reverse-integer", title: "Reverse Integer", difficulty: medium }
+      - { id: 400, slug: "nth-digit", title: "Nth Digit", difficulty: medium }
+      - { id: 1291, slug: "sequential-digits", title: "Sequential Digits", difficulty: medium }
+      - { id: 1780, slug: "check-if-number-is-a-sum-of-powers-of-three", title: "Check if Number is a Sum of Powers of Three", difficulty: medium }
+      - { id: 248, slug: "strobogrammatic-number-iii", title: "Strobogrammatic Number III", difficulty: hard }
+      - { id: 273, slug: "integer-to-english-words", title: "Integer to English Words", difficulty: hard }
+      - { id: 479, slug: "largest-palindrome-product", title: "Largest Palindrome Product", difficulty: hard }
+      - { id: 564, slug: "find-the-closest-palindrome", title: "Find the Closest Palindrome", difficulty: hard }
+  - code: number_theory_gcd_factorization
+    problems:
+      - { id: 263, slug: "ugly-number", title: "Ugly Number", difficulty: easy }
+      - { id: 326, slug: "power-of-three", title: "Power of Three", difficulty: easy }
+      - { id: 507, slug: "perfect-number", title: "Perfect Number", difficulty: easy }
+      - { id: 172, slug: "factorial-trailing-zeroes", title: "Factorial Trailing Zeroes", difficulty: medium }
+      - { id: 319, slug: "bulb-switcher", title: "Bulb Switcher", difficulty: medium }
+      - { id: 592, slug: "fraction-addition-and-subtraction", title: "Fraction Addition and Subtraction", difficulty: medium }
+      - { id: 625, slug: "minimum-factorization", title: "Minimum Factorization", difficulty: medium }
+      - { id: 1362, slug: "closest-divisors", title: "Closest Divisors", difficulty: medium }
+      - { id: 1390, slug: "four-divisors", title: "Four Divisors", difficulty: medium }
+      - { id: 1447, slug: "simplified-fractions", title: "Simplified Fractions", difficulty: medium }
+      - { id: 1492, slug: "the-kth-factor-of-n", title: "The kth Factor of n", difficulty: medium }
+      - { id: 1250, slug: "check-if-it-is-a-good-array", title: "Check If It Is a Good Array", difficulty: hard }
+      - { id: 1735, slug: "count-ways-to-make-array-with-product", title: "Count Ways to Make Array With Product", difficulty: hard }
+      - { id: 1819, slug: "number-of-different-subsequences-gcds", title: "Number of Different Subsequences GCDs", difficulty: hard }
+      - { id: 2183, slug: "count-array-pairs-divisible-by-k", title: "Count Array Pairs Divisible by K", difficulty: hard }
+      - { id: 3312, slug: "sorted-gcd-pair-queries", title: "Sorted GCD Pair Queries", difficulty: hard }
+  - code: modular_arithmetic_fast_pow
+    problems:
+      - { id: 372, slug: "super-pow", title: "Super Pow", difficulty: medium }
+      - { id: 1808, slug: "maximize-number-of-nice-divisors", title: "Maximize Number of Nice Divisors", difficulty: hard }
+  - code: dp_digit_positional
+    problems:
+      - { id: 233, slug: "number-of-digit-one", title: "Number of Digit One", difficulty: hard }
+  - code: combinatorial_counting
+    problems:
+      - { id: 60, slug: "permutation-sequence", title: "Permutation Sequence", difficulty: hard }
+      - { id: 458, slug: "poor-pigs", title: "Poor Pigs", difficulty: hard }
+      - { id: 1994, slug: "the-number-of-good-subsets", title: "The Number of Good Subsets", difficulty: hard }
+  - code: orientation_cross_product
+    problems:
+      - { id: 1037, slug: "valid-boomerang", title: "Valid Boomerang", difficulty: easy }
+      - { id: 1232, slug: "check-if-it-is-a-straight-line", title: "Check If It Is a Straight Line", difficulty: easy }
+      - { id: 469, slug: "convex-polygon", title: "Convex Polygon", difficulty: medium }
+      - { id: 587, slug: "erect-the-fence", title: "Erect the Fence", difficulty: hard }
+  - code: slope_normalization_geo_hashing
+    problems:
+      - { id: 939, slug: "minimum-area-rectangle", title: "Minimum Area Rectangle", difficulty: medium }
+      - { id: 2013, slug: "detect-squares", title: "Detect Squares", difficulty: medium }
+      - { id: 149, slug: "max-points-on-a-line", title: "Max Points on a Line", difficulty: hard }
+  - code: area_rectangle_overlap
+    problems:
+      - { id: 812, slug: "largest-triangle-area", title: "Largest Triangle Area", difficulty: easy }
+      - { id: 836, slug: "rectangle-overlap", title: "Rectangle Overlap", difficulty: easy }
+      - { id: 223, slug: "rectangle-area", title: "Rectangle Area", difficulty: medium }
+  - code: geometric_distance_optimization
+    problems:
+      - { id: 573, slug: "squirrel-simulation", title: "Squirrel Simulation", difficulty: medium }
+      - { id: 593, slug: "valid-square", title: "Valid Square", difficulty: medium }
+      - { id: 963, slug: "minimum-area-rectangle-ii", title: "Minimum Area Rectangle II", difficulty: medium }
+      - { id: 1344, slug: "angle-between-hands-of-a-clock", title: "Angle Between Hands of a Clock", difficulty: medium }
+      - { id: 1453, slug: "maximum-number-of-darts-inside-of-a-circular-dartboard", title: "Maximum Number of Darts Inside of a Circular Dartboard", difficulty: hard }
+  - code: fenwick_tree_bit
+    problems:
+      - { id: 307, slug: "range-sum-query-mutable", title: "Range Sum Query - Mutable", difficulty: medium }
+      - { id: 308, slug: "range-sum-query-2d-mutable", title: "Range Sum Query 2D - Mutable", difficulty: medium }
+      - { id: 1409, slug: "queries-on-a-permutation-with-key", title: "Queries on a Permutation With Key", difficulty: medium }
+      - { id: 1756, slug: "design-most-recently-used-queue", title: "Design Most Recently Used Queue", difficulty: medium }
+      - { id: 2907, slug: "maximum-profitable-triplets-with-increasing-prices-i", title: "Maximum Profitable Triplets With Increasing Prices I", difficulty: medium }
+  - code: segment_tree_lazy
+    problems:
+      - { id: 699, slug: "falling-squares", title: "Falling Squares", difficulty: hard }
+      - { id: 715, slug: "range-module", title: "Range Module", difficulty: hard }
+      - { id: 1157, slug: "online-majority-element-in-subarray", title: "Online Majority Element In Subarray", difficulty: hard }
+      - { id: 2286, slug: "booking-concert-tickets-in-groups", title: "Booking Concert Tickets in Groups", difficulty: hard }
+      - { id: 2569, slug: "handling-sum-queries-after-update", title: "Handling Sum Queries After Update", difficulty: hard }
+      - { id: 3161, slug: "block-placement-queries", title: "Block Placement Queries", difficulty: hard }
+  - code: ordered_set_sorted_map
+    problems:
+      - { id: 635, slug: "design-log-storage-system", title: "Design Log Storage System", difficulty: medium }
+      - { id: 855, slug: "exam-room", title: "Exam Room", difficulty: medium }
+      - { id: 1244, slug: "design-a-leaderboard", title: "Design A Leaderboard", difficulty: medium }
+      - { id: 1348, slug: "tweet-counts-per-frequency", title: "Tweet Counts Per Frequency", difficulty: medium }
+      - { id: 2349, slug: "design-a-number-container-system", title: "Design a Number Container System", difficulty: medium }
+      - { id: 2353, slug: "design-a-food-rating-system", title: "Design a Food Rating System", difficulty: medium }
+      - { id: 3408, slug: "design-task-manager", title: "Design Task Manager", difficulty: medium }
+      - { id: 3508, slug: "implement-router", title: "Implement Router", difficulty: medium }
+      - { id: 220, slug: "contains-duplicate-iii", title: "Contains Duplicate III", difficulty: hard }
+      - { id: 1206, slug: "design-skiplist", title: "Design Skiplist", difficulty: hard }
+      - { id: 1825, slug: "finding-mk-average", title: "Finding MK Average", difficulty: hard }
+      - { id: 1912, slug: "design-movie-rental-system", title: "Design Movie Rental System", difficulty: hard }
+      - { id: 2763, slug: "sum-of-imbalance-numbers-of-all-subarrays", title: "Sum of Imbalance Numbers of All Subarrays", difficulty: hard }
+      - { id: 3245, slug: "alternating-groups-iii", title: "Alternating Groups III", difficulty: hard }
+      - { id: 3321, slug: "find-x-sum-of-all-k-long-subarrays-ii", title: "Find X-Sum of All K-Long Subarrays II", difficulty: hard }
+  - code: coordinate_compression_offline
+    problems:
+      - { id: 2736, slug: "maximum-sum-queries", title: "Maximum Sum Queries", difficulty: hard }
+  - code: eulerian_path_circuit
+    problems:
+      - { id: 332, slug: "reconstruct-itinerary", title: "Reconstruct Itinerary", difficulty: hard }
+      - { id: 753, slug: "cracking-the-safe", title: "Cracking the Safe", difficulty: hard }
+  - code: low_link_bridges_articulation
+    problems:
+      - { id: 1192, slug: "critical-connections-in-a-network", title: "Critical Connections in a Network", difficulty: hard }
+  - code: binary_lifting_jump_pointers
+    problems:
+      - { id: 1483, slug: "kth-ancestor-of-a-tree-node", title: "Kth Ancestor of a Tree Node", difficulty: hard }
+      - { id: 1724, slug: "checking-existence-of-edge-length-limited-paths-ii", title: "Checking Existence of Edge Length Limited Paths II", difficulty: hard }
+  - code: cache_eviction_design
+    problems:
+      - { id: 146, slug: "lru-cache", title: "LRU Cache", difficulty: medium }
+      - { id: 460, slug: "lfu-cache", title: "LFU Cache", difficulty: hard }
+  - code: composite_o1_structures
+    problems:
+      - { id: 225, slug: "implement-stack-using-queues", title: "Implement Stack using Queues", difficulty: easy }
+      - { id: 232, slug: "implement-queue-using-stacks", title: "Implement Queue using Stacks", difficulty: easy }
+      - { id: 706, slug: "design-hashmap", title: "Design HashMap", difficulty: easy }
+      - { id: 1603, slug: "design-parking-system", title: "Design Parking System", difficulty: easy }
+      - { id: 155, slug: "min-stack", title: "Min Stack", difficulty: medium }
+      - { id: 348, slug: "design-tic-tac-toe", title: "Design Tic-Tac-Toe", difficulty: medium }
+      - { id: 355, slug: "design-twitter", title: "Design Twitter", difficulty: medium }
+      - { id: 379, slug: "design-phone-directory", title: "Design Phone Directory", difficulty: medium }
+      - { id: 380, slug: "insert-delete-getrandom-o1", title: "Insert Delete GetRandom O(1)", difficulty: medium }
+      - { id: 535, slug: "encode-and-decode-tinyurl", title: "Encode and Decode TinyURL", difficulty: medium }
+      - { id: 622, slug: "design-circular-queue", title: "Design Circular Queue", difficulty: medium }
+      - { id: 641, slug: "design-circular-deque", title: "Design Circular Deque", difficulty: medium }
+      - { id: 1381, slug: "design-a-stack-with-increment-operation", title: "Design a Stack With Increment Operation", difficulty: medium }
+      - { id: 1500, slug: "design-a-file-sharing-system", title: "Design a File Sharing System", difficulty: medium }
+      - { id: 1670, slug: "design-front-middle-back-queue", title: "Design Front Middle Back Queue", difficulty: medium }
+      - { id: 3484, slug: "design-spreadsheet", title: "Design Spreadsheet", difficulty: medium }
+      - { id: 381, slug: "insert-delete-getrandom-o1-duplicates-allowed", title: "Insert Delete GetRandom O(1) - Duplicates allowed", difficulty: hard }
+      - { id: 631, slug: "design-excel-sum-formula", title: "Design Excel Sum Formula", difficulty: hard }
+      - { id: 716, slug: "max-stack", title: "Max Stack", difficulty: hard }
+      - { id: 1172, slug: "dinner-plate-stacks", title: "Dinner Plate Stacks", difficulty: hard }
+  - code: iterator_stream_snapshot
+    problems:
+      - { id: 157, slug: "read-n-characters-given-read4", title: "Read N Characters Given Read4", difficulty: easy }
+      - { id: 604, slug: "design-compressed-string-iterator", title: "Design Compressed String Iterator", difficulty: easy }
+      - { id: 933, slug: "number-of-recent-calls", title: "Number of Recent Calls", difficulty: easy }
+      - { id: 1656, slug: "design-an-ordered-stream", title: "Design an Ordered Stream", difficulty: easy }
+      - { id: 251, slug: "flatten-2d-vector", title: "Flatten 2D Vector", difficulty: medium }
+      - { id: 281, slug: "zigzag-iterator", title: "Zigzag Iterator", difficulty: medium }
+      - { id: 284, slug: "peeking-iterator", title: "Peeking Iterator", difficulty: medium }
+      - { id: 341, slug: "flatten-nested-list-iterator", title: "Flatten Nested List Iterator", difficulty: medium }
+      - { id: 362, slug: "design-hit-counter", title: "Design Hit Counter", difficulty: medium }
+      - { id: 900, slug: "rle-iterator", title: "RLE Iterator", difficulty: medium }
+      - { id: 1146, slug: "snapshot-array", title: "Snapshot Array", difficulty: medium }
+      - { id: 1286, slug: "iterator-for-combination", title: "Iterator for Combination", difficulty: medium }
+      - { id: 1396, slug: "design-underground-system", title: "Design Underground System", difficulty: medium }
+      - { id: 1472, slug: "design-browser-history", title: "Design Browser History", difficulty: medium }
+      - { id: 158, slug: "read-n-characters-given-read4-ii-call-multiple-times", title: "Read N Characters Given read4 II - Call Multiple Times", difficulty: hard }
+  - code: randomized_sampling_reservoir
+    problems:
+      - { id: 382, slug: "linked-list-random-node", title: "Linked List Random Node", difficulty: medium }
+      - { id: 384, slug: "shuffle-an-array", title: "Shuffle an Array", difficulty: medium }
+      - { id: 398, slug: "random-pick-index", title: "Random Pick Index", difficulty: medium }
+      - { id: 470, slug: "implement-rand10-using-rand7", title: "Implement Rand10() Using Rand7()", difficulty: medium }
+      - { id: 478, slug: "generate-random-point-in-a-circle", title: "Generate Random Point in a Circle", difficulty: medium }
+      - { id: 497, slug: "random-point-in-non-overlapping-rectangles", title: "Random Point in Non-overlapping Rectangles", difficulty: medium }
+      - { id: 519, slug: "random-flip-matrix", title: "Random Flip Matrix", difficulty: medium }
+      - { id: 710, slug: "random-pick-with-blacklist", title: "Random Pick with Blacklist", difficulty: hard }
+  - code: interactive_query_strategy
+    problems:
+      - { id: 277, slug: "find-the-celebrity", title: "Find the Celebrity", difficulty: medium }
+      - { id: 1778, slug: "shortest-path-in-a-hidden-grid", title: "Shortest Path in a Hidden Grid", difficulty: medium }
+      - { id: 843, slug: "guess-the-word", title: "Guess the Word", difficulty: hard }

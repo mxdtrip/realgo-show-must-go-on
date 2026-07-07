@@ -5,27 +5,18 @@ import { useEffect, useState } from "react";
 
 import {
   getAtlasNode,
-  type CardSummary,
   type NodeDetail,
   type PracticeProblem,
 } from "../../../../_api/atlas";
 import { ApiError } from "../../../../_api/types";
-import { CabinetPanel, ProgressBar, StatusPill } from "../../../_components";
-import { CabinetIcon } from "../../../_icons";
+import { CabinetPanel } from "../../../_components";
+import { PatternProfile, ProfileSection } from "./PatternProfile";
 import type { getDictionary } from "../../../../_content/i18n";
 
 type NodeCopy = ReturnType<typeof getDictionary>["cabinet"]["pages"]["atlasNode"];
 type AtlasCopy = ReturnType<typeof getDictionary>["cabinet"]["pages"]["atlas"];
 
 type LoadState = "loading" | "loaded" | "not_found" | "error";
-
-function pluralRu(n: number, forms: readonly string[]): string {
-  const mod10 = n % 10;
-  const mod100 = n % 100;
-  if (mod10 === 1 && mod100 !== 11) return forms[0];
-  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return forms[1];
-  return forms[2];
-}
 
 function formatReview(value: string | undefined, copy: NodeCopy): string {
   if (!value) return copy.noReviews;
@@ -34,6 +25,26 @@ function formatReview(value: string | undefined, copy: NodeCopy): string {
   if (date.getTime() <= Date.now()) return copy.dueNow;
   return date.toLocaleDateString("ru-RU", { day: "numeric", month: "short" });
 }
+
+// what_it_is и другие текстовые секции приходят с абзацами через \n\n.
+function paragraphs(text: string): string[] {
+  return text
+    .split(/\n{2,}/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
+// Каталожное распределение сложности практики: "easy 4 · medium 8 · hard 3".
+function difficultySummary(counts: Record<string, number> | undefined): string {
+  if (!counts) return "";
+  return ["easy", "medium", "hard", "unknown"]
+    .filter((key) => (counts[key] ?? 0) > 0)
+    .map((key) => `${key} ${counts[key]}`)
+    .join(" · ");
+}
+
+// Длинные корпусные списки сворачиваем: сначала витрина, дальше по кнопке.
+const PROBLEMS_PREVIEW_COUNT = 24;
 
 export function AtlasNodeClient({
   code,
@@ -52,9 +63,9 @@ export function AtlasNodeClient({
 
     getAtlasNode(code, controller.signal)
       .then((data) => {
-        // Страницы существуют только у субпаттернов. Семейства раскрываются
-        // в дереве атласа и не имеют самостоятельного URL.
-        if (data.kind !== "subpattern") {
+        // Субпаттерн = рабочий узел, семейство = страница паттерна;
+        // у tool/pattern своих страниц нет.
+        if (data.kind !== "subpattern" && data.kind !== "family") {
           setDetail(null);
           setLoadState("not_found");
           return;
@@ -75,8 +86,10 @@ export function AtlasNodeClient({
     return () => controller.abort();
   }, [code, copy.errorTitle, reloadVersion]);
 
+  const isProfile = loadState === "loaded" && detail !== null;
+
   return (
-    <main className="cabinet-page">
+    <main className={isProfile ? "cabinet-page cabinet-page--pattern" : "cabinet-page"}>
       <Link className="cabinet-ghost-link" href="/patterns">
         {copy.backLink}
       </Link>
@@ -102,180 +115,209 @@ export function AtlasNodeClient({
         </CabinetPanel>
       ) : null}
 
-      {loadState === "loaded" && detail ? <NodeBody detail={detail} copy={copy} atlasCopy={atlasCopy} /> : null}
+      {loadState === "loaded" && detail ? (
+        detail.kind === "family" ? (
+          <PatternProfile detail={detail} copy={copy.profile} />
+        ) : (
+          <SubpatternProfile detail={detail} copy={copy} atlasCopy={atlasCopy} />
+        )
+      ) : null}
     </main>
   );
 }
 
-function NodeBody({
+function SubpatternProfile({
   detail,
   copy,
   atlasCopy,
 }: Readonly<{ detail: NodeDetail; copy: NodeCopy; atlasCopy: AtlasCopy }>) {
+  const material = detail.material;
   const mastery = detail.mastery;
   const stats = detail.stats;
+  const problems = detail.practice;
+  const [problemsExpanded, setProblemsExpanded] = useState(false);
+  const visibleProblems =
+    problemsExpanded || problems.length <= PROBLEMS_PREVIEW_COUNT
+      ? problems
+      : problems.slice(0, PROBLEMS_PREVIEW_COUNT);
+  const difficultyLine = difficultySummary(stats?.difficulty_counts);
+
+  // problem id -> названия компаний, у которых задача встречалась в собесах.
+  const companiesByProblem = new Map<number, string[]>();
+  for (const group of detail.company_practice) {
+    for (const problem of group.problems) {
+      const list = companiesByProblem.get(problem.id) ?? [];
+      list.push(group.company.name);
+      companiesByProblem.set(problem.id, list);
+    }
+  }
+
+  const tierLabel = (tier: string) =>
+    (copy.practice.tiers as Record<string, string>)[tier] ?? tier;
 
   return (
-    <>
-      <section className="cabinet-page-head">
-        <div>
-          <span className="cabinet-eyebrow">
-            {copy.eyebrow} · {copy.kindLabels[detail.kind]}
+    <article className="pattern-profile">
+      <header className="pattern-profile__hero pattern-profile__hero--split">
+        <div className="pattern-profile__hero-main">
+          <span className="pattern-profile__code">
+            {copy.kindLabels[detail.kind]} // {detail.code}
           </span>
           <h1>{detail.name}</h1>
-          {detail.description ? <p>{detail.description}</p> : null}
-          <p className="atlas-node-refs">
-            {detail.families && detail.families.length > 0 ? (
-              <span>
-                {copy.familiesLabel}:{" "}
-                {detail.families.map((family, index) => (
-                  <span key={family.code}>
-                    {index > 0 ? ", " : null}
-                    {family.name}
-                  </span>
-                ))}
-              </span>
-            ) : null}
-            {detail.tools && detail.tools.length > 0 ? (
-              <span className="atlas-node-tools">
-                {copy.toolsLabel}:{" "}
-                {detail.tools.map((tool) => (
-                  <span className="meta-chip" key={tool.code}>
-                    {tool.name}
-                  </span>
-                ))}
-              </span>
-            ) : null}
-          </p>
-        </div>
-        {mastery && stats ? (
-          <div className="cabinet-page-head__actions">
-            <div className="atlas-node-mastery">
-              <span className="cabinet-next-hint">
-                {copy.masteryLabel}:{" "}
-                <em>
-                  {atlasCopy.masteryStatuses[mastery.status]}
-                  {mastery.status !== "not_started" ? ` · ${mastery.percent}%` : ""}
-                </em>
-              </span>
-              {mastery.status !== "not_started" ? (
-                <ProgressBar
-                  value={mastery.percent}
-                  label={`${detail.name} mastery`}
-                  tone={mastery.percent < 40 ? "danger" : mastery.percent < 70 ? "warning" : "default"}
-                />
-              ) : null}
-              <span className="atlas-node-substats">
-                {stats.problem_count > 0 ? (
-                  <span>
-                    {copy.solvedLabel}: {stats.solved_count}/{stats.problem_count}
-                  </span>
-                ) : null}
-                <span>
-                  {copy.nextReviewLabel}: {formatReview(stats.next_review_at, copy)}
-                </span>
-              </span>
-            </div>
-          </div>
-        ) : null}
-      </section>
-
-      <nav className="atlas-node-actions" aria-label={copy.learn.title}>
-        <a className="btn-ghost" href="#atlas-cards">
-          {copy.actions.cards}
-        </a>
-        <a className="btn-ghost" href="#atlas-practice">
-          {copy.actions.practice}
-        </a>
-        <a className="btn-ghost" href="#atlas-company">
-          {copy.actions.company}
-        </a>
-        <Link className="cabinet-cta" href={`/patterns/${detail.code}/session`}>
-          {copy.actions.session}
-          <CabinetIcon name="arrow" />
-        </Link>
-      </nav>
-
-      <div className="cabinet-grid">
-        <LearnPanel detail={detail} copy={copy} />
-        <CardsPanel cards={detail.cards} copy={copy} />
-        <PracticePanel practice={detail.practice} copy={copy} />
-        <CompanyPanel detail={detail} copy={copy} atlasCopy={atlasCopy} />
-      </div>
-    </>
-  );
-}
-
-function LearnPanel({ detail, copy }: Readonly<{ detail: NodeDetail; copy: NodeCopy }>) {
-  const material = detail.material;
-  return (
-    <CabinetPanel eyebrow="learn" title={copy.learn.title} padded>
-      {!material ? (
-        <p>{copy.learn.preparing}</p>
-      ) : (
-        <div className="atlas-learn">
-          <h3>{copy.learn.whatItIs}</h3>
-          <p>{material.what_it_is}</p>
-
-          {material.mental_model ? (
-            <>
-              <h3>{copy.learn.mentalModel}</h3>
-              <p>{material.mental_model}</p>
-            </>
+          {detail.description ? (
+            <p className="pattern-profile__lead">{detail.description}</p>
           ) : null}
+          {mastery && stats ? (
+            <p className="pattern-profile__mastery">
+              {copy.masteryLabel}:{" "}
+              <em>
+                {atlasCopy.masteryStatuses[mastery.status]}
+                {mastery.status !== "not_started" ? ` · ${mastery.percent}%` : ""}
+              </em>
+              {stats.problem_count > 0 ? (
+                <>
+                  {" · "}
+                  {copy.solvedLabel} {stats.solved_count}/{stats.problem_count}
+                </>
+              ) : null}
+              {" · "}
+              {copy.nextReviewLabel}: {formatReview(stats.next_review_at, copy)}
+            </p>
+          ) : null}
+          {difficultyLine ? (
+            <p className="pattern-profile__mastery">
+              {copy.problems.difficultyLabel}: <em>{difficultyLine}</em>
+            </p>
+          ) : null}
+        </div>
+        <Link className="pattern-profile__cta" href={`/patterns/${detail.code}/session`}>
+          <span className="pattern-profile__sub-head">
+            <span>{copy.cta.eyebrow}</span>
+            <span className="pattern-profile__sub-arrow" aria-hidden="true">
+              →
+            </span>
+          </span>
+          <span className="pattern-profile__sub-name">{copy.cta.title}</span>
+          <span className="pattern-profile__sub-note">{copy.cta.note}</span>
+        </Link>
+      </header>
+
+      {material ? (
+        <>
+          <ProfileSection
+            title={copy.learn.whatItIs}
+            empty={!material.what_it_is}
+            pendingNote={copy.learn.preparing}
+            pendingBadge={copy.profile.pendingBadge}
+          >
+            {paragraphs(material.what_it_is).map((part) => (
+              <p key={part}>{part}</p>
+            ))}
+          </ProfileSection>
 
           {material.recognition_cues.length > 0 ? (
-            <>
-              <h3>{copy.learn.recognitionCues}</h3>
-              <ul className="pattern-detail-list">
+            <ProfileSection
+              title={copy.learn.recognitionCues}
+              empty={false}
+              pendingNote={copy.learn.preparing}
+              pendingBadge={copy.profile.pendingBadge}
+            >
+              <ul className="pattern-profile__list pattern-profile__list--cues">
                 {material.recognition_cues.map((cue) => (
                   <li key={cue}>{cue}</li>
                 ))}
               </ul>
-            </>
+            </ProfileSection>
+          ) : null}
+
+          {material.mental_model ? (
+            <ProfileSection
+              title={copy.learn.mentalModel}
+              empty={false}
+              pendingNote={copy.learn.preparing}
+              pendingBadge={copy.profile.pendingBadge}
+            >
+              {paragraphs(material.mental_model).map((part) => (
+                <p key={part}>{part}</p>
+              ))}
+            </ProfileSection>
           ) : null}
 
           {material.anti_cues.length > 0 ? (
-            <>
-              <h3>{copy.learn.antiCues}</h3>
-              <ul className="pattern-detail-list atlas-anti-cues">
+            <ProfileSection
+              title={copy.learn.antiCues}
+              empty={false}
+              pendingNote={copy.learn.preparing}
+              pendingBadge={copy.profile.pendingBadge}
+            >
+              <ul className="pattern-profile__list pattern-profile__list--misfits">
                 {material.anti_cues.map((cue) => (
                   <li key={cue}>{cue}</li>
                 ))}
               </ul>
-            </>
+            </ProfileSection>
           ) : null}
 
           {material.core_invariant ? (
-            <>
-              <h3>{copy.learn.coreInvariant}</h3>
-              <p>{material.core_invariant}</p>
-            </>
+            <ProfileSection
+              title={copy.learn.coreInvariant}
+              empty={false}
+              pendingNote={copy.learn.preparing}
+              pendingBadge={copy.profile.pendingBadge}
+            >
+              {paragraphs(material.core_invariant).map((part) => (
+                <p key={part}>{part}</p>
+              ))}
+            </ProfileSection>
           ) : null}
 
           {material.canonical_skeleton ? (
-            <>
-              <h3>{copy.learn.skeleton}</h3>
+            <ProfileSection
+              title={copy.learn.skeleton}
+              empty={false}
+              pendingNote={copy.learn.preparing}
+              pendingBadge={copy.profile.pendingBadge}
+            >
               <pre className="atlas-skeleton">
                 <code>{material.canonical_skeleton}</code>
               </pre>
-            </>
+            </ProfileSection>
+          ) : null}
+
+          {material.mini_example ? (
+            <ProfileSection
+              title={copy.learn.miniExample}
+              empty={false}
+              pendingNote={copy.learn.preparing}
+              pendingBadge={copy.profile.pendingBadge}
+            >
+              {paragraphs(material.mini_example).map((part) => (
+                <p key={part}>{part}</p>
+              ))}
+            </ProfileSection>
           ) : null}
 
           {material.common_mistakes.length > 0 ? (
-            <>
-              <h3>{copy.learn.commonMistakes}</h3>
-              <ul className="pattern-detail-list">
+            <ProfileSection
+              title={copy.learn.commonMistakes}
+              empty={false}
+              pendingNote={copy.learn.preparing}
+              pendingBadge={copy.profile.pendingBadge}
+            >
+              <ul className="pattern-profile__list pattern-profile__list--mechanics">
                 {material.common_mistakes.map((mistake) => (
                   <li key={mistake}>{mistake}</li>
                 ))}
               </ul>
-            </>
+            </ProfileSection>
           ) : null}
 
           {material.dont_confuse_with.length > 0 ? (
-            <>
-              <h3>{copy.learn.dontConfuse}</h3>
+            <ProfileSection
+              title={copy.learn.dontConfuse}
+              empty={false}
+              pendingNote={copy.learn.preparing}
+              pendingBadge={copy.profile.pendingBadge}
+            >
               <dl className="atlas-contrast">
                 {material.dont_confuse_with.map((pair) => (
                   <div key={pair.title}>
@@ -284,170 +326,97 @@ function LearnPanel({ detail, copy }: Readonly<{ detail: NodeDetail; copy: NodeC
                   </div>
                 ))}
               </dl>
-            </>
+            </ProfileSection>
           ) : null}
-        </div>
-      )}
-    </CabinetPanel>
-  );
-}
-
-function CardsPanel({ cards, copy }: Readonly<{ cards: CardSummary[]; copy: NodeCopy }>) {
-  const typeLabel = (type: string) =>
-    (copy.cards.types as Record<string, string>)[type] ?? type;
-  return (
-    <CabinetPanel
-      eyebrow="cards"
-      title={copy.cards.title}
-      padded
-      meta={<span className="cabinet-panel__meta" id="atlas-cards">{cards.length}</span>}
-    >
-      {cards.length === 0 ? (
-        <p>{copy.cards.empty}</p>
+        </>
       ) : (
-        <ul className="atlas-cards">
-          {cards.map((card) => (
-            <li key={card.id}>
-              <StatusPill tone="default">{typeLabel(card.type)}</StatusPill>
-              <span>{card.question}</span>
-            </li>
-          ))}
-        </ul>
+        <ProfileSection
+          title={copy.learn.title}
+          empty
+          pendingNote={copy.learn.preparing}
+          pendingBadge={copy.profile.pendingBadge}
+        >
+          {null}
+        </ProfileSection>
       )}
-    </CabinetPanel>
-  );
-}
 
-function ProblemRow({
-  problem,
-  copy,
-}: Readonly<{ problem: PracticeProblem; copy: NodeCopy }>) {
-  const statusLabel =
-    (copy.practice.statuses as Record<string, string>)[problem.status] ?? problem.status;
-  const solved = problem.status === "solved" || problem.status === "reviewing";
-  return (
-    <li className="atlas-problem">
-      <a href={problem.url} target="_blank" rel="noreferrer">
-        {problem.title}
-      </a>
-      <span className="atlas-problem__meta">
-        {problem.tier ? (
-          <span className="meta-chip meta-chip--muted">
-            {(copy.practice.tiers as Record<string, string>)[problem.tier] ?? problem.tier}
-          </span>
-        ) : null}
-        {problem.difficulty ? <span className="atlas-difficulty">{problem.difficulty}</span> : null}
-        <StatusPill tone={solved ? "success" : problem.status === "in_progress" ? "accent" : "default"}>
-          {statusLabel}
-        </StatusPill>
-      </span>
-    </li>
-  );
-}
-
-function PracticePanel({
-  practice,
-  copy,
-}: Readonly<{ practice: PracticeProblem[]; copy: NodeCopy }>) {
-  return (
-    <CabinetPanel
-      eyebrow="practice"
-      title={copy.practice.title}
-      padded
-      meta={<span className="cabinet-panel__meta" id="atlas-practice">{practice.length}</span>}
-    >
-      {practice.length === 0 ? (
-        <p>{copy.practice.empty}</p>
-      ) : (
-        <ul className="atlas-problems">
-          {practice.map((problem) => (
-            <ProblemRow key={problem.id} problem={problem} copy={copy} />
-          ))}
-        </ul>
-      )}
-    </CabinetPanel>
-  );
-}
-
-function CompanyPanel({
-  detail,
-  copy,
-  atlasCopy,
-}: Readonly<{ detail: NodeDetail; copy: NodeCopy; atlasCopy: AtlasCopy }>) {
-  return (
-    <>
-      <CabinetPanel
-        eyebrow="companies"
-        title={copy.relevantCompanies.title}
-        padded
-        meta={<span className="cabinet-panel__meta" id="atlas-company">{detail.relevant_companies.length}</span>}
+      <ProfileSection
+        title={copy.problems.title}
+        hint={copy.problems.hint}
+        empty={problems.length === 0}
+        pendingNote={copy.practice.empty}
+        pendingBadge={copy.profile.pendingBadge}
       >
-        {detail.relevant_companies.length === 0 ? (
-          <p>{copy.relevantCompanies.empty}</p>
-        ) : (
-          <ul className="atlas-companies">
-            {detail.relevant_companies.map((company) => (
-              <li key={company.code}>
-                <strong>{company.name}</strong>
-                <span className="atlas-companies__meta">
-                  <span className={`atlas-relevance atlas-relevance--${company.relevance}`}>
-                    {atlasCopy.relevanceLabels[company.relevance]}
-                  </span>
-                  <span>
-                    {copy.relevantCompanies.confidence}: {company.confidence}
-                  </span>
-                  <span>
-                    {copy.relevantCompanies.evidence}: {company.evidence_count}
-                  </span>
-                  {company.last_seen_at ? (
-                    <span>
-                      {copy.relevantCompanies.lastSeen}: {company.last_seen_at.slice(0, 4)}
-                    </span>
-                  ) : null}
-                  {company.source_type === "demo" ? (
-                    <span className="meta-chip meta-chip--muted">{atlasCopy.demoBadge}</span>
-                  ) : null}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </CabinetPanel>
+        <ul className="pattern-profile__subs">
+          {visibleProblems.map((problem, index) => (
+            <ProblemCard
+              key={problem.id}
+              problem={problem}
+              index={index}
+              companies={companiesByProblem.get(problem.id) ?? []}
+              copy={copy}
+              tierLabel={tierLabel}
+            />
+          ))}
+        </ul>
+        {problems.length > PROBLEMS_PREVIEW_COUNT ? (
+          <button
+            className="pattern-profile__more"
+            type="button"
+            onClick={() => setProblemsExpanded((value) => !value)}
+          >
+            {problemsExpanded
+              ? copy.problems.showLess
+              : `${copy.problems.showAll} · ${problems.length}`}
+          </button>
+        ) : null}
+      </ProfileSection>
+    </article>
+  );
+}
 
-      <CabinetPanel eyebrow="company practice" title={copy.companyPractice.title} padded>
-        {detail.company_practice.length === 0 ? (
-          <p>{copy.companyPractice.empty}</p>
-        ) : (
-          <div className="atlas-company-groups">
-            {detail.company_practice.map((group) => (
-              <div key={group.company.code}>
-                <h3>{group.company.name}</h3>
-                <ul className="atlas-problems">
-                  {group.problems.map((problem) => (
-                    <li className="atlas-problem" key={`${group.company.code}-${problem.id}`}>
-                      <a href={problem.url} target="_blank" rel="noreferrer">
-                        {problem.title}
-                      </a>
-                      <span className="atlas-problem__meta">
-                        {problem.difficulty ? (
-                          <span className="atlas-difficulty">{problem.difficulty}</span>
-                        ) : null}
-                        <span>
-                          {problem.evidence_count}{" "}
-                          {pluralRu(problem.evidence_count, copy.companyPractice.evidenceUnit)}
-                        </span>
-                        {problem.source_type === "demo" ? (
-                          <span className="meta-chip meta-chip--muted">{atlasCopy.demoBadge}</span>
-                        ) : null}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        )}
-      </CabinetPanel>
-    </>
+function ProblemCard({
+  problem,
+  index,
+  companies,
+  copy,
+  tierLabel,
+}: Readonly<{
+  problem: PracticeProblem;
+  index: number;
+  companies: string[];
+  copy: NodeCopy;
+  tierLabel: (tier: string) => string;
+}>) {
+  const meta = [String(index + 1).padStart(2, "0")];
+  if (problem.difficulty) meta.push(problem.difficulty.toLowerCase());
+  if (problem.tier) meta.push(tierLabel(problem.tier));
+  const statusLabel =
+    problem.status !== "not_started"
+      ? ((copy.practice.statuses as Record<string, string>)[problem.status] ?? problem.status)
+      : "";
+  if (statusLabel) meta.push(statusLabel);
+
+  return (
+    <li>
+      <a href={problem.url} target="_blank" rel="noreferrer">
+        <span className="pattern-profile__sub-head">
+          <span>{meta.join(" · ")}</span>
+          <span className="pattern-profile__sub-arrow" aria-hidden="true">
+            ↗
+          </span>
+        </span>
+        <span className="pattern-profile__sub-name">{problem.title}</span>
+        <span
+          className={
+            companies.length > 0
+              ? "pattern-profile__sub-note"
+              : "pattern-profile__sub-note is-pending"
+          }
+        >
+          {companies.length > 0 ? companies.join(", ") : copy.problems.companiesNone}
+        </span>
+      </a>
+    </li>
   );
 }

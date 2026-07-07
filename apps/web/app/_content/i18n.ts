@@ -223,10 +223,10 @@ const ru = {
       next: "Далее",
       skip: "Пропустить",
       company: {
-        title: "Компания мечты",
+        title: "В какие компании хочешь устроиться?",
         description:
-          "Если укажешь компанию, realgo сможет позже приоритизировать темы и задачи под её интервью-паттерны.",
-        label: "В какие компании хочешь устроиться?",
+          "Назови компании — realgo будет рекомендовать задачи и темы, которые именно эти компании реально спрашивают на интервью.",
+        label: "компании",
         placeholder: "Например, Google, Amazon, Yandex…",
         selectedLabel: "Выбранные компании",
         suggestionsLabel: "Подсказки компаний из GitHub-репозитория",
@@ -234,17 +234,20 @@ const ru = {
       date: {
         title: "Дата интервью",
         description:
-          "Выбери день в ближайшие три месяца или открой свой календарь, если интервью дальше.",
-        calendarLabel: "Календарь интервью на ближайшие три месяца",
-        customLabel: "Своя дата",
-        weekdays: ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"],
+          "Прокрути колёса — активными станут день и месяц, которые остановятся по центру.",
+        wheelsLabel: "Колёса выбора дня и месяца интервью",
+        dayAria: "День интервью",
+        monthAria: "Месяц интервью",
+        resultLabel: "интервью",
       },
       topics: {
         title: "Темы для повторения",
         description:
-          "Отметь темы, которые хочешь держать в фокусе. Из них соберём стартовый план повторения — набор можно поменять в любой момент.",
+          "Нажимай на темы по краям — выбранные притягиваются в центр и собирают твой фокус подготовки. Набор можно поменять в любой момент.",
         fieldLabel: "Выбор алгоритмических тем для повторения",
         selectedCount: "выбрано",
+        empty: "Выбранные темы появятся здесь",
+        selected: "Фокус подготовки",
       },
       welcome: {
         eyebrow: "setup complete",
@@ -597,6 +600,7 @@ const ru = {
           "Показываем распределение привязанных задач по easy/medium/hard. Среднюю сложность паттерна не считаем: она была бы слишком условной.",
         expandAria: "Раскрыть семейство",
         collapseAria: "Свернуть семейство",
+        openPattern: "Открыть страницу паттерна",
         subpatternUnit: ["субпаттерн", "субпаттерна", "субпаттернов"],
         taskUnit: ["задача", "задачи", "задач"],
         solvedLabel: "solved",
@@ -685,22 +689,33 @@ const ru = {
           },
         },
         actions: {
-          cards: "Карточки",
-          practice: "Практика",
-          company: "Задачи компаний",
           session: "Повторить слабые места",
         },
         learn: {
           title: "Методика",
           whatItIs: "Что это",
-          mentalModel: "Как думать",
-          recognitionCues: "Признаки в условии",
+          mentalModel: "Ключевая механика",
+          recognitionCues: "Как распознать",
           antiCues: "Когда это НЕ подходит",
           coreInvariant: "Инвариант",
-          skeleton: "Каркас",
+          skeleton: "Canonical skeleton",
+          miniExample: "Мини-пример",
           commonMistakes: "Типичные ошибки",
           dontConfuse: "Не путать с",
           preparing: "Методический материал готовится — скоро появится.",
+        },
+        cta: {
+          eyebrow: "cards",
+          title: "Порешать карточки",
+          note: "Короткая сессия по этому субпаттерну: распознавание, механика и граничные случаи.",
+        },
+        problems: {
+          title: "Задачи",
+          hint: "Практика по субпаттерну — с компаниями, где задачу реально спрашивали.",
+          companiesNone: "компании не отмечены",
+          difficultyLabel: "difficulty",
+          showAll: "показать все",
+          showLess: "свернуть",
         },
         cards: {
           title: "Карточки",
@@ -737,14 +752,6 @@ const ru = {
           title: "Задачи компаний",
           empty: "Задач с привязкой к компаниям для этого субпаттерна пока нет.",
           evidenceUnit: ["упоминание", "упоминания", "упоминаний"],
-        },
-        relevantCompanies: {
-          title: "Релевантные компании",
-          empty: "Данных о компаниях по этому субпаттерну пока нет.",
-          relevance: "relevance",
-          confidence: "confidence",
-          evidence: "evidence",
-          lastSeen: "last seen",
         },
       },
       cards: {
@@ -1355,8 +1362,6 @@ export const accountSecurityCopy = {
 
 // ===== #62 onboarding API wiring =====
 export const onboardingApiCopy = {
-  positionLabel: "target position",
-  positionPlaceholder: "Например, Senior Backend Engineer",
   goal: {
     title: "Цель подготовки",
     description:
@@ -1365,11 +1370,19 @@ export const onboardingApiCopy = {
     prepGoalPlaceholder: "Например: пройти интервью в Google через 2 месяца",
     gradeLabel: "уровень",
     grades: ["junior", "middle", "senior", "staff", "principal"],
+    referralLabel: "Откуда узнали про нас?",
+    referralOptions: [
+      "Telegram",
+      "YouTube",
+      "статья или блог",
+      "друзья или коллеги",
+      "поиск",
+      "другое",
+    ],
   },
   saving: "Сохраняем…",
   saveFailed: "Не удалось сохранить профиль. Попробуйте ещё раз.",
   companiesSearchFailed: "Не удалось загрузить подсказки компаний.",
-  summaryPosition: "позиция",
   summaryGoal: "цель",
   summaryGrade: "уровень",
 } as const;

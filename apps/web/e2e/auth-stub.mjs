@@ -122,7 +122,7 @@ function atlasPayload(withCompany) {
     }
   }
   return {
-    taxonomy_version: "realgo-v1",
+    taxonomy_version: "realgo-v2",
     tools: [
       { code: "tool_arrays", name: "Arrays", position: 1, subpattern_codes: ["binary_search_on_answer", "lower_upper_bound", "fixed_size_window"] },
       { code: "tool_hash_map", name: "Hash Map", position: 2, subpattern_codes: [] },
@@ -170,7 +170,7 @@ const ATLAS_NODES = {
     name: "Binary Search",
     kind: "family",
     description: "Family node stub rendered as the pattern profile page.",
-    taxonomy_version: "realgo-v1",
+    taxonomy_version: "realgo-v2",
     techniques: [],
     recognition_symptoms: [],
     checklist: [],
@@ -189,7 +189,7 @@ const ATLAS_NODES = {
     name: "Binary Search on Answer",
     kind: "subpattern",
     description: "",
-    taxonomy_version: "realgo-v1",
+    taxonomy_version: "realgo-v2",
     techniques: [],
     recognition_symptoms: [],
     checklist: [],
@@ -206,7 +206,12 @@ const ATLAS_NODES = {
       common_mistakes: ["hi = mid - 1 при поиске минимума"],
       dont_confuse_with: [{ title: "Exact Binary Search", note: "ищет элемент, а не границу" }],
     },
-    stats: stubStats({ problem_count: 12, solved_count: 3, due_count: 1 }),
+    stats: stubStats({
+      problem_count: 12,
+      solved_count: 3,
+      due_count: 1,
+      difficulty_counts: { easy: 2, medium: 7, hard: 3 },
+    }),
     mastery: stubMastery("unstable", 41),
     cards: [],
     practice: [
@@ -230,7 +235,7 @@ const ATLAS_NODES = {
     name: "Fixed-Size Window",
     kind: "subpattern",
     description: "",
-    taxonomy_version: "realgo-v1",
+    taxonomy_version: "realgo-v2",
     techniques: [],
     recognition_symptoms: [],
     checklist: [],

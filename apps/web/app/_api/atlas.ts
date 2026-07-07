@@ -135,6 +135,7 @@ export type LearningMaterial = {
   canonical_skeleton: string;
   common_mistakes: string[];
   dont_confuse_with: ContrastPair[];
+  mini_example: string;
 };
 
 export type CardSummary = {
