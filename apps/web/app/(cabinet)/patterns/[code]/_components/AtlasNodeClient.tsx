@@ -180,16 +180,7 @@ function NodeBody({
         ) : null}
       </section>
 
-      <nav className="atlas-node-actions" aria-label={copy.learn.title}>
-        <a className="btn-ghost" href="#atlas-cards">
-          {copy.actions.cards}
-        </a>
-        <a className="btn-ghost" href="#atlas-practice">
-          {copy.actions.practice}
-        </a>
-        <a className="btn-ghost" href="#atlas-company">
-          {copy.actions.company}
-        </a>
+      <nav className="atlas-node-actions" aria-label={copy.actions.session}>
         <Link className="cabinet-cta" href={`/patterns/${detail.code}/session`}>
           {copy.actions.session}
           <CabinetIcon name="arrow" />
@@ -300,7 +291,7 @@ function CardsPanel({ cards, copy }: Readonly<{ cards: CardSummary[]; copy: Node
       eyebrow="cards"
       title={copy.cards.title}
       padded
-      meta={<span className="cabinet-panel__meta" id="atlas-cards">{cards.length}</span>}
+      meta={<span className="cabinet-panel__meta">{cards.length}</span>}
     >
       {cards.length === 0 ? (
         <p>{copy.cards.empty}</p>
@@ -354,7 +345,7 @@ function PracticePanel({
       eyebrow="practice"
       title={copy.practice.title}
       padded
-      meta={<span className="cabinet-panel__meta" id="atlas-practice">{practice.length}</span>}
+      meta={<span className="cabinet-panel__meta">{practice.length}</span>}
     >
       {practice.length === 0 ? (
         <p>{copy.practice.empty}</p>
@@ -375,79 +366,39 @@ function CompanyPanel({
   atlasCopy,
 }: Readonly<{ detail: NodeDetail; copy: NodeCopy; atlasCopy: AtlasCopy }>) {
   return (
-    <>
-      <CabinetPanel
-        eyebrow="companies"
-        title={copy.relevantCompanies.title}
-        padded
-        meta={<span className="cabinet-panel__meta" id="atlas-company">{detail.relevant_companies.length}</span>}
-      >
-        {detail.relevant_companies.length === 0 ? (
-          <p>{copy.relevantCompanies.empty}</p>
-        ) : (
-          <ul className="atlas-companies">
-            {detail.relevant_companies.map((company) => (
-              <li key={company.code}>
-                <strong>{company.name}</strong>
-                <span className="atlas-companies__meta">
-                  <span className={`atlas-relevance atlas-relevance--${company.relevance}`}>
-                    {atlasCopy.relevanceLabels[company.relevance]}
-                  </span>
-                  <span>
-                    {copy.relevantCompanies.confidence}: {company.confidence}
-                  </span>
-                  <span>
-                    {copy.relevantCompanies.evidence}: {company.evidence_count}
-                  </span>
-                  {company.last_seen_at ? (
-                    <span>
-                      {copy.relevantCompanies.lastSeen}: {company.last_seen_at.slice(0, 4)}
-                    </span>
-                  ) : null}
-                  {company.source_type === "demo" ? (
-                    <span className="meta-chip meta-chip--muted">{atlasCopy.demoBadge}</span>
-                  ) : null}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </CabinetPanel>
-
-      <CabinetPanel eyebrow="company practice" title={copy.companyPractice.title} padded>
-        {detail.company_practice.length === 0 ? (
-          <p>{copy.companyPractice.empty}</p>
-        ) : (
-          <div className="atlas-company-groups">
-            {detail.company_practice.map((group) => (
-              <div key={group.company.code}>
-                <h3>{group.company.name}</h3>
-                <ul className="atlas-problems">
-                  {group.problems.map((problem) => (
-                    <li className="atlas-problem" key={`${group.company.code}-${problem.id}`}>
-                      <a href={problem.url} target="_blank" rel="noreferrer">
-                        {problem.title}
-                      </a>
-                      <span className="atlas-problem__meta">
-                        {problem.difficulty ? (
-                          <span className="atlas-difficulty">{problem.difficulty}</span>
-                        ) : null}
-                        <span>
-                          {problem.evidence_count}{" "}
-                          {pluralRu(problem.evidence_count, copy.companyPractice.evidenceUnit)}
-                        </span>
-                        {problem.source_type === "demo" ? (
-                          <span className="meta-chip meta-chip--muted">{atlasCopy.demoBadge}</span>
-                        ) : null}
+    <CabinetPanel eyebrow="company practice" title={copy.companyPractice.title} padded>
+      {detail.company_practice.length === 0 ? (
+        <p>{copy.companyPractice.empty}</p>
+      ) : (
+        <div className="atlas-company-groups">
+          {detail.company_practice.map((group) => (
+            <div key={group.company.code}>
+              <h3>{group.company.name}</h3>
+              <ul className="atlas-problems">
+                {group.problems.map((problem) => (
+                  <li className="atlas-problem" key={`${group.company.code}-${problem.id}`}>
+                    <a href={problem.url} target="_blank" rel="noreferrer">
+                      {problem.title}
+                    </a>
+                    <span className="atlas-problem__meta">
+                      {problem.difficulty ? (
+                        <span className="atlas-difficulty">{problem.difficulty}</span>
+                      ) : null}
+                      <span>
+                        {problem.evidence_count}{" "}
+                        {pluralRu(problem.evidence_count, copy.companyPractice.evidenceUnit)}
                       </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        )}
-      </CabinetPanel>
-    </>
+                      {problem.source_type === "demo" ? (
+                        <span className="meta-chip meta-chip--muted">{atlasCopy.demoBadge}</span>
+                      ) : null}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      )}
+    </CabinetPanel>
   );
 }

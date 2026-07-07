@@ -86,18 +86,25 @@ test.describe("pattern atlas tree", () => {
     await expect(windowRow.locator(".atlas-relevance")).toHaveCount(0);
   });
 
-  test("readiness view shows coverage and top gaps", async ({ page }) => {
+  test("readiness view is locked without a company and shows coverage with one", async ({ page }) => {
     await openAtlas(page);
     await expect(page.locator(".atlas-tree")).toBeVisible();
 
-    // Without a company the readiness view explains itself.
-    await page.click(".atlas-view-toggle button:nth-child(2)");
-    await expect(page.getByText("Выбери компанию, чтобы увидеть готовность")).toBeVisible();
+    // Without a company the readiness mode is disabled.
+    const readinessTab = page.locator(".atlas-view-toggle button:nth-child(2)");
+    await expect(readinessTab).toBeDisabled();
 
     await page.selectOption(".atlas-company select", "cmp_stub");
+    await expect(readinessTab).toBeEnabled();
+    await readinessTab.click();
     await expect(page.locator(".atlas-coverage")).toBeVisible();
     await expect(page.locator(".atlas-gaps li")).toHaveCount(1);
     await expect(page.locator(".atlas-gaps")).toContainText("Binary Search on Answer");
+
+    // Сброс компании возвращает дерево и снова блокирует readiness.
+    await page.selectOption(".atlas-company select", "");
+    await expect(page.locator(".atlas-tree")).toBeVisible();
+    await expect(readinessTab).toBeDisabled();
   });
 
   test("API failure shows error state with retry", async ({ page }) => {
@@ -121,11 +128,14 @@ test.describe("subpattern detail", () => {
     await expect(page.getByText("Koko Eating Bananas").first()).toBeVisible();
     await expect(page.locator(".atlas-problem").first()).toContainText("core");
 
-    // Relevant companies with evidence, marked as demo.
-    const companies = page.locator(".atlas-companies");
-    await expect(companies).toContainText("Stub Corp");
-    await expect(companies).toContainText("evidence: 7");
-    await expect(companies.locator(".meta-chip--muted")).toContainText("demo");
+    // Company practice grouped by company, marked as demo.
+    const companyGroups = page.locator(".atlas-company-groups");
+    await expect(companyGroups).toContainText("Stub Corp");
+    await expect(companyGroups.locator(".meta-chip--muted").first()).toContainText("demo");
+
+    // Anchor row and the relevant-companies panel are gone.
+    await expect(page.locator(".atlas-node-actions a")).toHaveCount(1);
+    await expect(page.locator(".atlas-companies")).toHaveCount(0);
 
     // Cards empty state is honest.
     await expect(page.getByText("Карточек по этому субпаттерну пока нет.")).toBeVisible();
@@ -138,7 +148,7 @@ test.describe("subpattern detail", () => {
     await expect(page.locator("h1")).toContainText("Fixed-Size Window");
     await expect(page.getByText("Методический материал готовится")).toBeVisible();
     await expect(page.getByText("К этому субпаттерну задачи ещё не привязаны.")).toBeVisible();
-    await expect(page.getByText("Данных о компаниях по этому субпаттерну пока нет.")).toBeVisible();
+    await expect(page.getByText("Задач с привязкой к компаниям для этого субпаттерна пока нет.")).toBeVisible();
   });
 
   test("family code does not render a standalone pattern page", async ({ page }) => {
