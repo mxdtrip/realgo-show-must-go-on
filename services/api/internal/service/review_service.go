@@ -45,7 +45,7 @@ func NewReviewService(repo repo.ReviewRepository, logger *slog.Logger) ReviewSer
 }
 
 func (s *reviewService) GetQueue(ctx context.Context, userID int64, status string, limit int32) (response.QueueResponse, error) {
-	items, err := s.repo.TodayReviews(ctx, userID, limit)
+	items, err := s.repo.QueueReviews(ctx, userID, status, limit)
 	if err != nil {
 		return response.QueueResponse{}, fmt.Errorf("reviews: GetQueue: %w", err)
 	}
@@ -94,6 +94,7 @@ func (s *reviewService) RateReview(ctx context.Context, reviewID, userID int64, 
 		UserID:      schedule.UserID,
 		ProblemID:   schedule.ProblemID,
 		PatternID:   schedule.PatternID,
+		CardID:      schedule.CardID,
 		Rating:      rating,
 		DurationSec: 0, // TODO: получать из запроса
 	})

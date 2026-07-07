@@ -3,18 +3,9 @@ import { getAccessToken, getApiBaseUrl } from "./storage";
 import type { SubmissionPayload } from "./types";
 
 /**
- * Planned backend contract (NOT yet implemented server-side — this branch is
- * frontend-only). The Go API already has the `extension_events` table, the
- * `problems` table with source_type='extension', and the FSRS reviews module;
- * the matching handler is the next backend step:
- *
- *   POST /api/v1/extension/events
- *   Authorization: Bearer <access_token>
- *   body: SubmissionPayload
- *
- * The endpoint is expected to upsert the problem, insert an extension_event,
- * update user_problem_progress and enqueue/advance a review_schedule via FSRS
- * (userDifficulty maps 1:1 to the FSRS rating hard|normal|easy).
+ * Persists detected submissions through the Go API. The backend upserts the
+ * problem, records an extension_event, updates progress and creates/advances
+ * the review schedule for the authenticated user.
  */
 export const EXTENSION_EVENTS_PATH = "/api/v1/extension/events";
 

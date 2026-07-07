@@ -8,8 +8,8 @@ import (
 
 // ReviewRepository — интерфейс для работы с данными повторений.
 type ReviewRepository interface {
-	// TodayReviews возвращает повторения на сегодня.
-	TodayReviews(ctx context.Context, userID int64, limit int32) ([]entity.ReviewItem, error)
+	// QueueReviews возвращает элементы очереди с фильтром due/upcoming.
+	QueueReviews(ctx context.Context, userID int64, status string, limit int32) ([]entity.ReviewItem, error)
 
 	// ScheduleByID возвращает расписание по ID.
 	ScheduleByID(ctx context.Context, scheduleID, userID int64) (entity.ReviewSchedule, error)

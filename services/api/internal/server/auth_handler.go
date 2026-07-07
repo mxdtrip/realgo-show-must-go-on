@@ -22,6 +22,8 @@ const maxJSONBodyBytes = 1 << 20
 type credentialsRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
+	Locale   string `json:"locale,omitempty"`
+	Timezone string `json:"timezone,omitempty"`
 }
 
 type refreshRequest struct {

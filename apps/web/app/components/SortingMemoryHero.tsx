@@ -53,6 +53,11 @@ type SortStep = {
   b: number;
 };
 
+type SortRecording = {
+  result: number[];
+  steps: SortStep[];
+};
+
 type SceneSize = {
   width: number;
   height: number;
@@ -146,18 +151,22 @@ function chaosPoses(size: SceneSize, order: number[]) {
   });
 }
 
-function recordSort(code: string, order: number[]) {
+const SORT_WORKER_TIMEOUT_MS = 800;
+
+const SORT_WORKER_SOURCE = `
+self.onmessage = (event) => {
+  const { code, order } = event.data;
   const arr = [...order];
-  const steps: SortStep[] = [];
+  const steps = [];
   const maxOps = 600;
 
-  const assertIndex = (value: number) => {
+  const assertIndex = (value) => {
     if (!Number.isInteger(value) || value < 0 || value >= arr.length) {
       throw new Error("invalid index");
     }
   };
 
-  const compare = (a: number, b: number) => {
+  const compare = (a, b) => {
     assertIndex(a);
     assertIndex(b);
     steps.push({ type: "compare", a, b });
@@ -165,7 +174,7 @@ function recordSort(code: string, order: number[]) {
     return Math.sign(arr[a] - arr[b]);
   };
 
-  const swap = (a: number, b: number) => {
+  const swap = (a, b) => {
     assertIndex(a);
     assertIndex(b);
     steps.push({ type: "swap", a, b });
@@ -173,20 +182,58 @@ function recordSort(code: string, order: number[]) {
     [arr[a], arr[b]] = [arr[b], arr[a]];
   };
 
-  const factory = new Function(
-    "compare",
-    "swap",
-    `"use strict";\n${code}\nreturn typeof bubbleSort === "function" ? bubbleSort : typeof sort === "function" ? sort : null;`,
-  );
-  const sort = factory(compare, swap) as ((items: number[]) => unknown) | null;
+  try {
+    const factory = new Function(
+      "compare",
+      "swap",
+      '"use strict";\\n' +
+        'const window = undefined; const document = undefined; const localStorage = undefined; const sessionStorage = undefined; const fetch = undefined; const importScripts = undefined; const eval = undefined;\\n' +
+        code +
+        '\\nreturn typeof bubbleSort === "function" ? bubbleSort : typeof sort === "function" ? sort : null;'
+    );
+    const sort = factory(compare, swap);
+    if (typeof sort !== "function") throw new Error("missing sort function");
+    sort(arr);
+    self.postMessage({ result: arr, steps });
+  } catch (error) {
+    self.postMessage({ error: error instanceof Error ? error.message : String(error) });
+  }
+};
+`;
 
-  if (typeof sort !== "function") {
-    throw new Error("missing sort function");
+function recordSort(code: string, order: number[]): Promise<SortRecording> {
+  if (typeof Worker === "undefined" || typeof Blob === "undefined") {
+    return Promise.reject(new Error("worker unavailable"));
   }
 
-  sort(arr);
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(new Blob([SORT_WORKER_SOURCE], { type: "text/javascript" }));
+    const worker = new Worker(url);
+    let timeout = 0;
+    const cleanup = () => {
+      window.clearTimeout(timeout);
+      worker.terminate();
+      URL.revokeObjectURL(url);
+    };
+    timeout = window.setTimeout(() => {
+      cleanup();
+      reject(new Error("sort timed out"));
+    }, SORT_WORKER_TIMEOUT_MS);
 
-  return { result: arr, steps };
+    worker.onmessage = (event: MessageEvent<SortRecording | { error: string }>) => {
+      cleanup();
+      if ("error" in event.data) {
+        reject(new Error(event.data.error));
+        return;
+      }
+      resolve(event.data);
+    };
+    worker.onerror = () => {
+      cleanup();
+      reject(new Error("sort worker failed"));
+    };
+    worker.postMessage({ code, order });
+  });
 }
 
 export function SortingMemoryHero() {
@@ -244,14 +291,16 @@ export function SortingMemoryHero() {
 
     const runId = runIdRef.current + 1;
     runIdRef.current = runId;
+    setIsSorting(true);
 
-    let recording: ReturnType<typeof recordSort>;
+    let recording: SortRecording;
 
     try {
-      recording = recordSort(code, order);
+      recording = await recordSort(code, order);
     } catch (error) {
       console.error(error);
       setCodeError(true);
+      setIsSorting(false);
       return;
     }
     setCodeError(false);
@@ -263,7 +312,6 @@ export function SortingMemoryHero() {
     const compareLine = lineWith("compare(");
     const swapLine = lineWith("swap(");
 
-    setIsSorting(true);
     let slotOrder = [...order];
     setMotionMode("gathering");
     setActiveLines([]);
