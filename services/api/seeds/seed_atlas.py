@@ -3,7 +3,7 @@
 links and (optionally, clearly demo-labelled) company relevance fixtures.
 
 The taxonomy itself (13 tools / 22 families / 72 subpatterns) lives in
-migration 000011 — this script only attaches content to existing nodes.
+migration 000012 — this script only attaches content to existing nodes.
 
 Usage:
   seed_atlas.py atlas_content.yaml atlas_problem_links.yaml [atlas_demo_companies.yaml]

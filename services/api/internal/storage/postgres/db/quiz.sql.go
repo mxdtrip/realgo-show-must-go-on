@@ -142,3 +142,34 @@ func (q *Queries) ListQuizSession(ctx context.Context, arg ListQuizSessionParams
 	}
 	return items, nil
 }
+
+const recordQuizAnswer = `-- name: RecordQuizAnswer :execrows
+INSERT INTO quiz_answers (user_id, question_id, selected_option, was_correct)
+VALUES ($1::bigint, $2::bigint,
+        $3::int, $4::bool)
+ON CONFLICT (user_id, question_id) DO NOTHING
+`
+
+type RecordQuizAnswerParams struct {
+	UserID         int64
+	QuestionID     int64
+	SelectedOption int32
+	WasCorrect     bool
+}
+
+// Фиксирует ответ пользователя. Анти-чит: UNIQUE (user_id, question_id) +
+// ON CONFLICT DO NOTHING делает вставку атомарной — количество затронутых
+// строк (1 = первый ответ записан, 0 = пара уже существует / повтор) заменяет
+// отдельную проверку IsAnswered и не имеет TOCTOU-окна.
+func (q *Queries) RecordQuizAnswer(ctx context.Context, arg RecordQuizAnswerParams) (int64, error) {
+	result, err := q.db.Exec(ctx, recordQuizAnswer,
+		arg.UserID,
+		arg.QuestionID,
+		arg.SelectedOption,
+		arg.WasCorrect,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}

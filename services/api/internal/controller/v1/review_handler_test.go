@@ -30,6 +30,10 @@ func (s *stubReviewService) GetStats(ctx context.Context, userID int64) (v1respo
 	return v1response.StatsResponse{}, nil
 }
 
+func (s *stubReviewService) RateByProblemID(ctx context.Context, userID, problemID int64, rating string, reviewedAt time.Time) error {
+	return nil
+}
+
 func TestRateReview_InvalidRating(t *testing.T) {
 	h := NewReviewHandler(&stubReviewService{})
 

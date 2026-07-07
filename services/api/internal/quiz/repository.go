@@ -86,5 +86,25 @@ func (r *pgRepository) GetQuizQuestion(ctx context.Context, questionID, userID i
 	if row.Explanation.Valid {
 		d.Explanation = &row.Explanation.String
 	}
+	if row.ProblemID.Valid {
+		v := row.ProblemID.Int64
+		d.ProblemID = &v
+	}
 	return d, nil
+}
+
+// RecordAnswer фиксирует ответ пользователя и возвращает количество затронутых
+// строк: 1 — ответ записан, 0 — пара (user_id, question_id) уже существует
+// (сработал анти-чит, см. UNIQUE-ограничение в миграции 000011).
+func (r *pgRepository) RecordAnswer(ctx context.Context, p recordAnswerParams) (int64, error) {
+	rows, err := r.q.RecordQuizAnswer(ctx, db.RecordQuizAnswerParams{
+		UserID:         p.UserID,
+		QuestionID:     p.QuestionID,
+		SelectedOption: p.SelectedOption,
+		WasCorrect:     p.WasCorrect,
+	})
+	if err != nil {
+		return 0, fmt.Errorf("quiz: record answer: %w", err)
+	}
+	return rows, nil
 }

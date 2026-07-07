@@ -28,6 +28,11 @@ type AuthenticatedUser interface {
 	// Это самая сильная и при этом дешёвая проверка того, что весь конвейер
 	// работает от начала до конца.
 	OwnIdentity(t *testing.T) string
+
+	// UserID возвращает числовой идентификатор пользователя. Нужен тестовым
+	// хелперам (seed-операции, probe), которым для прямой работы с БД требуется
+	// именно numeric id, а не email.
+	UserID(t *testing.T) int64
 }
 
 // HarnessSpecification — acceptance-тест уровня walking skeleton:
@@ -72,4 +77,28 @@ func uniqueEmail(t *testing.T) string {
 		local = local[:48]
 	}
 	return local + "@acceptance.test"
+}
+
+// uniqueSlug строит уникальный в пределах теста slug (для problems.external_slug,
+// где действует UNIQUE(platform_id, external_slug)). Строится из имени теста,
+// поэтому параллельные/под-тесты не конфликтуют.
+func uniqueSlug(t *testing.T) string {
+	t.Helper()
+	var b strings.Builder
+	for _, r := range strings.ToLower(t.Name()) {
+		switch {
+		case r >= 'a' && r <= 'z', r >= '0' && r <= '9':
+			b.WriteRune(r)
+		default:
+			b.WriteRune('-')
+		}
+	}
+	s := strings.Trim(b.String(), "-")
+	for strings.Contains(s, "--") {
+		s = strings.ReplaceAll(s, "--", "-")
+	}
+	if len(s) > 48 {
+		s = s[:48]
+	}
+	return s
 }
