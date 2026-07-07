@@ -4,6 +4,7 @@ package integration
 
 import (
 	"net/http"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -49,6 +50,20 @@ func TestContractCardsVisibility_AIGlobalCardsGatedByProgress(t *testing.T) {
 		require.True(t, containsCardID(listA, seedCardID), "user A must see the seed card")
 		require.False(t, containsCardID(listB, aiCardID), "user B (has not solved) must not see the AI card")
 		require.True(t, containsCardID(listB, seedCardID), "user B must still see the seed card (demo unaffected)")
+	})
+
+	t.Run("direct rate cannot bypass hidden AI card visibility", func(t *testing.T) {
+		resp := h.request(
+			t,
+			http.MethodPost,
+			"/api/v1/me/cards/"+strconv.FormatInt(aiCardID, 10)+"/rate",
+			tokensB.access,
+			map[string]string{
+				"rating":     "normal",
+				"reviewedAt": "2026-07-07T10:00:00Z",
+			},
+		)
+		requireErrorEnvelope(t, resp, http.StatusNotFound, "NOT_FOUND")
 	})
 
 	t.Run("GET /me/cards/session", func(t *testing.T) {

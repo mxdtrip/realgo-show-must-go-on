@@ -154,7 +154,20 @@ FROM cards c
 WHERE c.id = $1::bigint
   AND (
     c.user_id = $2::bigint
-    OR c.user_id IS NULL
+    OR (
+        c.user_id IS NULL
+        AND (
+            c.created_by_ai IS NOT TRUE
+            OR c.problem_id IS NULL
+            OR EXISTS (
+                SELECT 1
+                FROM user_problem_progress upp
+                WHERE upp.user_id = $2::bigint
+                  AND upp.problem_id = c.problem_id
+                  AND upp.status IN ('solved', 'reviewing')
+            )
+        )
+    )
     OR EXISTS (
         SELECT 1
         FROM review_schedules rs
