@@ -28,5 +28,9 @@ jobs:
         run: |
           docker compose pull --ignore-buildable || true
           docker compose --profile prod-demo up -d --build --remove-orphans
+      - name: Verify AI wiring
+        run: |
+          sleep 3
+          docker compose logs api --since 60s | grep -i "ai features" || echo "no 'ai features' log line found — api may still be starting"
       - name: Prune old images
         run: docker image prune -f
