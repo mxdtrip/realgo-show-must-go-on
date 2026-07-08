@@ -44,6 +44,10 @@ test.describe("pattern atlas tree", () => {
     await expect(page).toHaveURL(/\/patterns$/);
     await expect(page.getByText("Binary Search on Answer")).toBeVisible();
     await expect(page.locator(".atlas-sub:visible")).toHaveCount(2);
+    const answerSub = page.locator(".atlas-sub", { hasText: "Binary Search on Answer" });
+    await expect(answerSub.locator(".atlas-difficulty-badge")).toHaveText(["easy 3", "medium 6", "hard 3"]);
+    const boundsSub = page.locator(".atlas-sub", { hasText: "Lower / Upper Bound" });
+    await expect(boundsSub.locator(".atlas-difficulty-badge")).toHaveText(["easy 2", "medium 2"]);
     // The family name itself links to the pattern profile page.
     await expect(page.locator('a[href="/patterns/binary_search"]')).toBeVisible();
     await expect(page.locator('a[href="/patterns/binary_search_on_answer"]')).toBeVisible();
