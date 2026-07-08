@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 
@@ -29,6 +30,58 @@ func (r *pgRepository) CreateAIRequestLog(ctx context.Context, userID int64, fea
 		return 0, fmt.Errorf("ai: create request log: %w", err)
 	}
 	return row.ID, nil
+}
+
+// AssistantProblemContext returns catalog context for one platform problem.
+// A missing problem is not an error: the assistant can still provide a generic
+// non-solution hint from the page title/slug.
+func (r *pgRepository) AssistantProblemContext(ctx context.Context, platform, slug string) (AssistantHintInput, error) {
+	row, err := r.q.GetAssistantProblemContext(ctx, db.GetAssistantProblemContextParams{
+		Platform: platform,
+		Slug:     slug,
+	})
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return AssistantHintInput{ProblemKnown: false}, nil
+		}
+		return AssistantHintInput{}, fmt.Errorf("ai: get assistant problem context: %w", err)
+	}
+
+	patternRows, err := r.q.ListAssistantProblemSubpatterns(ctx, row.ID)
+	if err != nil {
+		return AssistantHintInput{}, fmt.Errorf("ai: list assistant subpatterns: %w", err)
+	}
+	patterns := make([]AssistantPattern, 0, len(patternRows))
+	for _, pattern := range patternRows {
+		patterns = append(patterns, AssistantPattern{
+			Code:     pattern.Code,
+			Name:     pattern.Name,
+			Tier:     pattern.Tier,
+			Families: pattern.Families,
+		})
+	}
+
+	return AssistantHintInput{
+		Platform:     row.Platform,
+		Slug:         row.Slug,
+		Title:        row.Title,
+		URL:          row.Url,
+		Difficulty:   row.Difficulty,
+		ProblemKnown: true,
+		ProblemID:    row.ID,
+		Patterns:     patterns,
+	}, nil
+}
+
+func (r *pgRepository) LogAssistantHintRequest(ctx context.Context, userID int64, model, status string) error {
+	if err := r.q.LogAssistantHintRequest(ctx, db.LogAssistantHintRequestParams{
+		UserID: userID,
+		Model:  model,
+		Status: status,
+	}); err != nil {
+		return fmt.Errorf("ai: log assistant hint request: %w", err)
+	}
+	return nil
 }
 
 // CountGlobalCards reports how many global (user_id IS NULL) AI-generated

@@ -54,53 +54,86 @@ type chatCompletionResponse struct {
 	} `json:"choices"`
 }
 
+func (p *GeminiProvider) ModelName() string { return p.model }
+
 func (p *GeminiProvider) GenerateCards(ctx context.Context, in GenerateCardsInput) ([]GeneratedCard, error) {
 	userContent, err := renderPromptUser(promptUserTmplV1, in)
 	if err != nil {
 		return nil, err
 	}
 
-	reqBody, err := json.Marshal(chatCompletionRequest{
-		Model: p.model,
-		Messages: []chatMessage{
-			{Role: "system", Content: promptSystemV1},
-			{Role: "user", Content: userContent},
-		},
+	content, err := p.chat(ctx, []chatMessage{
+		{Role: "system", Content: promptSystemV1},
+		{Role: "user", Content: userContent},
 	})
 	if err != nil {
-		return nil, fmt.Errorf("ai: encode gemini request: %w", err)
+		return nil, err
+	}
+
+	return parseGenerationContent(content)
+}
+
+func (p *GeminiProvider) GenerateHint(ctx context.Context, in AssistantHintInput) (AssistantHintResponse, error) {
+	userContent, err := renderAssistantPromptUser(assistantPromptUserTmplV1, in)
+	if err != nil {
+		return AssistantHintResponse{}, err
+	}
+
+	content, err := p.chat(ctx, []chatMessage{
+		{Role: "system", Content: assistantPromptSystemV1},
+		{Role: "user", Content: userContent},
+	})
+	if err != nil {
+		return AssistantHintResponse{}, err
+	}
+
+	out, err := parseAssistantHintContent(content)
+	if err != nil {
+		return AssistantHintResponse{}, err
+	}
+	out.ProblemKnown = in.ProblemKnown
+	out.Patterns = in.Patterns
+	return out, nil
+}
+
+func (p *GeminiProvider) chat(ctx context.Context, messages []chatMessage) (string, error) {
+	reqBody, err := json.Marshal(chatCompletionRequest{
+		Model:    p.model,
+		Messages: messages,
+	})
+	if err != nil {
+		return "", fmt.Errorf("ai: encode gemini request: %w", err)
 	}
 
 	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, p.baseURL+"/chat/completions", bytes.NewReader(reqBody))
 	if err != nil {
-		return nil, fmt.Errorf("ai: build gemini request: %w", err)
+		return "", fmt.Errorf("ai: build gemini request: %w", err)
 	}
 	httpReq.Header.Set("Content-Type", "application/json")
 	httpReq.Header.Set("Authorization", "Bearer "+p.apiKey)
 
 	resp, err := p.httpClient.Do(httpReq)
 	if err != nil {
-		return nil, fmt.Errorf("ai: call gemini: %w", err)
+		return "", fmt.Errorf("ai: call gemini: %w", err)
 	}
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode == http.StatusTooManyRequests {
-		return nil, ErrQuotaExceeded
+		return "", ErrQuotaExceeded
 	}
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("ai: gemini responded %d: %s", resp.StatusCode, string(body))
+		return "", fmt.Errorf("ai: gemini responded %d: %s", resp.StatusCode, string(body))
 	}
 
 	var completion chatCompletionResponse
 	if err := json.NewDecoder(resp.Body).Decode(&completion); err != nil {
-		return nil, fmt.Errorf("ai: decode gemini response: %w", err)
+		return "", fmt.Errorf("ai: decode gemini response: %w", err)
 	}
 	if len(completion.Choices) == 0 {
-		return nil, fmt.Errorf("ai: gemini returned no choices")
+		return "", fmt.Errorf("ai: gemini returned no choices")
 	}
-
-	return parseGenerationContent(completion.Choices[0].Message.Content)
+	return completion.Choices[0].Message.Content, nil
 }
 
 type generatedCardJSON struct {
@@ -142,4 +175,46 @@ func parseGenerationContent(content string) ([]GeneratedCard, error) {
 		return nil, ErrUnknownProblem
 	}
 	return nil, fmt.Errorf("ai: unexpected model response: %s", trimmed)
+}
+
+type assistantHintJSON struct {
+	Hint     string `json:"hint"`
+	Question string `json:"question"`
+	Stage    string `json:"stage"`
+}
+
+func parseAssistantHintContent(content string) (AssistantHintResponse, error) {
+	trimmed := strings.TrimSpace(content)
+	trimmed = strings.TrimPrefix(trimmed, "```json")
+	trimmed = strings.TrimPrefix(trimmed, "```")
+	trimmed = strings.TrimSuffix(trimmed, "```")
+	trimmed = strings.TrimSpace(trimmed)
+
+	var raw assistantHintJSON
+	if err := json.Unmarshal([]byte(trimmed), &raw); err != nil {
+		return AssistantHintResponse{}, fmt.Errorf("ai: parse assistant hint json: %w", err)
+	}
+	raw.Hint = strings.TrimSpace(raw.Hint)
+	raw.Question = strings.TrimSpace(raw.Question)
+	raw.Stage = strings.TrimSpace(raw.Stage)
+	if raw.Hint == "" {
+		return AssistantHintResponse{}, fmt.Errorf("ai: assistant hint is empty")
+	}
+	if !validAssistantStage(raw.Stage) {
+		raw.Stage = "nudge"
+	}
+	return AssistantHintResponse{
+		Hint:     raw.Hint,
+		Question: raw.Question,
+		Stage:    raw.Stage,
+	}, nil
+}
+
+func validAssistantStage(stage string) bool {
+	switch stage {
+	case "nudge", "pattern", "invariant", "next_step", "debug":
+		return true
+	default:
+		return false
+	}
 }

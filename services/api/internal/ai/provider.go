@@ -40,3 +40,10 @@ type Provider interface {
 	// prompt materially changes.
 	PromptVersion() string
 }
+
+// HintProvider generates one guided, non-solution hint for the extension
+// assistant. Implementations must keep API keys server-side.
+type HintProvider interface {
+	GenerateHint(ctx context.Context, in AssistantHintInput) (AssistantHintResponse, error)
+	ModelName() string
+}

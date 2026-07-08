@@ -1,9 +1,10 @@
-import { ApiError, getProblemCards, saveSubmission } from "./lib/api";
+import { ApiError, getAssistantHint, getProblemCards, saveSubmission } from "./lib/api";
 import { clearLastSubmission, setLastSubmission } from "./lib/storage";
 import type {
   CardsResponse,
   DetectedSubmission,
   RuntimeMessage,
+  AssistantHintResponse,
   SaveResponse,
 } from "./lib/types";
 
@@ -65,12 +66,35 @@ chrome.runtime.onMessage.addListener(
       return true;
     }
 
+    if (message.type === "REALGO_GET_ASSISTANT_HINT") {
+      getAssistantHint(message.payload)
+        .then((result) =>
+          sendResponse({ ok: true, result } satisfies AssistantHintResponse)
+        )
+        .catch((e) => sendResponse(toAssistantErrorResponse(e)))
+        .catch(() => {
+          /* sendResponse can throw if the channel closed; nothing to do */
+        });
+      return true;
+    }
+
     return false;
   }
 );
 
 /** Normalises any thrown error into the UI's SaveResponse shape. */
 function toErrorResponse(e: unknown): SaveResponse {
+  if (e instanceof ApiError) {
+    return { ok: false, error: e.message, code: e.code ?? String(e.status) };
+  }
+  return {
+    ok: false,
+    error: e instanceof Error ? e.message : String(e),
+    code: "unknown",
+  };
+}
+
+function toAssistantErrorResponse(e: unknown): AssistantHintResponse {
   if (e instanceof ApiError) {
     return { ok: false, error: e.message, code: e.code ?? String(e.status) };
   }

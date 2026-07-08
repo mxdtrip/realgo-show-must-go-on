@@ -31,9 +31,48 @@ export interface DetectedSubmission {
   platformTaskSlug?: string;
   /** Topic tags read from the task page, best-effort (absent if none found). */
   tags?: string[];
+  /** Difficulty read from the page, best-effort. */
+  difficulty?: string;
   submitResult?: SubmitResult;
   /** ISO-8601 timestamp of when the submit was observed. */
   submittedAt: string;
+}
+
+export interface AssistantTask {
+  platform: Exclude<Platform, "unknown">;
+  taskTitle: string;
+  taskUrl: string;
+  platformTaskSlug: string;
+  tags?: string[];
+  difficulty?: string;
+}
+
+export type AssistantRole = "user" | "assistant";
+
+export interface AssistantMessage {
+  role: AssistantRole;
+  content: string;
+}
+
+export interface AssistantHintPayload extends AssistantTask {
+  message: string;
+  hintLevel: number;
+  history: AssistantMessage[];
+}
+
+export interface AssistantPattern {
+  code: string;
+  name: string;
+  tier?: string;
+  families?: string;
+}
+
+export interface AssistantHintResult {
+  hint: string;
+  question?: string;
+  stage: "nudge" | "pattern" | "invariant" | "next_step" | "debug";
+  problemKnown: boolean;
+  patterns?: AssistantPattern[];
 }
 
 /** The full payload the popup sends to the backend after the user rates the task. */
@@ -43,9 +82,11 @@ export interface SubmissionPayload extends DetectedSubmission {
 
 /** Messages exchanged between content script, background and popup. */
 export type RuntimeMessage =
+  | { type: "REALGO_GET_CURRENT_TASK" }
   | { type: "REALGO_SUBMISSION_DETECTED"; submission: DetectedSubmission }
   | { type: "REALGO_SAVE_SUBMISSION"; payload: SubmissionPayload }
-  | { type: "REALGO_GET_PROBLEM_CARDS"; problemId: number };
+  | { type: "REALGO_GET_PROBLEM_CARDS"; problemId: number }
+  | { type: "REALGO_GET_ASSISTANT_HINT"; payload: AssistantHintPayload };
 
 /**
  * Parsed result of a successful `POST /api/v1/extension/events` (the backend
@@ -94,6 +135,18 @@ export interface CardsResponse {
   ok: boolean;
   /** Present when `ok`; absent means "endpoint unavailable" — stay silent. */
   result?: ProblemCardsResult;
+}
+
+export interface AssistantHintResponse {
+  ok: boolean;
+  result?: AssistantHintResult;
+  error?: string;
+  code?: string;
+}
+
+export interface CurrentTaskResponse {
+  ok: boolean;
+  task?: AssistantTask;
 }
 
 /** Token pair returned by the backend auth endpoints (snake_case = wire format). */

@@ -70,8 +70,10 @@ func Run(ctx context.Context) error {
 		Auth:     authSvc,
 	}
 	if cfg.Enabled() {
-		deps.CardProvisioner = ai.NewProvisioner(ai.NewRepository(pg.Pool), rdb, ai.NewGeminiProvider(cfg.AI), logger)
-		logger.Info("ai card generation enabled", slog.String("model", cfg.Model))
+		geminiProvider := ai.NewGeminiProvider(cfg.AI)
+		deps.CardProvisioner = ai.NewProvisioner(ai.NewRepository(pg.Pool), rdb, geminiProvider, logger)
+		deps.AssistantProvider = geminiProvider
+		logger.Info("ai features enabled", slog.String("model", cfg.Model))
 	}
 
 	handler := server.New(deps)

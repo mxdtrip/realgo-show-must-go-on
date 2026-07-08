@@ -43,6 +43,7 @@ export const neetcodeAdapter: PlatformAdapter = {
       taskUrl: location.href,
       platformTaskSlug: slug,
       tags: extractTags(),
+      difficulty: extractDifficulty(),
     };
   },
 
@@ -97,4 +98,16 @@ function extractTags(): string[] {
     if (seen.size >= 4) break;
   }
   return [...seen];
+}
+
+function extractDifficulty(): string | undefined {
+  const text = findText([
+    "[class*='difficulty']",
+    "[class*='badge']",
+    "[class*='tag']",
+  ]).toLowerCase();
+  if (text.includes("easy")) return "easy";
+  if (text.includes("medium")) return "medium";
+  if (text.includes("hard")) return "hard";
+  return undefined;
 }
