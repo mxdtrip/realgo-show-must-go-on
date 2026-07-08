@@ -26,9 +26,14 @@ remotePort = 8080
 # frpc), so it stays reachable once off the home LAN. Published on the VPS at
 # remotePort 2222 -- requires that port open in the VPS firewall (see frps.toml
 # docker-compose.yml comment).
+#
+# localIP is the homeserver's address on lxdbr0 (the LXD bridge appbox sits on),
+# not its WiFi LAN IP -- that one is DHCP-assigned and changes, and appbox's
+# docker network can't route to the WiFi subnet anyway (separate 10.125.73.0/24
+# vs 192.168.0.0/24). lxdbr0's gateway IP is stable and always the homeserver.
 [[proxies]]
 name = "homeserver-ssh"
 type = "tcp"
-localIP = "192.168.0.160"
+localIP = "10.125.73.1"
 localPort = 22
 remotePort = 2222
