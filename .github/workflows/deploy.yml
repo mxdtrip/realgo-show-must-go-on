@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "'deploy' (default) rebuilds and restarts; 'logs' only tails the running api container, no rebuild"
+        description: "'deploy' (default) rebuilds and restarts; 'logs' tails the running api container; 'curl' probes Groq connectivity from the same docker network"
         required: false
         default: "deploy"
       grep:
@@ -28,7 +28,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build & start
-        if: github.event_name != 'workflow_dispatch' || inputs.mode != 'logs'
+        if: github.event_name != 'workflow_dispatch' || (inputs.mode != 'logs' && inputs.mode != 'curl')
         env:
           AUTH_JWT_SECRET: ${{ secrets.AUTH_JWT_SECRET }}
           FRP_VPS_HOST: ${{ secrets.FRP_VPS_HOST }}
@@ -43,7 +43,7 @@ jobs:
           docker compose pull --ignore-buildable || true
           docker compose --profile prod-demo up -d --build --remove-orphans
       - name: Verify AI wiring
-        if: github.event_name != 'workflow_dispatch' || inputs.mode != 'logs'
+        if: github.event_name != 'workflow_dispatch' || (inputs.mode != 'logs' && inputs.mode != 'curl')
         run: |
           sleep 3
           # Plain `docker logs` by container name — NOT `docker compose logs`,
@@ -75,6 +75,34 @@ jobs:
           else
             docker logs "$container" --since "$since" 2>&1 | grep -i -- "$pattern" | tail -n 200 || echo "no lines matched '$pattern' in the last $since"
           fi
+      - name: Probe Groq connectivity
+        # Repeated 403 Forbidden from Groq across two different keys and two
+        # different models points away from "bad key"/"bad model" and toward
+        # an infrastructure-level block (edge/CDN denying the server's
+        # source IP or region) rather than anything wrong in our request. A
+        # raw curl from the same docker network, with response headers, is
+        # the fastest way to see evidence of that (e.g. a Cloudflare block
+        # page instead of Groq's own JSON error shape).
+        if: github.event_name == 'workflow_dispatch' && inputs.mode == 'curl'
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          container=$(docker ps --filter "name=freeburger-api-1" --format "{{.Names}}" | head -n1)
+          if [ -z "$container" ]; then
+            echo "api container not found by name filter"
+            exit 0
+          fi
+          net=$(docker inspect "$container" --format '{{range $k,$v := .NetworkSettings.Networks}}{{$k}}{{end}}')
+          echo "Using docker network: $net"
+          docker run --rm --network "$net" -e GEMINI_API_KEY curlimages/curl:8.11.0 sh -c '
+            curl -sS -D - -o /tmp/body \
+              -X POST https://api.groq.com/openai/v1/chat/completions \
+              -H "Content-Type: application/json" \
+              -H "Authorization: Bearer $GEMINI_API_KEY" \
+              -d "{\"model\":\"llama-3.3-70b-versatile\",\"messages\":[{\"role\":\"user\",\"content\":\"ping\"}]}"
+            echo "--- body ---"
+            cat /tmp/body
+          ' 2>&1 || true
       - name: Prune old images
-        if: github.event_name != 'workflow_dispatch' || inputs.mode != 'logs'
+        if: github.event_name != 'workflow_dispatch' || (inputs.mode != 'logs' && inputs.mode != 'curl')
         run: docker image prune -f
