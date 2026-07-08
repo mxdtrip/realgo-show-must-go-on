@@ -20,8 +20,12 @@ services:
       FRP_TOKEN: ${FRP_TOKEN:?FRP_TOKEN must be set}
     # Only the control port is public, so home can dial in. The tunnelled app
     # port (8080) stays on the internal docker network for caddy.
+    # 2222 is published for the homeserver-ssh proxy (frpc.toml) so `ssh -p 2222`
+    # reaches the homeserver from outside the home LAN. Also open in the VPS
+    # firewall: ufw allow 2222/tcp.
     ports:
       - "7000:7000"
+      - "2222:2222"
 
   caddy:
     image: caddy:2-alpine
