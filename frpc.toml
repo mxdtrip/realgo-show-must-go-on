@@ -21,3 +21,14 @@ type = "tcp"
 localIP = "caddy"
 localPort = 80
 remotePort = 8080
+
+# Reverse SSH into the homeserver itself (not the appbox container running this
+# frpc), so it stays reachable once off the home LAN. Published on the VPS at
+# remotePort 2222 -- requires that port open in the VPS firewall (see frps.toml
+# docker-compose.yml comment).
+[[proxies]]
+name = "homeserver-ssh"
+type = "tcp"
+localIP = "192.168.0.160"
+localPort = 22
+remotePort = 2222

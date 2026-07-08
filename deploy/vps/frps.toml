@@ -8,3 +8,11 @@ auth.token = "{{ .Envs.FRP_TOKEN }}"
 
 # Accept the TLS the client enables; don't force it on the control channel.
 transport.tls.force = false
+
+# Restrict which remotePorts a proxy may claim to the ones we actually publish
+# (8080 for realgo-web, 2222 for homeserver-ssh) so a leaked token can't bind
+# arbitrary ports on the VPS.
+allowPorts = [
+  { start = 8080, end = 8080 },
+  { start = 2222, end = 2222 },
+]
