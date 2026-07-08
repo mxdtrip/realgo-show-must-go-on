@@ -3,7 +3,6 @@ import { getAccessToken, getApiBaseUrl } from "./storage";
 import type {
   AssistantHintPayload,
   AssistantHintResult,
-  AuthUser,
   ExtensionEventResult,
   Platform,
   ProblemCardsResult,
@@ -249,34 +248,6 @@ export async function getAssistantHint(
     throw new ApiError("AI-помощник вернул пустую подсказку.", res.status, "empty_response");
   }
   return result;
-}
-
-/**
- * Current authenticated user, `GET /api/v1/users/me` — used right after syncing
- * tokens from the web session (see auth.ts syncWebSession) to populate the
- * cached email shown in the options page. Never throws: a failure here just
- * means the email badge stays blank, the session itself is still usable.
- */
-export async function getCurrentUser(): Promise<AuthUser | null> {
-  try {
-    const baseUrl = await getApiBaseUrl();
-    const url = `${baseUrl}/api/v1/users/me`;
-
-    let token = await getAccessToken();
-    if (!token) token = await tryRefresh();
-
-    let res = await authedGet(url, token);
-    if (res.status === 401) {
-      token = await tryRefresh();
-      res = await authedGet(url, token);
-    }
-    if (!res.ok) return null;
-
-    const data = await safeJson(res);
-    return (data?.data?.user as AuthUser | undefined) ?? null;
-  } catch {
-    return null;
-  }
 }
 
 async function authedGet(url: string, token: string): Promise<Response> {

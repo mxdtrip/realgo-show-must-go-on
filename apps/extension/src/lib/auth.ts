@@ -129,14 +129,37 @@ export async function getCurrentUserEmail(): Promise<string | undefined> {
  * refresh token means the web session logged out (or never started), and the
  * extension follows suit.
  *
- * `getCurrentUser` is imported lazily to dodge a circular import (api.ts
- * imports auth.ts for refreshAccessToken/AuthError).
+ * The web page fires both a `storage` event (cross-tab) and a same-tab
+ * `realgo:auth-changed` event on every token change, so two sync calls can
+ * land back-to-back (e.g. the web app's own 401 → refresh → re-sync, right
+ * after our first sync already raced the same refresh). Chained through
+ * `syncChain` so calls run one at a time instead of interleaving their
+ * read-current / store-new steps.
  */
-export async function syncWebSession(
+let syncChain: Promise<void> = Promise.resolve();
+
+export function syncWebSession(
+  accessToken: string | null,
+  refreshToken: string | null
+): Promise<void> {
+  syncChain = syncChain
+    .catch(() => {
+      /* previous call's failure shouldn't block the next one */
+    })
+    .then(() => syncWebSessionOnce(accessToken, refreshToken));
+  return syncChain;
+}
+
+async function syncWebSessionOnce(
   accessToken: string | null,
   refreshToken: string | null
 ): Promise<void> {
   const current = await getRefreshToken();
+  console.log("[realgo] syncWebSession", {
+    hasCurrent: Boolean(current),
+    sameAsCurrent: current === refreshToken,
+    incomingHasRefresh: Boolean(refreshToken),
+  });
 
   if (!refreshToken) {
     if (current) await clearTokens();
@@ -150,8 +173,31 @@ export async function syncWebSession(
     token_type: "Bearer",
     expires_in: 0,
   });
+  console.log("[realgo] syncWebSession: tokens stored");
 
-  const { getCurrentUser } = await import("./api");
-  const user = await getCurrentUser();
-  if (user?.email) await setUserEmail(user.email);
+  // Best-effort email lookup, deliberately one-shot (no 401 → refresh retry):
+  // the access token handed over here may already be the stale one the web
+  // tab itself is about to replace (its own /users/me 401 kicks off a
+  // refresh). Retrying with the extension's own tryRefresh() would race the
+  // web tab for the same one-time-use refresh token and could invalidate it
+  // for whichever side loses. A miss here just means the email fills in on
+  // the next auth-changed re-sync, once the web tab's refresh has landed.
+  await fetchEmailBestEffort(accessToken);
+}
+
+async function fetchEmailBestEffort(accessToken: string | null): Promise<void> {
+  if (!accessToken) return;
+  try {
+    const baseUrl = await getApiBaseUrl();
+    const res = await fetch(`${baseUrl}/api/v1/users/me`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!res.ok) return;
+    const data = await res.json().catch(() => null);
+    const user = data?.data?.user as AuthUser | undefined;
+    console.log("[realgo] syncWebSession: users/me ->", user);
+    if (user?.email) await setUserEmail(user.email);
+  } catch (e) {
+    console.error("[realgo] syncWebSession: users/me failed", e);
+  }
 }

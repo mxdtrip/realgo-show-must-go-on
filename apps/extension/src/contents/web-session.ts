@@ -26,13 +26,17 @@ const CHANGED_EVENT = "realgo:auth-changed";
 function syncSession() {
   const accessToken = window.localStorage.getItem(ACCESS_KEY);
   const refreshToken = window.localStorage.getItem(REFRESH_KEY);
+  console.log("[realgo] web-session: syncing", {
+    hasAccess: Boolean(accessToken),
+    hasRefresh: Boolean(refreshToken),
+  });
   chrome.runtime
     .sendMessage({ type: "REALGO_SYNC_WEB_SESSION", accessToken, refreshToken })
-    .catch(() => {
-      /* background worker may be asleep on first install; next event retries */
-    });
+    .then((res) => console.log("[realgo] web-session: background ack", res))
+    .catch((err) => console.error("[realgo] web-session: sendMessage failed", err));
 }
 
+console.log("[realgo] web-session content script loaded on", location.href);
 syncSession();
 window.addEventListener(CHANGED_EVENT, syncSession);
 window.addEventListener("storage", (event) => {
