@@ -58,13 +58,14 @@ SELECT
     sp.code,
     sp.name,
     COALESCE(ps.tier, '')::text AS tier,
+    COALESCE(sp.description, '')::text AS description,
     COALESCE(string_agg(DISTINCT f.name, ', ' ORDER BY f.name), '')::text AS families
 FROM problem_subpatterns ps
 JOIN patterns sp ON sp.id = ps.subpattern_id AND sp.kind = 'subpattern'
 LEFT JOIN pattern_family_subpatterns pfs ON pfs.subpattern_id = sp.id
 LEFT JOIN patterns f ON f.id = pfs.family_id AND f.kind = 'family'
 WHERE ps.problem_id = $1::bigint
-GROUP BY sp.code, sp.name, ps.tier, ps.position
+GROUP BY sp.code, sp.name, ps.tier, sp.description, ps.position
 ORDER BY
     CASE ps.tier
         WHEN 'foundational' THEN 0
@@ -77,10 +78,11 @@ ORDER BY
 `
 
 type ListAssistantProblemSubpatternsRow struct {
-	Code     string
-	Name     string
-	Tier     string
-	Families string
+	Code        string
+	Name        string
+	Tier        string
+	Description string
+	Families    string
 }
 
 func (q *Queries) ListAssistantProblemSubpatterns(ctx context.Context, problemID int64) ([]ListAssistantProblemSubpatternsRow, error) {
@@ -96,6 +98,7 @@ func (q *Queries) ListAssistantProblemSubpatterns(ctx context.Context, problemID
 			&i.Code,
 			&i.Name,
 			&i.Tier,
+			&i.Description,
 			&i.Families,
 		); err != nil {
 			return nil, err

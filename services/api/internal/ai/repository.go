@@ -54,10 +54,11 @@ func (r *pgRepository) AssistantProblemContext(ctx context.Context, platform, sl
 	patterns := make([]AssistantPattern, 0, len(patternRows))
 	for _, pattern := range patternRows {
 		patterns = append(patterns, AssistantPattern{
-			Code:     pattern.Code,
-			Name:     pattern.Name,
-			Tier:     pattern.Tier,
-			Families: pattern.Families,
+			Code:        pattern.Code,
+			Name:        pattern.Name,
+			Tier:        pattern.Tier,
+			Families:    pattern.Families,
+			Description: pattern.Description,
 		})
 	}
 

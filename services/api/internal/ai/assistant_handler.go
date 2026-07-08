@@ -15,10 +15,11 @@ import (
 )
 
 const (
-	maxAssistantMessageChars = 1200
-	maxAssistantHistoryItems = 8
-	maxAssistantTags         = 12
-	maxAssistantHintLevel    = 5
+	maxAssistantMessageChars     = 1200
+	maxAssistantHistoryItems     = 8
+	maxAssistantTags             = 12
+	maxAssistantHintLevel        = 5
+	maxAssistantDescriptionChars = 6000
 )
 
 type assistantRepository interface {
@@ -146,16 +147,23 @@ func normalizeAssistantRequest(req AssistantHintRequest) (AssistantHintInput, er
 		return AssistantHintInput{}, err
 	}
 
+	description := strings.TrimSpace(req.TaskDescription)
+	if len([]rune(description)) > maxAssistantDescriptionChars {
+		runes := []rune(description)
+		description = string(runes[:maxAssistantDescriptionChars])
+	}
+
 	return AssistantHintInput{
-		Platform:   platform,
-		Slug:       slug,
-		Title:      title,
-		URL:        url,
-		Difficulty: normalizeOptional(req.Difficulty, "unknown"),
-		Tags:       normalizeStringSlice(req.Tags, maxAssistantTags),
-		Message:    message,
-		HintLevel:  hintLevel,
-		History:    history,
+		Platform:    platform,
+		Slug:        slug,
+		Title:       title,
+		URL:         url,
+		Difficulty:  normalizeOptional(req.Difficulty, "unknown"),
+		Tags:        normalizeStringSlice(req.Tags, maxAssistantTags),
+		Description: description,
+		Message:     message,
+		HintLevel:   hintLevel,
+		History:     history,
 	}, nil
 }
 

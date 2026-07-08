@@ -1,0 +1,37 @@
+name: Diagnose API Logs
+on:
+  workflow_dispatch:
+    inputs:
+      grep:
+        description: "Case-insensitive pattern to filter for (empty = full tail)"
+        required: false
+        default: "ai:"
+      since:
+        description: "How far back to look (docker --since duration, e.g. 10m, 1h)"
+        required: false
+        default: "15m"
+      lines:
+        description: "Max matching lines to print"
+        required: false
+        default: "200"
+jobs:
+  logs:
+    runs-on: [self-hosted, linux, appbox]
+    permissions:
+      contents: read
+    steps:
+      - name: Tail api container logs
+        run: |
+          container=$(docker ps --filter "name=freeburger-api-1" --format "{{.Names}}" | head -n1)
+          if [ -z "$container" ]; then
+            echo "api container not found by name filter"
+            exit 0
+          fi
+          pattern='${{ inputs.grep }}'
+          since='${{ inputs.since }}'
+          lines='${{ inputs.lines }}'
+          if [ -z "$pattern" ]; then
+            docker logs "$container" --since "$since" 2>&1 | tail -n "$lines"
+          else
+            docker logs "$container" --since "$since" 2>&1 | grep -i -- "$pattern" | tail -n "$lines" || echo "no lines matched '$pattern' in the last $since"
+          fi

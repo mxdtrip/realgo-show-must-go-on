@@ -1,6 +1,7 @@
 import type { SubmitResult } from "../lib/types";
 import {
   classifyVerdict,
+  extractDescription,
   findButtonByText,
   findText,
   type PlatformAdapter,
@@ -36,6 +37,11 @@ export const leetcodeAdapter: PlatformAdapter = {
       platformTaskSlug: slug,
       tags: extractTags(),
       difficulty: extractDifficulty(),
+      taskDescription: extractDescription([
+        "[data-track-load='description_content']",
+        "div[class*='question-content']",
+        "[role='tabpanel']",
+      ]),
     };
   },
 

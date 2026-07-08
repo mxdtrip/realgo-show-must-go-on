@@ -71,10 +71,13 @@ user-секция — Go text/template, вход: контекст задачи,
 - tags: {{range $i, $tag := .Tags}}{{if $i}}, {{end}}{{$tag}}{{else}}none{{end}}
 - problem_known_in_realgo: {{.ProblemKnown}}
 
+Условие задачи (со страницы, лучшее доступное приближение):
+{{if .Description}}{{.Description}}{{else}}not available{{end}}
+
 {{if .Patterns}}
 Известные подпаттерны Realgo Taxonomy:
 {{range .Patterns}}
-- {{.Name}} (`{{.Code}}`){{if .Tier}}, tier: {{.Tier}}{{end}}{{if .Families}}, families: {{.Families}}{{end}}
+- {{.Name}} (`{{.Code}}`){{if .Tier}}, tier: {{.Tier}}{{end}}{{if .Families}}, families: {{.Families}}{{end}}{{if .Description}} — {{.Description}}{{end}}
 {{end}}
 {{else}}
 Известные подпаттерны Realgo Taxonomy: none

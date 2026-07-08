@@ -1,6 +1,7 @@
 import type { SubmitResult } from "../lib/types";
 import {
   classifyVerdict,
+  extractDescription,
   findButtonByText,
   findText,
   type PlatformAdapter,
@@ -44,6 +45,10 @@ export const neetcodeAdapter: PlatformAdapter = {
       platformTaskSlug: slug,
       tags: extractTags(),
       difficulty: extractDifficulty(),
+      taskDescription: extractDescription([
+        "[class*='description']",
+        "[role='tabpanel']",
+      ]),
     };
   },
 

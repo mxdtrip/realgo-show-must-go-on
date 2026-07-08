@@ -8,6 +8,30 @@ export interface TaskInfo {
   tags?: string[];
   /** Difficulty read from the page, best-effort. */
   difficulty?: string;
+  /** Problem statement text read from the page, best-effort (absent if not found). */
+  taskDescription?: string;
+}
+
+/** Caps how much page text rides along in the AI prompt (backend re-caps too). */
+const MAX_DESCRIPTION_CHARS = 4000;
+
+/**
+ * Best-effort problem statement scrape: tries each selector in order and
+ * returns the first non-empty `innerText`, trimmed and capped. Both LeetCode
+ * and NeetCode ship no stable data-* hook for the statement body, so this
+ * degrades to `undefined` rather than guessing wrong.
+ */
+export function extractDescription(selectors: string[]): string | undefined {
+  for (const selector of selectors) {
+    const el = document.querySelector<HTMLElement>(selector);
+    const text = el?.innerText?.trim();
+    if (text) {
+      return text.length > MAX_DESCRIPTION_CHARS
+        ? text.slice(0, MAX_DESCRIPTION_CHARS) + "…"
+        : text;
+    }
+  }
+  return undefined;
 }
 
 /**

@@ -45,6 +45,8 @@ export interface AssistantTask {
   platformTaskSlug: string;
   tags?: string[];
   difficulty?: string;
+  /** Problem statement scraped from the page, best-effort. */
+  taskDescription?: string;
 }
 
 export type AssistantRole = "user" | "assistant";

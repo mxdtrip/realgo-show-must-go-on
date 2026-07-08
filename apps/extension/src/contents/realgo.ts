@@ -324,6 +324,7 @@ function assistantTaskFrom(adapter: PlatformAdapter, info: TaskInfo): AssistantT
     platformTaskSlug: slug,
     tags: info.tags,
     difficulty: info.difficulty,
+    taskDescription: info.taskDescription,
   };
 }
 
