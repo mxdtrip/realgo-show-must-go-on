@@ -20,6 +20,7 @@ type AtlasCopy = ReturnType<typeof getDictionary>["cabinet"]["pages"]["atlas"];
 
 type LoadState = "loading" | "loaded" | "error";
 type AtlasView = "tree" | "readiness";
+type DifficultyLevel = "easy" | "medium" | "hard";
 
 const COMPANY_KEY = "realgo.atlas.company";
 const VIEW_KEY = "realgo.atlas.view";
@@ -80,17 +81,18 @@ function familyDifficulty(subs: readonly AtlasSubpattern[], copy: AtlasCopy) {
     return {
       label: copy.familyDifficultyUnknown,
       detail: copy.familyDifficultyNoData,
+      levels: [] as DifficultyLevel[],
       title: copy.familyDifficultyHint,
       known: false,
     };
   }
 
-  const parts = [`easy ${counts.easy}`, `medium ${counts.medium}`, `hard ${counts.hard}`];
-  if (counts.unknown > 0) parts.push(`unknown ${counts.unknown}`);
+  const levels = (["easy", "medium", "hard"] as const).filter((level) => counts[level] > 0);
 
   return {
-    label: copy.familyDifficultyDistribution,
-    detail: parts.join(" · "),
+    label: "",
+    detail: "",
+    levels,
     title: copy.familyDifficultyHint,
     known: true,
   };
@@ -374,8 +376,20 @@ function TreeView({
                       </Link>
                     </span>
                     <span className="atlas-table__cell atlas-family__difficulty" role="cell" title={difficulty.title}>
-                      <strong className={difficulty.known ? undefined : "is-muted"}>{difficulty.label}</strong>
-                      <em>{difficulty.detail}</em>
+                      {difficulty.known ? (
+                        <span className="atlas-difficulty-badges" aria-label={difficulty.levels.join(", ")}>
+                          {difficulty.levels.map((level) => (
+                            <span className={`atlas-difficulty-badge atlas-difficulty-badge--${level}`} key={level}>
+                              {level}
+                            </span>
+                          ))}
+                        </span>
+                      ) : (
+                        <>
+                          <strong className="is-muted">{difficulty.label}</strong>
+                          {difficulty.detail ? <em>{difficulty.detail}</em> : null}
+                        </>
+                      )}
                     </span>
                     <span className="atlas-table__cell atlas-family__tasks" role="cell">
                       <strong>{stats.problemCount}</strong>

@@ -601,7 +601,6 @@ const ru = {
           tasks: "задачи",
           subpatterns: "подпаттерны",
         },
-        familyDifficultyDistribution: "распределение",
         familyDifficultyUnknown: "нет данных",
         familyDifficultyNoData: "нет задач с разметкой",
         familyDifficultyHint:
