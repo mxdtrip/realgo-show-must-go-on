@@ -2315,7 +2315,7 @@ a.cabinet-panel__meta:hover {
 
 .heatmap__week {
   display: grid;
-  grid-template-columns: repeat(7, auto);
+  grid-template-columns: repeat(14, auto);
   gap: 7px;
 }
 
