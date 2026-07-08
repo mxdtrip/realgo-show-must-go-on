@@ -123,7 +123,12 @@ func (p *GeminiProvider) chat(ctx context.Context, messages []chatMessage) (stri
 	}
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
-		return "", fmt.Errorf("ai: gemini responded %d: %s", resp.StatusCode, string(body))
+		const maxLoggedBody = 2000 // cap so a verbose HTML/JSON error page doesn't flood the log
+		bodyStr := string(body)
+		if len(bodyStr) > maxLoggedBody {
+			bodyStr = bodyStr[:maxLoggedBody] + "...(truncated)"
+		}
+		return "", &APIError{StatusCode: resp.StatusCode, Body: bodyStr}
 	}
 
 	var completion chatCompletionResponse

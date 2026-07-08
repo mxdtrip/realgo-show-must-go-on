@@ -150,5 +150,20 @@ func (p *Provisioner) logAndClassify(ctx context.Context, err error) error {
 	if status == "refused" {
 		return nil
 	}
+	p.logProviderError(err)
 	return fmt.Errorf("ai: generate cards: %w", err)
+}
+
+// logProviderError surfaces the upstream HTTP status code and response body
+// as separate fields when the failure is a *APIError, so a Google-side
+// rejection (geo block, permission/quota denial) is distinguishable in logs
+// from a transient network error without needing shell access to prod.
+func (p *Provisioner) logProviderError(err error) {
+	var apiErr *APIError
+	if errors.As(err, &apiErr) {
+		p.logger.Warn("ai: card generation: gemini api error",
+			slog.Int("status_code", apiErr.StatusCode),
+			slog.String("body", apiErr.Body),
+		)
+	}
 }

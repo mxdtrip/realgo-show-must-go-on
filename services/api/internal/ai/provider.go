@@ -3,6 +3,7 @@ package ai
 import (
 	"context"
 	"errors"
+	"fmt"
 )
 
 // ErrUnknownProblem is returned when the model cannot confidently identify
@@ -12,6 +13,21 @@ var ErrUnknownProblem = errors.New("ai: unknown_problem")
 // ErrQuotaExceeded is returned when the provider rejects the request because
 // the configured quota/rate limit was hit.
 var ErrQuotaExceeded = errors.New("ai: quota_exceeded")
+
+// APIError wraps a non-2xx response from the upstream Gemini API so callers
+// can log the status code and response body separately from the generic
+// error string. This is what tells "GEMINI_API_KEY missing" apart from
+// "key present but Google rejected the request" (e.g. 403 PERMISSION_DENIED
+// with a "User location is not supported" message — the geo-block case) or a
+// transient 5xx on Google's side.
+type APIError struct {
+	StatusCode int
+	Body       string
+}
+
+func (e *APIError) Error() string {
+	return fmt.Sprintf("ai: gemini responded %d: %s", e.StatusCode, e.Body)
+}
 
 // GenerateCardsInput is the problem context fed into the generation prompt.
 type GenerateCardsInput struct {

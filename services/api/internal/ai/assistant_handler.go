@@ -79,7 +79,7 @@ func (h *AssistantHandler) Hint(w http.ResponseWriter, r *http.Request) {
 			response.Fail(w, http.StatusTooManyRequests, "AI_QUOTA_EXCEEDED", "AI assistant quota is exhausted")
 			return
 		}
-		slog.Error("ai: assistant hint failed", slog.Any("err", err), slog.Int64("user_id", userID))
+		logAssistantProviderError(err, userID)
 		response.Fail(w, http.StatusBadGateway, "AI_PROVIDER_ERROR", "could not generate hint")
 		return
 	}
@@ -88,6 +88,24 @@ func (h *AssistantHandler) Hint(w http.ResponseWriter, r *http.Request) {
 		slog.Warn("ai: assistant log failed", slog.Any("err", err), slog.Int64("user_id", userID))
 	}
 	response.JSON(w, http.StatusOK, out)
+}
+
+// logAssistantProviderError logs the upstream failure with the HTTP status
+// code and response body as separate, greppable fields (rather than buried
+// inside one error string) — this is what distinguishes a Google-side geo
+// block or quota/permission rejection from a transient network failure or a
+// bug on our end, without needing shell access to the prod container.
+func logAssistantProviderError(err error, userID int64) {
+	var apiErr *APIError
+	if errors.As(err, &apiErr) {
+		slog.Error("ai: assistant hint failed: gemini api error",
+			slog.Int("status_code", apiErr.StatusCode),
+			slog.String("body", apiErr.Body),
+			slog.Int64("user_id", userID),
+		)
+		return
+	}
+	slog.Error("ai: assistant hint failed", slog.Any("err", err), slog.Int64("user_id", userID))
 }
 
 func normalizeAssistantRequest(req AssistantHintRequest) (AssistantHintInput, error) {
