@@ -133,7 +133,7 @@ export function AssistantApp({ task, onAsk, variant = "dock", onClose }: Assista
           <p className="realgo-agent-title">{task.taskTitle}</p>
           <div className="realgo-agent-tags">
             {visibleTags.map((tag) => (
-              <span className="realgo-agent-tag" key={tag}>
+              <span className={`realgo-agent-tag ${difficultyTagClass(tag, task.difficulty)}`} key={tag}>
                 {tag}
               </span>
             ))}
@@ -203,6 +203,20 @@ function IconClose() {
       />
     </svg>
   );
+}
+
+function difficultyTagClass(tag: string, difficulty?: string): string {
+  if (!difficulty || tag.toLowerCase() !== difficulty.toLowerCase()) return "";
+  switch (difficulty.toLowerCase()) {
+    case "easy":
+      return "realgo-agent-tag--easy";
+    case "medium":
+      return "realgo-agent-tag--medium";
+    case "hard":
+      return "realgo-agent-tag--hard";
+    default:
+      return "";
+  }
 }
 
 function formatHint(result: AssistantHintResult): string {

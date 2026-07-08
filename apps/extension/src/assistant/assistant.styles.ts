@@ -141,6 +141,8 @@ export const ASSISTANT_CSS = `
 
 .realgo-agent-task {
   display: grid;
+  justify-items: center;
+  text-align: center;
   gap: 8px;
   padding: 12px 14px;
   border-bottom: 1px solid var(--border);
@@ -156,6 +158,7 @@ export const ASSISTANT_CSS = `
 .realgo-agent-tags {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 6px;
 }
 .realgo-agent-tag {
@@ -169,6 +172,21 @@ export const ASSISTANT_CSS = `
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.realgo-agent-tag--easy {
+  border-color: rgba(63, 185, 80, 0.4);
+  color: #3fb950;
+  background: rgba(63, 185, 80, 0.12);
+}
+.realgo-agent-tag--medium {
+  border-color: rgba(210, 153, 34, 0.4);
+  color: #d29922;
+  background: rgba(210, 153, 34, 0.12);
+}
+.realgo-agent-tag--hard {
+  border-color: rgba(248, 81, 73, 0.4);
+  color: var(--danger);
+  background: rgba(248, 81, 73, 0.12);
 }
 
 .realgo-agent-messages {
