@@ -3,6 +3,19 @@ on:
   push:
     branches: [dev, main]
   workflow_dispatch:
+    inputs:
+      mode:
+        description: "'deploy' (default) rebuilds and restarts; 'logs' only tails the running api container, no rebuild"
+        required: false
+        default: "deploy"
+      grep:
+        description: "logs mode only: case-insensitive pattern to filter for (empty = full tail)"
+        required: false
+        default: "ai:"
+      since:
+        description: "logs mode only: how far back to look (docker --since duration, e.g. 10m, 1h)"
+        required: false
+        default: "15m"
 concurrency:
   group: deploy
   cancel-in-progress: false
@@ -15,6 +28,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build & start
+        if: github.event_name != 'workflow_dispatch' || inputs.mode != 'logs'
         env:
           AUTH_JWT_SECRET: ${{ secrets.AUTH_JWT_SECRET }}
           FRP_VPS_HOST: ${{ secrets.FRP_VPS_HOST }}
@@ -29,6 +43,7 @@ jobs:
           docker compose pull --ignore-buildable || true
           docker compose --profile prod-demo up -d --build --remove-orphans
       - name: Verify AI wiring
+        if: github.event_name != 'workflow_dispatch' || inputs.mode != 'logs'
         run: |
           sleep 3
           # Plain `docker logs` by container name — NOT `docker compose logs`,
@@ -42,5 +57,24 @@ jobs:
           else
             docker logs "$container" --since 60s 2>&1 | grep -i "ai features" || echo "no 'ai features' log line found — api may still be starting"
           fi
+      - name: Tail logs on demand
+        # Lets a stuck/failed request be inspected without rebuilding — a
+        # rebuild recreates the api container and its log buffer, which would
+        # destroy the very evidence we're trying to look at.
+        if: github.event_name == 'workflow_dispatch' && inputs.mode == 'logs'
+        run: |
+          container=$(docker ps --filter "name=freeburger-api-1" --format "{{.Names}}" | head -n1)
+          if [ -z "$container" ]; then
+            echo "api container not found by name filter"
+            exit 0
+          fi
+          pattern='${{ inputs.grep }}'
+          since='${{ inputs.since }}'
+          if [ -z "$pattern" ]; then
+            docker logs "$container" --since "$since" 2>&1 | tail -n 200
+          else
+            docker logs "$container" --since "$since" 2>&1 | grep -i -- "$pattern" | tail -n 200 || echo "no lines matched '$pattern' in the last $since"
+          fi
       - name: Prune old images
+        if: github.event_name != 'workflow_dispatch' || inputs.mode != 'logs'
         run: docker image prune -f
