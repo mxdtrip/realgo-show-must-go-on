@@ -2218,7 +2218,7 @@ a.cabinet-panel__meta:hover {
 
 .heatmap-layout {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) 340px;
+  grid-template-columns: auto minmax(0, 1fr) 380px;
   gap: 0 clamp(20px, 3vw, 40px);
   align-items: center;
 }
@@ -7656,6 +7656,16 @@ a.roadmap-step__practice-card:hover {
   border-color: rgba(248, 81, 73, 0.4);
   color: #ff7b72;
   background: rgba(248, 81, 73, 0.12);
+}
+
+.atlas-sub__difficulty .atlas-difficulty-badges {
+  gap: 4px;
+}
+
+.atlas-sub__difficulty .atlas-difficulty-badge {
+  min-height: 19px;
+  padding: 2px 6px;
+  font-size: 9px;
 }
 
 .atlas-family__tasks,
