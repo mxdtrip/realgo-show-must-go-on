@@ -86,7 +86,12 @@ export type RuntimeMessage =
   | { type: "REALGO_SUBMISSION_DETECTED"; submission: DetectedSubmission }
   | { type: "REALGO_SAVE_SUBMISSION"; payload: SubmissionPayload }
   | { type: "REALGO_GET_PROBLEM_CARDS"; problemId: number }
-  | { type: "REALGO_GET_ASSISTANT_HINT"; payload: AssistantHintPayload };
+  | { type: "REALGO_GET_ASSISTANT_HINT"; payload: AssistantHintPayload }
+  | {
+      type: "REALGO_SYNC_WEB_SESSION";
+      accessToken: string | null;
+      refreshToken: string | null;
+    };
 
 /**
  * Parsed result of a successful `POST /api/v1/extension/events` (the backend

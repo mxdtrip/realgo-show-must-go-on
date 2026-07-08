@@ -23,7 +23,6 @@ type AskStatus = "idle" | "loading";
 export function AssistantApp({ task, onAsk, variant = "dock", onClose }: AssistantAppProps) {
   const [open, setOpen] = useState(variant === "panel");
   const [messages, setMessages] = useState<AssistantMessage[]>([]);
-  const [input, setInput] = useState("");
   const [status, setStatus] = useState<AskStatus>("idle");
   const [error, setError] = useState("");
   const [hintLevel, setHintLevel] = useState(1);
@@ -41,7 +40,6 @@ export function AssistantApp({ task, onAsk, variant = "dock", onClose }: Assista
   useEffect(() => {
     if (variant === "panel") setOpen(true);
     setMessages([]);
-    setInput("");
     setStatus("idle");
     setError("");
     setHintLevel(1);
@@ -87,13 +85,6 @@ export function AssistantApp({ task, onAsk, variant = "dock", onClose }: Assista
     }
   }
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const value = input;
-    setInput("");
-    void ask(value);
-  }
-
   function handleClose() {
     if (onClose) {
       onClose();
@@ -108,7 +99,7 @@ export function AssistantApp({ task, onAsk, variant = "dock", onClose }: Assista
         <style>{ASSISTANT_CSS}</style>
         <button type="button" className="realgo-agent-button" onClick={() => setOpen(true)}>
           <img className="realgo-agent-logo" src={BRAND_LOGO_URL} alt="" />
-          AI hint
+          ReAlgo
         </button>
       </div>
     );
@@ -139,14 +130,10 @@ export function AssistantApp({ task, onAsk, variant = "dock", onClose }: Assista
         </header>
 
         <div className="realgo-agent-task">
-          <div className="realgo-agent-task__top">
-            <span className="realgo-agent-eyebrow">режим подсказок</span>
-            <span className="realgo-agent-safe">без кода · без полного решения</span>
-          </div>
           <p className="realgo-agent-title">{task.taskTitle}</p>
           <div className="realgo-agent-tags">
             {visibleTags.map((tag) => (
-              <span className="realgo-agent-tag" key={tag}>
+              <span className={`realgo-agent-tag ${difficultyTagClass(tag, task.difficulty)}`} key={tag}>
                 {tag}
               </span>
             ))}
@@ -199,23 +186,6 @@ export function AssistantApp({ task, onAsk, variant = "dock", onClose }: Assista
             паттерн?
           </button>
         </div>
-
-        <form className="realgo-agent-form" onSubmit={handleSubmit}>
-          <input
-            className="realgo-agent-input"
-            value={input}
-            onChange={(event) => setInput(event.target.value)}
-            placeholder="где именно застрял?"
-            disabled={status === "loading"}
-          />
-          <button
-            type="submit"
-            className="realgo-agent-btn"
-            disabled={status === "loading" || input.trim() === ""}
-          >
-            спросить
-          </button>
-        </form>
       </section>
     </div>
   );
@@ -233,6 +203,20 @@ function IconClose() {
       />
     </svg>
   );
+}
+
+function difficultyTagClass(tag: string, difficulty?: string): string {
+  if (!difficulty || tag.toLowerCase() !== difficulty.toLowerCase()) return "";
+  switch (difficulty.toLowerCase()) {
+    case "easy":
+      return "realgo-agent-tag--easy";
+    case "medium":
+      return "realgo-agent-tag--medium";
+    case "hard":
+      return "realgo-agent-tag--hard";
+    default:
+      return "";
+  }
 }
 
 function formatHint(result: AssistantHintResult): string {

@@ -141,29 +141,12 @@ export const ASSISTANT_CSS = `
 
 .realgo-agent-task {
   display: grid;
+  justify-items: center;
+  text-align: center;
   gap: 8px;
   padding: 12px 14px;
   border-bottom: 1px solid var(--border);
   background: rgba(1, 4, 9, 0.26);
-}
-.realgo-agent-task__top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-.realgo-agent-eyebrow {
-  color: var(--accent-bright);
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-.realgo-agent-safe {
-  color: var(--text-faint);
-  font-family: var(--font-mono);
-  font-size: 10px;
-  white-space: nowrap;
 }
 .realgo-agent-title {
   margin: 0;
@@ -175,6 +158,7 @@ export const ASSISTANT_CSS = `
 .realgo-agent-tags {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 6px;
 }
 .realgo-agent-tag {
@@ -188,6 +172,21 @@ export const ASSISTANT_CSS = `
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.realgo-agent-tag--easy {
+  border-color: rgba(63, 185, 80, 0.4);
+  color: #3fb950;
+  background: rgba(63, 185, 80, 0.12);
+}
+.realgo-agent-tag--medium {
+  border-color: rgba(210, 153, 34, 0.4);
+  color: #d29922;
+  background: rgba(210, 153, 34, 0.12);
+}
+.realgo-agent-tag--hard {
+  border-color: rgba(248, 81, 73, 0.4);
+  color: var(--danger);
+  background: rgba(248, 81, 73, 0.12);
 }
 
 .realgo-agent-messages {
@@ -259,7 +258,7 @@ export const ASSISTANT_CSS = `
 .realgo-agent-actions {
   display: flex;
   gap: 8px;
-  padding: 10px 14px 0;
+  padding: 10px 14px 14px;
 }
 
 .realgo-agent-btn {
@@ -280,21 +279,4 @@ export const ASSISTANT_CSS = `
 .realgo-agent-btn:hover:not(:disabled) { border-color: var(--accent-line); color: var(--accent-bright); }
 .realgo-agent-btn:disabled { cursor: not-allowed; opacity: 0.55; }
 
-.realgo-agent-form {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 8px;
-  padding: 10px 14px 14px;
-}
-.realgo-agent-input {
-  min-width: 0;
-  height: 36px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--bg-2);
-  color: var(--text);
-  padding: 8px 10px;
-  font: 12px var(--font-sans);
-}
-.realgo-agent-input:focus { outline: none; border-color: var(--accent-line); }
 `;

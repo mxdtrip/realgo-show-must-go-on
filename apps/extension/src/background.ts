@@ -1,4 +1,5 @@
 import { ApiError, getAssistantHint, getProblemCards, saveSubmission } from "./lib/api";
+import { syncWebSession } from "./lib/auth";
 import { clearLastSubmission, setLastSubmission } from "./lib/storage";
 import type {
   CardsResponse,
@@ -62,6 +63,20 @@ chrome.runtime.onMessage.addListener(
         )
         .catch(() => {
           /* sendResponse can throw if the channel closed; nothing to do */
+        });
+      return true;
+    }
+
+    if (message.type === "REALGO_SYNC_WEB_SESSION") {
+      console.log("[realgo] background: REALGO_SYNC_WEB_SESSION received", {
+        hasAccess: Boolean(message.accessToken),
+        hasRefresh: Boolean(message.refreshToken),
+      });
+      syncWebSession(message.accessToken, message.refreshToken)
+        .then(() => sendResponse({ ok: true }))
+        .catch((e) => {
+          console.error("[realgo] background: syncWebSession failed", e);
+          sendResponse({ ok: false });
         });
       return true;
     }
