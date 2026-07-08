@@ -7623,6 +7623,7 @@ a.roadmap-step__practice-card:hover {
 .atlas-difficulty-badge {
   display: inline-flex;
   align-items: center;
+  gap: 5px;
   min-height: 21px;
   border: 1px solid;
   border-radius: 999px;
@@ -7632,6 +7633,11 @@ a.roadmap-step__practice-card:hover {
   line-height: 1;
   letter-spacing: 0.02em;
   text-transform: lowercase;
+}
+
+.atlas-difficulty-badge__count {
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
 }
 
 .atlas-difficulty-badge--easy {

@@ -21,6 +21,7 @@ type AtlasCopy = ReturnType<typeof getDictionary>["cabinet"]["pages"]["atlas"];
 type LoadState = "loading" | "loaded" | "error";
 type AtlasView = "tree" | "readiness";
 type DifficultyLevel = "easy" | "medium" | "hard";
+type DifficultyBreakdown = { level: DifficultyLevel; count: number };
 
 const COMPANY_KEY = "realgo.atlas.company";
 const VIEW_KEY = "realgo.atlas.view";
@@ -81,13 +82,15 @@ function familyDifficulty(subs: readonly AtlasSubpattern[], copy: AtlasCopy) {
     return {
       label: copy.familyDifficultyUnknown,
       detail: copy.familyDifficultyNoData,
-      levels: [] as DifficultyLevel[],
+      levels: [] as DifficultyBreakdown[],
       title: copy.familyDifficultyHint,
       known: false,
     };
   }
 
-  const levels = (["easy", "medium", "hard"] as const).filter((level) => counts[level] > 0);
+  const levels = (["easy", "medium", "hard"] as const)
+    .filter((level) => counts[level] > 0)
+    .map((level) => ({ level, count: counts[level] }));
 
   return {
     label: "",
@@ -377,10 +380,15 @@ function TreeView({
                     </span>
                     <span className="atlas-table__cell atlas-family__difficulty" role="cell" title={difficulty.title}>
                       {difficulty.known ? (
-                        <span className="atlas-difficulty-badges" aria-label={difficulty.levels.join(", ")}>
-                          {difficulty.levels.map((level) => (
+                        <span
+                          className="atlas-difficulty-badges"
+                          aria-label={difficulty.levels.map((item) => `${item.level} ${item.count}`).join(", ")}
+                        >
+                          {difficulty.levels.map(({ level, count }) => (
                             <span className={`atlas-difficulty-badge atlas-difficulty-badge--${level}`} key={level}>
-                              {level}
+                              <span>{level}</span>
+                              {" "}
+                              <span className="atlas-difficulty-badge__count">{count}</span>
                             </span>
                           ))}
                         </span>

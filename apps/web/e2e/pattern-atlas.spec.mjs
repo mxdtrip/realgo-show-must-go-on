@@ -36,8 +36,7 @@ test.describe("pattern atlas tree", () => {
     await expect(page.getByRole("button", { name: "свернуть всё" })).toHaveCount(0);
     await expect(page.locator(".atlas-tree.atlas-table")).toHaveCount(0);
     const binaryFamily = page.locator(".atlas-family", { hasText: "Binary Search" });
-    await expect(binaryFamily.locator(".atlas-difficulty-badge")).toHaveText(["easy", "medium", "hard"]);
-    await expect(binaryFamily.locator(".atlas-family__difficulty")).not.toContainText(/\d/);
+    await expect(binaryFamily.locator(".atlas-difficulty-badge")).toHaveText(["easy 5", "medium 8", "hard 3"]);
 
     // Progressive disclosure: subpatterns hidden until expanded.
     await expect(page.locator(".atlas-sub:visible")).toHaveCount(0);
