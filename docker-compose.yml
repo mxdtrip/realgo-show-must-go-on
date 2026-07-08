@@ -213,7 +213,7 @@ services:
       # below point the OpenAI-compatible client at Groq instead of Google.
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       AI_BASE_URL: ${AI_BASE_URL:-https://api.groq.com/openai/v1}
-      AI_MODEL: ${AI_MODEL:-qwen/qwen3.6-27b}
+      AI_MODEL: ${AI_MODEL:-llama-3.3-70b-versatile}
       # In this stack the api is reachable only through the caddy container, so
       # X-Forwarded-For from the docker network is trustworthy. Without this the
       # auth rate limiter keys every request to caddy's container IP — one
