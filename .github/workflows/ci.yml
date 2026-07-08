@@ -94,6 +94,10 @@ jobs:
         working-directory: .
         env:
           AUTH_JWT_SECRET: ci-secret-with-more-than-32-random-looking-characters
+          # Just needs to be non-empty for `docker compose config` to resolve
+          # the required-var check; the real subscription is only needed at
+          # actual deploy time (GEMINI_API_KEY-style secret, set on appbox).
+          VPN_SUB_URL: ci-placeholder
         run: docker compose config --quiet
 
   web:

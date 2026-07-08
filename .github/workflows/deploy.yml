@@ -39,6 +39,9 @@ jobs:
           # Gemini key for AI card generation. Optional: when unset the api
           # boots normally with generation disabled.
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          # VLESS subscription for the vpngw gateway (api shares its netns so
+          # Groq calls ride this tunnel instead of the ISP's flagged egress).
+          VPN_SUB_URL: ${{ secrets.VPN_SUB_URL }}
         run: |
           docker compose pull --ignore-buildable || true
           docker compose --profile prod-demo up -d --build --remove-orphans
@@ -77,24 +80,26 @@ jobs:
           fi
       - name: Probe Groq connectivity
         # Repeated 403 Forbidden from Groq across two different keys and two
-        # different models points away from "bad key"/"bad model" and toward
-        # an infrastructure-level block (edge/CDN denying the server's
-        # source IP or region) rather than anything wrong in our request. A
-        # raw curl from the same docker network, with response headers, is
-        # the fastest way to see evidence of that (e.g. a Cloudflare block
-        # page instead of Groq's own JSON error shape).
+        # different models, from both this network and the RuVDS VPS, pointed
+        # to Cloudflare bot-managing this IP/ASN space rather than anything
+        # wrong in the request — hence vpngw's VLESS tunnel. This probe joins
+        # vpngw's netns directly so it's subject to the same iptables egress
+        # redirect api's traffic is, confirming the tunnel actually routes
+        # around the block (expect 200 here, not 403).
         if: github.event_name == 'workflow_dispatch' && inputs.mode == 'curl'
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
-          container=$(docker ps --filter "name=freeburger-api-1" --format "{{.Names}}" | head -n1)
+          # api has no network attachment of its own (network_mode: service:vpngw),
+          # so join vpngw's netns directly — that's the only way this probe is
+          # actually subject to the same iptables tunnel redirect api's traffic is.
+          container=$(docker ps --filter "name=freeburger-vpngw-1" --format "{{.Names}}" | head -n1)
           if [ -z "$container" ]; then
-            echo "api container not found by name filter"
+            echo "vpngw container not found by name filter"
             exit 0
           fi
-          net=$(docker inspect "$container" --format '{{range $k,$v := .NetworkSettings.Networks}}{{$k}}{{end}}')
-          echo "Using docker network: $net"
-          docker run --rm --network "$net" -e GEMINI_API_KEY curlimages/curl:8.11.0 sh -c '
+          echo "Joining netns of: $container"
+          docker run --rm --network "container:$container" -e GEMINI_API_KEY curlimages/curl:8.11.0 sh -c '
             curl -sS -D - -o /tmp/body \
               -X POST https://api.groq.com/openai/v1/chat/completions \
               -H "Content-Type: application/json" \
