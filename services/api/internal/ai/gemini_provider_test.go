@@ -74,6 +74,50 @@ func TestGeminiProvider_GenerateCards_Success(t *testing.T) {
 	}
 }
 
+func TestGeminiProvider_GenerateHint_Success(t *testing.T) {
+	hintJSON := `{"hint":"Посмотри, что надо быстро находить для текущего числа.","question":"Какую информацию о предыдущих элементах стоит хранить?","stage":"pattern"}`
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Authorization") != "Bearer test-key" {
+			t.Errorf("missing/incorrect Authorization header: %q", r.Header.Get("Authorization"))
+		}
+		var req chatCompletionRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Fatalf("decode request: %v", err)
+		}
+		if req.Model != "gemini-2.5-flash" {
+			t.Fatalf("model = %q", req.Model)
+		}
+		if len(req.Messages) != 2 || !strings.Contains(req.Messages[1].Content, "Two Sum") {
+			t.Fatalf("unexpected messages: %+v", req.Messages)
+		}
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(chatCompletionBody(hintJSON)))
+	}))
+	defer srv.Close()
+
+	p := NewGeminiProvider(config.AI{APIKey: "test-key", Model: "gemini-2.5-flash", BaseURL: srv.URL})
+	out, err := p.GenerateHint(context.Background(), AssistantHintInput{
+		Platform:     "leetcode",
+		Slug:         "two-sum",
+		Title:        "Two Sum",
+		URL:          "https://leetcode.com/problems/two-sum/",
+		Difficulty:   "easy",
+		Message:      "Я застрял",
+		HintLevel:    2,
+		ProblemKnown: true,
+		Patterns:     []AssistantPattern{{Code: "complement_lookup", Name: "Complement Lookup / Pair Mapping"}},
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if out.Stage != "pattern" || out.Hint == "" || out.Question == "" {
+		t.Fatalf("unexpected hint: %+v", out)
+	}
+	if !out.ProblemKnown || len(out.Patterns) != 1 {
+		t.Fatalf("missing enriched context: %+v", out)
+	}
+}
+
 func TestGeminiProvider_GenerateCards_UnknownProblem(t *testing.T) {
 	srv := newTestServer(t, http.StatusOK, chatCompletionBody(`{"error":"unknown_problem"}`))
 	p := NewGeminiProvider(config.AI{APIKey: "k", Model: "m", BaseURL: srv.URL})
@@ -133,6 +177,19 @@ func TestParseGenerationContent(t *testing.T) {
 			t.Fatal("expected error for invalid json")
 		}
 	})
+}
+
+func TestParseAssistantHintContent(t *testing.T) {
+	out, err := parseAssistantHintContent("```json\n{\"hint\":\"h\",\"question\":\"q\",\"stage\":\"unexpected\"}\n```")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if out.Hint != "h" || out.Question != "q" || out.Stage != "nudge" {
+		t.Fatalf("unexpected parsed hint: %+v", out)
+	}
+	if _, err := parseAssistantHintContent(`{"hint":"","stage":"nudge"}`); err == nil {
+		t.Fatal("expected error for empty hint")
+	}
 }
 
 func TestRenderPromptUser(t *testing.T) {

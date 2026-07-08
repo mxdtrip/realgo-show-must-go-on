@@ -6,6 +6,8 @@ export interface TaskInfo {
   platformTaskSlug?: string;
   /** Topic tags read from the page, best-effort (empty/absent if none found). */
   tags?: string[];
+  /** Difficulty read from the page, best-effort. */
+  difficulty?: string;
 }
 
 /**
@@ -38,7 +40,7 @@ export interface PlatformAdapter {
 /** Maps free verdict text found in the DOM to a normalized SubmitResult. */
 export function classifyVerdict(text: string): SubmitResult {
   const t = text.toLowerCase();
-  if (t.includes("accepted")) return "accepted";
+  if (/\baccepted\b/.test(t) && !/\bacceptance\b/.test(t)) return "accepted";
   if (t.includes("wrong answer")) return "wrong_answer";
   if (t.includes("runtime error")) return "runtime_error";
   if (t.includes("time limit")) return "time_limit";

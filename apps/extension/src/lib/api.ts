@@ -1,6 +1,8 @@
 import { AuthError, refreshAccessToken } from "./auth";
 import { getAccessToken, getApiBaseUrl } from "./storage";
 import type {
+  AssistantHintPayload,
+  AssistantHintResult,
   ExtensionEventResult,
   Platform,
   ProblemCardsResult,
@@ -29,6 +31,9 @@ export const HEALTH_PATH = "/healthz";
 /** Cards readiness of a problem (Bearer, like the rest of /me/*). */
 export const problemCardsPath = (problemId: number) =>
   `/api/v1/me/problems/${problemId}/cards`;
+
+/** Guided, non-solution AI hints for coding-problem pages. */
+export const ASSISTANT_HINT_PATH = "/api/v1/assistant/hint";
 
 /** The exact JSON body the backend expects (see services/api .../extension). */
 interface EventRequest {
@@ -145,6 +150,7 @@ function buildEventRequest(payload: SubmissionPayload): EventRequest {
       externalId,
       title: payload.taskTitle,
       url: payload.taskUrl,
+      difficulty: payload.difficulty,
     },
   };
 }
@@ -213,6 +219,35 @@ export async function getProblemCards(
   } catch {
     return null;
   }
+}
+
+export async function getAssistantHint(
+  payload: AssistantHintPayload
+): Promise<AssistantHintResult> {
+  const baseUrl = await getApiBaseUrl();
+  const url = `${baseUrl}${ASSISTANT_HINT_PATH}`;
+  const body = JSON.stringify(payload);
+
+  let token = await getAccessToken();
+  if (!token) token = await tryRefresh();
+
+  let res = await authedPost(url, body, token);
+  if (res.status === 401) {
+    token = await tryRefresh();
+    res = await authedPost(url, body, token);
+  }
+
+  const data = await safeJson(res);
+  if (!res.ok) {
+    const message = data?.error?.message || `Ошибка AI-помощника (${res.status})`;
+    throw new ApiError(message, res.status, data?.error?.code);
+  }
+
+  const result = data?.data as AssistantHintResult | undefined;
+  if (!result?.hint) {
+    throw new ApiError("AI-помощник вернул пустую подсказку.", res.status, "empty_response");
+  }
+  return result;
 }
 
 async function authedGet(url: string, token: string): Promise<Response> {
