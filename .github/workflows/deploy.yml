@@ -98,6 +98,8 @@ jobs:
             curl -sS -D - -o /tmp/body \
               -X POST https://api.groq.com/openai/v1/chat/completions \
               -H "Content-Type: application/json" \
+              -H "Accept: application/json" \
+              -H "User-Agent: realgo-assistant/1.0 (+https://realgo.dev)" \
               -H "Authorization: Bearer $GEMINI_API_KEY" \
               -d "{\"model\":\"llama-3.3-70b-versatile\",\"messages\":[{\"role\":\"user\",\"content\":\"ping\"}]}"
             echo "--- body ---"

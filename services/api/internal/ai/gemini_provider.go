@@ -110,7 +110,15 @@ func (p *GeminiProvider) chat(ctx context.Context, messages []chatMessage) (stri
 		return "", fmt.Errorf("ai: build gemini request: %w", err)
 	}
 	httpReq.Header.Set("Content-Type", "application/json")
+	httpReq.Header.Set("Accept", "application/json")
 	httpReq.Header.Set("Authorization", "Bearer "+p.apiKey)
+	// Go's default "Go-http-client/1.1" User-Agent is a common Cloudflare Bot
+	// Management signature; we saw Cloudflare 403 our traffic with a fresh
+	// __cf_bm cookie (i.e. classified as a bot before reaching Groq's origin
+	// at all) using that default. A descriptive, non-generic UA is the
+	// standard fix API providers ask for (same reasoning as GitHub's API
+	// requiring one).
+	httpReq.Header.Set("User-Agent", "realgo-assistant/1.0 (+https://realgo.dev)")
 
 	resp, err := p.httpClient.Do(httpReq)
 	if err != nil {
