@@ -55,9 +55,9 @@ function mulberry32(seed: number) {
 
 const heatRand = mulberry32(20260702);
 
-/** Last 28 days of review-activity levels (0–4): 4 rows × 7 days, newest last. */
+/** Last 56 days of review-activity levels (0–4): 4 rows × 14 days, newest last. */
 export const activityWeeks: readonly (readonly number[])[] = Array.from({ length: 4 }, () =>
-  Array.from({ length: 7 }, () => {
+  Array.from({ length: 14 }, () => {
     const r = heatRand();
     if (r < 0.34) return 0;
     if (r < 0.56) return 1;

@@ -169,8 +169,8 @@ export type HeatmapTooltipCopy = Readonly<{
   unitForms: readonly string[];
 }>;
 
-/** Contribution-style activity heatmap: each outer entry is a row of 7 days
-    (last 28 days → 4 rows × 7 columns), newest cell bottom-right. With
+/** Contribution-style activity heatmap: each outer entry is a visual row
+    (last 56 days → 4 rows × 14 columns), newest cell bottom-right. With
     `counts` + `tooltip` each cell grows a pure-CSS hover tip (date + reviews). */
 export function ActivityHeatmap({
   weeks,
@@ -194,13 +194,14 @@ export function ActivityHeatmap({
 
   // The newest cell (bottom-right) is today; walk backwards for the rest.
   const totalDays = weeks.reduce((sum, week) => sum + week.length, 0);
+  const flatCounts = counts?.flat();
   const now = new Date();
   const tipFor = (flatIndex: number): string | undefined => {
     if (!tooltip) return undefined;
     const daysAgo = totalDays - 1 - flatIndex;
     const date = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysAgo);
     const label = `${date.getDate()} ${tooltip.months[date.getMonth()]}`;
-    const count = counts?.[Math.floor(flatIndex / 7)]?.[flatIndex % 7] ?? 0;
+    const count = flatCounts?.[flatIndex] ?? 0;
     return count > 0
       ? `${label} · ${count} ${pluralRu(count, tooltip.unitForms)}`
       : `${label} · ${tooltip.empty}`;

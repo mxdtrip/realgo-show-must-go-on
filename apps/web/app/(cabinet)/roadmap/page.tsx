@@ -1,19 +1,27 @@
+import Link from "next/link";
+
 import { CabinetPanel, ProgressBar } from "../_components";
+import { CabinetIcon } from "../_icons";
 import { getDictionary } from "../../_content/i18n";
 import { roadmapWeeks } from "../_mock";
 
 export default function RoadmapPage() {
   const page = getDictionary().cabinet.pages.roadmap;
+  const statuses = {
+    done: page.statusDone,
+    active: page.statusActive,
+    todo: page.statusTodo,
+  } as const;
 
   const overall = Math.round(
     roadmapWeeks.reduce((sum, week) => sum + week.progress, 0) / roadmapWeeks.length,
   );
 
-  const stateOf = (progress: number) => {
-    if (progress >= 70) return { name: "done", label: page.statusDone };
-    if (progress >= 30) return { name: "active", label: page.statusActive };
-    return { name: "todo", label: page.statusTodo };
+  const stateOf = (status: keyof typeof statuses) => {
+    return { name: status, label: statuses[status] };
   };
+
+  const isDoneStatus = (status: string) => status === "done";
 
   return (
     <main className="cabinet-page">
@@ -44,26 +52,50 @@ export default function RoadmapPage() {
       >
         <ol className="roadmap-track">
           {roadmapWeeks.map((week, index) => {
-            const state = stateOf(week.progress);
+            const state = stateOf(week.status);
+            const isLocked = roadmapWeeks
+              .slice(0, index)
+              .some((previousWeek) => !isDoneStatus(previousWeek.status));
             return (
-              <li className={`roadmap-step roadmap-step--${state.name}`} key={week.week}>
+              <li className={`roadmap-step roadmap-step--${state.name}`} key={week.id}>
                 <div className="roadmap-step__rail">
                   <span className="roadmap-step__node">{String(index + 1).padStart(2, "0")}</span>
                 </div>
                 <div className="roadmap-step__body">
-                  <div className="roadmap-step__head">
-                    <span className="roadmap-step__week">{week.week}</span>
-                    <span className="roadmap-step__state">{state.label}</span>
-                    {state.name === "active" ? (
-                      <span className="roadmap-step__now">{page.nowLabel}</span>
-                    ) : null}
+                  <div className="roadmap-step__main">
+                    <div className="roadmap-step__head">
+                      <span className="roadmap-step__week">{week.week}</span>
+                      <span className="roadmap-step__state">{state.label}</span>
+                      {state.name === "active" ? (
+                        <span className="roadmap-step__now">{page.nowLabel}</span>
+                      ) : null}
+                    </div>
+                    <h2>{week.title}</h2>
+                    <p>{week.focus}</p>
+                    <div className="roadmap-step__progress">
+                      <ProgressBar value={week.progress} label={`${week.title} progress`} />
+                      <strong>{week.progress}%</strong>
+                    </div>
                   </div>
-                  <h2>{week.title}</h2>
-                  <p>{week.focus}</p>
-                  <div className="roadmap-step__progress">
-                    <ProgressBar value={week.progress} label={`${week.title} progress`} />
-                    <strong>{week.progress}%</strong>
-                  </div>
+                  {isLocked ? (
+                    <div className="roadmap-step__practice-card roadmap-step__practice-card--locked">
+                      <span className="roadmap-step__practice-eyebrow">{page.lockedEyebrow}</span>
+                      <strong>{page.lockedTitle}</strong>
+                      <span>{page.lockedDescription}</span>
+                    </div>
+                  ) : (
+                    <Link className="roadmap-step__practice-card" href={week.practiceHref}>
+                      <span className="roadmap-step__practice-eyebrow">{page.practiceEyebrow}</span>
+                      <strong>{page.practiceCta}</strong>
+                      <span>
+                        {week.items.length} {page.subpatternsLabel} · {week.practiceMeta}
+                      </span>
+                      <em>
+                        {page.practiceAction}
+                        <CabinetIcon name="arrow" />
+                      </em>
+                    </Link>
+                  )}
                 </div>
               </li>
             );
