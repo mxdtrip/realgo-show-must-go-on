@@ -50,10 +50,14 @@ export function AssistantApp({ task, onAsk, variant = "dock", onClose }: Assista
   }, [messages, status, error]);
 
   useEffect(() => {
-    if (!open || status !== "idle" || messages.length > 0) return;
+    // `error` must gate this: without it, a failed first ask() resets status
+    // back to "idle" with messages still empty, so this effect re-fires and
+    // silently retries — back-to-back failures then look like the spinner
+    // never stopping instead of a visible error.
+    if (!open || status !== "idle" || messages.length > 0 || error) return;
     void ask(DEFAULT_MESSAGE, false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, taskKey, status, messages.length]);
+  }, [open, taskKey, status, messages.length, error]);
 
   async function ask(message: string, showUserMessage = true) {
     const trimmed = message.trim();

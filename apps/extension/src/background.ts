@@ -82,11 +82,26 @@ chrome.runtime.onMessage.addListener(
     }
 
     if (message.type === "REALGO_GET_ASSISTANT_HINT") {
+      const startedAt = Date.now();
+      console.log("[realgo] background: REALGO_GET_ASSISTANT_HINT received", {
+        platform: message.payload.platform,
+        slug: message.payload.platformTaskSlug,
+        hintLevel: message.payload.hintLevel,
+      });
       getAssistantHint(message.payload)
-        .then((result) =>
-          sendResponse({ ok: true, result } satisfies AssistantHintResponse)
-        )
-        .catch((e) => sendResponse(toAssistantErrorResponse(e)))
+        .then((result) => {
+          console.log("[realgo] background: assistant hint ok", {
+            ms: Date.now() - startedAt,
+          });
+          sendResponse({ ok: true, result } satisfies AssistantHintResponse);
+        })
+        .catch((e) => {
+          console.error("[realgo] background: assistant hint failed", {
+            ms: Date.now() - startedAt,
+            error: e,
+          });
+          sendResponse(toAssistantErrorResponse(e));
+        })
         .catch(() => {
           /* sendResponse can throw if the channel closed; nothing to do */
         });

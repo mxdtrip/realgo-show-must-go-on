@@ -230,11 +230,17 @@ export async function getAssistantHint(
 
   let token = await getAccessToken();
   if (!token) token = await tryRefresh();
+  console.log("[realgo] api: assistant hint request", {
+    url,
+    hasToken: Boolean(token),
+  });
 
   let res = await authedPost(url, body, token);
+  console.log("[realgo] api: assistant hint response", { status: res.status });
   if (res.status === 401) {
     token = await tryRefresh();
     res = await authedPost(url, body, token);
+    console.log("[realgo] api: assistant hint retry response", { status: res.status });
   }
 
   const data = await safeJson(res);
