@@ -209,7 +209,11 @@ services:
       AUTH_REFRESH_TTL: ${AUTH_REFRESH_TTL:-720h}
       # Optional: without a key the api still boots, AI card generation is
       # just disabled. Prod gets it from the GEMINI_API_KEY GitHub secret.
+      # Despite the name, this currently holds a Groq key — AI_BASE_URL/AI_MODEL
+      # below point the OpenAI-compatible client at Groq instead of Google.
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      AI_BASE_URL: ${AI_BASE_URL:-https://api.groq.com/openai/v1}
+      AI_MODEL: ${AI_MODEL:-qwen/qwen3.6-27b}
       # In this stack the api is reachable only through the caddy container, so
       # X-Forwarded-For from the docker network is trustworthy. Without this the
       # auth rate limiter keys every request to caddy's container IP — one
