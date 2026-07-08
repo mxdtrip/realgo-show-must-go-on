@@ -3242,9 +3242,9 @@ a.cabinet-panel__meta:hover {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 7px;
-  min-height: 118px;
-  padding: 16px;
+  gap: 10px;
+  min-height: 102px;
+  padding: 15px 16px;
   border: 1px solid rgba(56, 139, 253, 0.28);
   border-radius: 10px;
   overflow: hidden;
@@ -3292,6 +3292,7 @@ a.roadmap-step__practice-card:hover {
 }
 
 .roadmap-step__practice-card--locked {
+  gap: 8px;
   border-color: rgba(139, 148, 158, 0.18);
   background:
     radial-gradient(140% 100% at 50% 0%, rgba(139, 148, 158, 0.1), transparent 62%),
@@ -3310,7 +3311,7 @@ a.roadmap-step__practice-card:hover {
   align-items: center;
   gap: 7px;
   width: fit-content;
-  margin-top: 5px;
+  margin-top: 0;
   color: #ffffff;
   font-family: var(--font-stack-mono);
   font-size: 11.5px;

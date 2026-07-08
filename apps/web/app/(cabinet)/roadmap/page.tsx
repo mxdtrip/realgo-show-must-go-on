@@ -81,15 +81,11 @@ export default function RoadmapPage() {
                     <div className="roadmap-step__practice-card roadmap-step__practice-card--locked">
                       <span className="roadmap-step__practice-eyebrow">{page.lockedEyebrow}</span>
                       <strong>{page.lockedTitle}</strong>
-                      <span>{page.lockedDescription}</span>
                     </div>
                   ) : (
                     <Link className="roadmap-step__practice-card" href={week.practiceHref}>
                       <span className="roadmap-step__practice-eyebrow">{page.practiceEyebrow}</span>
                       <strong>{page.practiceCta}</strong>
-                      <span>
-                        {week.items.length} {page.subpatternsLabel} · {week.practiceMeta}
-                      </span>
                       <em>
                         {page.practiceAction}
                         <CabinetIcon name="arrow" />
