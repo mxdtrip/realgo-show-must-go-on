@@ -1,4 +1,5 @@
 import { ApiError, getAssistantHint, getProblemCards, saveSubmission } from "./lib/api";
+import { syncWebSession } from "./lib/auth";
 import { clearLastSubmission, setLastSubmission } from "./lib/storage";
 import type {
   CardsResponse,
@@ -63,6 +64,13 @@ chrome.runtime.onMessage.addListener(
         .catch(() => {
           /* sendResponse can throw if the channel closed; nothing to do */
         });
+      return true;
+    }
+
+    if (message.type === "REALGO_SYNC_WEB_SESSION") {
+      syncWebSession(message.accessToken, message.refreshToken)
+        .then(() => sendResponse({ ok: true }))
+        .catch(() => sendResponse({ ok: false }));
       return true;
     }
 

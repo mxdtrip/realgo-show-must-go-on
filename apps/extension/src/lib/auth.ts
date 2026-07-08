@@ -122,3 +122,36 @@ export async function getCurrentUserEmail(): Promise<string | undefined> {
   const [email, refresh] = await Promise.all([getUserEmail(), getRefreshToken()]);
   return refresh ? email : undefined;
 }
+
+/**
+ * Mirrors the realgo.dev web session into the extension's own storage, so the
+ * user doesn't have to log in twice. The web app is the source of truth: no
+ * refresh token means the web session logged out (or never started), and the
+ * extension follows suit.
+ *
+ * `getCurrentUser` is imported lazily to dodge a circular import (api.ts
+ * imports auth.ts for refreshAccessToken/AuthError).
+ */
+export async function syncWebSession(
+  accessToken: string | null,
+  refreshToken: string | null
+): Promise<void> {
+  const current = await getRefreshToken();
+
+  if (!refreshToken) {
+    if (current) await clearTokens();
+    return;
+  }
+  if (current === refreshToken) return; // already in sync, skip the /users/me round-trip
+
+  await setTokens({
+    access_token: accessToken ?? "",
+    refresh_token: refreshToken,
+    token_type: "Bearer",
+    expires_in: 0,
+  });
+
+  const { getCurrentUser } = await import("./api");
+  const user = await getCurrentUser();
+  if (user?.email) await setUserEmail(user.email);
+}
