@@ -106,6 +106,7 @@ func (p *GeminiProvider) GenerateHint(ctx context.Context, in AssistantHintInput
 	if err != nil {
 		return AssistantHintResponse{}, err
 	}
+	applyHintLevel(&out, in.HintLevel)
 	out.ProblemKnown = in.ProblemKnown
 	out.Patterns = in.Patterns
 	return out, nil
@@ -133,6 +134,7 @@ func (p *GeminiProvider) StreamHint(ctx context.Context, in AssistantHintInput, 
 	if err != nil {
 		return AssistantHintResponse{}, err
 	}
+	applyHintLevel(&out, in.HintLevel)
 	out.ProblemKnown = in.ProblemKnown
 	out.Patterns = in.Patterns
 	return out, nil
@@ -354,5 +356,24 @@ func validAssistantStage(stage string) bool {
 		return true
 	default:
 		return false
+	}
+}
+
+// applyHintLevel makes the level -> stage mapping authoritative on our side
+// instead of trusting the model's self-reported "stage" field: live testing
+// showed the model sometimes mislabels a level-3 reply as "approach" (or
+// tacks a trailing question onto it despite the prompt forbidding that at
+// the final level). Overriding here guarantees the client always sees a
+// stage consistent with the level it asked for, and that the last of the
+// three hints never carries a dangling question.
+func applyHintLevel(out *AssistantHintResponse, hintLevel int) {
+	switch {
+	case hintLevel <= 1:
+		out.Stage = "nudge"
+	case hintLevel == 2:
+		out.Stage = "approach"
+	default:
+		out.Stage = "reveal"
+		out.Question = ""
 	}
 }

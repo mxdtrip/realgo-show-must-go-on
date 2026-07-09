@@ -161,7 +161,7 @@ func TestGeminiProvider_StreamHint_Success(t *testing.T) {
 	p := NewGeminiProvider(config.AI{APIKey: "k", Model: "m", BaseURL: srv.URL})
 
 	var revealed strings.Builder
-	out, err := p.StreamHint(context.Background(), AssistantHintInput{Title: "Two Sum"}, func(delta string) {
+	out, err := p.StreamHint(context.Background(), AssistantHintInput{Title: "Two Sum", HintLevel: 2}, func(delta string) {
 		revealed.WriteString(delta)
 	})
 	if err != nil {
@@ -251,6 +251,37 @@ func TestParseAssistantHintContent(t *testing.T) {
 	}
 	if _, err := parseAssistantHintContent(`{"hint":"","stage":"nudge"}`); err == nil {
 		t.Fatal("expected error for empty hint")
+	}
+}
+
+// TestApplyHintLevel guards the deterministic level -> stage mapping added
+// after live testing showed the model sometimes mislabels its own stage (or
+// tacks a trailing question onto a level-3 reply despite the prompt
+// forbidding it): the client must always see a stage consistent with the
+// requested level, and level 3 must never carry a question.
+func TestApplyHintLevel(t *testing.T) {
+	cases := []struct {
+		level        int
+		wantStage    string
+		questionKept bool
+	}{
+		{level: 1, wantStage: "nudge", questionKept: true},
+		{level: 2, wantStage: "approach", questionKept: true},
+		{level: 3, wantStage: "reveal", questionKept: false},
+	}
+	for _, tc := range cases {
+		out := AssistantHintResponse{Stage: "approach", Question: "leftover question?"}
+		applyHintLevel(&out, tc.level)
+		if out.Stage != tc.wantStage {
+			t.Errorf("level %d: stage = %q, want %q", tc.level, out.Stage, tc.wantStage)
+		}
+		wantQuestion := ""
+		if tc.questionKept {
+			wantQuestion = "leftover question?"
+		}
+		if out.Question != wantQuestion {
+			t.Errorf("level %d: question = %q, want %q", tc.level, out.Question, wantQuestion)
+		}
 	}
 }
 
