@@ -12,7 +12,7 @@ export type SessionSourceCard = {
   sourceLabel: string;
   front: string;
   back: string;
-  /** Optional until the backend ships it (issue #227); absent = not AI-generated. */
+  /** Shipped by the backend since issue #227; kept optional so older payloads parse. */
   createdByAi?: boolean;
   reviewState: {
     attempts: number;
@@ -39,6 +39,27 @@ export function getCardSession(params: GetCardSessionParams = {}, signal?: Abort
   if (params.patternCode) query.set("patternCode", params.patternCode);
   if (params.limit) query.set("limit", String(params.limit));
   return apiFetch<CardSession>(`/me/cards/session?${query}`, { signal });
+}
+
+export type RateCardResult = {
+  cardId: number;
+  rating: CardRating;
+  nextReviewAt: string;
+  repeatInCurrentSession: boolean;
+  sessionProgress: {
+    reviewed: number;
+    total: number;
+    remaining: number;
+  };
+};
+
+/** Persists a review rating (POST /me/cards/{cardId}/rate). */
+export function rateCard(
+  cardId: number | string,
+  body: { sessionId: string; rating: CardRating; reviewedAt: string },
+  signal?: AbortSignal,
+) {
+  return apiFetch<RateCardResult>(`/me/cards/${cardId}/rate`, { method: "POST", body, signal });
 }
 
 const cardTypeLabels: Record<CardType, string> = {

@@ -776,6 +776,7 @@ const ru = {
           cardUnit: "карт.",
           dueLabel: "к повторению сегодня",
           estimatedTime: "~5 минут",
+          minuteUnit: "мин",
           mixEyebrow: "mix",
           mixTitle: "Что повторяем сегодня",
           types: [
@@ -793,6 +794,7 @@ const ru = {
         },
         session: {
           loading: "Loading card session…",
+          sessionError: "Не удалось загрузить карточки. Обнови страницу или загляни позже.",
           progress: "reviewed",
           remaining: "remaining",
           showAnswer: "Show answer",

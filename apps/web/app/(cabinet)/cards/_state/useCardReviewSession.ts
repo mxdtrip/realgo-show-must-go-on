@@ -92,7 +92,12 @@ function readStoredSession(cards: readonly ReviewCard[]): StoredSession {
         )
       : [];
 
-    return { queue, history, sessionCardIds: sessionCardIds.length > 0 ? sessionCardIds : fallback.sessionCardIds };
+    // Nothing stored matches the current card set (e.g. the mock demo session
+    // was persisted and the api session has different ids) — start fresh
+    // instead of instantly showing a "completed" empty queue.
+    if (sessionCardIds.length === 0) return fallback;
+
+    return { queue, history, sessionCardIds };
   } catch {
     return fallback;
   }
@@ -102,6 +107,8 @@ export function useCardReviewSession(
   cards: readonly ReviewCard[],
   nextReviewByRating: Record<ReviewRating, string>,
   onSessionComplete?: () => void,
+  /** Fire-and-forget side channel for persisting a rating (e.g. POST to the api). */
+  onRate?: (cardId: string, rating: ReviewRating, reviewedAt: string) => void,
 ) {
   const [isReady, setIsReady] = useState(false);
   const [queue, setQueue] = useState<string[]>([]);
@@ -141,6 +148,8 @@ export function useCardReviewSession(
         nextReview: nextReviewByRating[rating],
       };
 
+      onRate?.(currentId, rating, logItem.reviewedAt);
+
       setHistory((currentHistory) => [logItem, ...currentHistory].slice(0, 12));
       setQueue((currentQueue) => {
         const [, ...rest] = currentQueue;
@@ -152,7 +161,7 @@ export function useCardReviewSession(
       });
       setIsFlipped(false);
     },
-    [nextReviewByRating, onSessionComplete, queue],
+    [nextReviewByRating, onRate, onSessionComplete, queue],
   );
 
   const reset = useCallback(() => {
