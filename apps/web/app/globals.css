@@ -4064,12 +4064,17 @@ a.roadmap-step__practice-card:hover {
   transition: opacity 0.28s ease;
 }
 
+/* The stage owns enter/exit animations while .focus-card owns only the flip
+   transform. Keeping them on separate elements means the enter animation's
+   fill mode can never override (or be re-triggered by) the flip transform —
+   previously un-flipping a card replayed the enter animation. */
 .focus-card-stage {
   position: relative;
   z-index: 1;
   width: 100%;
   height: 100%;
   transform-style: preserve-3d;
+  animation: focus-card-enter 0.42s cubic-bezier(0.2, 0.72, 0.22, 1) backwards;
 }
 
 .focus-card {
@@ -4077,8 +4082,8 @@ a.roadmap-step__practice-card:hover {
   width: 100%;
   height: 100%;
   transform-style: preserve-3d;
-  animation: focus-card-enter 0.42s cubic-bezier(0.2, 0.72, 0.22, 1) both;
   transition: transform 0.68s cubic-bezier(0.2, 0.72, 0.22, 1);
+  will-change: transform;
   cursor: pointer;
 }
 
@@ -4089,35 +4094,32 @@ a.roadmap-step__practice-card:hover {
 @keyframes focus-card-enter {
   from {
     opacity: 0;
-    transform: translate3d(0, 18px, 0) rotateX(2deg) scale(0.985);
+    transform: translate3d(0, 18px, 0) scale(0.985);
   }
 
   to {
     opacity: 1;
-    transform: translate3d(0, 0, 0) rotateX(0) scale(1);
+    transform: translate3d(0, 0, 0) scale(1);
   }
 }
 
-.focus-card--answer {
-  animation-name: none;
-}
-
-.focus-card--advancing {
+.focus-card-stage--advancing {
   pointer-events: none;
   animation: focus-card-advance 0.42s cubic-bezier(0.64, 0.02, 0.4, 1) both;
 }
 
+/* No rotateY here: the flip lives on .focus-card, so the exit slide works for
+   both flipped and unflipped cards. No filter either — filter on a 3D parent
+   flattens the preserve-3d subtree in Firefox. */
 @keyframes focus-card-advance {
   from {
     opacity: 1;
-    filter: blur(0);
-    transform: translate3d(0, 0, 0) rotateY(180deg) rotateZ(0) scale(1);
+    transform: translate3d(0, 0, 0) rotateZ(0) scale(1);
   }
 
   to {
     opacity: 0;
-    filter: blur(2px);
-    transform: translate3d(66vw, -10px, 120px) rotateY(180deg) rotateZ(8deg) scale(0.92);
+    transform: translate3d(66vw, -10px, 120px) rotateZ(8deg) scale(0.92);
   }
 }
 
@@ -5439,6 +5441,8 @@ a.roadmap-step__practice-card:hover {
 
   .focus-progress i,
   .focus-card,
+  .focus-card-stage,
+  .focus-card__face,
   .cabinet-cta,
   .focus-complete a,
   .focus-complete button,
