@@ -4302,9 +4302,10 @@ a.roadmap-step__practice-card:hover {
   font-weight: 600;
   text-align: center;
   text-wrap: balance;
-  overflow-wrap: anywhere;
-  word-break: break-word;
-  hyphens: auto;
+  /* No hyphens:auto and no overflow-wrap:anywhere: both happily split short
+     Russian words (сле-ва, пу-стом). break-word only kicks in when a single
+     word is longer than the line — the overflow guard, nothing more. */
+  overflow-wrap: break-word;
 }
 
 .focus-card--answer .focus-card__content h1 {
