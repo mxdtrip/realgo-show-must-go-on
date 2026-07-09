@@ -335,7 +335,7 @@ func parseAssistantHintContent(content string) (AssistantHintResponse, error) {
 		return AssistantHintResponse{}, fmt.Errorf("ai: assistant hint is empty")
 	}
 	if !validAssistantStage(raw.Stage) {
-		raw.Stage = "nudge"
+		raw.Stage = defaultAssistantStage
 	}
 	return AssistantHintResponse{
 		Hint:     raw.Hint,
@@ -344,9 +344,13 @@ func parseAssistantHintContent(content string) (AssistantHintResponse, error) {
 	}, nil
 }
 
+// defaultAssistantStage is used when the model's "stage" field is missing or
+// doesn't match one of the three hint levels (see prompts/assistant_hint_v1.md).
+const defaultAssistantStage = "nudge"
+
 func validAssistantStage(stage string) bool {
 	switch stage {
-	case "nudge", "pattern", "invariant", "next_step", "debug":
+	case "nudge", "approach", "reveal":
 		return true
 	default:
 		return false

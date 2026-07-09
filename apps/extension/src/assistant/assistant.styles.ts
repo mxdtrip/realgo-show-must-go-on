@@ -265,10 +265,60 @@ export const ASSISTANT_CSS = `
   font-size: 12px;
 }
 
+.realgo-agent-actions-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 14px 14px;
+}
+
 .realgo-agent-actions {
   display: flex;
   gap: 8px;
-  padding: 10px 14px 14px;
+}
+
+.realgo-agent-cooldown {
+  position: relative;
+  height: 22px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.03);
+}
+.realgo-agent-cooldown__bar {
+  position: absolute;
+  inset: 0;
+  width: 0%;
+  background: linear-gradient(90deg, var(--accent-soft), var(--accent-line));
+  transition: width 0.2s linear;
+}
+.realgo-agent-cooldown__label {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.02em;
+}
+
+.realgo-agent-hints-done {
+  margin: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-dim);
+  font-size: 11.5px;
+  text-align: center;
+  animation: realgo-agent-fade-in 0.35s ease;
+}
+@keyframes realgo-agent-fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .realgo-agent-btn {

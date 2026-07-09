@@ -76,7 +76,7 @@ func TestGeminiProvider_GenerateCards_Success(t *testing.T) {
 }
 
 func TestGeminiProvider_GenerateHint_Success(t *testing.T) {
-	hintJSON := `{"hint":"Посмотри, что надо быстро находить для текущего числа.","question":"Какую информацию о предыдущих элементах стоит хранить?","stage":"pattern"}`
+	hintJSON := `{"hint":"Посмотри, что надо быстро находить для текущего числа.","question":"Какую информацию о предыдущих элементах стоит хранить?","stage":"approach"}`
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Header.Get("Authorization") != "Bearer test-key" {
 			t.Errorf("missing/incorrect Authorization header: %q", r.Header.Get("Authorization"))
@@ -111,7 +111,7 @@ func TestGeminiProvider_GenerateHint_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if out.Stage != "pattern" || out.Hint == "" || out.Question == "" {
+	if out.Stage != "approach" || out.Hint == "" || out.Question == "" {
 		t.Fatalf("unexpected hint: %+v", out)
 	}
 	if !out.ProblemKnown || len(out.Patterns) != 1 {
@@ -128,7 +128,7 @@ func TestGeminiProvider_StreamHint_Success(t *testing.T) {
 		`мотри на паре`,
 		`й.\`,
 		`n"`,
-		`,"question":"Что хранить?","stage":"pattern"}`,
+		`,"question":"Что хранить?","stage":"approach"}`,
 	}
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var req chatCompletionStreamRequest
@@ -175,7 +175,7 @@ func TestGeminiProvider_StreamHint_Success(t *testing.T) {
 	if out.Hint != "Посмотри на парей." {
 		t.Fatalf("unexpected hint: %q", out.Hint)
 	}
-	if out.Question != "Что хранить?" || out.Stage != "pattern" {
+	if out.Question != "Что хранить?" || out.Stage != "approach" {
 		t.Fatalf("unexpected out: %+v", out)
 	}
 }

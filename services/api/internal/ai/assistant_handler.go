@@ -20,7 +20,7 @@ const (
 	maxAssistantMessageChars     = 1200
 	maxAssistantHistoryItems     = 8
 	maxAssistantTags             = 12
-	maxAssistantHintLevel        = 5
+	maxAssistantHintLevel        = 3
 	maxAssistantDescriptionChars = 6000
 )
 

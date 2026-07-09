@@ -43,7 +43,7 @@ func (f *fakeHintProvider) GenerateHint(_ context.Context, in AssistantHintInput
 	return AssistantHintResponse{
 		Hint:         "Сфокусируйся на том, что нужно найти для текущего элемента.",
 		Question:     "Что можно сохранить из уже просмотренной части массива?",
-		Stage:        "pattern",
+		Stage:        "approach",
 		ProblemKnown: in.ProblemKnown,
 		Patterns:     in.Patterns,
 	}, nil
@@ -107,7 +107,7 @@ func TestAssistantHandler_Hint(t *testing.T) {
 	if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
 		t.Fatalf("decode response: %v", err)
 	}
-	if body.Data.Stage != "pattern" || !body.Data.ProblemKnown || len(body.Data.Patterns) != 1 {
+	if body.Data.Stage != "approach" || !body.Data.ProblemKnown || len(body.Data.Patterns) != 1 {
 		t.Fatalf("unexpected response: %+v", body.Data)
 	}
 }

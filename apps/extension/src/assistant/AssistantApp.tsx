@@ -4,12 +4,16 @@ import type {
   AssistantHintPayload,
   AssistantHintResult,
   AssistantMessage,
+  AssistantPattern,
   AssistantTask,
 } from "../lib/types";
 import { ASSISTANT_CSS } from "./assistant.styles";
 
 const BRAND_LOGO_URL = new URL("../../assets/icon.png", import.meta.url).href;
 const DEFAULT_MESSAGE = "Я застрял. Дай первую мягкую подсказку, без решения.";
+// Keep in sync with maxAssistantHintLevel in services/api/internal/ai/assistant_handler.go.
+const MAX_HINTS = 3;
+const HINT_COOLDOWN_MS = 30_000;
 
 interface AssistantAppProps {
   task: AssistantTask;
@@ -29,12 +33,21 @@ export function AssistantApp({ task, onAsk, variant = "dock", onClose }: Assista
   const [status, setStatus] = useState<AskStatus>("idle");
   const [error, setError] = useState("");
   const [hintLevel, setHintLevel] = useState(1);
+  const [hintsUsed, setHintsUsed] = useState(0);
+  const [cooldownEndAt, setCooldownEndAt] = useState<number | null>(null);
+  const [now, setNow] = useState(() => Date.now());
+  const [patterns, setPatterns] = useState<AssistantPattern[] | undefined>();
+  const [problemKnown, setProblemKnown] = useState(false);
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
   const taskKey = `${task.platform}:${task.platformTaskSlug}:${task.taskUrl}`;
   const lastMessage = messages[messages.length - 1];
   const isStreamingEmpty =
     status === "loading" && lastMessage?.role === "assistant" && lastMessage.content === "";
+  const hintsExhausted = hintsUsed >= MAX_HINTS;
+  const cooldownRemainingMs = cooldownEndAt ? Math.max(0, cooldownEndAt - now) : 0;
+  const isCoolingDown = cooldownRemainingMs > 0;
+  const cooldownProgress = cooldownEndAt ? 1 - cooldownRemainingMs / HINT_COOLDOWN_MS : 1;
   const visibleTags = useMemo(
     () =>
       [task.platform, task.difficulty, ...(task.tags ?? [])]
@@ -49,7 +62,23 @@ export function AssistantApp({ task, onAsk, variant = "dock", onClose }: Assista
     setStatus("idle");
     setError("");
     setHintLevel(1);
+    setHintsUsed(0);
+    setCooldownEndAt(null);
+    setPatterns(undefined);
+    setProblemKnown(false);
   }, [taskKey, variant]);
+
+  // Ticks `now` while a cooldown is running so the recharge bar/countdown
+  // stay live; stops itself once the cooldown has actually elapsed.
+  useEffect(() => {
+    if (cooldownEndAt === null) return;
+    const id = setInterval(() => {
+      const next = Date.now();
+      setNow(next);
+      if (next >= cooldownEndAt) clearInterval(id);
+    }, 200);
+    return () => clearInterval(id);
+  }, [cooldownEndAt]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ block: "end" });
@@ -67,7 +96,7 @@ export function AssistantApp({ task, onAsk, variant = "dock", onClose }: Assista
 
   async function ask(message: string, showUserMessage = true) {
     const trimmed = message.trim();
-    if (!trimmed || status === "loading") return;
+    if (!trimmed || status === "loading" || hintsUsed >= MAX_HINTS) return;
 
     const history = messages.slice(-8);
     if (showUserMessage) {
@@ -85,13 +114,30 @@ export function AssistantApp({ task, onAsk, variant = "dock", onClose }: Assista
         (delta) => appendToLastAssistantMessage(delta)
       );
       setMessages((items) => replaceLastMessage(items, formatHint(result)));
-      setHintLevel((level) => Math.min(level + 1, 5));
+      setHintLevel((level) => Math.min(level + 1, MAX_HINTS));
+      setPatterns(result.patterns);
+      setProblemKnown(result.problemKnown);
+      const usedAfterThis = hintsUsed + 1;
+      setHintsUsed(usedAfterThis);
+      setCooldownEndAt(usedAfterThis < MAX_HINTS ? Date.now() + HINT_COOLDOWN_MS : null);
     } catch (e) {
       setMessages((items) => items.slice(0, -1));
       setError(e instanceof Error ? e.message : "AI-помощник сейчас недоступен.");
     } finally {
       setStatus("idle");
     }
+  }
+
+  // Reveals the known taxonomy pattern directly from data already returned
+  // by the last hint — this is not itself a hint, so it doesn't touch
+  // hintsUsed/cooldown and stays available even after hints run out.
+  function revealPattern() {
+    if (status === "loading") return;
+    const text =
+      problemKnown && patterns && patterns.length > 0
+        ? `Паттерн: ${patterns.slice(0, 2).map((pattern) => pattern.name).join(", ")}`
+        : "Эта задача пока не привязана к паттерну в базе realgo — попробуй определить его по тегам и условию самостоятельно.";
+    setMessages((items) => [...items, { role: "assistant", content: text }]);
   }
 
   function appendToLastAssistantMessage(delta: string) {
@@ -193,23 +239,41 @@ export function AssistantApp({ task, onAsk, variant = "dock", onClose }: Assista
           <div ref={bottomRef} />
         </div>
 
-        <div className="realgo-agent-actions">
-          <button
-            type="button"
-            className="realgo-agent-btn"
-            disabled={status === "loading"}
-            onClick={() => ask("Дай следующий намёк, но всё ещё без полного решения.")}
-          >
-            следующий намёк
-          </button>
-          <button
-            type="button"
-            className="realgo-agent-btn"
-            disabled={status === "loading"}
-            onClick={() => ask("Я не уверен в выбранном паттерне. Помоги распознать его мягко.")}
-          >
-            паттерн?
-          </button>
+        <div className="realgo-agent-actions-wrap">
+          <div className="realgo-agent-actions">
+            <button
+              type="button"
+              className="realgo-agent-btn"
+              disabled={status === "loading" || hintsExhausted || isCoolingDown}
+              onClick={() => ask("Дай следующий намёк, но всё ещё без полного решения.")}
+            >
+              следующий намёк
+            </button>
+            <button
+              type="button"
+              className="realgo-agent-btn"
+              disabled={status === "loading"}
+              onClick={revealPattern}
+            >
+              паттерн
+            </button>
+          </div>
+          {isCoolingDown && (
+            <div className="realgo-agent-cooldown" aria-hidden="true">
+              <div
+                className="realgo-agent-cooldown__bar"
+                style={{ width: `${Math.round(cooldownProgress * 100)}%` }}
+              />
+              <span className="realgo-agent-cooldown__label">
+                подсказка восстановится через {Math.ceil(cooldownRemainingMs / 1000)}с
+              </span>
+            </div>
+          )}
+          {hintsExhausted && (
+            <p className="realgo-agent-hints-done">
+              Подсказки для этой задачи закончились — на следующей задаче они появятся снова.
+            </p>
+          )}
         </div>
       </section>
     </div>

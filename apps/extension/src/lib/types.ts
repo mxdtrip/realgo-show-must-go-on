@@ -72,7 +72,7 @@ export interface AssistantPattern {
 export interface AssistantHintResult {
   hint: string;
   question?: string;
-  stage: "nudge" | "pattern" | "invariant" | "next_step" | "debug";
+  stage: "nudge" | "approach" | "reveal";
   problemKnown: boolean;
   patterns?: AssistantPattern[];
 }
