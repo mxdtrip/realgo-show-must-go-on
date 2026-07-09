@@ -61,5 +61,10 @@ type Provider interface {
 // assistant. Implementations must keep API keys server-side.
 type HintProvider interface {
 	GenerateHint(ctx context.Context, in AssistantHintInput) (AssistantHintResponse, error)
+	// StreamHint behaves like GenerateHint but additionally invokes onDelta
+	// with newly available fragments of the hint text as the model generates
+	// them, so callers can render it incrementally instead of waiting for the
+	// full response.
+	StreamHint(ctx context.Context, in AssistantHintInput, onDelta func(text string)) (AssistantHintResponse, error)
 	ModelName() string
 }

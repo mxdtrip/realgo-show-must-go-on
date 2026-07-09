@@ -2,7 +2,9 @@ package ai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -73,6 +75,11 @@ func (h *AssistantHandler) Hint(w http.ResponseWriter, r *http.Request) {
 	input = mergeAssistantContext(input, dbContext)
 	input.PromptVersion = AssistantHintPromptVersionV1
 
+	if r.URL.Query().Get("stream") == "1" {
+		h.streamHint(w, r, input, userID)
+		return
+	}
+
 	out, err := h.provider.GenerateHint(r.Context(), input)
 	if err != nil {
 		_ = h.repo.LogAssistantHintRequest(context.WithoutCancel(r.Context()), userID, h.provider.ModelName(), "failed")
@@ -89,6 +96,50 @@ func (h *AssistantHandler) Hint(w http.ResponseWriter, r *http.Request) {
 		slog.Warn("ai: assistant log failed", slog.Any("err", err), slog.Int64("user_id", userID))
 	}
 	response.JSON(w, http.StatusOK, out)
+}
+
+// streamHint serves the hint as Server-Sent Events, revealing the "hint"
+// text as the model generates it instead of making the client wait for the
+// full JSON response. Terminates with a "done" event carrying the full
+// AssistantHintResponse, or an "error" event on failure.
+func (h *AssistantHandler) streamHint(w http.ResponseWriter, r *http.Request, input AssistantHintInput, userID int64) {
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", "streaming unsupported")
+		return
+	}
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("X-Accel-Buffering", "no")
+	w.WriteHeader(http.StatusOK)
+
+	writeEvent := func(event string, payload any) {
+		data, err := json.Marshal(payload)
+		if err != nil {
+			return
+		}
+		_, _ = fmt.Fprintf(w, "event: %s\ndata: %s\n\n", event, data)
+		flusher.Flush()
+	}
+
+	out, err := h.provider.StreamHint(r.Context(), input, func(delta string) {
+		writeEvent("delta", map[string]string{"text": delta})
+	})
+	if err != nil {
+		_ = h.repo.LogAssistantHintRequest(context.WithoutCancel(r.Context()), userID, h.provider.ModelName(), "failed")
+		logAssistantProviderError(err, userID)
+		code := "AI_PROVIDER_ERROR"
+		if errors.Is(err, ErrQuotaExceeded) {
+			code = "AI_QUOTA_EXCEEDED"
+		}
+		writeEvent("error", map[string]string{"code": code, "message": "could not generate hint"})
+		return
+	}
+
+	if err := h.repo.LogAssistantHintRequest(context.WithoutCancel(r.Context()), userID, h.provider.ModelName(), "success"); err != nil {
+		slog.Warn("ai: assistant log failed", slog.Any("err", err), slog.Int64("user_id", userID))
+	}
+	writeEvent("done", out)
 }
 
 // logAssistantProviderError logs the upstream failure with the HTTP status

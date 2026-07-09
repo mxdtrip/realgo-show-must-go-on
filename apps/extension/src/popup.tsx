@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { AssistantApp } from "./assistant/AssistantApp";
-import { fetchAssistantHintViaBackground } from "./lib/assistantClient";
+import { streamAssistantHintViaBackground } from "./lib/assistantClient";
 import { fetchCardsViaBackground } from "./lib/cardsClient";
 import { clearLastSubmission, getLastSubmission, getReviewUrl } from "./lib/storage";
 import type {
@@ -114,7 +114,7 @@ function IndexPopup() {
       ) : currentTask ? (
         <AssistantApp
           task={currentTask}
-          onAsk={fetchAssistantHintViaBackground}
+          onAsk={streamAssistantHintViaBackground}
           variant="panel"
           onClose={() => window.close()}
         />

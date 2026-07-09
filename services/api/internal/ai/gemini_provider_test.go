@@ -3,6 +3,7 @@ package ai
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -115,6 +116,67 @@ func TestGeminiProvider_GenerateHint_Success(t *testing.T) {
 	}
 	if !out.ProblemKnown || len(out.Patterns) != 1 {
 		t.Fatalf("missing enriched context: %+v", out)
+	}
+}
+
+func TestGeminiProvider_StreamHint_Success(t *testing.T) {
+	// Split across multiple SSE chunks, including one that splits a JSON
+	// escape sequence ("\\" and "n" in separate chunks) to exercise the
+	// extractor's cross-chunk escape-decoding state.
+	chunks := []string{
+		`{"hint":"Пос`,
+		`мотри на паре`,
+		`й.\`,
+		`n"`,
+		`,"question":"Что хранить?","stage":"pattern"}`,
+	}
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req chatCompletionStreamRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Fatalf("decode request: %v", err)
+		}
+		if !req.Stream {
+			t.Fatalf("expected stream=true in request")
+		}
+		w.Header().Set("Content-Type", "text/event-stream")
+		w.WriteHeader(http.StatusOK)
+		flusher := w.(http.Flusher)
+		for _, c := range chunks {
+			chunk := chatCompletionChunk{Choices: []struct {
+				Delta struct {
+					Content string `json:"content"`
+				} `json:"delta"`
+			}{{Delta: struct {
+				Content string `json:"content"`
+			}{Content: c}}}}
+			data, _ := json.Marshal(chunk)
+			_, _ = fmt.Fprintf(w, "data: %s\n\n", data)
+			flusher.Flush()
+		}
+		_, _ = fmt.Fprint(w, "data: [DONE]\n\n")
+		flusher.Flush()
+	}))
+	defer srv.Close()
+
+	p := NewGeminiProvider(config.AI{APIKey: "k", Model: "m", BaseURL: srv.URL})
+
+	var revealed strings.Builder
+	out, err := p.StreamHint(context.Background(), AssistantHintInput{Title: "Two Sum"}, func(delta string) {
+		revealed.WriteString(delta)
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	// parseAssistantHintContent trims the final hint (out.Hint), but the
+	// streamed deltas reveal the raw, untrimmed decoded value as it arrives.
+	if revealed.String() != "Посмотри на парей.\n" {
+		t.Fatalf("unexpected revealed text: %q", revealed.String())
+	}
+	if out.Hint != "Посмотри на парей." {
+		t.Fatalf("unexpected hint: %q", out.Hint)
+	}
+	if out.Question != "Что хранить?" || out.Stage != "pattern" {
+		t.Fatalf("unexpected out: %+v", out)
 	}
 }
 

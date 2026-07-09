@@ -13,7 +13,7 @@ import type {
   SubmitResult,
 } from "../lib/types";
 import { AssistantApp } from "../assistant/AssistantApp";
-import { fetchAssistantHintViaBackground } from "../lib/assistantClient";
+import { streamAssistantHintViaBackground } from "../lib/assistantClient";
 import { fetchCardsViaBackground } from "../lib/cardsClient";
 import { getReviewUrl } from "../lib/storage";
 import { detectAdapter, type PlatformAdapter, type TaskInfo } from "../platforms";
@@ -293,7 +293,7 @@ function refreshAssistant() {
   assistantRoot.render(
     createElement(AssistantApp, {
       task,
-      onAsk: fetchAssistantHintViaBackground,
+      onAsk: streamAssistantHintViaBackground,
     })
   );
 }

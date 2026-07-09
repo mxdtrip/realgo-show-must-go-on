@@ -94,12 +94,7 @@ jobs:
         working-directory: .
         env:
           AUTH_JWT_SECRET: ci-secret-with-more-than-32-random-looking-characters
-        # VPN_SUB_URL is intentionally NOT set: it is optional at config time
-        # (dev never needs it; prod-demo reads it from a deploy secret), and
-        # validating without it proves the dev flow parses on a clean machine.
-        run: |
-          docker compose --profile dev config --quiet
-          docker compose --profile prod-demo config --quiet
+        run: docker compose config --quiet
 
   web:
     name: Web

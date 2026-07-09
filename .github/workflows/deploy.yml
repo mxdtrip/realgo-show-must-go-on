@@ -43,8 +43,8 @@ jobs:
           # Groq calls ride this tunnel instead of the ISP's flagged egress).
           VPN_SUB_URL: ${{ secrets.VPN_SUB_URL }}
         run: |
-          docker compose pull --ignore-buildable || true
-          docker compose --profile prod-demo up -d --build --remove-orphans
+          docker compose -f docker-compose.yml -f docker-compose.prod.yml pull --ignore-buildable || true
+          docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile prod-demo up -d --build --remove-orphans
       - name: Verify AI wiring
         if: github.event_name != 'workflow_dispatch' || (inputs.mode != 'logs' && inputs.mode != 'curl')
         run: |
