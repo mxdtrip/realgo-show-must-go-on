@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, JetBrains_Mono, Space_Grotesk, Space_Mono } from "next/font/google";
+import { Inter, JetBrains_Mono, Manrope } from "next/font/google";
 import { AuthProvider } from "./_api/AuthProvider";
 import { getDictionary } from "./_content/i18n";
 import { PWAProvider } from "./_pwa/PWAProvider";
@@ -12,8 +12,10 @@ const inter = Inter({
   display: "swap",
 });
 
-const spaceGrotesk = Space_Grotesk({
-  subsets: ["latin"],
+// Manrope covers both Latin and Cyrillic, so mixed RU/EN headings render in a
+// single typeface instead of falling back to Inter for Russian glyphs.
+const manrope = Manrope({
+  subsets: ["latin", "cyrillic"],
   variable: "--font-display",
   weight: ["500", "600", "700"],
   display: "swap",
@@ -23,13 +25,6 @@ const jetBrainsMono = JetBrains_Mono({
   subsets: ["latin", "cyrillic"],
   variable: "--font-mono",
   weight: ["400", "500", "700"],
-  display: "swap",
-});
-
-const spaceMono = Space_Mono({
-  subsets: ["latin"],
-  variable: "--font-wordmark",
-  weight: ["700"],
   display: "swap",
 });
 
@@ -94,7 +89,7 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      className={`${inter.variable} ${spaceGrotesk.variable} ${jetBrainsMono.variable} ${spaceMono.variable}`}
+      className={`${inter.variable} ${manrope.variable} ${jetBrainsMono.variable}`}
       lang="ru"
     >
       <body>
