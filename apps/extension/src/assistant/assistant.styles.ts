@@ -188,6 +188,16 @@ export const ASSISTANT_CSS = `
   color: var(--danger);
   background: rgba(248, 81, 73, 0.12);
 }
+.realgo-agent-tag--leetcode {
+  border-color: rgba(255, 161, 22, 0.4);
+  color: #ffa116;
+  background: rgba(255, 161, 22, 0.12);
+}
+.realgo-agent-tag--neetcode {
+  border-color: rgba(56, 189, 178, 0.4);
+  color: #38bdb2;
+  background: rgba(56, 189, 178, 0.12);
+}
 
 .realgo-agent-messages {
   flex: 1;

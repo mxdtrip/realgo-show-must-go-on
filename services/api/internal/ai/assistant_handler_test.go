@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/mxdtrip/freeburger/services/api/internal/auth"
@@ -46,6 +47,14 @@ func (f *fakeHintProvider) GenerateHint(_ context.Context, in AssistantHintInput
 		ProblemKnown: in.ProblemKnown,
 		Patterns:     in.Patterns,
 	}, nil
+}
+
+func (f *fakeHintProvider) StreamHint(ctx context.Context, in AssistantHintInput, onDelta func(string)) (AssistantHintResponse, error) {
+	out, err := f.GenerateHint(ctx, in)
+	if err == nil && onDelta != nil {
+		onDelta(out.Hint)
+	}
+	return out, err
 }
 
 func (f *fakeHintProvider) ModelName() string { return "fake-model" }
@@ -100,6 +109,46 @@ func TestAssistantHandler_Hint(t *testing.T) {
 	}
 	if body.Data.Stage != "pattern" || !body.Data.ProblemKnown || len(body.Data.Patterns) != 1 {
 		t.Fatalf("unexpected response: %+v", body.Data)
+	}
+}
+
+func TestAssistantHandler_Hint_Stream(t *testing.T) {
+	repo := &fakeAssistantRepo{ctxInput: AssistantHintInput{
+		Platform: "leetcode", Slug: "two-sum", ProblemKnown: true,
+	}}
+	provider := &fakeHintProvider{}
+	handler := NewAssistantHandler(repo, provider)
+
+	reqBody := map[string]any{
+		"platform":         "leetcode",
+		"taskTitle":        "Two Sum",
+		"taskUrl":          "https://leetcode.com/problems/two-sum/",
+		"platformTaskSlug": "two-sum",
+		"message":          "Я застрял",
+		"hintLevel":        1,
+	}
+	raw, _ := json.Marshal(reqBody)
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/assistant/hint?stream=1", bytes.NewReader(raw))
+	req = req.WithContext(auth.ContextWithUserID(req.Context(), 42))
+	rec := httptest.NewRecorder()
+
+	handler.Hint(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, body = %s", rec.Code, rec.Body.String())
+	}
+	if ct := rec.Header().Get("Content-Type"); ct != "text/event-stream" {
+		t.Fatalf("content-type = %q", ct)
+	}
+	body := rec.Body.String()
+	if !strings.Contains(body, "event: delta") {
+		t.Fatalf("expected at least one delta event, got: %s", body)
+	}
+	if !strings.Contains(body, "event: done") {
+		t.Fatalf("expected a done event, got: %s", body)
+	}
+	if len(repo.logs) != 1 || repo.logs[0] != "success" {
+		t.Fatalf("logs = %+v", repo.logs)
 	}
 }
 

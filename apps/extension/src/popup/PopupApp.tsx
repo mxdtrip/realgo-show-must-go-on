@@ -370,7 +370,7 @@ function Shell({
           <span className="realgo-eyebrow">Задача выполнена успешно!</span>
           <p className="realgo-task__title">{task.taskTitle}</p>
           <div className="realgo-task__meta">
-            <span className="realgo-tag">{task.platform}</span>
+            <span className={`realgo-tag ${platformTagClass(task.platform)}`}>{task.platform}</span>
             {task.tags?.map((tag) => (
               <span className="realgo-tag" key={tag}>
                 {tag}
@@ -507,6 +507,17 @@ function IconClose() {
       <path d="m6 6 12 12" />
     </svg>
   );
+}
+
+function platformTagClass(platform: string): string {
+  switch (platform.toLowerCase()) {
+    case "leetcode":
+      return "realgo-tag--leetcode";
+    case "neetcode":
+      return "realgo-tag--neetcode";
+    default:
+      return "";
+  }
 }
 
 export { BrandMark };

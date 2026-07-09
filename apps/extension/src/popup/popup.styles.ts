@@ -246,6 +246,16 @@ export const POPUP_CSS = `
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.realgo-tag--leetcode {
+  border-color: rgba(255, 161, 22, 0.4);
+  color: #ffa116;
+  background: rgba(255, 161, 22, 0.12);
+}
+.realgo-tag--neetcode {
+  border-color: rgba(56, 189, 178, 0.4);
+  color: #38bdb2;
+  background: rgba(56, 189, 178, 0.12);
+}
 
 /* Body / question groups.
    Pinned toward the bottom (align-content:end) so the difficulty block sits

@@ -88,12 +88,48 @@ export type RuntimeMessage =
   | { type: "REALGO_SUBMISSION_DETECTED"; submission: DetectedSubmission }
   | { type: "REALGO_SAVE_SUBMISSION"; payload: SubmissionPayload }
   | { type: "REALGO_GET_PROBLEM_CARDS"; problemId: number }
-  | { type: "REALGO_GET_ASSISTANT_HINT"; payload: AssistantHintPayload }
   | {
       type: "REALGO_SYNC_WEB_SESSION";
       accessToken: string | null;
       refreshToken: string | null;
     };
+
+/**
+ * Name of the long-lived `chrome.runtime.connect` port used for streaming
+ * assistant hints. A one-shot `sendMessage` can only deliver a single
+ * response, so the streamed deltas ride a port instead (see background.ts /
+ * lib/assistantClient.ts).
+ */
+export const ASSISTANT_HINT_STREAM_PORT = "realgo-assistant-hint-stream";
+
+/** UI → background: kick off a streamed hint request over the port above. */
+export interface AssistantHintStreamStartMessage {
+  type: "start";
+  payload: AssistantHintPayload;
+}
+
+/** background → UI: one newly generated fragment of the hint text. */
+export interface AssistantHintStreamDeltaMessage {
+  type: "delta";
+  text: string;
+}
+
+/** background → UI: the full structured result, once generation finishes. */
+export interface AssistantHintStreamDoneMessage {
+  type: "done";
+  result: AssistantHintResult;
+}
+
+/** background → UI: the request failed; human-readable message for the UI. */
+export interface AssistantHintStreamErrorMessage {
+  type: "error";
+  error: string;
+}
+
+export type AssistantHintStreamMessage =
+  | AssistantHintStreamDeltaMessage
+  | AssistantHintStreamDoneMessage
+  | AssistantHintStreamErrorMessage;
 
 /**
  * Parsed result of a successful `POST /api/v1/extension/events` (the backend
@@ -142,13 +178,6 @@ export interface CardsResponse {
   ok: boolean;
   /** Present when `ok`; absent means "endpoint unavailable" — stay silent. */
   result?: ProblemCardsResult;
-}
-
-export interface AssistantHintResponse {
-  ok: boolean;
-  result?: AssistantHintResult;
-  error?: string;
-  code?: string;
 }
 
 export interface CurrentTaskResponse {

@@ -1,13 +1,15 @@
-import { ApiError, getAssistantHint, getProblemCards, saveSubmission } from "./lib/api";
+import { ApiError, getProblemCards, saveSubmission, streamAssistantHint } from "./lib/api";
 import { syncWebSession } from "./lib/auth";
 import { clearLastSubmission, setLastSubmission } from "./lib/storage";
 import type {
+  AssistantHintStreamMessage,
+  AssistantHintStreamStartMessage,
   CardsResponse,
   DetectedSubmission,
   RuntimeMessage,
-  AssistantHintResponse,
   SaveResponse,
 } from "./lib/types";
+import { ASSISTANT_HINT_STREAM_PORT } from "./lib/types";
 
 /**
  * Background service worker.
@@ -81,50 +83,61 @@ chrome.runtime.onMessage.addListener(
       return true;
     }
 
-    if (message.type === "REALGO_GET_ASSISTANT_HINT") {
-      const startedAt = Date.now();
-      console.log("[realgo] background: REALGO_GET_ASSISTANT_HINT received", {
-        platform: message.payload.platform,
-        slug: message.payload.platformTaskSlug,
-        hintLevel: message.payload.hintLevel,
-      });
-      getAssistantHint(message.payload)
-        .then((result) => {
-          console.log("[realgo] background: assistant hint ok", {
-            ms: Date.now() - startedAt,
-          });
-          sendResponse({ ok: true, result } satisfies AssistantHintResponse);
-        })
-        .catch((e) => {
-          console.error("[realgo] background: assistant hint failed", {
-            ms: Date.now() - startedAt,
-            error: e,
-          });
-          sendResponse(toAssistantErrorResponse(e));
-        })
-        .catch(() => {
-          /* sendResponse can throw if the channel closed; nothing to do */
-        });
-      return true;
-    }
-
     return false;
   }
 );
 
-/** Normalises any thrown error into the UI's SaveResponse shape. */
-function toErrorResponse(e: unknown): SaveResponse {
-  if (e instanceof ApiError) {
-    return { ok: false, error: e.message, code: e.code ?? String(e.status) };
+/**
+ * Streamed assistant hints ride a long-lived port instead of one-shot
+ * sendMessage: the UI needs multiple "delta" messages plus a final
+ * "done"/"error", which chrome.runtime.sendMessage's single sendResponse
+ * can't deliver.
+ */
+chrome.runtime.onConnect.addListener((port) => {
+  if (port.name !== ASSISTANT_HINT_STREAM_PORT) return;
+
+  port.onMessage.addListener((message: AssistantHintStreamStartMessage) => {
+    if (message.type !== "start") return;
+    const startedAt = Date.now();
+    console.log("[realgo] background: assistant hint stream started", {
+      platform: message.payload.platform,
+      slug: message.payload.platformTaskSlug,
+      hintLevel: message.payload.hintLevel,
+    });
+
+    streamAssistantHint(message.payload, (text) => {
+      post(port, { type: "delta", text });
+    })
+      .then((result) => {
+        console.log("[realgo] background: assistant hint stream done", {
+          ms: Date.now() - startedAt,
+        });
+        post(port, { type: "done", result });
+      })
+      .catch((e) => {
+        console.error("[realgo] background: assistant hint stream failed", {
+          ms: Date.now() - startedAt,
+          error: e,
+        });
+        post(port, {
+          type: "error",
+          error: e instanceof Error ? e.message : String(e),
+        });
+      });
+  });
+});
+
+/** Ignores "port disconnected" errors from a UI that navigated away mid-stream. */
+function post(port: chrome.runtime.Port, message: AssistantHintStreamMessage): void {
+  try {
+    port.postMessage(message);
+  } catch {
+    /* the receiving side is gone; nothing to do */
   }
-  return {
-    ok: false,
-    error: e instanceof Error ? e.message : String(e),
-    code: "unknown",
-  };
 }
 
-function toAssistantErrorResponse(e: unknown): AssistantHintResponse {
+/** Normalises any thrown error into the UI's SaveResponse shape. */
+function toErrorResponse(e: unknown): SaveResponse {
   if (e instanceof ApiError) {
     return { ok: false, error: e.message, code: e.code ?? String(e.status) };
   }

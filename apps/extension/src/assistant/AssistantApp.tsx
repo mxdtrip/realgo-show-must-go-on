@@ -13,7 +13,10 @@ const DEFAULT_MESSAGE = "Я застрял. Дай первую мягкую п�
 
 interface AssistantAppProps {
   task: AssistantTask;
-  onAsk: (payload: AssistantHintPayload) => Promise<AssistantHintResult>;
+  onAsk: (
+    payload: AssistantHintPayload,
+    onDelta: (text: string) => void
+  ) => Promise<AssistantHintResult>;
   variant?: "dock" | "panel";
   onClose?: () => void;
 }
@@ -29,6 +32,9 @@ export function AssistantApp({ task, onAsk, variant = "dock", onClose }: Assista
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
   const taskKey = `${task.platform}:${task.platformTaskSlug}:${task.taskUrl}`;
+  const lastMessage = messages[messages.length - 1];
+  const isStreamingEmpty =
+    status === "loading" && lastMessage?.role === "assistant" && lastMessage.content === "";
   const visibleTags = useMemo(
     () =>
       [task.platform, task.difficulty, ...(task.tags ?? [])]
@@ -64,29 +70,37 @@ export function AssistantApp({ task, onAsk, variant = "dock", onClose }: Assista
     if (!trimmed || status === "loading") return;
 
     const history = messages.slice(-8);
+    const isFirstAssistantMessage = !messages.some((item) => item.role === "assistant");
     if (showUserMessage) {
       setMessages((items) => [...items, { role: "user", content: trimmed }]);
     }
     setStatus("loading");
     setError("");
+    // Placeholder the streamed reply fills in as fragments arrive; it's
+    // always the last item until `ask` replaces or drops it below.
+    setMessages((items) => [...items, { role: "assistant", content: "" }]);
 
     try {
-      const result = await onAsk({
-        ...task,
-        message: trimmed,
-        hintLevel,
-        history,
-      });
-      setMessages((items) => [
-        ...items,
-        { role: "assistant", content: formatHint(result) },
-      ]);
+      const result = await onAsk(
+        { ...task, message: trimmed, hintLevel, history },
+        (delta) => appendToLastAssistantMessage(delta)
+      );
+      setMessages((items) => replaceLastMessage(items, formatHint(result, isFirstAssistantMessage)));
       setHintLevel((level) => Math.min(level + 1, 5));
     } catch (e) {
+      setMessages((items) => items.slice(0, -1));
       setError(e instanceof Error ? e.message : "AI-помощник сейчас недоступен.");
     } finally {
       setStatus("idle");
     }
+  }
+
+  function appendToLastAssistantMessage(delta: string) {
+    setMessages((items) => {
+      const last = items[items.length - 1];
+      if (!last || last.role !== "assistant") return items;
+      return replaceLastMessage(items, last.content + delta);
+    });
   }
 
   function handleClose() {
@@ -137,7 +151,10 @@ export function AssistantApp({ task, onAsk, variant = "dock", onClose }: Assista
           <p className="realgo-agent-title">{task.taskTitle}</p>
           <div className="realgo-agent-tags">
             {visibleTags.map((tag) => (
-              <span className={`realgo-agent-tag ${difficultyTagClass(tag, task.difficulty)}`} key={tag}>
+              <span
+                className={`realgo-agent-tag ${difficultyTagClass(tag, task.difficulty)} ${platformTagClass(tag, task.platform)}`}
+                key={tag}
+              >
                 {tag}
               </span>
             ))}
@@ -145,24 +162,29 @@ export function AssistantApp({ task, onAsk, variant = "dock", onClose }: Assista
         </div>
 
         <div className="realgo-agent-messages" role="log" aria-live="polite">
-          {messages.map((message, index) => (
-            <article
-              className={`realgo-agent-msg realgo-agent-msg--${message.role}`}
-              key={`${message.role}-${index}`}
-            >
-              <span className="realgo-agent-msg__role">
-                {message.role === "assistant" ? "agent" : "you"}
-              </span>
-              <p>{message.content}</p>
-            </article>
-          ))}
+          {messages.map((message, index) => {
+            // The streamed placeholder still has no text: show the spinner
+            // in its place below instead of an empty bubble.
+            if (index === messages.length - 1 && isStreamingEmpty) return null;
+            return (
+              <article
+                className={`realgo-agent-msg realgo-agent-msg--${message.role}`}
+                key={`${message.role}-${index}`}
+              >
+                <span className="realgo-agent-msg__role">
+                  {message.role === "assistant" ? "agent" : "you"}
+                </span>
+                <p>{message.content}</p>
+              </article>
+            );
+          })}
           {messages.length === 0 && status === "idle" && !error && (
             <article className="realgo-agent-msg realgo-agent-msg--assistant">
               <span className="realgo-agent-msg__role">agent</span>
               <p>Вижу открытую задачу. Нажми на агент или выбери быстрый запрос — буду вести по одному шагу.</p>
             </article>
           )}
-          {status === "loading" && (
+          {isStreamingEmpty && (
             <div className="realgo-agent-loading">
               <span className="realgo-agent-spinner" aria-hidden="true" />
               думаю над следующей наводкой…
@@ -209,6 +231,11 @@ function IconClose() {
   );
 }
 
+function replaceLastMessage(items: AssistantMessage[], content: string): AssistantMessage[] {
+  if (items.length === 0) return items;
+  return [...items.slice(0, -1), { role: "assistant", content }];
+}
+
 function difficultyTagClass(tag: string, difficulty?: string): string {
   if (!difficulty || tag.toLowerCase() !== difficulty.toLowerCase()) return "";
   switch (difficulty.toLowerCase()) {
@@ -223,12 +250,26 @@ function difficultyTagClass(tag: string, difficulty?: string): string {
   }
 }
 
-function formatHint(result: AssistantHintResult): string {
+function platformTagClass(tag: string, platform: string): string {
+  if (tag.toLowerCase() !== platform.toLowerCase()) return "";
+  switch (platform.toLowerCase()) {
+    case "leetcode":
+      return "realgo-agent-tag--leetcode";
+    case "neetcode":
+      return "realgo-agent-tag--neetcode";
+    default:
+      return "";
+  }
+}
+
+function formatHint(result: AssistantHintResult, showContext: boolean): string {
   const parts = [stageLabel(result.stage), result.hint.trim()];
   if (result.question?.trim()) {
     parts.push(`Вопрос: ${result.question.trim()}`);
   }
-  if (result.problemKnown && result.patterns?.length) {
+  // Only surface the connected-pattern context on the first reply — it's the
+  // same context every turn, so repeating it on each hint just adds noise.
+  if (showContext && result.problemKnown && result.patterns?.length) {
     const names = result.patterns.slice(0, 2).map((pattern) => pattern.name).join(", ");
     parts.push(`Контекст realgo: ${names}`);
   }
