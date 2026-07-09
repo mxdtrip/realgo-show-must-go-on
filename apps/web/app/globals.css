@@ -4171,6 +4171,22 @@ a.roadmap-step__practice-card:hover {
   pointer-events: none;
 }
 
+/* Content fades through the flip instead of being cut by the visibility swap:
+   the outgoing face's text dissolves right as the rotation starts (also hiding
+   the perspective zoom of glyphs closest to the viewer), the incoming face's
+   text fades in once the face is actually shown again at the 0.34s midpoint.
+   Only the children fade — the face itself keeps its background and border, so
+   mid-flip the card reads as a physical card showing its blank side. */
+.focus-card__face > * {
+  opacity: 1;
+  transition: opacity 0.3s ease 0.34s;
+}
+
+.focus-card__face[aria-hidden="true"] > * {
+  opacity: 0;
+  transition: opacity 0.22s ease;
+}
+
 .focus-card__face--back {
   border-color: rgba(63, 185, 80, 0.32);
   background: rgba(13, 22, 18, 0.94);
@@ -5492,6 +5508,7 @@ a.roadmap-step__practice-card:hover {
   .focus-card,
   .focus-card-stage,
   .focus-card__face,
+  .focus-card__face > *,
   .cabinet-cta,
   .focus-complete a,
   .focus-complete button,
