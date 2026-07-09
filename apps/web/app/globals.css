@@ -3951,6 +3951,7 @@ a.roadmap-step__practice-card:hover {
 
 /* distraction-free card session */
 .focus-space {
+  min-height: 100vh; /* fallback for browsers without dvh */
   min-height: 100dvh;
   overflow: clip;
 }
@@ -3958,7 +3959,9 @@ a.roadmap-step__practice-card:hover {
 .focus-session {
   position: relative;
   isolation: isolate;
+  height: 100vh; /* fallback for browsers without dvh */
   height: 100dvh;
+  min-height: 100vh;
   min-height: 100dvh;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
@@ -4056,8 +4059,11 @@ a.roadmap-step__practice-card:hover {
   position: relative;
   width: min(100%, 780px);
   min-width: 0;
+  height: min(66vh, 660px); /* fallback for browsers without dvh */
   height: min(66dvh, 660px);
+  min-height: min(66vh, 660px);
   min-height: min(66dvh, 660px);
+  max-height: calc(100vh - 150px);
   max-height: calc(100dvh - 150px);
   align-self: center;
   justify-self: center;
@@ -4072,10 +4078,8 @@ a.roadmap-step__practice-card:hover {
   border-radius: 28px;
   background:
     linear-gradient(145deg, rgba(88, 166, 255, 0.08), transparent 38%),
-    rgba(13, 17, 23, 0.5);
+    rgba(13, 17, 23, 0.72);
   box-shadow: 0 26px 80px -54px rgba(0, 0, 0, 0.9);
-  backdrop-filter: blur(14px) saturate(112%);
-  -webkit-backdrop-filter: blur(14px) saturate(112%);
 }
 
 .focus-card-stack__edge--back {
@@ -4099,12 +4103,17 @@ a.roadmap-step__practice-card:hover {
   transition: opacity 0.28s ease;
 }
 
+/* The stage owns enter/exit animations while .focus-card owns only the flip
+   transform. Keeping them on separate elements means the enter animation's
+   fill mode can never override (or be re-triggered by) the flip transform —
+   previously un-flipping a card replayed the enter animation. */
 .focus-card-stage {
   position: relative;
   z-index: 1;
   width: 100%;
   height: 100%;
   transform-style: preserve-3d;
+  animation: focus-card-enter 0.42s cubic-bezier(0.2, 0.72, 0.22, 1) backwards;
 }
 
 .focus-card {
@@ -4112,9 +4121,11 @@ a.roadmap-step__practice-card:hover {
   width: 100%;
   height: 100%;
   transform-style: preserve-3d;
-  animation: focus-card-enter 0.42s cubic-bezier(0.2, 0.72, 0.22, 1) both;
   transition: transform 0.68s cubic-bezier(0.2, 0.72, 0.22, 1);
+  will-change: transform;
   cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .focus-card--answer {
@@ -4124,17 +4135,33 @@ a.roadmap-step__practice-card:hover {
 @keyframes focus-card-enter {
   from {
     opacity: 0;
-    transform: translate3d(0, 18px, 0) rotateX(2deg) scale(0.985);
+    transform: translate3d(0, 18px, 0) scale(0.985);
   }
 
   to {
     opacity: 1;
-    transform: translate3d(0, 0, 0) rotateX(0) scale(1);
+    transform: translate3d(0, 0, 0) scale(1);
   }
 }
 
-.focus-card--answer {
-  animation-name: none;
+.focus-card-stage--advancing {
+  pointer-events: none;
+  animation: focus-card-advance 0.42s cubic-bezier(0.64, 0.02, 0.4, 1) both;
+}
+
+/* No rotateY here: the flip lives on .focus-card, so the exit slide works for
+   both flipped and unflipped cards. No filter either — filter on a 3D parent
+   flattens the preserve-3d subtree in Firefox. */
+@keyframes focus-card-advance {
+  from {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) rotateZ(0) scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: translate3d(66vw, -10px, 120px) rotateZ(8deg) scale(0.92);
+  }
 }
 
 .focus-card--advancing {
@@ -4162,36 +4189,59 @@ a.roadmap-step__practice-card:hover {
   transform-style: preserve-3d;
 }
 
+/* NB: no overflow:hidden and no backdrop-filter here. Firefox ignores
+   backface-visibility on elements that clip (overflow/border-radius clipping
+   via overflow) or filter themselves (bugzilla #1201471), which made both
+   faces render at once. Backgrounds are near-opaque instead of blurred. */
 .focus-card__face {
   position: absolute;
   inset: 0;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
   gap: 24px;
-  overflow: hidden;
   border: 1px solid rgba(88, 166, 255, 0.22);
   border-radius: 28px;
   padding: clamp(24px, 5vw, 56px);
-  background: rgba(13, 17, 23, 0.8);
+  background: rgba(13, 17, 23, 0.94);
   box-shadow:
     0 44px 120px -58px rgba(0, 0, 0, 0.95),
     inset 0 1px 0 rgba(255, 255, 255, 0.045);
-  backdrop-filter: blur(22px) saturate(125%);
-  -webkit-backdrop-filter: blur(22px) saturate(125%);
   transition:
     border-color 0.28s ease,
-    background 0.28s ease;
+    background 0.28s ease,
+    visibility 0s linear 0.34s;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
 }
 
+/* Belt-and-braces for browsers where backface culling still glitches: the
+   inactive face is fully hidden. The 0.34s visibility delay (half the 0.68s
+   flip) swaps faces exactly when the card is edge-on, so the flip animation
+   itself looks unchanged. */
 .focus-card__face[aria-hidden="true"] {
+  visibility: hidden;
   pointer-events: none;
+}
+
+/* Content fades through the flip instead of being cut by the visibility swap:
+   the outgoing face's text dissolves right as the rotation starts (also hiding
+   the perspective zoom of glyphs closest to the viewer), the incoming face's
+   text fades in once the face is actually shown again at the 0.34s midpoint.
+   Only the children fade — the face itself keeps its background and border, so
+   mid-flip the card reads as a physical card showing its blank side. */
+.focus-card__face > * {
+  opacity: 1;
+  transition: opacity 0.3s ease 0.34s;
+}
+
+.focus-card__face[aria-hidden="true"] > * {
+  opacity: 0;
+  transition: opacity 0.22s ease;
 }
 
 .focus-card__face--back {
   border-color: rgba(63, 185, 80, 0.32);
-  background: rgba(13, 22, 18, 0.82);
+  background: rgba(13, 22, 18, 0.94);
   transform: rotateY(180deg);
 }
 
@@ -4199,6 +4249,7 @@ a.roadmap-step__practice-card:hover {
   content: "";
   position: absolute;
   inset: 0;
+  border-radius: inherit;
   pointer-events: none;
   opacity: 0.48;
   background:
@@ -4319,9 +4370,10 @@ a.roadmap-step__practice-card:hover {
   font-weight: 600;
   text-align: center;
   text-wrap: balance;
-  overflow-wrap: anywhere;
-  word-break: break-word;
-  hyphens: auto;
+  /* No hyphens:auto and no overflow-wrap:anywhere: both happily split short
+     Russian words (сле-ва, пу-стом). break-word only kicks in when a single
+     word is longer than the line — the overflow guard, nothing more. */
+  overflow-wrap: break-word;
 }
 
 .focus-card--answer .focus-card__content h1 {
@@ -4333,6 +4385,8 @@ a.roadmap-step__practice-card:hover {
   justify-self: center;
   min-width: 220px;
   min-height: 50px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
   border: 1px solid var(--accent-line);
   border-radius: 12px;
   padding: 12px 20px;
@@ -4363,6 +4417,8 @@ a.roadmap-step__practice-card:hover {
 .focus-rating__button {
   min-width: 0;
   min-height: 72px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
   display: grid;
   grid-template-columns: auto 1fr;
   gap: 3px 10px;
@@ -4379,8 +4435,12 @@ a.roadmap-step__practice-card:hover {
     transform 0.18s ease;
 }
 
-.focus-rating__button:hover {
-  transform: translateY(-1px);
+/* Hover styles are pointer-only: on touch devices :hover sticks after a tap,
+   leaving a rating button stuck in its highlighted state. */
+@media (hover: hover) {
+  .focus-rating__button:hover {
+    transform: translateY(-1px);
+  }
 }
 
 .focus-rating__button kbd {
@@ -4405,17 +4465,39 @@ a.roadmap-step__practice-card:hover {
   color: var(--text-faint);
 }
 
-.focus-rating__button--hard:hover {
+@media (hover: hover) {
+  .focus-rating__button--hard:hover {
+    border-color: rgba(248, 81, 73, 0.45);
+    background: rgba(248, 81, 73, 0.1);
+  }
+
+  .focus-rating__button--normal:hover {
+    border-color: var(--accent-line);
+    background: var(--accent-soft);
+  }
+
+  .focus-rating__button--easy:hover {
+    border-color: rgba(63, 185, 80, 0.42);
+    background: rgba(46, 160, 67, 0.12);
+  }
+}
+
+/* Touch feedback replaces hover on coarse pointers. */
+.focus-rating__button:active {
+  transform: scale(0.98);
+}
+
+.focus-rating__button--hard:active {
   border-color: rgba(248, 81, 73, 0.45);
   background: rgba(248, 81, 73, 0.1);
 }
 
-.focus-rating__button--normal:hover {
+.focus-rating__button--normal:active {
   border-color: var(--accent-line);
   background: var(--accent-soft);
 }
 
-.focus-rating__button--easy:hover {
+.focus-rating__button--easy:active {
   border-color: rgba(63, 185, 80, 0.42);
   background: rgba(46, 160, 67, 0.12);
 }
@@ -5361,12 +5443,16 @@ a.roadmap-step__practice-card:hover {
   }
 
   .focus-exit {
+    padding: 12px 0 12px 12px; /* comfortable touch target */
     font-size: 11px;
   }
 
   .focus-card-stack {
+    height: calc(100vh - 126px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
     height: calc(100dvh - 126px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    min-height: calc(100vh - 126px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
     min-height: calc(100dvh - 126px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    max-height: calc(100vh - 126px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
     max-height: calc(100dvh - 126px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
     margin: 12px 0;
   }
@@ -5414,7 +5500,13 @@ a.roadmap-step__practice-card:hover {
   }
 
   .focus-rating__button {
+    grid-template-columns: 1fr;
     min-height: 60px;
+  }
+
+  /* Keyboard shortcut chips are meaningless on touch screens. */
+  .focus-rating__button kbd {
+    display: none;
   }
 
   .focus-complete__actions {
@@ -5490,6 +5582,9 @@ a.roadmap-step__practice-card:hover {
 
   .focus-progress i,
   .focus-card,
+  .focus-card-stage,
+  .focus-card__face,
+  .focus-card__face > *,
   .cabinet-cta,
   .focus-complete a,
   .focus-complete button,

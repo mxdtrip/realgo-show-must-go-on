@@ -75,7 +75,7 @@ def upsert(cur, manifest_code, rows):
         code = row["pattern_code"]
         if code in pattern_ids:
             continue
-        # Taxonomy nodes (patterns.taxonomy_version set by migration 000011)
+        # Taxonomy nodes (patterns.taxonomy_version set by migration 000012)
         # keep their curated names; only legacy roadmap groupings follow the
         # manifest. The CASE keeps the upsert a real UPDATE so RETURNING
         # always yields the id.

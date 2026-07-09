@@ -1,9 +1,14 @@
 # Local dev stack and server deployment for the FreeBurger API.
 #
-# The deploy workflow runs `docker compose --profile prod-demo up -d --build`
-# from the repository root, so this file is the single source of truth for both
-# the local environment and the appbox server. Dev-friendly defaults are
-# inlined; on the server, override secrets via environment or a root .env file.
+# The deploy workflow runs
+# `docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile prod-demo up -d --build`
+# from the repository root, so this file plus docker-compose.prod.yml are the
+# single source of truth for both the local environment and the appbox server.
+# Dev-friendly defaults are inlined here; on the server, override secrets via
+# environment or a root .env file. Anything that only makes sense on the
+# server (and would otherwise break `docker compose up`/`config` for every
+# local dev — see docker-compose.prod.yml) belongs in the prod overlay, not
+# here.
 
 name: freeburger
 
@@ -150,8 +155,9 @@ services:
   caddy:
     image: caddy:2-alpine
     restart: unless-stopped
-    depends_on:
-      - api
+    # No depends_on api: on the server the api joins vpngw's netns only after
+    # vpngw is healthy (see docker-compose.prod.yml), so Caddy just 502s until
+    # the upstream is up, then recovers.
     environment:
       REALGO_EXTENSION_ORIGIN: ${REALGO_EXTENSION_ORIGIN:-chrome-extension://kclglopmphebagjjimjhdpnmoddmbgea}
     ports:
@@ -209,15 +215,24 @@ services:
       AUTH_REFRESH_TTL: ${AUTH_REFRESH_TTL:-720h}
       # Optional: without a key the api still boots, AI card generation is
       # just disabled. Prod gets it from the GEMINI_API_KEY GitHub secret.
+      # Despite the name, this currently holds a Groq key — AI_BASE_URL/AI_MODEL
+      # below point the OpenAI-compatible client at Groq instead of Google.
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      AI_BASE_URL: ${AI_BASE_URL:-https://api.groq.com/openai/v1}
+      AI_MODEL: ${AI_MODEL:-llama-3.3-70b-versatile}
       # In this stack the api is reachable only through the caddy container, so
       # X-Forwarded-For from the docker network is trustworthy. Without this the
       # auth rate limiter keys every request to caddy's container IP — one
       # shared 20 req/min bucket for ALL users, i.e. any single client can lock
       # everyone out of login/register/refresh.
       TRUSTED_PROXY_CIDRS: ${TRUSTED_PROXY_CIDRS:-10.0.0.0/8,172.16.0.0/12,192.168.0.0/16}
-    expose:
-      - "8080"
+    # No `expose:` here on purpose: caddy reaches api:8080 over the compose
+    # network regardless (expose is inert on user-defined networks), and the
+    # prod overlay puts api into vpngw's netns (network_mode: service:vpngw) —
+    # docker rejects a container that has exposed ports of its own while
+    # borrowing another container's network, and compose merging cannot unset
+    # a list inherited from this file. The prod-facing expose lives on vpngw
+    # in docker-compose.prod.yml.
 
 volumes:
   pgdata:

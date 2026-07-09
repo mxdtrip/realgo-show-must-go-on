@@ -70,8 +70,17 @@ func Run(ctx context.Context) error {
 		Auth:     authSvc,
 	}
 	if cfg.Enabled() {
-		deps.CardProvisioner = ai.NewProvisioner(ai.NewRepository(pg.Pool), rdb, ai.NewGeminiProvider(cfg.AI), logger)
-		logger.Info("ai card generation enabled", slog.String("model", cfg.Model))
+		geminiProvider := ai.NewGeminiProvider(cfg.AI)
+		deps.CardProvisioner = ai.NewProvisioner(ai.NewRepository(pg.Pool), rdb, geminiProvider, logger)
+		deps.AssistantProvider = geminiProvider
+		logger.Info("ai features enabled", slog.String("model", cfg.Model))
+	} else {
+		// Only reachable startup-time signal that GEMINI_API_KEY didn't reach this
+		// container — there's no SSH access to this host from outside the home
+		// network, so this line (visible via `docker compose logs api`) is the
+		// only way to tell "key missing" apart from "key present but the Gemini
+		// call itself failed" without a live request.
+		logger.Warn("ai features disabled: GEMINI_API_KEY is not set")
 	}
 
 	handler := server.New(deps)

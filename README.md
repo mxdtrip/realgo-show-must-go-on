@@ -32,7 +32,11 @@ Node-приложения пока хранят собственные `package-
 
 ## Быстрый запуск
 
-Локальный dev stack не требует VPS/FRP-переменных:
+`docker-compose.yml` — базовый (локальный) стек; всё серверное (vpngw, netns
+для api, prod Caddyfile) вынесено в overlay `docker-compose.prod.yml`.
+`VPN_SUB_URL`, `FRP_VPS_HOST`, `FRP_TOKEN` нужны только серверу.
+
+Локальный dev stack:
 
 ```sh
 cp .env.example .env
@@ -41,6 +45,10 @@ docker compose up -d --build
 curl -fsS http://localhost:8080/healthz
 curl -fsS http://localhost:8080/readyz
 ```
+
+Сайт и API доступны через Caddy на `http://localhost:8080` (порт меняется
+переменной `API_PORT`). Порт 3000 наружу не публикуется: web-контейнер виден
+только внутри docker-сети, Caddy проксирует на него всё, кроме `/api/*`.
 
 То же из backend-директории:
 
@@ -58,14 +66,16 @@ Caddy. Полный стек с web: `make up` / `task up`.
 Если Docker пишет `permission denied` к сокету, это не ошибка проекта: запустите
 Docker Desktop или добавьте пользователя в docker group и перелогиньтесь.
 
-Prod-demo с reverse tunnel запускается отдельным profile:
+Prod-demo (сервер) запускается с overlay и профилем `prod-demo`:
 
 ```sh
-docker compose --profile prod-demo up -d --build
+docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile prod-demo up -d --build
+# или: cd services/api && make prod-demo-up / task prod-demo-up
 ```
 
-Для prod-demo нужны `FRP_VPS_HOST` и `FRP_TOKEN`; для обычной локальной разработки
-они не нужны. Детали: [prod-demo runbook](docs/prod-demo-deploy-runbook.md).
+Для prod-demo нужны `FRP_VPS_HOST`, `FRP_TOKEN` и `VPN_SUB_URL`; для обычной
+локальной разработки они не нужны. Детали:
+[prod-demo runbook](docs/prod-demo-deploy-runbook.md).
 
 ## Приложения и сервисы
 

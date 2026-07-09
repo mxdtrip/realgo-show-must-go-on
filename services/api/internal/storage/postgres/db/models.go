@@ -132,6 +132,17 @@ type ProblemSubpattern struct {
 	Position     pgtype.Int4
 }
 
+type QuizAnswer struct {
+	ID         int64
+	UserID     int64
+	QuestionID int64
+	// Индекс выбранного пользователем варианта (0-based).
+	SelectedOption int32
+	// Совпал ли selected_option с quiz_questions.correct_option в момент ответа.
+	WasCorrect bool
+	CreatedAt  pgtype.Timestamptz
+}
+
 type QuizQuestion struct {
 	ID            int64
 	UserID        pgtype.Int8

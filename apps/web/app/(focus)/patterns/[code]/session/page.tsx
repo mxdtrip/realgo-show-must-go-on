@@ -12,7 +12,7 @@ export default async function PatternSessionPage({
   return (
     <PatternSessionClient
       code={code}
-      brand={dictionary.common.brand}
+      brand={dictionary.cabinet.layout.brand}
       copy={dictionary.cabinet.pages.cards.session}
       emptyMessage={dictionary.cabinet.pages.patternDetail.sessionEmpty}
       errorFallback={dictionary.cabinet.pages.patternDetail.sessionError}

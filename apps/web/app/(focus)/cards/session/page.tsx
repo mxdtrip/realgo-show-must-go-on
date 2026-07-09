@@ -7,7 +7,7 @@ export default function CardSessionPage() {
 
   return (
     <FocusCardReviewSession
-      brand={dictionary.common.brand}
+      brand={dictionary.cabinet.layout.brand}
       cards={cards}
       copy={dictionary.cabinet.pages.cards.session}
     />

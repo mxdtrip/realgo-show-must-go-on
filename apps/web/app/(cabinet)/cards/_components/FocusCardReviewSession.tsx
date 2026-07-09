@@ -198,12 +198,15 @@ export function FocusCardReviewSession({ brand, cards, copy }: Readonly<FocusCar
         <div className="focus-card-stack__edge focus-card-stack__edge--back" aria-hidden="true" />
         <div className="focus-card-stack__edge focus-card-stack__edge--middle" aria-hidden="true" />
 
-        <div className="focus-card-stage">
+        {/* The stage is keyed and owns enter/exit animations; the article owns
+            only the flip transform. Mixing them on one element made the enter
+            animation replay whenever the card was flipped back. */}
+        <div
+          className={`focus-card-stage ${isAdvancing ? "focus-card-stage--advancing" : ""}`}
+          key={session.currentCard.id}
+        >
           <article
-            className={`focus-card ${session.isFlipped ? "focus-card--answer" : ""} ${
-              isAdvancing ? "focus-card--advancing" : ""
-            }`}
-            key={session.currentCard.id}
+            className={`focus-card ${session.isFlipped ? "focus-card--answer" : ""}`}
             onClick={(event) => {
               if (isAdvancing) return;
               // Clicking the card flips it both ways, but let inner controls

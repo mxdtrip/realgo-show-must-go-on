@@ -6,6 +6,32 @@ export interface TaskInfo {
   platformTaskSlug?: string;
   /** Topic tags read from the page, best-effort (empty/absent if none found). */
   tags?: string[];
+  /** Difficulty read from the page, best-effort. */
+  difficulty?: string;
+  /** Problem statement text read from the page, best-effort (absent if not found). */
+  taskDescription?: string;
+}
+
+/** Caps how much page text rides along in the AI prompt (backend re-caps too). */
+const MAX_DESCRIPTION_CHARS = 4000;
+
+/**
+ * Best-effort problem statement scrape: tries each selector in order and
+ * returns the first non-empty `innerText`, trimmed and capped. Both LeetCode
+ * and NeetCode ship no stable data-* hook for the statement body, so this
+ * degrades to `undefined` rather than guessing wrong.
+ */
+export function extractDescription(selectors: string[]): string | undefined {
+  for (const selector of selectors) {
+    const el = document.querySelector<HTMLElement>(selector);
+    const text = el?.innerText?.trim();
+    if (text) {
+      return text.length > MAX_DESCRIPTION_CHARS
+        ? text.slice(0, MAX_DESCRIPTION_CHARS) + "…"
+        : text;
+    }
+  }
+  return undefined;
 }
 
 /**
@@ -38,7 +64,7 @@ export interface PlatformAdapter {
 /** Maps free verdict text found in the DOM to a normalized SubmitResult. */
 export function classifyVerdict(text: string): SubmitResult {
   const t = text.toLowerCase();
-  if (t.includes("accepted")) return "accepted";
+  if (/\baccepted\b/.test(t) && !/\bacceptance\b/.test(t)) return "accepted";
   if (t.includes("wrong answer")) return "wrong_answer";
   if (t.includes("runtime error")) return "runtime_error";
   if (t.includes("time limit")) return "time_limit";

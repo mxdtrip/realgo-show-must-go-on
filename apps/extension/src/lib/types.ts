@@ -31,9 +31,50 @@ export interface DetectedSubmission {
   platformTaskSlug?: string;
   /** Topic tags read from the task page, best-effort (absent if none found). */
   tags?: string[];
+  /** Difficulty read from the page, best-effort. */
+  difficulty?: string;
   submitResult?: SubmitResult;
   /** ISO-8601 timestamp of when the submit was observed. */
   submittedAt: string;
+}
+
+export interface AssistantTask {
+  platform: Exclude<Platform, "unknown">;
+  taskTitle: string;
+  taskUrl: string;
+  platformTaskSlug: string;
+  tags?: string[];
+  difficulty?: string;
+  /** Problem statement scraped from the page, best-effort. */
+  taskDescription?: string;
+}
+
+export type AssistantRole = "user" | "assistant";
+
+export interface AssistantMessage {
+  role: AssistantRole;
+  content: string;
+}
+
+export interface AssistantHintPayload extends AssistantTask {
+  message: string;
+  hintLevel: number;
+  history: AssistantMessage[];
+}
+
+export interface AssistantPattern {
+  code: string;
+  name: string;
+  tier?: string;
+  families?: string;
+}
+
+export interface AssistantHintResult {
+  hint: string;
+  question?: string;
+  stage: "nudge" | "approach" | "reveal";
+  problemKnown: boolean;
+  patterns?: AssistantPattern[];
 }
 
 /** The full payload the popup sends to the backend after the user rates the task. */
@@ -43,9 +84,52 @@ export interface SubmissionPayload extends DetectedSubmission {
 
 /** Messages exchanged between content script, background and popup. */
 export type RuntimeMessage =
+  | { type: "REALGO_GET_CURRENT_TASK" }
   | { type: "REALGO_SUBMISSION_DETECTED"; submission: DetectedSubmission }
   | { type: "REALGO_SAVE_SUBMISSION"; payload: SubmissionPayload }
-  | { type: "REALGO_GET_PROBLEM_CARDS"; problemId: number };
+  | { type: "REALGO_GET_PROBLEM_CARDS"; problemId: number }
+  | {
+      type: "REALGO_SYNC_WEB_SESSION";
+      accessToken: string | null;
+      refreshToken: string | null;
+    };
+
+/**
+ * Name of the long-lived `chrome.runtime.connect` port used for streaming
+ * assistant hints. A one-shot `sendMessage` can only deliver a single
+ * response, so the streamed deltas ride a port instead (see background.ts /
+ * lib/assistantClient.ts).
+ */
+export const ASSISTANT_HINT_STREAM_PORT = "realgo-assistant-hint-stream";
+
+/** UI → background: kick off a streamed hint request over the port above. */
+export interface AssistantHintStreamStartMessage {
+  type: "start";
+  payload: AssistantHintPayload;
+}
+
+/** background → UI: one newly generated fragment of the hint text. */
+export interface AssistantHintStreamDeltaMessage {
+  type: "delta";
+  text: string;
+}
+
+/** background → UI: the full structured result, once generation finishes. */
+export interface AssistantHintStreamDoneMessage {
+  type: "done";
+  result: AssistantHintResult;
+}
+
+/** background → UI: the request failed; human-readable message for the UI. */
+export interface AssistantHintStreamErrorMessage {
+  type: "error";
+  error: string;
+}
+
+export type AssistantHintStreamMessage =
+  | AssistantHintStreamDeltaMessage
+  | AssistantHintStreamDoneMessage
+  | AssistantHintStreamErrorMessage;
 
 /**
  * Parsed result of a successful `POST /api/v1/extension/events` (the backend
@@ -94,6 +178,11 @@ export interface CardsResponse {
   ok: boolean;
   /** Present when `ok`; absent means "endpoint unavailable" — stay silent. */
   result?: ProblemCardsResult;
+}
+
+export interface CurrentTaskResponse {
+  ok: boolean;
+  task?: AssistantTask;
 }
 
 /** Token pair returned by the backend auth endpoints (snake_case = wire format). */

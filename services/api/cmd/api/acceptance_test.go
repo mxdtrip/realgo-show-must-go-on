@@ -87,3 +87,17 @@ func TestAcceptance_Cards(t *testing.T) {
 
 	specifications.CardsSpecification(t, d)
 }
+
+// TestAcceptance_Quiz — acceptance-тесты для интеграции Quiz и FSRS.
+func TestAcceptance_Quiz(t *testing.T) {
+	if testing.Short() {
+		t.Skip("acceptance test requires Docker")
+	}
+
+	harness.Reset(t)
+
+	d := httpdriver.New(t, harness)
+	defer d.Close()
+
+	specifications.QuizSpecification(t, d, d, d)
+}

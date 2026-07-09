@@ -19,17 +19,19 @@ const (
 	maxSessionLimit     = 30
 )
 
-type repository interface {
-	ListQuizSession(ctx context.Context, userID int64, limit int32) ([]sessionQuestion, error)
-	GetQuizQuestion(ctx context.Context, questionID, userID int64) (questionDetail, error)
+// service — consumer-side интерфейс handler'а. Обе рутин идут через него,
+// сохраняя controller→service→repository (см. эталон internal/cards).
+type service interface {
+	ListSession(ctx context.Context, userID int64, limit int32) ([]sessionQuestion, error)
+	RecordAnswer(ctx context.Context, userID, questionID int64, option int) (answerResult, error)
 }
 
 type Handler struct {
-	repo repository
+	svc service
 }
 
-func NewHandler(repo repository) *Handler {
-	return &Handler{repo: repo}
+func NewHandler(svc service) *Handler {
+	return &Handler{svc: svc}
 }
 
 func RegisterRoutes(r chi.Router, h *Handler) {
@@ -46,7 +48,7 @@ func (h *Handler) session(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rows, err := h.repo.ListQuizSession(r.Context(), userID, sessionLimit(r))
+	rows, err := h.svc.ListSession(r.Context(), userID, sessionLimit(r))
 	if err != nil {
 		slog.Error("quiz: session failed", slog.Any("err", err), slog.Int64("user_id", userID))
 		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", "could not load quiz session")
@@ -85,23 +87,23 @@ func (h *Handler) answer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	detail, err := h.repo.GetQuizQuestion(r.Context(), questionID, userID)
-	if errors.Is(err, errNotFound) {
-		slog.Warn("quiz: answer failed", slog.Any("err", err), slog.Int64("user_id", userID), slog.Int64("question_id", questionID))
-		response.Fail(w, http.StatusNotFound, "NOT_FOUND", "question not found")
-		return
-	}
+	res, err := h.svc.RecordAnswer(r.Context(), userID, questionID, req.Option)
 	if err != nil {
-		slog.Error("quiz: answer failed", slog.Any("err", err), slog.Int64("user_id", userID), slog.Int64("question_id", questionID))
-		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", "could not fetch question")
+		switch {
+		case errors.Is(err, ErrQuestionNotFound):
+			slog.Warn("quiz: answer failed", slog.Any("err", err), slog.Int64("user_id", userID), slog.Int64("question_id", questionID))
+			response.Fail(w, http.StatusNotFound, "NOT_FOUND", "question not found")
+		case errors.Is(err, ErrAlreadyAnswered):
+			slog.Warn("quiz: answer rejected (already answered)", slog.Int64("user_id", userID), slog.Int64("question_id", questionID))
+			response.Fail(w, http.StatusConflict, "CONFLICT", "question already answered")
+		default:
+			slog.Error("quiz: answer failed", slog.Any("err", err), slog.Int64("user_id", userID), slog.Int64("question_id", questionID))
+			response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", "could not record answer")
+		}
 		return
 	}
 
-	response.JSON(w, http.StatusOK, answerResult{
-		Correct:       req.Option == detail.CorrectOption,
-		CorrectOption: detail.CorrectOption,
-		Explanation:   detail.Explanation,
-	})
+	response.JSON(w, http.StatusOK, res)
 }
 
 func sessionLimit(r *http.Request) int32 {

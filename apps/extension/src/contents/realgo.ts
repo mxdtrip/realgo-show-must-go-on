@@ -3,12 +3,17 @@ import { createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 
 import type {
+  AssistantTask,
+  CurrentTaskResponse,
   DetectedSubmission,
   ExtensionEventResult,
+  RuntimeMessage,
   SaveResponse,
   SubmissionPayload,
   SubmitResult,
 } from "../lib/types";
+import { AssistantApp } from "../assistant/AssistantApp";
+import { streamAssistantHintViaBackground } from "../lib/assistantClient";
 import { fetchCardsViaBackground } from "../lib/cardsClient";
 import { getReviewUrl } from "../lib/storage";
 import { detectAdapter, type PlatformAdapter, type TaskInfo } from "../platforms";
@@ -31,6 +36,7 @@ export const config: PlasmoCSConfig = {
  */
 const RESULT_POLL_MS = 500;
 const RESULT_TIMEOUT_MS = 20_000;
+const ASSISTANT_REFRESH_MS = 1_000;
 
 function init() {
   // The manifest already scopes this script to supported hosts, so the listener
@@ -40,6 +46,19 @@ function init() {
   // re-runs init — the extension stayed inert until a hard reload.
   // Capture-phase delegation survives the SPA re-rendering its buttons.
   document.addEventListener("click", onDocumentClick, true);
+  chrome.runtime.onMessage.addListener(onRuntimeMessage);
+  refreshAssistant();
+  window.setInterval(refreshAssistant, ASSISTANT_REFRESH_MS);
+}
+
+function onRuntimeMessage(
+  message: RuntimeMessage,
+  _sender: chrome.runtime.MessageSender,
+  sendResponse: (response: CurrentTaskResponse) => void
+) {
+  if (message.type !== "REALGO_GET_CURRENT_TASK") return false;
+  sendResponse(currentAssistantTaskResponse());
+  return false;
 }
 
 function onDocumentClick(event: MouseEvent) {
@@ -71,6 +90,7 @@ function watchForResult(adapter: PlatformAdapter, clickInfo: TaskInfo | null) {
   watching = true;
 
   const startedAt = Date.now();
+  let sawMutation = false;
   const finish = (result: SubmitResult) => {
     clearInterval(timer);
     observer.disconnect();
@@ -79,6 +99,11 @@ function watchForResult(adapter: PlatformAdapter, clickInfo: TaskInfo | null) {
   };
 
   const check = () => {
+    if (!sawMutation) {
+      if (Date.now() - startedAt > RESULT_TIMEOUT_MS) finish("unknown");
+      return;
+    }
+    if (Date.now() - startedAt < 800) return;
     const result = adapter.detectSubmitResult();
     if (result !== "unknown") {
       finish(result);
@@ -87,7 +112,10 @@ function watchForResult(adapter: PlatformAdapter, clickInfo: TaskInfo | null) {
     }
   };
 
-  const observer = new MutationObserver(check);
+  const observer = new MutationObserver(() => {
+    sawMutation = true;
+    check();
+  });
   try {
     observer.observe(document.body, { childList: true, subtree: true, characterData: true });
   } catch {
@@ -131,6 +159,7 @@ function finalize(
     taskUrl: info.taskUrl,
     platformTaskSlug: info.platformTaskSlug,
     tags: info.tags,
+    difficulty: info.difficulty,
     submitResult,
     submittedAt: new Date().toISOString(),
   };
@@ -180,10 +209,11 @@ function showOverlay(submission: DetectedSubmission) {
   // the card). Positioning lives here too; the shadow content stays static.
   // Placed below the site's top nav so a self-triggered popup doesn't cover it.
   overlayHost.style.cssText =
-    "all: initial; position: fixed; top: 76px; right: 16px; z-index: 2147483647; color-scheme: dark;";
+    "all: initial; position: fixed; top: 76px; right: 16px; z-index: 2147483647; color-scheme: dark; background: transparent; width: max-content; height: max-content;";
   const shadow = overlayHost.attachShadow({ mode: "open" });
   const mount = document.createElement("div");
   mount.className = "realgo-overlay";
+  mount.style.cssText = "all: initial; display: block; background: transparent; width: max-content; height: max-content;";
 
   // The close affordance lives in the popup header (PopupApp renders an X when
   // given onClose), so the overlay doesn't add its own button.
@@ -228,6 +258,78 @@ async function saveViaBackground(
     throw new Error(res?.error ?? "Не удалось сохранить.");
   }
   return res.result ?? null;
+}
+
+/* -- In-page AI assistant (shadow DOM, independent from submit overlay) ----- */
+
+let assistantHost: HTMLDivElement | null = null;
+let assistantRoot: Root | null = null;
+let assistantKey = "";
+
+function refreshAssistant() {
+  const task = currentAssistantTaskResponse().task ?? null;
+  if (!task) {
+    removeAssistant();
+    return;
+  }
+
+  const key = `${task.platform}:${task.platformTaskSlug}:${task.taskUrl}`;
+  if (key === assistantKey && assistantHost?.isConnected) return;
+
+  removeAssistant();
+  assistantKey = key;
+  assistantHost = document.createElement("div");
+  assistantHost.id = "realgo-assistant-host";
+  assistantHost.style.cssText =
+    "all: initial; position: fixed; right: 16px; bottom: 18px; z-index: 2147483646; color-scheme: dark; background: transparent; width: max-content; height: max-content; pointer-events: none;";
+  const shadow = assistantHost.attachShadow({ mode: "open" });
+  const mount = document.createElement("div");
+  mount.className = "realgo-assistant-root";
+  mount.style.cssText = "all: initial; display: block; background: transparent; width: max-content; height: max-content; pointer-events: none;";
+  shadow.appendChild(mount);
+  document.body.appendChild(assistantHost);
+
+  assistantRoot = createRoot(mount);
+  assistantRoot.render(
+    createElement(AssistantApp, {
+      task,
+      onAsk: streamAssistantHintViaBackground,
+    })
+  );
+}
+
+function currentAssistantTaskResponse(): CurrentTaskResponse {
+  const adapter = detectAdapter(location.href);
+  const info = adapter?.extractTaskInfo() ?? null;
+  const task = adapter && info ? assistantTaskFrom(adapter, info) : null;
+  return task ? { ok: true, task } : { ok: false };
+}
+
+function removeAssistant() {
+  assistantRoot?.unmount();
+  assistantHost?.remove();
+  assistantRoot = null;
+  assistantHost = null;
+  assistantKey = "";
+}
+
+function assistantTaskFrom(adapter: PlatformAdapter, info: TaskInfo): AssistantTask | null {
+  if (!isAssistantPlatform(adapter.platform)) return null;
+  const slug = info.platformTaskSlug?.trim();
+  if (!slug) return null;
+  return {
+    platform: adapter.platform,
+    taskTitle: info.taskTitle,
+    taskUrl: info.taskUrl,
+    platformTaskSlug: slug,
+    tags: info.tags,
+    difficulty: info.difficulty,
+    taskDescription: info.taskDescription,
+  };
+}
+
+function isAssistantPlatform(platform: PlatformAdapter["platform"]): platform is AssistantTask["platform"] {
+  return platform === "leetcode" || platform === "neetcode";
 }
 
 init();

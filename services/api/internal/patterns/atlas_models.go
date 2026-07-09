@@ -3,7 +3,7 @@ package patterns
 import "time"
 
 // TaxonomyVersion is the currently served taxonomy release. Bumping it (and
-// shipping the matching nodes/edges, migration 000014) is how a new taxonomy
+// shipping the matching nodes/edges, migration 000015) is how a new taxonomy
 // rolls out without rewriting the atlas API.
 const TaxonomyVersion = "realgo-v2"
 

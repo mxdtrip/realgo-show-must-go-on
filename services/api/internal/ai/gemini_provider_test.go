@@ -3,6 +3,7 @@ package ai
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -74,6 +75,111 @@ func TestGeminiProvider_GenerateCards_Success(t *testing.T) {
 	}
 }
 
+func TestGeminiProvider_GenerateHint_Success(t *testing.T) {
+	hintJSON := `{"hint":"Посмотри, что надо быстро находить для текущего числа.","question":"Какую информацию о предыдущих элементах стоит хранить?","stage":"approach"}`
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Authorization") != "Bearer test-key" {
+			t.Errorf("missing/incorrect Authorization header: %q", r.Header.Get("Authorization"))
+		}
+		var req chatCompletionRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Fatalf("decode request: %v", err)
+		}
+		if req.Model != "gemini-2.5-flash" {
+			t.Fatalf("model = %q", req.Model)
+		}
+		if len(req.Messages) != 2 || !strings.Contains(req.Messages[1].Content, "Two Sum") {
+			t.Fatalf("unexpected messages: %+v", req.Messages)
+		}
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(chatCompletionBody(hintJSON)))
+	}))
+	defer srv.Close()
+
+	p := NewGeminiProvider(config.AI{APIKey: "test-key", Model: "gemini-2.5-flash", BaseURL: srv.URL})
+	out, err := p.GenerateHint(context.Background(), AssistantHintInput{
+		Platform:     "leetcode",
+		Slug:         "two-sum",
+		Title:        "Two Sum",
+		URL:          "https://leetcode.com/problems/two-sum/",
+		Difficulty:   "easy",
+		Message:      "Я застрял",
+		HintLevel:    2,
+		ProblemKnown: true,
+		Patterns:     []AssistantPattern{{Code: "complement_lookup", Name: "Complement Lookup / Pair Mapping"}},
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if out.Stage != "approach" || out.Hint == "" || out.Question == "" {
+		t.Fatalf("unexpected hint: %+v", out)
+	}
+	if !out.ProblemKnown || len(out.Patterns) != 1 {
+		t.Fatalf("missing enriched context: %+v", out)
+	}
+}
+
+func TestGeminiProvider_StreamHint_Success(t *testing.T) {
+	// Split across multiple SSE chunks, including one that splits a JSON
+	// escape sequence ("\\" and "n" in separate chunks) to exercise the
+	// extractor's cross-chunk escape-decoding state.
+	chunks := []string{
+		`{"hint":"Пос`,
+		`мотри на паре`,
+		`й.\`,
+		`n"`,
+		`,"question":"Что хранить?","stage":"approach"}`,
+	}
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req chatCompletionStreamRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Fatalf("decode request: %v", err)
+		}
+		if !req.Stream {
+			t.Fatalf("expected stream=true in request")
+		}
+		w.Header().Set("Content-Type", "text/event-stream")
+		w.WriteHeader(http.StatusOK)
+		flusher := w.(http.Flusher)
+		for _, c := range chunks {
+			chunk := chatCompletionChunk{Choices: []struct {
+				Delta struct {
+					Content string `json:"content"`
+				} `json:"delta"`
+			}{{Delta: struct {
+				Content string `json:"content"`
+			}{Content: c}}}}
+			data, _ := json.Marshal(chunk)
+			_, _ = fmt.Fprintf(w, "data: %s\n\n", data)
+			flusher.Flush()
+		}
+		_, _ = fmt.Fprint(w, "data: [DONE]\n\n")
+		flusher.Flush()
+	}))
+	defer srv.Close()
+
+	p := NewGeminiProvider(config.AI{APIKey: "k", Model: "m", BaseURL: srv.URL})
+
+	var revealed strings.Builder
+	out, err := p.StreamHint(context.Background(), AssistantHintInput{Title: "Two Sum", HintLevel: 2}, func(delta string) {
+		revealed.WriteString(delta)
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	// parseAssistantHintContent trims the final hint (out.Hint), but the
+	// streamed deltas reveal the raw, untrimmed decoded value as it arrives.
+	if revealed.String() != "Посмотри на парей.\n" {
+		t.Fatalf("unexpected revealed text: %q", revealed.String())
+	}
+	if out.Hint != "Посмотри на парей." {
+		t.Fatalf("unexpected hint: %q", out.Hint)
+	}
+	if out.Question != "Что хранить?" || out.Stage != "approach" {
+		t.Fatalf("unexpected out: %+v", out)
+	}
+}
+
 func TestGeminiProvider_GenerateCards_UnknownProblem(t *testing.T) {
 	srv := newTestServer(t, http.StatusOK, chatCompletionBody(`{"error":"unknown_problem"}`))
 	p := NewGeminiProvider(config.AI{APIKey: "k", Model: "m", BaseURL: srv.URL})
@@ -133,6 +239,50 @@ func TestParseGenerationContent(t *testing.T) {
 			t.Fatal("expected error for invalid json")
 		}
 	})
+}
+
+func TestParseAssistantHintContent(t *testing.T) {
+	out, err := parseAssistantHintContent("```json\n{\"hint\":\"h\",\"question\":\"q\",\"stage\":\"unexpected\"}\n```")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if out.Hint != "h" || out.Question != "q" || out.Stage != "nudge" {
+		t.Fatalf("unexpected parsed hint: %+v", out)
+	}
+	if _, err := parseAssistantHintContent(`{"hint":"","stage":"nudge"}`); err == nil {
+		t.Fatal("expected error for empty hint")
+	}
+}
+
+// TestApplyHintLevel guards the deterministic level -> stage mapping added
+// after live testing showed the model sometimes mislabels its own stage (or
+// tacks a trailing question onto a level-3 reply despite the prompt
+// forbidding it): the client must always see a stage consistent with the
+// requested level, and level 3 must never carry a question.
+func TestApplyHintLevel(t *testing.T) {
+	cases := []struct {
+		level        int
+		wantStage    string
+		questionKept bool
+	}{
+		{level: 1, wantStage: "nudge", questionKept: true},
+		{level: 2, wantStage: "approach", questionKept: true},
+		{level: 3, wantStage: "reveal", questionKept: false},
+	}
+	for _, tc := range cases {
+		out := AssistantHintResponse{Stage: "approach", Question: "leftover question?"}
+		applyHintLevel(&out, tc.level)
+		if out.Stage != tc.wantStage {
+			t.Errorf("level %d: stage = %q, want %q", tc.level, out.Stage, tc.wantStage)
+		}
+		wantQuestion := ""
+		if tc.questionKept {
+			wantQuestion = "leftover question?"
+		}
+		if out.Question != wantQuestion {
+			t.Errorf("level %d: question = %q, want %q", tc.level, out.Question, wantQuestion)
+		}
+	}
 }
 
 func TestRenderPromptUser(t *testing.T) {

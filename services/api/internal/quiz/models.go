@@ -18,6 +18,9 @@ type sessionQuestion struct {
 type questionDetail struct {
 	CorrectOption int
 	Explanation   *string
+	// ProblemID непуст, только если вопрос привязан к problem (а не к pattern).
+	// Нужен сервису, чтобы обновить confidence и (позже) прогнать FSRS.
+	ProblemID *int64
 }
 
 type questionItem struct {

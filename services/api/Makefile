@@ -1,6 +1,8 @@
 GO ?= go
 COMPOSE ?= docker compose -f ../../docker-compose.yml
-PROD_COMPOSE ?= $(COMPOSE) --profile prod-demo
+# Server stack = base + prod overlay (vpngw, api netns, prod Caddyfile) + the
+# prod-demo profile for frpc. See docker-compose.prod.yml.
+PROD_COMPOSE ?= docker compose -f ../../docker-compose.yml -f ../../docker-compose.prod.yml --profile prod-demo
 
 .PHONY: help build run test test-integration vet fmt tidy sqlc up up-api prod-demo-up down migrate seed-roadmap seed-cards seed-users reset-demo logs
 

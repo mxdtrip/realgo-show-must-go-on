@@ -1,6 +1,8 @@
 import { AuthError, refreshAccessToken } from "./auth";
 import { getAccessToken, getApiBaseUrl } from "./storage";
 import type {
+  AssistantHintPayload,
+  AssistantHintResult,
   ExtensionEventResult,
   Platform,
   ProblemCardsResult,
@@ -29,6 +31,9 @@ export const HEALTH_PATH = "/healthz";
 /** Cards readiness of a problem (Bearer, like the rest of /me/*). */
 export const problemCardsPath = (problemId: number) =>
   `/api/v1/me/problems/${problemId}/cards`;
+
+/** Guided, non-solution AI hints for coding-problem pages. */
+export const ASSISTANT_HINT_PATH = "/api/v1/assistant/hint";
 
 /** The exact JSON body the backend expects (see services/api .../extension). */
 interface EventRequest {
@@ -145,6 +150,7 @@ function buildEventRequest(payload: SubmissionPayload): EventRequest {
       externalId,
       title: payload.taskTitle,
       url: payload.taskUrl,
+      difficulty: payload.difficulty,
     },
   };
 }
@@ -213,6 +219,90 @@ export async function getProblemCards(
   } catch {
     return null;
   }
+}
+
+/**
+ * Requests a hint as Server-Sent Events (`?stream=1`, see
+ * services/api/internal/ai/assistant_handler.go's streamHint): the model's
+ * "hint" text arrives as `delta` events while it's still being generated
+ * (onDelta is called for each fragment, in order), and the full structured
+ * result arrives last as a `done` event. This is what lets the UI show the
+ * hint as it's written instead of waiting for the whole reply.
+ */
+export async function streamAssistantHint(
+  payload: AssistantHintPayload,
+  onDelta: (text: string) => void
+): Promise<AssistantHintResult> {
+  const baseUrl = await getApiBaseUrl();
+  const url = `${baseUrl}${ASSISTANT_HINT_PATH}?stream=1`;
+  const body = JSON.stringify(payload);
+
+  let token = await getAccessToken();
+  if (!token) token = await tryRefresh();
+
+  let res = await authedPost(url, body, token);
+  if (res.status === 401) {
+    token = await tryRefresh();
+    res = await authedPost(url, body, token);
+  }
+
+  if (!res.ok || !res.body) {
+    const data = await safeJson(res);
+    const message = data?.error?.message || `Ошибка AI-помощника (${res.status})`;
+    throw new ApiError(message, res.status, data?.error?.code);
+  }
+
+  return readAssistantHintStream(res.body, onDelta);
+}
+
+async function readAssistantHintStream(
+  body: ReadableStream<Uint8Array>,
+  onDelta: (text: string) => void
+): Promise<AssistantHintResult> {
+  const reader = body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+
+    let sep: number;
+    while ((sep = buffer.indexOf("\n\n")) !== -1) {
+      const frame = buffer.slice(0, sep);
+      buffer = buffer.slice(sep + 2);
+      const parsed = parseSseFrame(frame);
+      if (!parsed) continue;
+
+      if (parsed.event === "delta") {
+        const data = JSON.parse(parsed.data) as { text: string };
+        onDelta(data.text);
+      } else if (parsed.event === "done") {
+        return JSON.parse(parsed.data) as AssistantHintResult;
+      } else if (parsed.event === "error") {
+        const data = JSON.parse(parsed.data) as { message?: string; code?: string };
+        throw new ApiError(
+          data.message ?? "AI-помощник сейчас недоступен.",
+          502,
+          data.code
+        );
+      }
+    }
+  }
+  throw new ApiError("AI-помощник прервал соединение.", 502, "stream_closed");
+}
+
+/** Parses one `event: ...\ndata: ...` SSE frame (blank-line-terminated). */
+function parseSseFrame(frame: string): { event: string; data: string } | null {
+  let event = "message";
+  const dataLines: string[] = [];
+  for (const line of frame.split("\n")) {
+    if (line.startsWith("event:")) event = line.slice("event:".length).trim();
+    else if (line.startsWith("data:")) dataLines.push(line.slice("data:".length).trim());
+  }
+  if (dataLines.length === 0) return null;
+  return { event, data: dataLines.join("\n") };
 }
 
 async function authedGet(url: string, token: string): Promise<Response> {

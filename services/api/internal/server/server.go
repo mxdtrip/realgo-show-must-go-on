@@ -41,6 +41,10 @@ type Deps struct {
 	// (e.g. no AI provider key configured); wiring lives in cmd/api
 	// (production, via config.AI) or tests (a fake provider).
 	CardProvisioner extension.Provisioner
+	// AssistantProvider optionally serves guided extension hints. Nil keeps the
+	// route mounted but returns 503, so clients can show a friendly disabled
+	// state without learning anything about secrets/config.
+	AssistantProvider ai.HintProvider
 }
 
 // New builds the application's HTTP handler with the base middleware stack,
@@ -75,8 +79,11 @@ func New(deps Deps) http.Handler {
 	companiesHandler := companies.NewHandler()
 	dashboardHandler := dashboard.NewHandler(dashboard.NewService(dashboard.NewRepository(deps.Postgres.Pool), patterns.NewRepository(deps.Postgres.Pool)))
 	cardsHandler := cards.NewHandler(cardsSvc)
-	quizHandler := quiz.NewHandler(quiz.NewRepository(deps.Postgres.Pool))
+	quizRepo := quiz.NewRepository(deps.Postgres.Pool)
+	quizSvc := quiz.NewService(quizRepo, reviewService) // reviewService удовлетворяет quiz.ProblemRater (RateByProblemID)
+	quizHandler := quiz.NewHandler(quizSvc)
 	aiHandler := ai.NewHandler(ai.NewRepository(deps.Postgres.Pool))
+	assistantHandler := ai.NewAssistantHandler(ai.NewRepository(deps.Postgres.Pool), deps.AssistantProvider)
 
 	// Browser-extension ingest: FSRS scheduler behind the Scheduler interface,
 	// sharing the same algorithm as the review service (issue #160).
@@ -133,6 +140,13 @@ func New(deps Deps) http.Handler {
 			})
 		})
 		r.With(requireAuth(deps.Auth)).Get("/me/extension/status", extensionStatusHandler.GetStatus) // codex/s3-ext-status
+
+		assistantRateLimit := rateLimit(deps.Redis, "assistant", 30, time.Minute)
+		r.Route("/assistant", func(r chi.Router) {
+			r.With(requireAuth(deps.Auth), assistantRateLimit).Group(func(r chi.Router) {
+				ai.RegisterAssistantRoutes(r, assistantHandler)
+			})
+		})
 
 		// S2 problems.
 		r.Route("/me/problems", func(r chi.Router) {

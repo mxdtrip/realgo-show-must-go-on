@@ -1,0 +1,62 @@
+# Server-only overlay, merged on top of docker-compose.yml at deploy time:
+# `docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile prod-demo up -d --build`
+#
+# Everything here is appbox-specific infrastructure that must never leak into
+# the base file, because that file is also what every local dev and CI run
+# through `docker compose up`/`config` — a hard-required var or an
+# unbuildable image here would break that for everyone (as it briefly did).
+
+services:
+  # VPN gateway: Cloudflare (fronting Groq's API) 403s requests from this
+  # network's address space with a bot-management challenge, regardless of
+  # API key/model/User-Agent — evidence points to IP/ASN reputation, not
+  # anything wrong with the request itself. sing-box tunnels outbound TCP
+  # through a VLESS/Reality subscription (foreign exit) via an iptables
+  # transparent REDIRECT; api (below) shares this container's netns so its
+  # public egress — Groq calls in particular — rides the tunnel, while
+  # private-range destinations (postgres/redis/the docker network itself)
+  # are excluded and stay direct.
+  #
+  # Deliberately NOT built from this repo: the image is built once directly
+  # on the server (source lives at /opt/vpngw-gateway on appbox, outside any
+  # git repo) and referenced here by tag. This is host/network infrastructure
+  # for appbox, not application code — tweaking sing-box/iptables internals
+  # shouldn't need a PR+CI+deploy cycle in the product repo. Rebuild after
+  # editing the source there: `docker build -t vpngw:local /opt/vpngw-gateway`.
+  vpngw:
+    image: vpngw:local
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+    environment:
+      VPN_SUB_URL: ${VPN_SUB_URL:?VPN_SUB_URL must be set}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    # Healthy only once traffic actually egresses through the VLESS tunnel: this
+    # curl runs in vpngw's netns and is itself redirected through sing-box.
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "--max-time", "8", "-o", "/dev/null", "https://www.gstatic.com/generate_204"]
+      interval: 15s
+      timeout: 12s
+      retries: 20
+      start_period: 25s
+    # api shares this netns and listens on 8080; expose it here since api's
+    # own service block has no network attachment of its own to expose from.
+    expose:
+      - "8080"
+
+  api:
+    network_mode: "service:vpngw"
+    depends_on:
+      vpngw:
+        condition: service_healthy
+
+  # Route through vpngw:8080 instead of api:8080 — see Caddyfile.internal.prod.
+  caddy:
+    volumes:
+      - ./Caddyfile.internal.prod:/etc/caddy/Caddyfile:ro

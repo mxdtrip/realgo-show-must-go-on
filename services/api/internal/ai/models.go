@@ -1,5 +1,75 @@
 package ai
 
+type AssistantRole string
+
+const (
+	AssistantRoleUser      AssistantRole = "user"
+	AssistantRoleAssistant AssistantRole = "assistant"
+)
+
+// AssistantHintRequest describes one hint turn from the browser extension.
+type AssistantHintRequest struct {
+	Platform         string   `json:"platform"`
+	TaskTitle        string   `json:"taskTitle"`
+	TaskURL          string   `json:"taskUrl"`
+	PlatformTaskSlug string   `json:"platformTaskSlug"`
+	Difficulty       string   `json:"difficulty"`
+	Tags             []string `json:"tags"`
+	// TaskDescription is the problem statement scraped from the page,
+	// best-effort (the problems table itself stores no statement text).
+	TaskDescription string             `json:"taskDescription"`
+	Message         string             `json:"message"`
+	HintLevel       int                `json:"hintLevel"`
+	History         []AssistantMessage `json:"history"`
+}
+
+// AssistantMessage is a compact conversation item. Only the last few turns are
+// accepted by the handler; this is context, not durable chat history.
+type AssistantMessage struct {
+	Role    AssistantRole `json:"role"`
+	Content string        `json:"content"`
+}
+
+// AssistantPattern is the known taxonomy context for this problem, when the
+// problem exists in the catalog.
+type AssistantPattern struct {
+	Code        string `json:"code"`
+	Name        string `json:"name"`
+	Tier        string `json:"tier,omitempty"`
+	Families    string `json:"families,omitempty"`
+	Description string `json:"description,omitempty"`
+}
+
+// AssistantHintInput is the provider-facing shape after validation and DB
+// enrichment.
+type AssistantHintInput struct {
+	Platform   string
+	Slug       string
+	Title      string
+	URL        string
+	Difficulty string
+	Tags       []string
+	// Description is the problem statement, best-effort — the extension
+	// scrapes it from the page since the problems table stores none.
+	Description   string
+	Message       string
+	HintLevel     int
+	History       []AssistantMessage
+	ProblemKnown  bool
+	ProblemID     int64
+	Patterns      []AssistantPattern
+	PromptVersion string
+}
+
+// AssistantHintResponse is returned to the extension.
+type AssistantHintResponse struct {
+	Hint         string             `json:"hint"`
+	Question     string             `json:"question,omitempty"`
+	Stage        string             `json:"stage"`
+	ProblemKnown bool               `json:"problemKnown"`
+	Patterns     []AssistantPattern `json:"patterns,omitempty"`
+}
+
 // GenerateCardRequest describes the context for card generation.
 type GenerateCardRequest struct {
 	// Exactly one of ProblemID or PatternID must be set.

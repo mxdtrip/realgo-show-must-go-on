@@ -1,14 +1,41 @@
 import { useEffect, useState } from "react";
 
+import { AssistantApp } from "./assistant/AssistantApp";
+import { streamAssistantHintViaBackground } from "./lib/assistantClient";
 import { fetchCardsViaBackground } from "./lib/cardsClient";
 import { clearLastSubmission, getLastSubmission, getReviewUrl } from "./lib/storage";
 import type {
+  AssistantTask,
+  CurrentTaskResponse,
   DetectedSubmission,
   ExtensionEventResult,
   SaveResponse,
   SubmissionPayload,
 } from "./lib/types";
 import { PopupApp } from "./popup/PopupApp";
+
+const POPUP_DOCUMENT_CSS = `
+html, body {
+  margin: 0 !important;
+  padding: 0 !important;
+  background: #0d1117 !important;
+  color-scheme: dark;
+  overflow: hidden !important;
+  border-radius: 8px;
+}
+body {
+  width: max-content;
+  min-width: 0;
+}
+#__plasmo, #plasmo-shadow-container {
+  display: block;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: #0d1117 !important;
+  border-radius: 8px;
+  overflow: hidden;
+}
+`;
 
 /**
  * Toolbar popup entry. Shows the most recently detected submission (stored by
@@ -19,11 +46,28 @@ function IndexPopup() {
   const [submission, setSubmission] = useState<
     DetectedSubmission | null | undefined
   >(undefined);
+  const [currentTask, setCurrentTask] = useState<AssistantTask | null>(null);
 
   useEffect(() => {
-    getLastSubmission()
-      .then((s) => setSubmission(s ?? null))
-      .catch(() => setSubmission(null));
+    let alive = true;
+    Promise.all([getLastSubmission().catch(() => undefined), getCurrentTask()])
+      .then(([lastSubmission, task]) => {
+        if (!alive) return;
+        setCurrentTask(task);
+        setSubmission(
+          lastSubmission && isAcceptedForTask(lastSubmission, task)
+            ? lastSubmission
+            : null
+        );
+      })
+      .catch(() => {
+        if (!alive) return;
+        setCurrentTask(null);
+        setSubmission(null);
+      });
+    return () => {
+      alive = false;
+    };
   }, []);
 
   async function handleSave(
@@ -60,13 +104,57 @@ function IndexPopup() {
   }
 
   return (
-    <PopupApp
-      submission={submission}
-      onSave={handleSave}
-      onFetchCards={fetchCardsViaBackground}
-      onCollapse={() => window.close()}
-      onReview={handleReview}
-    />
+    <>
+      <style>{POPUP_DOCUMENT_CSS}</style>
+      {submission ? (
+        <PopupApp
+          submission={submission}
+          onSave={handleSave}
+          onFetchCards={fetchCardsViaBackground}
+          onCollapse={() => window.close()}
+          onReview={handleReview}
+        />
+      ) : currentTask ? (
+        <AssistantApp
+          task={currentTask}
+          onAsk={streamAssistantHintViaBackground}
+          variant="panel"
+          onClose={() => window.close()}
+        />
+      ) : (
+        <PopupApp
+          submission={submission}
+          onSave={handleSave}
+          onFetchCards={fetchCardsViaBackground}
+          onCollapse={() => window.close()}
+          onReview={handleReview}
+        />
+      )}
+    </>
+  );
+}
+
+async function getCurrentTask(): Promise<AssistantTask | null> {
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tab?.id) return null;
+    const res: CurrentTaskResponse | undefined = await chrome.tabs.sendMessage(tab.id, {
+      type: "REALGO_GET_CURRENT_TASK",
+    });
+    return res?.ok && res.task ? res.task : null;
+  } catch {
+    return null;
+  }
+}
+
+function isAcceptedForTask(
+  submission: DetectedSubmission,
+  task: AssistantTask | null
+): boolean {
+  if (!task || submission.submitResult !== "accepted") return false;
+  return (
+    submission.platform === task.platform &&
+    submission.platformTaskSlug === task.platformTaskSlug
   );
 }
 
