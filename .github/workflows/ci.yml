@@ -94,11 +94,12 @@ jobs:
         working-directory: .
         env:
           AUTH_JWT_SECRET: ci-secret-with-more-than-32-random-looking-characters
-          # Just needs to be non-empty for `docker compose config` to resolve
-          # the required-var check; the real subscription is only needed at
-          # actual deploy time (GEMINI_API_KEY-style secret, set on appbox).
-          VPN_SUB_URL: ci-placeholder
-        run: docker compose config --quiet
+        # VPN_SUB_URL is intentionally NOT set: it is optional at config time
+        # (dev never needs it; prod-demo reads it from a deploy secret), and
+        # validating without it proves the dev flow parses on a clean machine.
+        run: |
+          docker compose --profile dev config --quiet
+          docker compose --profile prod-demo config --quiet
 
   web:
     name: Web
