@@ -5,12 +5,17 @@ reverse tunnel через `deploy/vps`.
 
 ## Схема
 
-- Dev stack: корневой `docker-compose.yml` поднимает `api`, `web`, `caddy`,
-  `postgres`, `redis`, миграции и seed jobs без VPS tunnel.
-- Prod-demo profile: тот же compose плюс `frpc`.
+- Dev profile (`--profile dev`, включается через `COMPOSE_PROFILES=dev` в
+  `.env`): корневой `docker-compose.yml` поднимает `api` (собственная сеть),
+  `web`, `caddy`, `postgres`, `redis`, миграции и seed jobs — без VPS tunnel
+  и без vpngw.
+- Prod-demo profile (`--profile prod-demo`): тот же compose, но вместо `api`
+  поднимается `api-prod` в network namespace шлюза `vpngw`, плюс `frpc`.
+  Профили взаимоисключающие — не включать оба сразу.
 - VPS edge: `deploy/vps/docker-compose.yml` поднимает `frps` и публичный Caddy.
 - TLS завершается на VPS Caddy. Home Caddy получает plain HTTP через frp и
-  роутит `/api/*` в `api:8080`, остальное в `web:3000`.
+  роутит `/api/*` в `api:8080` (в prod-demo это alias vpngw), остальное
+  в `web:3000`.
 
 ## Локальный dev запуск
 
@@ -22,7 +27,7 @@ curl -fsS http://localhost:8080/healthz
 curl -fsS http://localhost:8080/readyz
 ```
 
-`FRP_VPS_HOST` и `FRP_TOKEN` для dev-запуска не нужны.
+`FRP_VPS_HOST`, `FRP_TOKEN` и `VPN_SUB_URL` для dev-запуска не нужны.
 
 Из backend-директории можно использовать Makefile или go-task:
 
@@ -50,6 +55,10 @@ cp .env.example .env
 | `AUTH_JWT_SECRET` | home `.env` | Случайная строка минимум 32 символа; не placeholder. |
 | `FRP_VPS_HOST` | home `.env` | Публичный IP или hostname VPS. |
 | `FRP_TOKEN` | home `.env`, VPS `.env` | Один и тот же случайный shared token. |
+| `VPN_SUB_URL` | home `.env` / secret | VLESS-подписка для vpngw; без неё vpngw не станет healthy и `api-prod` не стартует. |
+
+На сервере в `.env` НЕ должно быть `COMPOSE_PROFILES` — профиль передаётся
+флагом `--profile prod-demo` из deploy workflow.
 
 Прод-демо значения, которые обычно оставляем явно:
 
@@ -112,13 +121,13 @@ Expected:
 
 - `/healthz` возвращает `{"status":"ok"}`.
 - `/readyz` возвращает `{"status":"ready"}`.
-- `docker compose ps` показывает `api`, `web`, `caddy`, `frpc`, `postgres`,
-  `redis` как running/healthy; `migrate` завершен успешно.
+- `docker compose ps` показывает `api-prod`, `vpngw`, `web`, `caddy`, `frpc`,
+  `postgres`, `redis` как running/healthy; `migrate` завершен успешно.
 
 Если публичный healthcheck не проходит:
 
 ```sh
-docker compose logs -f caddy frpc api
+docker compose --profile prod-demo logs -f caddy frpc api-prod
 cd deploy/vps && docker compose logs -f caddy frps
 ```
 
