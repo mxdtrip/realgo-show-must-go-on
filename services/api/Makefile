@@ -1,6 +1,8 @@
 GO ?= go
-COMPOSE ?= docker compose -f ../../docker-compose.yml
-PROD_COMPOSE ?= $(COMPOSE) --profile prod-demo
+# --profile dev must not leak into PROD_COMPOSE (profiles would merge and both
+# api variants would start), so the two commands are defined independently.
+COMPOSE ?= docker compose -f ../../docker-compose.yml --profile dev
+PROD_COMPOSE ?= docker compose -f ../../docker-compose.yml --profile prod-demo
 
 .PHONY: help build run test test-integration vet fmt tidy sqlc up up-api prod-demo-up down migrate seed-roadmap seed-cards seed-users reset-demo logs
 

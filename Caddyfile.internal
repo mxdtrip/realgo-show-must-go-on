@@ -28,10 +28,11 @@
 			@preflight method OPTIONS
 			respond @preflight 204
 
-			# api shares vpngw's network namespace (see docker-compose.yml) so its
-			# outbound public traffic — Groq calls in particular — rides the VLESS
-			# tunnel; that means api is only reachable here as vpngw:8080, not api:8080.
-			reverse_proxy vpngw:8080
+			# `api` resolves per compose profile: in dev it is the api service
+			# itself; in prod-demo it is a network alias on vpngw, whose netns the
+			# api process shares so its outbound public traffic — Groq calls in
+			# particular — rides the VLESS tunnel (see docker-compose.yml).
+			reverse_proxy api:8080
 		}
 	}
 

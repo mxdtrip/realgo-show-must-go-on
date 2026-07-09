@@ -1,11 +1,62 @@
 # Local dev stack and server deployment for the FreeBurger API.
 #
-# The deploy workflow runs `docker compose --profile prod-demo up -d --build`
-# from the repository root, so this file is the single source of truth for both
-# the local environment and the appbox server. Dev-friendly defaults are
-# inlined; on the server, override secrets via environment or a root .env file.
+# This file is the single source of truth for both environments, split by
+# compose profiles:
+#
+#   dev       — local development. `docker compose up -d --build` activates it
+#               via COMPOSE_PROFILES=dev in .env (see .env.example); or run
+#               `docker compose --profile dev up -d --build` explicitly.
+#               The api gets its own network namespace; no VPN gateway, no
+#               tunnel, no VPN_SUB_URL/FRP_* variables needed.
+#   prod-demo — appbox server. The deploy workflow runs
+#               `docker compose --profile prod-demo up -d --build` from the
+#               repository root. Adds the frpc reverse tunnel and the vpngw
+#               egress gateway; the api (api-prod) shares vpngw's netns.
+#
+# Never enable both profiles at once: two api containers would answer to the
+# same `api` DNS name and Caddy would round-robin between tunneled and
+# untunneled egress. Dev-friendly defaults are inlined; on the server,
+# override secrets via environment or a root .env file (without
+# COMPOSE_PROFILES — the deploy workflow passes --profile explicitly).
 
 name: freeburger
+
+# Everything the api needs regardless of how it is wired into the network.
+# `api` (dev) and `api-prod` (prod-demo) below differ only in networking.
+x-api-common: &api-common
+  build:
+    context: ./services/api
+  restart: unless-stopped
+  environment:
+    CONFIG_PATH: /app/config.yaml
+    # "local" (default) = text logs at debug; anything else = JSON at info.
+    APP_ENV: ${APP_ENV:-local}
+    ADDRESS: 0.0.0.0:8080
+    DB_HOST: postgres
+    DB_PORT: "5432"
+    DB_USER: ${DB_USER:-postgres}
+    DB_PASSWORD: ${DB_PASSWORD:-postgres}
+    DB_NAME: ${DB_NAME:-freeburger}
+    DB_SSLMODE: disable
+    REDIS_HOST: redis
+    REDIS_PORT: "6379"
+    REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+    AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:?AUTH_JWT_SECRET must be set}
+    AUTH_ACCESS_TTL: ${AUTH_ACCESS_TTL:-15m}
+    AUTH_REFRESH_TTL: ${AUTH_REFRESH_TTL:-720h}
+    # Optional: without a key the api still boots, AI card generation is
+    # just disabled. Prod gets it from the GEMINI_API_KEY GitHub secret.
+    # Despite the name, this currently holds a Groq key — AI_BASE_URL/AI_MODEL
+    # below point the OpenAI-compatible client at Groq instead of Google.
+    GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+    AI_BASE_URL: ${AI_BASE_URL:-https://api.groq.com/openai/v1}
+    AI_MODEL: ${AI_MODEL:-llama-3.3-70b-versatile}
+    # In this stack the api is reachable only through the caddy container, so
+    # X-Forwarded-For from the docker network is trustworthy. Without this the
+    # auth rate limiter keys every request to caddy's container IP — one
+    # shared 20 req/min bucket for ALL users, i.e. any single client can lock
+    # everyone out of login/register/refresh.
+    TRUSTED_PROXY_CIDRS: ${TRUSTED_PROXY_CIDRS:-10.0.0.0/8,172.16.0.0/12,192.168.0.0/16}
 
 services:
   postgres:
@@ -150,8 +201,9 @@ services:
   caddy:
     image: caddy:2-alpine
     restart: unless-stopped
-    depends_on:
-      - api
+    # No depends_on api here: the api service differs per profile (api vs
+    # api-prod) and a profile-less service may not depend on a profiled one.
+    # Caddy simply 502s until the api upstream is up, then recovers.
     environment:
       REALGO_EXTENSION_ORIGIN: ${REALGO_EXTENSION_ORIGIN:-chrome-extension://kclglopmphebagjjimjhdpnmoddmbgea}
     ports:
@@ -197,11 +249,28 @@ services:
   # editing the source there: `docker build -t vpngw:local /opt/vpngw-gateway`.
   vpngw:
     image: vpngw:local
+    # prod-demo only: the vpngw:local image is built directly on the server
+    # (see the comment above) and does not exist on dev machines.
+    profiles: ["prod-demo"]
     restart: unless-stopped
     cap_add:
       - NET_ADMIN
+    # Caddy always proxies to api:8080 (see Caddyfile.internal). In prod-demo
+    # the api process lives inside THIS container's netns, so vpngw answers to
+    # the `api` DNS name; in dev the api service resolves it instead. The two
+    # profiles are mutually exclusive, so the alias never collides.
+    networks:
+      default:
+        aliases:
+          - api
     environment:
-      VPN_SUB_URL: ${VPN_SUB_URL:?VPN_SUB_URL must be set}
+      # Required in practice for prod-demo (the container cannot establish the
+      # tunnel without a subscription and will exit / stay unhealthy), but NOT
+      # enforced with :? — compose interpolates the whole file eagerly, so a
+      # hard-required variable here would break plain dev `docker compose up`
+      # even though this service is excluded by profile. The deploy workflow
+      # supplies it from the VPN_SUB_URL GitHub secret.
+      VPN_SUB_URL: ${VPN_SUB_URL:-}
     depends_on:
       postgres:
         condition: service_healthy
@@ -222,48 +291,34 @@ services:
     expose:
       - "8080"
 
+  # Dev api: plain networking, no VPN gateway. Explicitly targeting it
+  # (`docker compose up api` / `make up-api`) auto-activates the dev profile.
   api:
-    build:
-      context: ./services/api
-    restart: unless-stopped
+    <<: *api-common
+    profiles: ["dev"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    expose:
+      - "8080"
+
+  # Prod api: identical to `api` except it shares vpngw's network namespace so
+  # its public egress (Groq calls) rides the VLESS tunnel.
+  api-prod:
+    <<: *api-common
+    profiles: ["prod-demo"]
     network_mode: "service:vpngw"
     depends_on:
       vpngw:
         condition: service_healthy
-    environment:
-      CONFIG_PATH: /app/config.yaml
-      # "local" (default) = text logs at debug; anything else = JSON at info.
-      APP_ENV: ${APP_ENV:-local}
-      ADDRESS: 0.0.0.0:8080
-      DB_HOST: postgres
-      DB_PORT: "5432"
-      DB_USER: ${DB_USER:-postgres}
-      DB_PASSWORD: ${DB_PASSWORD:-postgres}
-      DB_NAME: ${DB_NAME:-freeburger}
-      DB_SSLMODE: disable
-      REDIS_HOST: redis
-      REDIS_PORT: "6379"
-      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
-      AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:?AUTH_JWT_SECRET must be set}
-      AUTH_ACCESS_TTL: ${AUTH_ACCESS_TTL:-15m}
-      AUTH_REFRESH_TTL: ${AUTH_REFRESH_TTL:-720h}
-      # Optional: without a key the api still boots, AI card generation is
-      # just disabled. Prod gets it from the GEMINI_API_KEY GitHub secret.
-      # Despite the name, this currently holds a Groq key — AI_BASE_URL/AI_MODEL
-      # below point the OpenAI-compatible client at Groq instead of Google.
-      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
-      AI_BASE_URL: ${AI_BASE_URL:-https://api.groq.com/openai/v1}
-      AI_MODEL: ${AI_MODEL:-llama-3.3-70b-versatile}
-      # In this stack the api is reachable only through the caddy container, so
-      # X-Forwarded-For from the docker network is trustworthy. Without this the
-      # auth rate limiter keys every request to caddy's container IP — one
-      # shared 20 req/min bucket for ALL users, i.e. any single client can lock
-      # everyone out of login/register/refresh.
-      TRUSTED_PROXY_CIDRS: ${TRUSTED_PROXY_CIDRS:-10.0.0.0/8,172.16.0.0/12,192.168.0.0/16}
-    # No `expose` here: api shares vpngw's network namespace (network_mode
+    # No `expose` here: api-prod shares vpngw's network namespace (network_mode
     # above), so the port it listens on is only reachable via vpngw's own
-    # network attachment — see the `expose: 8080` on vpngw's healthcheck
-    # dependency chain and Caddyfile.internal's `reverse_proxy vpngw:8080`.
+    # network attachment — see the `expose: 8080` on vpngw and the `api` alias
+    # that Caddyfile.internal's `reverse_proxy api:8080` resolves to.
 
 volumes:
   pgdata:
