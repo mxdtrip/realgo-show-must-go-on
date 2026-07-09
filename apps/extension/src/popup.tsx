@@ -21,6 +21,7 @@ html, body {
   background: #0d1117 !important;
   color-scheme: dark;
   overflow: hidden !important;
+  border-radius: 8px;
 }
 body {
   width: max-content;
@@ -31,6 +32,8 @@ body {
   margin: 0 !important;
   padding: 0 !important;
   background: #0d1117 !important;
+  border-radius: 8px;
+  overflow: hidden;
 }
 `;
 

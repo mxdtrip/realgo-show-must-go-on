@@ -38,6 +38,7 @@ export function AssistantApp({ task, onAsk, variant = "dock", onClose }: Assista
   const [now, setNow] = useState(() => Date.now());
   const [patterns, setPatterns] = useState<AssistantPattern[] | undefined>();
   const [problemKnown, setProblemKnown] = useState(false);
+  const [patternUsed, setPatternUsed] = useState(false);
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
   const taskKey = `${task.platform}:${task.platformTaskSlug}:${task.taskUrl}`;
@@ -66,6 +67,7 @@ export function AssistantApp({ task, onAsk, variant = "dock", onClose }: Assista
     setCooldownEndAt(null);
     setPatterns(undefined);
     setProblemKnown(false);
+    setPatternUsed(false);
   }, [taskKey, variant]);
 
   // Ticks `now` while a cooldown is running so the recharge bar/countdown
@@ -130,14 +132,16 @@ export function AssistantApp({ task, onAsk, variant = "dock", onClose }: Assista
 
   // Reveals the known taxonomy pattern directly from data already returned
   // by the last hint — this is not itself a hint, so it doesn't touch
-  // hintsUsed/cooldown and stays available even after hints run out.
+  // hintsUsed/cooldown, but it's a one-shot reveal: once used for this task
+  // there's nothing left to ask it again for.
   function revealPattern() {
-    if (status === "loading") return;
+    if (status === "loading" || patternUsed) return;
     const text =
       problemKnown && patterns && patterns.length > 0
         ? `Паттерн: ${patterns.slice(0, 2).map((pattern) => pattern.name).join(", ")}`
         : "Эта задача пока не привязана к паттерну в базе realgo — попробуй определить его по тегам и условию самостоятельно.";
     setMessages((items) => [...items, { role: "assistant", content: text }]);
+    setPatternUsed(true);
   }
 
   function appendToLastAssistantMessage(delta: string) {
@@ -243,32 +247,32 @@ export function AssistantApp({ task, onAsk, variant = "dock", onClose }: Assista
           <div className="realgo-agent-actions">
             <button
               type="button"
-              className="realgo-agent-btn"
+              className="realgo-agent-btn realgo-agent-btn--hint"
               disabled={status === "loading" || hintsExhausted || isCoolingDown}
               onClick={() => ask("Дай следующий намёк, но всё ещё без полного решения.")}
             >
-              следующий намёк
+              {isCoolingDown && (
+                <span
+                  className="realgo-agent-btn__fill"
+                  aria-hidden="true"
+                  style={{ width: `${Math.round(cooldownProgress * 100)}%` }}
+                />
+              )}
+              <span className="realgo-agent-btn__label">
+                {isCoolingDown
+                  ? `через ${Math.ceil(cooldownRemainingMs / 1000)}с`
+                  : "следующий намёк"}
+              </span>
             </button>
             <button
               type="button"
               className="realgo-agent-btn"
-              disabled={status === "loading"}
+              disabled={status === "loading" || patternUsed}
               onClick={revealPattern}
             >
               паттерн
             </button>
           </div>
-          {isCoolingDown && (
-            <div className="realgo-agent-cooldown" aria-hidden="true">
-              <div
-                className="realgo-agent-cooldown__bar"
-                style={{ width: `${Math.round(cooldownProgress * 100)}%` }}
-              />
-              <span className="realgo-agent-cooldown__label">
-                подсказка восстановится через {Math.ceil(cooldownRemainingMs / 1000)}с
-              </span>
-            </div>
-          )}
           {hintsExhausted && (
             <p className="realgo-agent-hints-done">
               Подсказки для этой задачи закончились — на следующей задаче они появятся снова.

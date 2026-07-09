@@ -277,34 +277,6 @@ export const ASSISTANT_CSS = `
   gap: 8px;
 }
 
-.realgo-agent-cooldown {
-  position: relative;
-  height: 22px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  overflow: hidden;
-  background: rgba(255, 255, 255, 0.03);
-}
-.realgo-agent-cooldown__bar {
-  position: absolute;
-  inset: 0;
-  width: 0%;
-  background: linear-gradient(90deg, var(--accent-soft), var(--accent-line));
-  transition: width 0.2s linear;
-}
-.realgo-agent-cooldown__label {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  color: var(--text-dim);
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.02em;
-}
-
 .realgo-agent-hints-done {
   margin: 0;
   padding: 8px 10px;
@@ -338,5 +310,22 @@ export const ASSISTANT_CSS = `
 }
 .realgo-agent-btn:hover:not(:disabled) { border-color: var(--accent-line); color: var(--accent-bright); }
 .realgo-agent-btn:disabled { cursor: not-allowed; opacity: 0.55; }
+
+.realgo-agent-btn--hint {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+}
+.realgo-agent-btn__fill {
+  position: absolute;
+  inset: 0;
+  width: 0%;
+  background: linear-gradient(90deg, var(--accent-soft), var(--accent-line));
+  transition: width 0.2s linear;
+}
+.realgo-agent-btn__label {
+  position: relative;
+  z-index: 1;
+}
 
 `;
