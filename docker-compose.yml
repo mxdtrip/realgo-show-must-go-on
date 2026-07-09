@@ -226,8 +226,13 @@ services:
       # shared 20 req/min bucket for ALL users, i.e. any single client can lock
       # everyone out of login/register/refresh.
       TRUSTED_PROXY_CIDRS: ${TRUSTED_PROXY_CIDRS:-10.0.0.0/8,172.16.0.0/12,192.168.0.0/16}
-    expose:
-      - "8080"
+    # No `expose:` here on purpose: caddy reaches api:8080 over the compose
+    # network regardless (expose is inert on user-defined networks), and the
+    # prod overlay puts api into vpngw's netns (network_mode: service:vpngw) —
+    # docker rejects a container that has exposed ports of its own while
+    # borrowing another container's network, and compose merging cannot unset
+    # a list inherited from this file. The prod-facing expose lives on vpngw
+    # in docker-compose.prod.yml.
 
 volumes:
   pgdata:
