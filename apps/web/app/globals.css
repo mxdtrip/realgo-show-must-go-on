@@ -3918,6 +3918,7 @@ a.roadmap-step__practice-card:hover {
 
 /* distraction-free card session */
 .focus-space {
+  min-height: 100vh; /* fallback for browsers without dvh */
   min-height: 100dvh;
   overflow: clip;
 }
@@ -3925,7 +3926,9 @@ a.roadmap-step__practice-card:hover {
 .focus-session {
   position: relative;
   isolation: isolate;
+  height: 100vh; /* fallback for browsers without dvh */
   height: 100dvh;
+  min-height: 100vh;
   min-height: 100dvh;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
@@ -4023,8 +4026,11 @@ a.roadmap-step__practice-card:hover {
   position: relative;
   width: min(100%, 780px);
   min-width: 0;
+  height: min(66vh, 660px); /* fallback for browsers without dvh */
   height: min(66dvh, 660px);
+  min-height: min(66vh, 660px);
   min-height: min(66dvh, 660px);
+  max-height: calc(100vh - 150px);
   max-height: calc(100dvh - 150px);
   align-self: center;
   justify-self: center;
@@ -4085,6 +4091,8 @@ a.roadmap-step__practice-card:hover {
   transition: transform 0.68s cubic-bezier(0.2, 0.72, 0.22, 1);
   will-change: transform;
   cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .focus-card--answer {
@@ -4308,6 +4316,8 @@ a.roadmap-step__practice-card:hover {
   justify-self: center;
   min-width: 220px;
   min-height: 50px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
   border: 1px solid var(--accent-line);
   border-radius: 12px;
   padding: 12px 20px;
@@ -4338,6 +4348,8 @@ a.roadmap-step__practice-card:hover {
 .focus-rating__button {
   min-width: 0;
   min-height: 72px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
   display: grid;
   grid-template-columns: auto 1fr;
   gap: 3px 10px;
@@ -4354,8 +4366,12 @@ a.roadmap-step__practice-card:hover {
     transform 0.18s ease;
 }
 
-.focus-rating__button:hover {
-  transform: translateY(-1px);
+/* Hover styles are pointer-only: on touch devices :hover sticks after a tap,
+   leaving a rating button stuck in its highlighted state. */
+@media (hover: hover) {
+  .focus-rating__button:hover {
+    transform: translateY(-1px);
+  }
 }
 
 .focus-rating__button kbd {
@@ -4380,17 +4396,39 @@ a.roadmap-step__practice-card:hover {
   color: var(--text-faint);
 }
 
-.focus-rating__button--hard:hover {
+@media (hover: hover) {
+  .focus-rating__button--hard:hover {
+    border-color: rgba(248, 81, 73, 0.45);
+    background: rgba(248, 81, 73, 0.1);
+  }
+
+  .focus-rating__button--normal:hover {
+    border-color: var(--accent-line);
+    background: var(--accent-soft);
+  }
+
+  .focus-rating__button--easy:hover {
+    border-color: rgba(63, 185, 80, 0.42);
+    background: rgba(46, 160, 67, 0.12);
+  }
+}
+
+/* Touch feedback replaces hover on coarse pointers. */
+.focus-rating__button:active {
+  transform: scale(0.98);
+}
+
+.focus-rating__button--hard:active {
   border-color: rgba(248, 81, 73, 0.45);
   background: rgba(248, 81, 73, 0.1);
 }
 
-.focus-rating__button--normal:hover {
+.focus-rating__button--normal:active {
   border-color: var(--accent-line);
   background: var(--accent-soft);
 }
 
-.focus-rating__button--easy:hover {
+.focus-rating__button--easy:active {
   border-color: rgba(63, 185, 80, 0.42);
   background: rgba(46, 160, 67, 0.12);
 }
@@ -5312,12 +5350,16 @@ a.roadmap-step__practice-card:hover {
   }
 
   .focus-exit {
+    padding: 12px 0 12px 12px; /* comfortable touch target */
     font-size: 11px;
   }
 
   .focus-card-stack {
+    height: calc(100vh - 126px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
     height: calc(100dvh - 126px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    min-height: calc(100vh - 126px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
     min-height: calc(100dvh - 126px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    max-height: calc(100vh - 126px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
     max-height: calc(100dvh - 126px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
     margin: 12px 0;
   }
@@ -5365,7 +5407,13 @@ a.roadmap-step__practice-card:hover {
   }
 
   .focus-rating__button {
+    grid-template-columns: 1fr;
     min-height: 60px;
+  }
+
+  /* Keyboard shortcut chips are meaningless on touch screens. */
+  .focus-rating__button kbd {
+    display: none;
   }
 
   .focus-complete__actions {
