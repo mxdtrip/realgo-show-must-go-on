@@ -2,10 +2,10 @@ version: "3"
 
 vars:
   GO: '{{.GO | default "go"}}'
-  # --profile dev must not leak into PROD_COMPOSE (profiles would merge and
-  # both api variants would start), so the two commands are independent.
-  COMPOSE: '{{.COMPOSE | default "docker compose -f ../../docker-compose.yml --profile dev"}}'
-  PROD_COMPOSE: '{{.PROD_COMPOSE | default "docker compose -f ../../docker-compose.yml --profile prod-demo"}}'
+  COMPOSE: '{{.COMPOSE | default "docker compose -f ../../docker-compose.yml"}}'
+  # Server stack = base + prod overlay (vpngw, api netns, prod Caddyfile) +
+  # the prod-demo profile for frpc. See docker-compose.prod.yml.
+  PROD_COMPOSE: '{{.PROD_COMPOSE | default "docker compose -f ../../docker-compose.yml -f ../../docker-compose.prod.yml --profile prod-demo"}}'
 
 tasks:
   default:

@@ -12,43 +12,6 @@
 
 name: freeburger
 
-# Everything the api needs regardless of how it is wired into the network.
-# `api` (dev) and `api-prod` (prod-demo) below differ only in networking.
-x-api-common: &api-common
-  build:
-    context: ./services/api
-  restart: unless-stopped
-  environment:
-    CONFIG_PATH: /app/config.yaml
-    # "local" (default) = text logs at debug; anything else = JSON at info.
-    APP_ENV: ${APP_ENV:-local}
-    ADDRESS: 0.0.0.0:8080
-    DB_HOST: postgres
-    DB_PORT: "5432"
-    DB_USER: ${DB_USER:-postgres}
-    DB_PASSWORD: ${DB_PASSWORD:-postgres}
-    DB_NAME: ${DB_NAME:-freeburger}
-    DB_SSLMODE: disable
-    REDIS_HOST: redis
-    REDIS_PORT: "6379"
-    REDIS_PASSWORD: ${REDIS_PASSWORD:-}
-    AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:?AUTH_JWT_SECRET must be set}
-    AUTH_ACCESS_TTL: ${AUTH_ACCESS_TTL:-15m}
-    AUTH_REFRESH_TTL: ${AUTH_REFRESH_TTL:-720h}
-    # Optional: without a key the api still boots, AI card generation is
-    # just disabled. Prod gets it from the GEMINI_API_KEY GitHub secret.
-    # Despite the name, this currently holds a Groq key — AI_BASE_URL/AI_MODEL
-    # below point the OpenAI-compatible client at Groq instead of Google.
-    GEMINI_API_KEY: ${GEMINI_API_KEY:-}
-    AI_BASE_URL: ${AI_BASE_URL:-https://api.groq.com/openai/v1}
-    AI_MODEL: ${AI_MODEL:-llama-3.3-70b-versatile}
-    # In this stack the api is reachable only through the caddy container, so
-    # X-Forwarded-For from the docker network is trustworthy. Without this the
-    # auth rate limiter keys every request to caddy's container IP — one
-    # shared 20 req/min bucket for ALL users, i.e. any single client can lock
-    # everyone out of login/register/refresh.
-    TRUSTED_PROXY_CIDRS: ${TRUSTED_PROXY_CIDRS:-10.0.0.0/8,172.16.0.0/12,192.168.0.0/16}
-
 services:
   postgres:
     image: postgres:16-alpine
@@ -192,9 +155,9 @@ services:
   caddy:
     image: caddy:2-alpine
     restart: unless-stopped
-    # No depends_on api here: the api service differs per profile (api vs
-    # api-prod) and a profile-less service may not depend on a profiled one.
-    # Caddy simply 502s until the api upstream is up, then recovers.
+    # No depends_on api: on the server the api joins vpngw's netns only after
+    # vpngw is healthy (see docker-compose.prod.yml), so Caddy just 502s until
+    # the upstream is up, then recovers.
     environment:
       REALGO_EXTENSION_ORIGIN: ${REALGO_EXTENSION_ORIGIN:-chrome-extension://kclglopmphebagjjimjhdpnmoddmbgea}
     ports:
