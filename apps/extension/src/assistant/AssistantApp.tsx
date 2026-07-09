@@ -70,7 +70,6 @@ export function AssistantApp({ task, onAsk, variant = "dock", onClose }: Assista
     if (!trimmed || status === "loading") return;
 
     const history = messages.slice(-8);
-    const isFirstAssistantMessage = !messages.some((item) => item.role === "assistant");
     if (showUserMessage) {
       setMessages((items) => [...items, { role: "user", content: trimmed }]);
     }
@@ -85,7 +84,7 @@ export function AssistantApp({ task, onAsk, variant = "dock", onClose }: Assista
         { ...task, message: trimmed, hintLevel, history },
         (delta) => appendToLastAssistantMessage(delta)
       );
-      setMessages((items) => replaceLastMessage(items, formatHint(result, isFirstAssistantMessage)));
+      setMessages((items) => replaceLastMessage(items, formatHint(result)));
       setHintLevel((level) => Math.min(level + 1, 5));
     } catch (e) {
       setMessages((items) => items.slice(0, -1));
@@ -262,34 +261,12 @@ function platformTagClass(tag: string, platform: string): string {
   }
 }
 
-function formatHint(result: AssistantHintResult, showContext: boolean): string {
-  const parts = [stageLabel(result.stage), result.hint.trim()];
+function formatHint(result: AssistantHintResult): string {
+  const parts = [result.hint.trim()];
   if (result.question?.trim()) {
     parts.push(`Вопрос: ${result.question.trim()}`);
   }
-  // Only surface the connected-pattern context on the first reply — it's the
-  // same context every turn, so repeating it on each hint just adds noise.
-  if (showContext && result.problemKnown && result.patterns?.length) {
-    const names = result.patterns.slice(0, 2).map((pattern) => pattern.name).join(", ");
-    parts.push(`Контекст realgo: ${names}`);
-  }
   return parts.filter(Boolean).join("\n\n");
-}
-
-function stageLabel(stage: AssistantHintResult["stage"]): string {
-  switch (stage) {
-    case "pattern":
-      return "паттерн";
-    case "invariant":
-      return "инвариант";
-    case "next_step":
-      return "следующий шаг";
-    case "debug":
-      return "debug";
-    case "nudge":
-    default:
-      return "наводка";
-  }
 }
 
 function IconMinus() {
