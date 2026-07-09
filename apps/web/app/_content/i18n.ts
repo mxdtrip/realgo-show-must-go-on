@@ -776,6 +776,7 @@ const ru = {
           cardUnit: "карт.",
           dueLabel: "к повторению сегодня",
           estimatedTime: "~5 минут",
+          minuteUnit: "мин",
           mixEyebrow: "mix",
           mixTitle: "Что повторяем сегодня",
           types: [
