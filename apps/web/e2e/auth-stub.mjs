@@ -86,6 +86,33 @@ const STUB_RELEVANCE = {
   },
 };
 
+// Deterministic card review session for the /cards/session e2e specs.
+const CARD_SESSION = {
+  sessionId: "sess_stub",
+  scope: "due",
+  estimatedMinutes: 3,
+  cards: [
+    {
+      id: 9101,
+      type: "pattern_recognition",
+      sourceLabel: "Stub Problem · Two Pointers",
+      front: "STUB FRONT: which approach fits a sorted array?",
+      back: "STUB BACK: two pointers moving inward.",
+      createdByAi: true,
+      reviewState: { attempts: 0, lastRating: null, nextReviewAt: null },
+    },
+    {
+      id: 9102,
+      type: "edge_case",
+      sourceLabel: "Stub Problem · Edge Cases",
+      front: "STUB FRONT: what breaks on an empty input?",
+      back: "STUB BACK: guard the zero-length slice first.",
+      createdByAi: false,
+      reviewState: { attempts: 1, lastRating: "normal", nextReviewAt: "2026-07-01T00:00:00Z" },
+    },
+  ],
+};
+
 function atlasPayload(withCompany) {
   const subpatterns = [
     {
@@ -307,6 +334,34 @@ const server = createServer((req, res) => {
 
     if (req.method === "POST" && path === `${PREFIX}/auth/logout`) {
       return ok(res, { status: "ok" });
+    }
+
+    // ---- Card session fixtures (e2e for /cards/session) ----------------
+    if (path === `${PREFIX}/me/cards/session` && req.method === "GET") {
+      const bearer = (req.headers.authorization ?? "").replace(/^Bearer\s+/i, "");
+      const kind = kindOf(bearer);
+      if (kind === "FLAKY") return fail(res, 500, "server_error", "stub transient failure");
+      if (kind !== "LIVE") return fail(res, 401, "unauthorized", "stub: session invalid");
+      return ok(res, CARD_SESSION);
+    }
+
+    if (req.method === "POST" && /^\/api\/v1\/me\/cards\/\d+\/rate$/.test(path)) {
+      const bearer = (req.headers.authorization ?? "").replace(/^Bearer\s+/i, "");
+      if (kindOf(bearer) !== "LIVE") return fail(res, 401, "unauthorized", "stub: session invalid");
+      if (body.sessionId !== CARD_SESSION.sessionId) {
+        return fail(res, 400, "validation_error", "stub: unknown sessionId");
+      }
+      if (!["hard", "normal", "easy"].includes(body.rating)) {
+        return fail(res, 400, "validation_error", "stub: bad rating");
+      }
+      const cardId = Number(path.split("/").at(-2));
+      return ok(res, {
+        cardId,
+        rating: body.rating,
+        nextReviewAt: "2026-07-12T00:00:00Z",
+        repeatInCurrentSession: body.rating === "hard",
+        sessionProgress: { reviewed: 1, total: CARD_SESSION.cards.length, remaining: 1 },
+      });
     }
 
     // ---- Pattern Atlas fixtures (e2e for /patterns) --------------------
