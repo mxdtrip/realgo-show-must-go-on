@@ -181,9 +181,9 @@ export default function Home() {
               alt=""
               className="footer-powered__logo"
               decoding="async"
-              height="600"
+              height="1024"
               loading="lazy"
-              width="1586"
+              width="1024"
             />
           </span>
           <span>{copy.footer.tagline}</span>

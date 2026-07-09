@@ -94,7 +94,12 @@ function atlasPayload(withCompany) {
       position: 1,
       family_codes: ["binary_search"],
       tool_codes: ["tool_arrays"],
-      stats: stubStats({ problem_count: 12, solved_count: 3, due_count: 1 }),
+      stats: stubStats({
+        problem_count: 12,
+        solved_count: 3,
+        due_count: 1,
+        difficulty_counts: { easy: 3, medium: 6, hard: 3 },
+      }),
       mastery: stubMastery("unstable", 41),
     },
     {
@@ -103,7 +108,7 @@ function atlasPayload(withCompany) {
       position: 2,
       family_codes: ["binary_search"],
       tool_codes: ["tool_arrays"],
-      stats: stubStats({ problem_count: 4, solved_count: 4 }),
+      stats: stubStats({ problem_count: 4, solved_count: 4, difficulty_counts: { easy: 2, medium: 2 } }),
       mastery: stubMastery("mastered", 92),
     },
     {

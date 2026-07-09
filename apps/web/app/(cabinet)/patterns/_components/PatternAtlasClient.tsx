@@ -20,6 +20,9 @@ type AtlasCopy = ReturnType<typeof getDictionary>["cabinet"]["pages"]["atlas"];
 
 type LoadState = "loading" | "loaded" | "error";
 type AtlasView = "tree" | "readiness";
+type DifficultyLevel = "easy" | "medium" | "hard";
+type DifficultyBreakdown = { level: DifficultyLevel; count: number };
+type DifficultyCounts = Partial<Record<DifficultyLevel | "unknown", number>>;
 
 const COMPANY_KEY = "realgo.atlas.company";
 const VIEW_KEY = "realgo.atlas.view";
@@ -57,6 +60,30 @@ function familyStats(subs: readonly AtlasSubpattern[]) {
   };
 }
 
+function difficultyBreakdown(counts: DifficultyCounts | undefined): DifficultyBreakdown[] {
+  if (!counts) return [];
+  return (["easy", "medium", "hard"] as const)
+    .filter((level) => (counts[level] ?? 0) > 0)
+    .map((level) => ({ level, count: counts[level] ?? 0 }));
+}
+
+function DifficultyBadges({ levels }: Readonly<{ levels: readonly DifficultyBreakdown[] }>) {
+  return (
+    <span
+      className="atlas-difficulty-badges"
+      aria-label={levels.map((item) => `${item.level} ${item.count}`).join(", ")}
+    >
+      {levels.map(({ level, count }) => (
+        <span className={`atlas-difficulty-badge atlas-difficulty-badge--${level}`} key={level}>
+          <span>{level}</span>
+          {" "}
+          <span className="atlas-difficulty-badge__count">{count}</span>
+        </span>
+      ))}
+    </span>
+  );
+}
+
 function familyDifficulty(subs: readonly AtlasSubpattern[], copy: AtlasCopy) {
   const counts = { easy: 0, medium: 0, hard: 0, unknown: 0 };
 
@@ -80,17 +107,18 @@ function familyDifficulty(subs: readonly AtlasSubpattern[], copy: AtlasCopy) {
     return {
       label: copy.familyDifficultyUnknown,
       detail: copy.familyDifficultyNoData,
+      levels: [] as DifficultyBreakdown[],
       title: copy.familyDifficultyHint,
       known: false,
     };
   }
 
-  const parts = [`easy ${counts.easy}`, `medium ${counts.medium}`, `hard ${counts.hard}`];
-  if (counts.unknown > 0) parts.push(`unknown ${counts.unknown}`);
+  const levels = difficultyBreakdown(counts);
 
   return {
-    label: copy.familyDifficultyDistribution,
-    detail: parts.join(" · "),
+    label: "",
+    detail: "",
+    levels,
     title: copy.familyDifficultyHint,
     known: true,
   };
@@ -374,8 +402,14 @@ function TreeView({
                       </Link>
                     </span>
                     <span className="atlas-table__cell atlas-family__difficulty" role="cell" title={difficulty.title}>
-                      <strong className={difficulty.known ? undefined : "is-muted"}>{difficulty.label}</strong>
-                      <em>{difficulty.detail}</em>
+                      {difficulty.known ? (
+                        <DifficultyBadges levels={difficulty.levels} />
+                      ) : (
+                        <>
+                          <strong className="is-muted">{difficulty.label}</strong>
+                          {difficulty.detail ? <em>{difficulty.detail}</em> : null}
+                        </>
+                      )}
                     </span>
                     <span className="atlas-table__cell atlas-family__tasks" role="cell">
                       <strong>{stats.problemCount}</strong>
@@ -413,6 +447,7 @@ function TreeView({
 function SubpatternRow({ sub, copy }: Readonly<{ sub: AtlasSubpattern; copy: AtlasCopy }>) {
   const { mastery, stats } = sub;
   const started = mastery.status !== "not_started";
+  const difficulty = difficultyBreakdown(stats.difficulty_counts);
   return (
     <li className="atlas-sub">
       <Link href={`/patterns/${sub.code}`} className="atlas-sub__link">
@@ -423,6 +458,11 @@ function SubpatternRow({ sub, copy }: Readonly<{ sub: AtlasSubpattern; copy: Atl
             {copy.masteryStatuses[mastery.status]}
           </span>
           {started ? <span className="atlas-percent">{mastery.percent}%</span> : null}
+          {difficulty.length > 0 ? (
+            <span className="atlas-sub__difficulty">
+              <DifficultyBadges levels={difficulty} />
+            </span>
+          ) : null}
           {stats.problem_count > 0 ? (
             <span className="atlas-solved">
               {stats.solved_count}/{stats.problem_count}

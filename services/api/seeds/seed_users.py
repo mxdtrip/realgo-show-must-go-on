@@ -103,13 +103,14 @@ def parse_time(value):
 def upsert_user(cur, user, password_hash):
     cur.execute(
         """
-        INSERT INTO users (email, password_hash, timezone, plan, interview_date)
-        VALUES (%s, %s, %s, %s, %s)
+        INSERT INTO users (email, password_hash, timezone, plan, interview_date, onboarding_completed_at)
+        VALUES (%s, %s, %s, %s, %s, CURRENT_TIMESTAMP)
         ON CONFLICT (email) DO UPDATE SET
             password_hash = EXCLUDED.password_hash,
             timezone = EXCLUDED.timezone,
             plan = EXCLUDED.plan,
             interview_date = EXCLUDED.interview_date,
+            onboarding_completed_at = COALESCE(users.onboarding_completed_at, CURRENT_TIMESTAMP),
             updated_at = CURRENT_TIMESTAMP
         RETURNING id
         """,

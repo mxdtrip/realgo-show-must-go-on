@@ -196,8 +196,9 @@ export function ActivityHeatmap({
   const totalDays = weeks.reduce((sum, week) => sum + week.length, 0);
   const flatCounts = counts?.flat();
   const now = new Date();
-  const tipFor = (flatIndex: number): string | undefined => {
+  const tipFor = (weekIndex: number, dayIndex: number): string | undefined => {
     if (!tooltip) return undefined;
+    const flatIndex = weeks.slice(0, weekIndex).reduce((sum, w) => sum + w.length, 0) + dayIndex;
     const daysAgo = totalDays - 1 - flatIndex;
     const date = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysAgo);
     const label = `${date.getDate()} ${tooltip.months[date.getMonth()]}`;
@@ -218,7 +219,7 @@ export function ActivityHeatmap({
               return (
                 <i
                   className={`heatmap__cell${levelClass}${isToday ? " heatmap__cell--today" : ""}`}
-                  data-tip={tipFor(weekIndex * 7 + dayIndex)}
+                  data-tip={tipFor(weekIndex, dayIndex)}
                   key={dayIndex}
                 />
               );

@@ -5,7 +5,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useAuth } from "../_api/AuthProvider";
 import { ApiError } from "../_api/types";
+import { ReportProblemLauncher, openReportProblemDialog } from "../(cabinet)/ReportProblemDialog";
 import { getDictionary } from "../_content/i18n";
+import { AccountUserMenu } from "./AccountUserMenu";
 
 const WORD = "realgo";
 const LETTER_COUNT = WORD.length;
@@ -607,23 +609,18 @@ export function SortingMemoryHero() {
             </a>
           ))}
         </nav>
-        <div className="site-auth">
+        <div className={auth.status === "authenticated" && auth.user ? "site-auth site-auth--authenticated" : "site-auth"}>
           {auth.status === "authenticated" && auth.user ? (
-            // An authed visitor sees their account chip next to a way back
-            // into the cabinet, instead of being asked to log in again.
             <>
-              <a className="site-auth__account" href="/settings" title={auth.user.email}>
-                <span className="site-auth__avatar" aria-hidden="true">
-                  {auth.user.email.slice(0, 2).toLowerCase()}
-                </span>
-                <span className="site-auth__account-id">
-                  <strong>{auth.user.email.split("@")[0]}</strong>
-                  <span>{auth.user.plan}</span>
-                </span>
-              </a>
+              <AccountUserMenu
+                className="site-user-panel"
+                copy={dictionary.cabinet.layout.account}
+                onReport={openReportProblemDialog}
+              />
               <a className="site-auth__dashboard" href="/dashboard">
                 {copy.auth.dashboard}
               </a>
+              <ReportProblemLauncher copy={dictionary.cabinet.shell.report} showTrigger={false} />
             </>
           ) : (
             <>

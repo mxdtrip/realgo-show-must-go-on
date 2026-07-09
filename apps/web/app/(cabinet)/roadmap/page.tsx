@@ -13,15 +13,19 @@ export default function RoadmapPage() {
     todo: page.statusTodo,
   } as const;
 
-  const overall = Math.round(
-    roadmapWeeks.reduce((sum, week) => sum + week.progress, 0) / roadmapWeeks.length,
-  );
-
   const stateOf = (status: keyof typeof statuses) => {
     return { name: status, label: statuses[status] };
   };
 
   const isDoneStatus = (status: string) => status === "done";
+  const isWeekLocked = (index: number) =>
+    roadmapWeeks.slice(0, index).some((previousWeek) => !isDoneStatus(previousWeek.status));
+  const progressOf = (week: (typeof roadmapWeeks)[number], index: number) =>
+    isWeekLocked(index) ? 0 : week.progress;
+
+  const overall = Math.round(
+    roadmapWeeks.reduce((sum, week, index) => sum + progressOf(week, index), 0) / roadmapWeeks.length,
+  );
 
   return (
     <main className="cabinet-page">
@@ -53,9 +57,8 @@ export default function RoadmapPage() {
         <ol className="roadmap-track">
           {roadmapWeeks.map((week, index) => {
             const state = stateOf(week.status);
-            const isLocked = roadmapWeeks
-              .slice(0, index)
-              .some((previousWeek) => !isDoneStatus(previousWeek.status));
+            const isLocked = isWeekLocked(index);
+            const visibleProgress = progressOf(week, index);
             return (
               <li className={`roadmap-step roadmap-step--${state.name}`} key={week.id}>
                 <div className="roadmap-step__rail">
@@ -73,23 +76,19 @@ export default function RoadmapPage() {
                     <h2>{week.title}</h2>
                     <p>{week.focus}</p>
                     <div className="roadmap-step__progress">
-                      <ProgressBar value={week.progress} label={`${week.title} progress`} />
-                      <strong>{week.progress}%</strong>
+                      <ProgressBar value={visibleProgress} label={`${week.title} progress`} />
+                      <strong>{visibleProgress}%</strong>
                     </div>
                   </div>
                   {isLocked ? (
                     <div className="roadmap-step__practice-card roadmap-step__practice-card--locked">
                       <span className="roadmap-step__practice-eyebrow">{page.lockedEyebrow}</span>
                       <strong>{page.lockedTitle}</strong>
-                      <span>{page.lockedDescription}</span>
                     </div>
                   ) : (
                     <Link className="roadmap-step__practice-card" href={week.practiceHref}>
                       <span className="roadmap-step__practice-eyebrow">{page.practiceEyebrow}</span>
                       <strong>{page.practiceCta}</strong>
-                      <span>
-                        {week.items.length} {page.subpatternsLabel} · {week.practiceMeta}
-                      </span>
                       <em>
                         {page.practiceAction}
                         <CabinetIcon name="arrow" />

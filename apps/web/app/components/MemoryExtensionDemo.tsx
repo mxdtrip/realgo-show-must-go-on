@@ -47,13 +47,13 @@ export function MemoryExtensionDemo() {
   }
 
   return (
-    <div className="realgo-popup" aria-label="Демо интерфейса расширения realgo">
+    <div className="realgo-popup" aria-label="Демо интерфейса расширения ReAlgo">
       <style>{MEMORY_DEMO_CSS}</style>
 
       <div className="realgo-header">
         <span className="realgo-brand">
           <BrandMark />
-          realgo
+          ReAlgo
           <span className="realgo-path">~/ext</span>
         </span>
       </div>
@@ -106,7 +106,7 @@ export function MemoryExtensionDemo() {
                 ))}
               </div>
             </div>
-            <p className="realgo-hint">Выберите сложность — realgo сохранит результат</p>
+            <p className="realgo-hint">Выберите сложность — ReAlgo сохранит результат</p>
           </div>
         </>
       )}
