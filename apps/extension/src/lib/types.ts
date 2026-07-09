@@ -208,6 +208,27 @@ export const STORAGE_KEYS = {
   userEmail: "realgo:userEmail",
 } as const;
 
+/** Prefix for per-task assistant conversation state (suffix = task key). */
+export const ASSISTANT_STATE_KEY_PREFIX = "realgo:assistant:";
+
+/**
+ * Assistant conversation state persisted per task, so closing the toolbar
+ * popup (which unmounts React) doesn't reset the hint counter/cooldown —
+ * otherwise every reopen would hand out a fresh set of LLM hints.
+ */
+export interface AssistantPersistedState {
+  messages: AssistantMessage[];
+  hintLevel: number;
+  hintsUsed: number;
+  /** Absolute epoch ms; survives reopen so the countdown keeps running. */
+  cooldownEndAt: number | null;
+  patterns?: AssistantPattern[];
+  problemKnown: boolean;
+  patternUsed: boolean;
+  /** Epoch ms of the last save; entries older than a day get pruned. */
+  savedAt: number;
+}
+
 export const DEFAULT_API_BASE_URL = "https://realgo.dev";
 
 /** realgo web app (the cabinet). "К повторению" opens its review cards here. */

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { getAssistantState, setAssistantState } from "../lib/storage";
 import type {
   AssistantHintPayload,
   AssistantHintResult,
@@ -10,10 +11,13 @@ import type {
 import { ASSISTANT_CSS } from "./assistant.styles";
 
 const BRAND_LOGO_URL = new URL("../../assets/icon.png", import.meta.url).href;
-const DEFAULT_MESSAGE = "Я застрял. Дай первую мягкую подсказку, без решения.";
+const FIRST_MESSAGE = "Я застрял. Дай первую мягкую подсказку, без решения.";
+const NEXT_MESSAGE = "Дай следующий намёк, но всё ещё без полного решения.";
 // Keep in sync with maxAssistantHintLevel in services/api/internal/ai/assistant_handler.go.
 const MAX_HINTS = 3;
 const HINT_COOLDOWN_MS = 30_000;
+// Must cover the panel-out animation in assistant.styles.ts (0.18s).
+const COLLAPSE_MS = 200;
 
 interface AssistantAppProps {
   task: AssistantTask;
@@ -29,6 +33,7 @@ type AskStatus = "idle" | "loading";
 
 export function AssistantApp({ task, onAsk, variant = "dock", onClose }: AssistantAppProps) {
   const [open, setOpen] = useState(variant === "panel");
+  const [closing, setClosing] = useState(false);
   const [messages, setMessages] = useState<AssistantMessage[]>([]);
   const [status, setStatus] = useState<AskStatus>("idle");
   const [error, setError] = useState("");
@@ -39,6 +44,9 @@ export function AssistantApp({ task, onAsk, variant = "dock", onClose }: Assista
   const [patterns, setPatterns] = useState<AssistantPattern[] | undefined>();
   const [problemKnown, setProblemKnown] = useState(false);
   const [patternUsed, setPatternUsed] = useState(false);
+  // Blocks persistence until the stored state for the current task has been
+  // loaded — otherwise the initial empty state would clobber it on mount.
+  const [hydrated, setHydrated] = useState(false);
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
   const taskKey = `${task.platform}:${task.platformTaskSlug}:${task.taskUrl}`;
@@ -59,6 +67,7 @@ export function AssistantApp({ task, onAsk, variant = "dock", onClose }: Assista
 
   useEffect(() => {
     if (variant === "panel") setOpen(true);
+    setHydrated(false);
     setMessages([]);
     setStatus("idle");
     setError("");
@@ -68,7 +77,51 @@ export function AssistantApp({ task, onAsk, variant = "dock", onClose }: Assista
     setPatterns(undefined);
     setProblemKnown(false);
     setPatternUsed(false);
+
+    // Rehydrate this task's conversation: the toolbar popup unmounts on every
+    // close, and without this each reopen would grant a fresh hint set.
+    let alive = true;
+    getAssistantState(taskKey)
+      .then((saved) => {
+        if (!alive || !saved) return;
+        setMessages(saved.messages);
+        setHintLevel(saved.hintLevel);
+        setHintsUsed(saved.hintsUsed);
+        setCooldownEndAt(saved.cooldownEndAt);
+        setPatterns(saved.patterns);
+        setProblemKnown(saved.problemKnown);
+        setPatternUsed(saved.patternUsed);
+        setNow(Date.now());
+      })
+      .catch(() => {
+        /* no stored state — start fresh */
+      })
+      .finally(() => {
+        if (alive) setHydrated(true);
+      });
+    return () => {
+      alive = false;
+    };
   }, [taskKey, variant]);
+
+  // Persist after each completed exchange (not mid-stream: the placeholder
+  // message and per-delta updates would spam storage with partial states).
+  useEffect(() => {
+    if (!hydrated || status !== "idle") return;
+    void setAssistantState(taskKey, {
+      messages,
+      hintLevel,
+      hintsUsed,
+      cooldownEndAt,
+      patterns,
+      problemKnown,
+      patternUsed,
+      savedAt: Date.now(),
+    }).catch(() => {
+      /* persistence is best-effort */
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hydrated, status, messages, hintsUsed, patternUsed, cooldownEndAt]);
 
   // Ticks `now` while a cooldown is running so the recharge bar/countdown
   // stay live; stops itself once the cooldown has actually elapsed.
@@ -86,19 +139,13 @@ export function AssistantApp({ task, onAsk, variant = "dock", onClose }: Assista
     bottomRef.current?.scrollIntoView({ block: "end" });
   }, [messages, status, error]);
 
-  useEffect(() => {
-    // `error` must gate this: without it, a failed first ask() resets status
-    // back to "idle" with messages still empty, so this effect re-fires and
-    // silently retries — back-to-back failures then look like the spinner
-    // never stopping instead of a visible error.
-    if (!open || status !== "idle" || messages.length > 0 || error) return;
-    void ask(DEFAULT_MESSAGE, false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, taskKey, status, messages.length, error]);
+  // No auto-ask on open: the first hint costs an LLM call, so it must be an
+  // explicit button press. (The old auto-ask fired on every popup mount —
+  // collapse/expand regenerated the first hint and burned quota each time.)
 
   async function ask(message: string, showUserMessage = true) {
     const trimmed = message.trim();
-    if (!trimmed || status === "loading" || hintsUsed >= MAX_HINTS) return;
+    if (!trimmed || status === "loading" || hintsUsed >= MAX_HINTS || !hydrated) return;
 
     const history = messages.slice(-8);
     if (showUserMessage) {
@@ -157,7 +204,15 @@ export function AssistantApp({ task, onAsk, variant = "dock", onClose }: Assista
       onClose();
       return;
     }
-    if (variant === "dock") setOpen(false);
+    // Dock collapse plays the panel-out animation first, then unmounts the
+    // panel; `closing` keeps it rendered for the animation's duration.
+    if (variant === "dock" && !closing) {
+      setClosing(true);
+      window.setTimeout(() => {
+        setOpen(false);
+        setClosing(false);
+      }, COLLAPSE_MS);
+    }
   }
 
   if (!open) {
@@ -173,7 +228,11 @@ export function AssistantApp({ task, onAsk, variant = "dock", onClose }: Assista
   }
 
   return (
-    <div className={`realgo-assistant realgo-assistant--open realgo-assistant--${variant}`}>
+    <div
+      className={`realgo-assistant realgo-assistant--open realgo-assistant--${variant} ${
+        closing ? "realgo-assistant--closing" : ""
+      }`}
+    >
       <style>{ASSISTANT_CSS}</style>
       <section className="realgo-agent-panel" aria-label="realgo AI assistant">
         <header className="realgo-agent-header">
@@ -230,7 +289,10 @@ export function AssistantApp({ task, onAsk, variant = "dock", onClose }: Assista
           {messages.length === 0 && status === "idle" && !error && (
             <article className="realgo-agent-msg realgo-agent-msg--assistant">
               <span className="realgo-agent-msg__role">agent</span>
-              <p>Вижу открытую задачу. Нажми на агент или выбери быстрый запрос — буду вести по одному шагу.</p>
+              <p>
+                Вижу открытую задачу. Нажми «получить подсказку» — начну с мягкой наводки,
+                без решения. Всего подсказок {MAX_HINTS}, каждая следующая конкретнее.
+              </p>
             </article>
           )}
           {isStreamingEmpty && (
@@ -248,8 +310,10 @@ export function AssistantApp({ task, onAsk, variant = "dock", onClose }: Assista
             <button
               type="button"
               className="realgo-agent-btn realgo-agent-btn--hint"
-              disabled={status === "loading" || hintsExhausted || isCoolingDown}
-              onClick={() => ask("Дай следующий намёк, но всё ещё без полного решения.")}
+              disabled={status === "loading" || hintsExhausted || isCoolingDown || !hydrated}
+              onClick={() =>
+                hintsUsed === 0 ? ask(FIRST_MESSAGE, false) : ask(NEXT_MESSAGE)
+              }
             >
               {isCoolingDown && (
                 <span
@@ -261,7 +325,9 @@ export function AssistantApp({ task, onAsk, variant = "dock", onClose }: Assista
               <span className="realgo-agent-btn__label">
                 {isCoolingDown
                   ? `через ${Math.ceil(cooldownRemainingMs / 1000)}с`
-                  : "следующий намёк"}
+                  : hintsUsed === 0
+                    ? "получить подсказку"
+                    : "следующий намёк"}
               </span>
             </button>
             <button

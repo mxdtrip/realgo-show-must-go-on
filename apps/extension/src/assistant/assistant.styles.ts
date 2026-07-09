@@ -70,12 +70,58 @@ export const ASSISTANT_CSS = `
   overflow: hidden;
   border: 1px solid var(--border);
   border-radius: 12px;
+  /* Expands out of the collapsed pill's corner (dock sits bottom-right). */
+  transform-origin: bottom right;
+  animation: realgo-agent-panel-in 0.22s cubic-bezier(0.2, 0.72, 0.22, 1) both;
   background:
     radial-gradient(360px 220px at 86% -10%, rgba(56, 139, 253, 0.1), transparent 68%),
     var(--bg);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.04),
     0 24px 70px -32px rgba(1, 4, 9, 0.95);
+}
+
+@keyframes realgo-agent-panel-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+/* Collapse: the component keeps the panel mounted for COLLAPSE_MS while this
+   plays, then swaps to the pill button (see handleClose in AssistantApp). */
+.realgo-assistant--closing .realgo-agent-panel {
+  animation: realgo-agent-panel-out 0.18s cubic-bezier(0.64, 0.02, 0.4, 1) both;
+  pointer-events: none;
+}
+
+@keyframes realgo-agent-panel-out {
+  from {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0) scale(0.94);
+  }
+}
+
+/* The pill pops in right after the panel collapses into its corner. */
+.realgo-assistant--closed .realgo-agent-button {
+  transform-origin: bottom right;
+  animation: realgo-agent-panel-in 0.18s cubic-bezier(0.2, 0.72, 0.22, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .realgo-agent-panel,
+  .realgo-assistant--closing .realgo-agent-panel,
+  .realgo-assistant--closed .realgo-agent-button {
+    animation: none;
+  }
 }
 
 .realgo-agent-header {

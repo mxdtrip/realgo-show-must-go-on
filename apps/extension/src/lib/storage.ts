@@ -1,8 +1,10 @@
 import {
+  ASSISTANT_STATE_KEY_PREFIX,
   DEFAULT_API_BASE_URL,
   DEFAULT_WEB_BASE_URL,
   REVIEW_PATH,
   STORAGE_KEYS,
+  type AssistantPersistedState,
   type DetectedSubmission,
   type TokenPair,
 } from "./types";
@@ -89,4 +91,39 @@ export function setLastSubmission(submission: DetectedSubmission): Promise<void>
 
 export function clearLastSubmission(): Promise<void> {
   return chrome.storage.local.remove(STORAGE_KEYS.lastSubmission);
+}
+
+/** A day: assistant state older than this is stale (limits reset per task/day). */
+const ASSISTANT_STATE_TTL_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Loads the persisted assistant conversation for a task and, piggybacking on
+ * the same storage read, prunes stale entries for other tasks so the store
+ * doesn't accumulate one record per problem ever opened.
+ */
+export async function getAssistantState(
+  taskKey: string
+): Promise<AssistantPersistedState | undefined> {
+  const all = await chrome.storage.local.get(null);
+  const staleKeys: string[] = [];
+  const cutoff = Date.now() - ASSISTANT_STATE_TTL_MS;
+  for (const [key, value] of Object.entries(all)) {
+    if (!key.startsWith(ASSISTANT_STATE_KEY_PREFIX)) continue;
+    const savedAt = (value as AssistantPersistedState | undefined)?.savedAt ?? 0;
+    if (savedAt < cutoff) staleKeys.push(key);
+  }
+  if (staleKeys.length > 0) {
+    await chrome.storage.local.remove(staleKeys);
+  }
+
+  const key = ASSISTANT_STATE_KEY_PREFIX + taskKey;
+  if (staleKeys.includes(key)) return undefined;
+  return all[key] as AssistantPersistedState | undefined;
+}
+
+export function setAssistantState(
+  taskKey: string,
+  state: AssistantPersistedState
+): Promise<void> {
+  return set(ASSISTANT_STATE_KEY_PREFIX + taskKey, state);
 }
