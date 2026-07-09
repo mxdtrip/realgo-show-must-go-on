@@ -50,6 +50,8 @@ type FocusCardReviewSessionProps = {
   brand: string;
   cards: readonly ReviewCard[];
   copy: FocusCopy;
+  /** Fire-and-forget side channel for persisting a rating (e.g. POST to the api). */
+  onRate?: (cardId: string, rating: ReviewRating, reviewedAt: string) => void;
 };
 
 const ratings = [
@@ -60,7 +62,7 @@ const ratings = [
 
 const cardExitMs = 420;
 
-export function FocusCardReviewSession({ brand, cards, copy }: Readonly<FocusCardReviewSessionProps>) {
+export function FocusCardReviewSession({ brand, cards, copy, onRate }: Readonly<FocusCardReviewSessionProps>) {
   const [advanceRating, setAdvanceRating] = useState<ReviewRating | null>(null);
   const advanceTimeoutRef = useRef<number | null>(null);
 
@@ -74,7 +76,7 @@ export function FocusCardReviewSession({ brand, cards, copy }: Readonly<FocusCar
     });
   }, [copy.sessionCompleteBody, copy.sessionCompleteTitle]);
 
-  const session = useCardReviewSession(cards, copy.nextReview, notifyComplete);
+  const session = useCardReviewSession(cards, copy.nextReview, notifyComplete, onRate);
   const currentPosition = Math.min(session.completedUnique + 1, session.totalCards);
   const isAdvancing = advanceRating !== null;
 

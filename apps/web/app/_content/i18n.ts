@@ -793,6 +793,7 @@ const ru = {
         },
         session: {
           loading: "Loading card session…",
+          sessionError: "Не удалось загрузить карточки. Обнови страницу или загляни позже.",
           progress: "reviewed",
           remaining: "remaining",
           showAnswer: "Show answer",
