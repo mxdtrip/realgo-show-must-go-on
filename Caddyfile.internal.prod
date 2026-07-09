@@ -1,11 +1,11 @@
-# Internal home-stack router. It intentionally has no public domain: the VPS
-# edge Caddy terminates TLS for realgo.dev and reaches this listener through frp.
+# Prod-only variant of Caddyfile.internal, mounted instead of it by
+# docker-compose.prod.yml. Identical except for the api upstream: on the
+# server api shares vpngw's network namespace (network_mode: "service:vpngw"
+# in docker-compose.prod.yml) so its outbound public traffic — Groq calls in
+# particular — rides the VLESS tunnel. That means api is only reachable here
+# as vpngw:8080, not api:8080. Keep this file in sync with Caddyfile.internal
+# for everything else.
 
-# Requests arrive here through the frp tunnel, so the TCP peer is the frpc
-# container, not the browser. The VPS edge Caddy has already stamped the real
-# client IP into X-Forwarded-For; trust private peers so that header is passed
-# through (with the tunnel hop appended) instead of being replaced. The api's
-# rate limiter then keys on the real client IP rather than one shared proxy IP.
 {
 	servers {
 		trusted_proxies static private_ranges
@@ -28,7 +28,7 @@
 			@preflight method OPTIONS
 			respond @preflight 204
 
-			reverse_proxy api:8080
+			reverse_proxy vpngw:8080
 		}
 	}
 
