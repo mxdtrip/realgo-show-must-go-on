@@ -54,7 +54,7 @@ jobs:
           # same way `docker compose ps`/`logs` do in any step that lacks the
           # secrets env block from "Build & start": every docker-compose.yml
           # variable, not just the ones this step cares about, must resolve).
-          container=$(docker ps --filter "name=freeburger-api-prod-1" --format "{{.Names}}" | head -n1)
+          container=$(docker ps --filter "name=freeburger-api-1" --format "{{.Names}}" | head -n1)
           if [ -z "$container" ]; then
             echo "api container not found by name filter"
           else
@@ -66,7 +66,7 @@ jobs:
         # destroy the very evidence we're trying to look at.
         if: github.event_name == 'workflow_dispatch' && inputs.mode == 'logs'
         run: |
-          container=$(docker ps --filter "name=freeburger-api-prod-1" --format "{{.Names}}" | head -n1)
+          container=$(docker ps --filter "name=freeburger-api-1" --format "{{.Names}}" | head -n1)
           if [ -z "$container" ]; then
             echo "api container not found by name filter"
             exit 0
