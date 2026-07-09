@@ -5,17 +5,16 @@ reverse tunnel через `deploy/vps`.
 
 ## Схема
 
-- Dev profile (`--profile dev`, включается через `COMPOSE_PROFILES=dev` в
-  `.env`): корневой `docker-compose.yml` поднимает `api` (собственная сеть),
-  `web`, `caddy`, `postgres`, `redis`, миграции и seed jobs — без VPS tunnel
-  и без vpngw.
-- Prod-demo profile (`--profile prod-demo`): тот же compose, но вместо `api`
-  поднимается `api-prod` в network namespace шлюза `vpngw`, плюс `frpc`.
-  Профили взаимоисключающие — не включать оба сразу.
+- Dev stack: корневой `docker-compose.yml` поднимает `api` (собственная
+  сеть), `web`, `caddy`, `postgres`, `redis`, миграции и seed jobs — без VPS
+  tunnel и без vpngw. Обычный `docker compose up` этого файла достаточно.
+- Prod-demo: base + overlay `docker-compose.prod.yml` (vpngw; api переезжает
+  в его network namespace; caddy монтирует `Caddyfile.internal.prod`) +
+  профиль `prod-demo` для `frpc`.
 - VPS edge: `deploy/vps/docker-compose.yml` поднимает `frps` и публичный Caddy.
 - TLS завершается на VPS Caddy. Home Caddy получает plain HTTP через frp и
-  роутит `/api/*` в `api:8080` (в prod-demo это alias vpngw), остальное
-  в `web:3000`.
+  роутит `/api/*` в api (`api:8080` в dev, `vpngw:8080` на сервере — см.
+  `Caddyfile.internal.prod`), остальное в `web:3000`.
 
 ## Локальный dev запуск
 
@@ -55,10 +54,7 @@ cp .env.example .env
 | `AUTH_JWT_SECRET` | home `.env` | Случайная строка минимум 32 символа; не placeholder. |
 | `FRP_VPS_HOST` | home `.env` | Публичный IP или hostname VPS. |
 | `FRP_TOKEN` | home `.env`, VPS `.env` | Один и тот же случайный shared token. |
-| `VPN_SUB_URL` | home `.env` / secret | VLESS-подписка для vpngw; без неё vpngw не станет healthy и `api-prod` не стартует. |
-
-На сервере в `.env` НЕ должно быть `COMPOSE_PROFILES` — профиль передаётся
-флагом `--profile prod-demo` из deploy workflow.
+| `VPN_SUB_URL` | home `.env` / secret | VLESS-подписка для vpngw; без неё overlay не отрезолвится и vpngw/api не стартуют. |
 
 Прод-демо значения, которые обычно оставляем явно:
 
@@ -88,7 +84,7 @@ Home stack:
 ```sh
 cp .env.example .env
 # отредактировать AUTH_JWT_SECRET, FRP_VPS_HOST, FRP_TOKEN, DB_PASSWORD
-docker compose --profile prod-demo up -d --build
+docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile prod-demo up -d --build
 docker compose ps
 ```
 
@@ -121,13 +117,13 @@ Expected:
 
 - `/healthz` возвращает `{"status":"ok"}`.
 - `/readyz` возвращает `{"status":"ready"}`.
-- `docker compose ps` показывает `api-prod`, `vpngw`, `web`, `caddy`, `frpc`,
+- `docker compose ps` показывает `api`, `vpngw`, `web`, `caddy`, `frpc`,
   `postgres`, `redis` как running/healthy; `migrate` завершен успешно.
 
 Если публичный healthcheck не проходит:
 
 ```sh
-docker compose --profile prod-demo logs -f caddy frpc api-prod
+docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile prod-demo logs -f caddy frpc api
 cd deploy/vps && docker compose logs -f caddy frps
 ```
 
@@ -155,7 +151,7 @@ review attempt, weak patterns.
 
 ```sh
 git switch main
-docker compose --profile prod-demo up -d --build
+docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile prod-demo up -d --build
 curl -fsS http://localhost:${API_PORT:-8080}/readyz
 ```
 

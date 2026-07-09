@@ -32,9 +32,9 @@ Node-приложения пока хранят собственные `package-
 
 ## Быстрый запуск
 
-Compose разделён на профили: `dev` (локальная разработка, api со своей сетью,
-без VPN/tunnel) и `prod-demo` (сервер: vpngw + frpc, api в netns vpngw).
-`VPN_SUB_URL`, `FRP_VPS_HOST`, `FRP_TOKEN` нужны только для `prod-demo`.
+`docker-compose.yml` — базовый (локальный) стек; всё серверное (vpngw, netns
+для api, prod Caddyfile) вынесено в overlay `docker-compose.prod.yml`.
+`VPN_SUB_URL`, `FRP_VPS_HOST`, `FRP_TOKEN` нужны только серверу.
 
 Локальный dev stack:
 
@@ -46,10 +46,9 @@ curl -fsS http://localhost:8080/healthz
 curl -fsS http://localhost:8080/readyz
 ```
 
-`.env.example` включает `COMPOSE_PROFILES=dev`, поэтому обычный
-`docker compose up` поднимает dev-профиль. Если ваш `.env` создан раньше,
-добавьте в него `COMPOSE_PROFILES=dev` (или запускайте
-`docker compose --profile dev up -d --build`) — иначе api не стартует.
+Сайт и API доступны через Caddy на `http://localhost:8080` (порт меняется
+переменной `API_PORT`). Порт 3000 наружу не публикуется: web-контейнер виден
+только внутри docker-сети, Caddy проксирует на него всё, кроме `/api/*`.
 
 То же из backend-директории:
 
@@ -67,11 +66,11 @@ Caddy. Полный стек с web: `make up` / `task up`.
 Если Docker пишет `permission denied` к сокету, это не ошибка проекта: запустите
 Docker Desktop или добавьте пользователя в docker group и перелогиньтесь.
 
-Prod-demo с reverse tunnel запускается отдельным profile (не совмещать с `dev`
-в одном запуске):
+Prod-demo (сервер) запускается с overlay и профилем `prod-demo`:
 
 ```sh
-docker compose --profile prod-demo up -d --build
+docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile prod-demo up -d --build
+# или: cd services/api && make prod-demo-up / task prod-demo-up
 ```
 
 Для prod-demo нужны `FRP_VPS_HOST`, `FRP_TOKEN` и `VPN_SUB_URL`; для обычной
