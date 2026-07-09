@@ -4039,10 +4039,8 @@ a.roadmap-step__practice-card:hover {
   border-radius: 28px;
   background:
     linear-gradient(145deg, rgba(88, 166, 255, 0.08), transparent 38%),
-    rgba(13, 17, 23, 0.5);
+    rgba(13, 17, 23, 0.72);
   box-shadow: 0 26px 80px -54px rgba(0, 0, 0, 0.9);
-  backdrop-filter: blur(14px) saturate(112%);
-  -webkit-backdrop-filter: blur(14px) saturate(112%);
 }
 
 .focus-card-stack__edge--back {
@@ -4129,36 +4127,43 @@ a.roadmap-step__practice-card:hover {
   transform-style: preserve-3d;
 }
 
+/* NB: no overflow:hidden and no backdrop-filter here. Firefox ignores
+   backface-visibility on elements that clip (overflow/border-radius clipping
+   via overflow) or filter themselves (bugzilla #1201471), which made both
+   faces render at once. Backgrounds are near-opaque instead of blurred. */
 .focus-card__face {
   position: absolute;
   inset: 0;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
   gap: 24px;
-  overflow: hidden;
   border: 1px solid rgba(88, 166, 255, 0.22);
   border-radius: 28px;
   padding: clamp(24px, 5vw, 56px);
-  background: rgba(13, 17, 23, 0.8);
+  background: rgba(13, 17, 23, 0.94);
   box-shadow:
     0 44px 120px -58px rgba(0, 0, 0, 0.95),
     inset 0 1px 0 rgba(255, 255, 255, 0.045);
-  backdrop-filter: blur(22px) saturate(125%);
-  -webkit-backdrop-filter: blur(22px) saturate(125%);
   transition:
     border-color 0.28s ease,
-    background 0.28s ease;
+    background 0.28s ease,
+    visibility 0s linear 0.34s;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
 }
 
+/* Belt-and-braces for browsers where backface culling still glitches: the
+   inactive face is fully hidden. The 0.34s visibility delay (half the 0.68s
+   flip) swaps faces exactly when the card is edge-on, so the flip animation
+   itself looks unchanged. */
 .focus-card__face[aria-hidden="true"] {
+  visibility: hidden;
   pointer-events: none;
 }
 
 .focus-card__face--back {
   border-color: rgba(63, 185, 80, 0.32);
-  background: rgba(13, 22, 18, 0.82);
+  background: rgba(13, 22, 18, 0.94);
   transform: rotateY(180deg);
 }
 
@@ -4166,6 +4171,7 @@ a.roadmap-step__practice-card:hover {
   content: "";
   position: absolute;
   inset: 0;
+  border-radius: inherit;
   pointer-events: none;
   opacity: 0.48;
   background:
