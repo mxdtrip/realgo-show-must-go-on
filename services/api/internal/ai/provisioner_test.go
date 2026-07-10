@@ -175,6 +175,27 @@ func TestProvisioner_Provision_OtherErrorsPropagate(t *testing.T) {
 	if repo.logs[0] != "failed" {
 		t.Fatalf("logs = %v, want [failed]", repo.logs)
 	}
+	if len(repo.upserted) != 0 {
+		t.Fatalf("expected no cards stored, got %d", len(repo.upserted))
+	}
+}
+
+// TestProvisioner_Provision_InvalidGenerationNotPersisted guards the "мусор
+// в БД не пишем" contract at the Provisioner boundary: a Provider that fails
+// strict validation (e.g. GeminiProvider after exhausting its retry) must
+// never reach UpsertGeneratedCards.
+func TestProvisioner_Provision_InvalidGenerationNotPersisted(t *testing.T) {
+	repo := &fakeProvisionRepo{}
+	provider := aitest.New()
+	provider.Err = errors.New("ai: model returned 2 cards, want exactly 3")
+	p := ai.NewProvisioner(repo, newFakeLocker(), provider, testLogger())
+
+	if err := p.Provision(context.Background(), 1, "leetcode", "two-sum"); err == nil {
+		t.Fatal("expected the validation failure to propagate")
+	}
+	if len(repo.upserted) != 0 {
+		t.Fatalf("expected no cards stored for an invalid generation, got %d", len(repo.upserted))
+	}
 }
 
 func TestProvisioner_ProvisionAsync_ConcurrentCallsGenerateOnce(t *testing.T) {

@@ -5,16 +5,40 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/mxdtrip/freeburger/services/api/internal/config"
 )
 
 const requestTimeout = 45 * time.Second
+
+// chatMaxAttempts bounds retries on transient upstream failures (429/5xx):
+// the first call plus this many extra attempts, with exponential backoff.
+const chatMaxAttempts = 3
+
+// chatRetryBaseDelay is GeminiProvider.retryDelay's default: the backoff
+// before the first retry, doubling each subsequent attempt.
+const chatRetryBaseDelay = 400 * time.Millisecond
+
+// Card content limits are a defense-in-depth backstop, not the primary
+// contract (the prompt already instructs a short answer/explanation): they
+// exist to reject a malformed or run-on model reply before it reaches
+// Postgres, independent of whatever the prompt says today.
+const (
+	maxCardQuestionRunes    = 500
+	maxCardAnswerRunes      = 800
+	maxCardExplanationRunes = 500
+)
+
+// requiredCardTypes is the exact set (order-independent) the prompt commits
+// to producing — see "## Состав" in prompts/generate_cards_v1.md.
+var requiredCardTypes = []string{"pattern_recognition", "algorithm_mechanics", "edge_case"}
 
 // GeminiProvider calls Gemini's OpenAI-compatible chat completions endpoint
 // (see config.AI) using the generate_cards_v1 prompt.
@@ -23,6 +47,9 @@ type GeminiProvider struct {
 	model      string
 	baseURL    string
 	httpClient *http.Client
+	// retryDelay is the base backoff delay for chat()'s 429/5xx retries.
+	// Defaults to chatRetryBaseDelay; tests shrink it to keep runtime short.
+	retryDelay time.Duration
 }
 
 // NewGeminiProvider builds a Provider from the loaded AI config. Callers must
@@ -34,6 +61,7 @@ func NewGeminiProvider(cfg config.AI) *GeminiProvider {
 		model:      cfg.Model,
 		baseURL:    strings.TrimRight(cfg.BaseURL, "/"),
 		httpClient: &http.Client{Timeout: requestTimeout},
+		retryDelay: chatRetryBaseDelay,
 	}
 }
 
@@ -71,21 +99,55 @@ type chatCompletionChunk struct {
 
 func (p *GeminiProvider) ModelName() string { return p.model }
 
+// GenerateCards asks the model for the three-card batch and strictly
+// validates the reply (see parseGenerationContent). A reply that fails
+// validation (bad JSON, wrong card count/types, empty or oversized fields)
+// gets exactly one retry with feedback describing what was wrong — the
+// model's own bad reply plus the failure become extra turns in the same
+// conversation — before giving up; an invalid batch is never persisted.
 func (p *GeminiProvider) GenerateCards(ctx context.Context, in GenerateCardsInput) ([]GeneratedCard, error) {
 	userContent, err := renderPromptUser(promptUserTmplV1, in)
 	if err != nil {
 		return nil, err
 	}
 
-	content, err := p.chat(ctx, []chatMessage{
+	messages := []chatMessage{
 		{Role: "system", Content: promptSystemV1},
 		{Role: "user", Content: userContent},
-	})
+	}
+
+	content, err := p.chat(ctx, messages)
 	if err != nil {
 		return nil, err
 	}
 
+	cards, parseErr := parseGenerationContent(content)
+	if parseErr == nil || errors.Is(parseErr, ErrUnknownProblem) {
+		return cards, parseErr
+	}
+
+	messages = append(messages,
+		chatMessage{Role: "assistant", Content: content},
+		chatMessage{Role: "user", Content: invalidCardsFeedback(parseErr)},
+	)
+	content, err = p.chat(ctx, messages)
+	if err != nil {
+		return nil, err
+	}
 	return parseGenerationContent(content)
+}
+
+// invalidCardsFeedback builds the retry turn telling the model what was
+// wrong with its previous reply, so the retry can actually self-correct
+// instead of repeating the same mistake.
+func invalidCardsFeedback(err error) string {
+	return fmt.Sprintf(
+		"Твой предыдущий ответ не прошёл проверку: %s. Верни ИСКЛЮЧИТЕЛЬНО валидный JSON "+
+			"по формату из системной инструкции: либо массив ровно из трёх карточек "+
+			"(pattern_recognition, algorithm_mechanics, edge_case — каждый тип один раз, "+
+			"question и answer непустые, без markdown-обёртки), либо {\"error\":\"unknown_problem\"}.",
+		err,
+	)
 }
 
 func (p *GeminiProvider) GenerateHint(ctx context.Context, in AssistantHintInput) (AssistantHintResponse, error) {
@@ -219,7 +281,46 @@ func (p *GeminiProvider) chatStream(ctx context.Context, messages []chatMessage,
 	return full.String(), nil
 }
 
+// chat calls doChat, retrying on transient upstream failures (429/5xx) with
+// exponential backoff, up to chatMaxAttempts total attempts. Any other error
+// (network failure, non-retryable status, malformed response) returns
+// immediately.
 func (p *GeminiProvider) chat(ctx context.Context, messages []chatMessage) (string, error) {
+	var lastErr error
+	for attempt := 0; attempt < chatMaxAttempts; attempt++ {
+		if attempt > 0 {
+			delay := p.retryDelay * time.Duration(1<<uint(attempt-1))
+			select {
+			case <-time.After(delay):
+			case <-ctx.Done():
+				return "", ctx.Err()
+			}
+		}
+
+		content, err := p.doChat(ctx, messages)
+		if err == nil {
+			return content, nil
+		}
+		lastErr = err
+		if !isRetryableChatError(err) {
+			return "", err
+		}
+	}
+	return "", lastErr
+}
+
+// isRetryableChatError reports whether err represents a transient upstream
+// failure (429 or 5xx) worth retrying, as opposed to a client-side/permanent
+// failure (4xx other than 429, network setup error, etc.).
+func isRetryableChatError(err error) bool {
+	if errors.Is(err, ErrQuotaExceeded) {
+		return true
+	}
+	var apiErr *APIError
+	return errors.As(err, &apiErr) && apiErr.StatusCode >= 500
+}
+
+func (p *GeminiProvider) doChat(ctx context.Context, messages []chatMessage) (string, error) {
 	reqBody, err := json.Marshal(chatCompletionRequest{
 		Model:    p.model,
 		Messages: messages,
@@ -284,7 +385,9 @@ type refusalJSON struct {
 }
 
 // parseGenerationContent parses the model's strict-JSON reply: either an
-// array of exactly three cards, or a {"error":"unknown_problem"} refusal.
+// array of exactly three cards (one each of requiredCardTypes, matching the
+// cards.type CHECK constraint) passing validateGeneratedCards, or a
+// {"error":"unknown_problem"} refusal.
 func parseGenerationContent(content string) ([]GeneratedCard, error) {
 	trimmed := strings.TrimSpace(content)
 
@@ -293,8 +396,8 @@ func parseGenerationContent(content string) ([]GeneratedCard, error) {
 		if err := json.Unmarshal([]byte(trimmed), &raw); err != nil {
 			return nil, fmt.Errorf("ai: parse cards json: %w", err)
 		}
-		if len(raw) == 0 {
-			return nil, fmt.Errorf("ai: model returned an empty cards array")
+		if err := validateGeneratedCards(raw); err != nil {
+			return nil, err
 		}
 		cards := make([]GeneratedCard, 0, len(raw))
 		for _, c := range raw {
@@ -311,6 +414,59 @@ func parseGenerationContent(content string) ([]GeneratedCard, error) {
 		return nil, ErrUnknownProblem
 	}
 	return nil, fmt.Errorf("ai: unexpected model response: %s", trimmed)
+}
+
+// validateGeneratedCards enforces the strict card-generation contract:
+// exactly one card per requiredCardTypes entry, non-empty question/answer,
+// and length backstops on question/answer/explanation. Garbage that fails
+// here is never passed on to a caller that would persist it.
+func validateGeneratedCards(raw []generatedCardJSON) error {
+	if len(raw) != len(requiredCardTypes) {
+		return fmt.Errorf("ai: model returned %d cards, want exactly %d", len(raw), len(requiredCardTypes))
+	}
+
+	seen := make(map[string]bool, len(requiredCardTypes))
+	for _, c := range raw {
+		if !isRequiredCardType(c.Type) {
+			return fmt.Errorf("ai: unexpected card type %q", c.Type)
+		}
+		if seen[c.Type] {
+			return fmt.Errorf("ai: duplicate card type %q", c.Type)
+		}
+		seen[c.Type] = true
+
+		if strings.TrimSpace(c.Question) == "" {
+			return fmt.Errorf("ai: card %q has an empty question", c.Type)
+		}
+		if strings.TrimSpace(c.Answer) == "" {
+			return fmt.Errorf("ai: card %q has an empty answer", c.Type)
+		}
+		if n := utf8.RuneCountInString(c.Question); n > maxCardQuestionRunes {
+			return fmt.Errorf("ai: card %q question too long (%d runes, max %d)", c.Type, n, maxCardQuestionRunes)
+		}
+		if n := utf8.RuneCountInString(c.Answer); n > maxCardAnswerRunes {
+			return fmt.Errorf("ai: card %q answer too long (%d runes, max %d)", c.Type, n, maxCardAnswerRunes)
+		}
+		if n := utf8.RuneCountInString(c.Explanation); n > maxCardExplanationRunes {
+			return fmt.Errorf("ai: card %q explanation too long (%d runes, max %d)", c.Type, n, maxCardExplanationRunes)
+		}
+	}
+
+	for _, want := range requiredCardTypes {
+		if !seen[want] {
+			return fmt.Errorf("ai: missing required card type %q", want)
+		}
+	}
+	return nil
+}
+
+func isRequiredCardType(t string) bool {
+	for _, want := range requiredCardTypes {
+		if t == want {
+			return true
+		}
+	}
+	return false
 }
 
 type assistantHintJSON struct {
