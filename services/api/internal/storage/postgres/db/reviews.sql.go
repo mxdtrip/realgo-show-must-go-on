@@ -255,6 +255,7 @@ SELECT rs.id, rs.user_id, rs.problem_id, rs.pattern_id, rs.card_id, rs.next_revi
        rs.last_rating, rs.state, rs.lapses, rs.last_review_at, rs.remaining_steps,
        p.title AS problem_title, p.url AS problem_url,
        COALESCE(pt.name, cpt.name, rpt.name, '') AS pattern_title,
+       COALESCE(pt.code, cpt.code, rpt.code, '') AS pattern_code,
        p.difficulty AS problem_difficulty,
        c.question AS card_question,
        COALESCE(c.type, '') AS card_type
@@ -304,6 +305,7 @@ type ListReviewQueueRow struct {
 	ProblemTitle      pgtype.Text
 	ProblemUrl        pgtype.Text
 	PatternTitle      string
+	PatternCode       string
 	ProblemDifficulty pgtype.Text
 	CardQuestion      pgtype.Text
 	CardType          string
@@ -343,6 +345,7 @@ func (q *Queries) ListReviewQueue(ctx context.Context, arg ListReviewQueueParams
 			&i.ProblemTitle,
 			&i.ProblemUrl,
 			&i.PatternTitle,
+			&i.PatternCode,
 			&i.ProblemDifficulty,
 			&i.CardQuestion,
 			&i.CardType,
