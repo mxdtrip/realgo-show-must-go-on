@@ -31,23 +31,6 @@ func (q *Queries) CountCardSessionAttempts(ctx context.Context, arg CountCardSes
 	return column_1, err
 }
 
-const countGlobalAICardsByProblem = `-- name: CountGlobalAICardsByProblem :one
-SELECT COUNT(*)::bigint
-FROM cards
-WHERE problem_id = $1::bigint
-  AND user_id IS NULL
-  AND created_by_ai = TRUE
-`
-
-// Idempotency check for CardProvisioner: has this problem already been
-// globally AI-provisioned, regardless of which user triggers generation.
-func (q *Queries) CountGlobalAICardsByProblem(ctx context.Context, problemID int64) (int64, error) {
-	row := q.db.QueryRow(ctx, countGlobalAICardsByProblem, problemID)
-	var column_1 int64
-	err := row.Scan(&column_1)
-	return column_1, err
-}
-
 const createCard = `-- name: CreateCard :one
 INSERT INTO cards (user_id, problem_id, pattern_id, type, question, answer, explanation, source, created_by_ai)
 VALUES (
@@ -260,6 +243,35 @@ func (q *Queries) GetCardReviewSchedule(ctx context.Context, arg GetCardReviewSc
 	var id int64
 	err := row.Scan(&id)
 	return id, err
+}
+
+const hasReadyCards = `-- name: HasReadyCards :one
+SELECT EXISTS (
+    SELECT 1 FROM cards
+    WHERE problem_id = $1::bigint
+      AND user_id IS NULL
+      AND (
+        created_by_ai IS NOT TRUE
+        OR ai_prompt_version = $2
+      )
+)::bool AS ready
+`
+
+type HasReadyCardsParams struct {
+	ProblemID       int64
+	AiPromptVersion pgtype.Text
+}
+
+// Reports whether problemID already has global cards ready to serve without
+// new generation: seed content (created_by_ai = FALSE, curated, never stale)
+// or AI-generated cards at the current ai_prompt_version. An older-version
+// AI card doesn't count, so CardProvisioner regenerates instead of serving
+// stale content forever once the prompt bumps.
+func (q *Queries) HasReadyCards(ctx context.Context, arg HasReadyCardsParams) (bool, error) {
+	row := q.db.QueryRow(ctx, hasReadyCards, arg.ProblemID, arg.AiPromptVersion)
+	var ready bool
+	err := row.Scan(&ready)
+	return ready, err
 }
 
 const listCardSession = `-- name: ListCardSession :many

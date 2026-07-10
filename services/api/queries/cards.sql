@@ -277,14 +277,21 @@ WHERE user_id = $1
   AND card_id IS NOT NULL
   AND created_at >= $2;
 
--- name: CountGlobalAICardsByProblem :one
--- Idempotency check for CardProvisioner: has this problem already been
--- globally AI-provisioned, regardless of which user triggers generation.
-SELECT COUNT(*)::bigint
-FROM cards
-WHERE problem_id = sqlc.arg(problem_id)::bigint
-  AND user_id IS NULL
-  AND created_by_ai = TRUE;
+-- name: HasReadyCards :one
+-- Reports whether problemID already has global cards ready to serve without
+-- new generation: seed content (created_by_ai = FALSE, curated, never stale)
+-- or AI-generated cards at the current ai_prompt_version. An older-version
+-- AI card doesn't count, so CardProvisioner regenerates instead of serving
+-- stale content forever once the prompt bumps.
+SELECT EXISTS (
+    SELECT 1 FROM cards
+    WHERE problem_id = sqlc.arg(problem_id)::bigint
+      AND user_id IS NULL
+      AND (
+        created_by_ai IS NOT TRUE
+        OR ai_prompt_version = sqlc.arg(ai_prompt_version)
+      )
+)::bool AS ready;
 
 -- name: UpsertGeneratedCard :one
 -- Idempotent insert for one AI-generated global card. Concurrent generations

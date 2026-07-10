@@ -1,10 +1,12 @@
-// Package ai exposes placeholder endpoints for AI-assisted content generation.
-// Actual generation requires an AI provider (e.g. OpenAI) configured in config.
-// Until then the endpoints log the intent to ai_request_logs and return 202 Accepted.
+// Package ai exposes AI-assisted content generation endpoints. POST
+// /me/cards/generate is backed by a real Provisioner once an AI provider is
+// configured (see config.AI); POST /me/quiz/generate is still a placeholder
+// that only logs the intent to ai_request_logs and returns 202 Accepted.
 package ai
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"net/http"
 
@@ -19,12 +21,20 @@ type repository interface {
 	CreateAIRequestLog(ctx context.Context, userID int64, feature string) (int64, error)
 }
 
-type Handler struct {
-	repo repository
+// CardGenerator is the behaviour Handler needs to serve POST
+// /me/cards/generate. Satisfied by *Provisioner; nil disables the route
+// (e.g. no AI provider key configured).
+type CardGenerator interface {
+	Ensure(ctx context.Context, problemID int64) (string, error)
 }
 
-func NewHandler(repo repository) *Handler {
-	return &Handler{repo: repo}
+type Handler struct {
+	repo repository
+	gen  CardGenerator
+}
+
+func NewHandler(repo repository, gen CardGenerator) *Handler {
+	return &Handler{repo: repo, gen: gen}
 }
 
 func RegisterCardRoutes(r chi.Router, h *Handler) {
@@ -46,7 +56,20 @@ func validateTarget(problemID, patternID *int64) string {
 	return ""
 }
 
-// GenerateCard handles POST /me/cards/generate.
+// GenerateCard handles POST /me/cards/generate: manually ensures the three
+// global AI cards for a problem are ready, kicking off generation if they
+// aren't (without blocking on the LLM call itself — see Provisioner.Ensure).
+//
+// 200 {"status": "ready"}      - cards already exist (cache, seed, or a
+//
+//	prior generation at the current prompt version).
+//
+// 202 {"status": "generating"} - generation just started or was already in
+//
+//	flight; poll GET /me/problems/{id}/cards for
+//	the result.
+//
+// 404 when problem_id does not exist. 503 when no AI provider is configured.
 func (h *Handler) GenerateCard(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.UserIDFromContext(r.Context())
 	if !ok {
@@ -65,19 +88,33 @@ func (h *Handler) GenerateCard(w http.ResponseWriter, r *http.Request) {
 		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", msg)
 		return
 	}
-
-	id, err := h.repo.CreateAIRequestLog(r.Context(), userID, "card_generation")
-	if err != nil {
-		slog.Error("ai: GenerateCard failed", slog.Any("err", err), slog.Int64("user_id", userID))
-		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", "could not queue generation request")
+	if req.PatternID != nil {
+		slog.Warn("ai: GenerateCard failed", slog.Int64("user_id", userID), slog.String("reason", "pattern_id not supported"))
+		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "AI card generation only supports problem_id targets")
 		return
 	}
 
-	response.JSON(w, http.StatusAccepted, map[string]any{
-		"request_id": id,
-		"status":     "queued",
-		"message":    "AI card generation is not yet available; configure an AI provider to enable this feature.",
-	})
+	if h.gen == nil {
+		response.Fail(w, http.StatusServiceUnavailable, "AI_UNAVAILABLE", "AI card generation is not configured")
+		return
+	}
+
+	status, err := h.gen.Ensure(r.Context(), *req.ProblemID)
+	if errors.Is(err, ErrProblemNotFound) {
+		response.Fail(w, http.StatusNotFound, "NOT_FOUND", "problem not found")
+		return
+	}
+	if err != nil {
+		slog.Error("ai: GenerateCard failed", slog.Any("err", err), slog.Int64("user_id", userID))
+		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", "could not generate cards")
+		return
+	}
+
+	httpStatus := http.StatusAccepted
+	if status == EnsureReady {
+		httpStatus = http.StatusOK
+	}
+	response.JSON(w, httpStatus, map[string]any{"status": status})
 }
 
 // GenerateQuiz handles POST /me/quiz/generate.
