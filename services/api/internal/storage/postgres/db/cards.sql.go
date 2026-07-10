@@ -694,21 +694,23 @@ func (q *Queries) UpdateCard(ctx context.Context, arg UpdateCardParams) (Card, e
 }
 
 const upsertGeneratedCard = `-- name: UpsertGeneratedCard :one
-INSERT INTO cards (problem_id, type, question, answer, explanation, created_by_ai, ai_prompt_version)
+INSERT INTO cards (problem_id, type, question, answer, explanation, source, created_by_ai, ai_prompt_version)
 VALUES (
     $1::bigint,
     $2,
     $3,
     $4,
     $5,
+    $6,
     TRUE,
-    $6
+    $7
 )
-ON CONFLICT (problem_id, type, ai_prompt_version) WHERE user_id IS NULL AND created_by_ai = TRUE AND problem_id IS NOT NULL
+ON CONFLICT (source) WHERE user_id IS NULL AND source IS NOT NULL
 DO UPDATE SET
-    question    = EXCLUDED.question,
-    answer      = EXCLUDED.answer,
-    explanation = EXCLUDED.explanation
+    question          = EXCLUDED.question,
+    answer            = EXCLUDED.answer,
+    explanation       = EXCLUDED.explanation,
+    ai_prompt_version = EXCLUDED.ai_prompt_version
 RETURNING id
 `
 
@@ -718,11 +720,15 @@ type UpsertGeneratedCardParams struct {
 	Question        string
 	Answer          string
 	Explanation     pgtype.Text
+	Source          pgtype.Text
 	AiPromptVersion pgtype.Text
 }
 
 // Idempotent insert for one AI-generated global card. Concurrent generations
-// for the same problem+type+prompt_version converge on cards_ai_global_unique_idx.
+// for the same problem+type converge on cards_source_global_unique_idx via
+// the deterministic "ai:{platform}:{slug}:{type}" source key; ai_prompt_version
+// is refreshed on conflict so a prompt bump regenerates content in place
+// instead of leaving the invalidation check comparing against a stale value.
 func (q *Queries) UpsertGeneratedCard(ctx context.Context, arg UpsertGeneratedCardParams) (int64, error) {
 	row := q.db.QueryRow(ctx, upsertGeneratedCard,
 		arg.ProblemID,
@@ -730,6 +736,7 @@ func (q *Queries) UpsertGeneratedCard(ctx context.Context, arg UpsertGeneratedCa
 		arg.Question,
 		arg.Answer,
 		arg.Explanation,
+		arg.Source,
 		arg.AiPromptVersion,
 	)
 	var id int64

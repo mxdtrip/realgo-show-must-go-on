@@ -288,20 +288,25 @@ WHERE problem_id = sqlc.arg(problem_id)::bigint
 
 -- name: UpsertGeneratedCard :one
 -- Idempotent insert for one AI-generated global card. Concurrent generations
--- for the same problem+type+prompt_version converge on cards_ai_global_unique_idx.
-INSERT INTO cards (problem_id, type, question, answer, explanation, created_by_ai, ai_prompt_version)
+-- for the same problem+type converge on cards_source_global_unique_idx via
+-- the deterministic "ai:{platform}:{slug}:{type}" source key; ai_prompt_version
+-- is refreshed on conflict so a prompt bump regenerates content in place
+-- instead of leaving the invalidation check comparing against a stale value.
+INSERT INTO cards (problem_id, type, question, answer, explanation, source, created_by_ai, ai_prompt_version)
 VALUES (
     sqlc.arg(problem_id)::bigint,
     sqlc.arg(card_type),
     sqlc.arg(question),
     sqlc.arg(answer),
     sqlc.narg(explanation),
+    sqlc.arg(source),
     TRUE,
     sqlc.arg(ai_prompt_version)
 )
-ON CONFLICT (problem_id, type, ai_prompt_version) WHERE user_id IS NULL AND created_by_ai = TRUE AND problem_id IS NOT NULL
+ON CONFLICT (source) WHERE user_id IS NULL AND source IS NOT NULL
 DO UPDATE SET
-    question    = EXCLUDED.question,
-    answer      = EXCLUDED.answer,
-    explanation = EXCLUDED.explanation
+    question          = EXCLUDED.question,
+    answer            = EXCLUDED.answer,
+    explanation       = EXCLUDED.explanation,
+    ai_prompt_version = EXCLUDED.ai_prompt_version
 RETURNING id;

@@ -27,8 +27,9 @@ type ProvisionRepository interface {
 	CountGlobalCards(ctx context.Context, problemID int64) (int64, error)
 	ProblemInfo(ctx context.Context, problemID int64) (ProblemInfo, error)
 	// UpsertGeneratedCards stores the whole generated batch atomically: a
-	// reader must never observe a partial batch as "ready".
-	UpsertGeneratedCards(ctx context.Context, problemID int64, cards []GeneratedCard, promptVersion string) error
+	// reader must never observe a partial batch as "ready". platform/slug
+	// build each card's deterministic "ai:{platform}:{slug}:{type}" source key.
+	UpsertGeneratedCards(ctx context.Context, problemID int64, platform, slug string, cards []GeneratedCard, promptVersion string) error
 	LogGenerationRequest(ctx context.Context, model, status string) error
 }
 
@@ -43,7 +44,7 @@ type locker interface {
 // Provisioner (CardProvisioner) generates and persists global AI cards for a
 // solved problem, at most once per problem: a Redis lock
 // (lock:gen:{platform}:{slug}) dedupes concurrent attempts, and the
-// cards_ai_global_unique_idx unique index makes the batch insert itself
+// cards_source_global_unique_idx unique index makes the batch insert itself
 // idempotent even if two lock holders ever raced.
 type Provisioner struct {
 	repo     ProvisionRepository
@@ -118,7 +119,7 @@ func (p *Provisioner) Provision(ctx context.Context, problemID int64, platform, 
 		return p.logAndClassify(ctx, err)
 	}
 
-	if err := p.repo.UpsertGeneratedCards(ctx, problemID, cards, p.provider.PromptVersion()); err != nil {
+	if err := p.repo.UpsertGeneratedCards(ctx, problemID, info.Platform, info.Slug, cards, p.provider.PromptVersion()); err != nil {
 		return fmt.Errorf("ai: store generated cards: %w", err)
 	}
 
