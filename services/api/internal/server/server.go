@@ -16,6 +16,7 @@ import (
 	"github.com/mxdtrip/freeburger/services/api/internal/dashboard"
 	"github.com/mxdtrip/freeburger/services/api/internal/extension"
 	"github.com/mxdtrip/freeburger/services/api/internal/patterns"
+	"github.com/mxdtrip/freeburger/services/api/internal/practice"
 	"github.com/mxdtrip/freeburger/services/api/internal/problemcards"
 	"github.com/mxdtrip/freeburger/services/api/internal/problems"
 	"github.com/mxdtrip/freeburger/services/api/internal/quiz"
@@ -79,6 +80,7 @@ func New(deps Deps) http.Handler {
 	companiesHandler := companies.NewHandler()
 	dashboardHandler := dashboard.NewHandler(dashboard.NewService(dashboard.NewRepository(deps.Postgres.Pool), patterns.NewRepository(deps.Postgres.Pool)))
 	cardsHandler := cards.NewHandler(cardsSvc)
+	practiceHandler := practice.NewHandler(practice.NewRepository(deps.Postgres.Pool))
 	quizRepo := quiz.NewRepository(deps.Postgres.Pool)
 	quizSvc := quiz.NewService(quizRepo, reviewService) // reviewService удовлетворяет quiz.ProblemRater (RateByProblemID)
 	quizHandler := quiz.NewHandler(quizSvc)
@@ -157,6 +159,12 @@ func New(deps Deps) http.Handler {
 		})
 
 		r.With(requireAuth(deps.Auth)).Get("/me/dashboard", dashboardHandler.Get) // codex/s1-dashboard
+
+		r.Route("/me/practice", func(r chi.Router) {
+			r.With(requireAuth(deps.Auth)).Group(func(r chi.Router) {
+				practice.RegisterRoutes(r, practiceHandler)
+			})
+		})
 
 		r.Route("/me/cards", func(r chi.Router) {
 			r.With(requireAuth(deps.Auth)).Group(func(r chi.Router) {

@@ -195,6 +195,7 @@ WITH scoped_problems AS (
         rs.next_review_at,
         COALESCE(rs.last_rating, upp.rating) AS last_rating,
         upp.solved_at,
+        COALESCE(hints.used, 0) AS hints_used,
         COALESCE(p.created_at, '1970-01-01 00:00:00+00'::timestamptz) AS created_at,
         COALESCE(p.updated_at, p.created_at, '1970-01-01 00:00:00+00'::timestamptz) AS updated_at
     FROM problems p
@@ -212,6 +213,14 @@ WITH scoped_problems AS (
     LEFT JOIN roadmap_items ri
         ON ri.problem_id = p.id AND ri.roadmap_code = 'neetcode_150'
     LEFT JOIN patterns pt ON pt.id = ri.pattern_id
+    LEFT JOIN LATERAL (
+        SELECT COUNT(*)::int AS used
+        FROM ai_request_logs l
+        WHERE l.user_id = $6
+          AND l.problem_id = p.id
+          AND l.feature = 'assistant_hint'
+          AND l.status = 'success'
+    ) hints ON TRUE
     WHERE upp.user_id IS NOT NULL
        OR p.created_by_user_id = $6
        OR rs.next_review_at IS NOT NULL
@@ -229,6 +238,7 @@ SELECT
     next_review_at,
     last_rating,
     solved_at,
+    hints_used,
     created_at,
     updated_at
 FROM scoped_problems
@@ -261,6 +271,7 @@ type ListUserProblemsRow struct {
 	NextReviewAt pgtype.Timestamptz
 	LastRating   pgtype.Text
 	SolvedAt     pgtype.Timestamptz
+	HintsUsed    int32
 	CreatedAt    pgtype.Timestamptz
 	UpdatedAt    pgtype.Timestamptz
 }
@@ -294,6 +305,7 @@ func (q *Queries) ListUserProblems(ctx context.Context, arg ListUserProblemsPara
 			&i.NextReviewAt,
 			&i.LastRating,
 			&i.SolvedAt,
+			&i.HintsUsed,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {

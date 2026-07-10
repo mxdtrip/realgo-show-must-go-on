@@ -114,6 +114,7 @@ func problemFromRow(row db.ListUserProblemsRow) Problem {
 		NextReviewAt: timePtrFromPg(row.NextReviewAt),
 		LastRating:   stringPtrFromPg(row.LastRating),
 		SolvedAt:     timePtrFromPg(row.SolvedAt),
+		HintsUsed:    int(row.HintsUsed),
 		CreatedAt:    timeFromPg(row.CreatedAt),
 		UpdatedAt:    timeFromPg(row.UpdatedAt),
 	}

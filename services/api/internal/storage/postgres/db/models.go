@@ -19,6 +19,7 @@ type AiRequestLog struct {
 	EstimatedCost pgtype.Numeric
 	Status        pgtype.Text
 	CreatedAt     pgtype.Timestamptz
+	ProblemID     pgtype.Int8
 }
 
 type Card struct {
@@ -245,6 +246,12 @@ type User struct {
 	NotifyReviewReminder  bool
 	NotifyWeeklyDigest    bool
 	NotifyEmailEnabled    bool
+}
+
+type UserPracticePattern struct {
+	UserID    int64
+	PatternID int64
+	AddedAt   pgtype.Timestamptz
 }
 
 type UserProblemProgress struct {

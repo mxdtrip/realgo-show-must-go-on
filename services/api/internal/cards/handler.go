@@ -333,7 +333,7 @@ func parseSessionParams(r *http.Request) (SessionParams, error) {
 		scope = SessionScopeDue
 	}
 	if !validScope(scope) {
-		return SessionParams{}, errors.New("scope must be due, hard_normal, or all")
+		return SessionParams{}, errors.New("scope must be due, hard_normal, all, or practice")
 	}
 
 	patternCode := strings.TrimSpace(r.URL.Query().Get("patternCode"))
@@ -366,7 +366,7 @@ func validCardType(value string) bool {
 
 func validScope(value string) bool {
 	switch value {
-	case SessionScopeDue, SessionScopeHardNormal, SessionScopeAll:
+	case SessionScopeDue, SessionScopeHardNormal, SessionScopeAll, SessionScopePractice:
 		return true
 	default:
 		return false

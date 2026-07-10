@@ -15,6 +15,7 @@ const (
 	SessionScopeDue        = "due"
 	SessionScopeHardNormal = "hard_normal"
 	SessionScopeAll        = "all"
+	SessionScopePractice   = "practice"
 )
 
 type Card struct {

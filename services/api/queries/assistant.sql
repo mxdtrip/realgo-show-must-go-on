@@ -37,11 +37,12 @@ ORDER BY
     sp.name;
 
 -- name: LogAssistantHintRequest :exec
-INSERT INTO ai_request_logs (user_id, feature, provider, model, status)
+INSERT INTO ai_request_logs (user_id, feature, provider, model, status, problem_id)
 VALUES (
     sqlc.arg(user_id)::bigint,
     'assistant_hint',
     'gemini',
     sqlc.arg(model)::text,
-    sqlc.arg(status)::text
+    sqlc.arg(status)::text,
+    sqlc.narg(problem_id)
 );
