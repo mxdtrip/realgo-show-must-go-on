@@ -5,7 +5,7 @@ import { apiFetch, apiFetchEnvelope } from "./client";
 export type CardType = "pattern_recognition" | "algorithm_mechanics" | "edge_case";
 export type CardRating = "hard" | "normal" | "easy";
 export type CardStatus = "new" | "due" | "learning" | "mastered";
-export type SessionScope = "due" | "hard_normal" | "all";
+export type SessionScope = "due" | "hard_normal" | "all" | "practice";
 
 export type SessionSourceCard = {
   id: number;

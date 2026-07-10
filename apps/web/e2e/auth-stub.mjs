@@ -151,6 +151,7 @@ const PROBLEMS = [
     nextReviewAt: PAST_ISO,
     lastRating: "hard",
     solvedAt: PAST_ISO,
+    hintsUsed: 2,
     createdAt: "2026-06-01T10:00:00Z",
     updatedAt: PAST_ISO,
   },
@@ -166,9 +167,18 @@ const PROBLEMS = [
     nextReviewAt: FUTURE_ISO,
     lastRating: "easy",
     solvedAt: "2026-06-20T10:00:00Z",
+    hintsUsed: 0,
     createdAt: "2026-05-20T10:00:00Z",
     updatedAt: "2026-06-20T10:00:00Z",
   },
+];
+
+// Practice set: statuses derive from the atlas mastery fixtures above
+// (unstable 41% -> "в работе", mastered 92% -> "освоен", not_started -> "добавлен").
+let PRACTICE = [
+  { code: "binary_search_on_answer", name: "Binary Search on Answer", addedAt: "2026-07-01T10:00:00Z" },
+  { code: "lower_upper_bound", name: "Lower / Upper Bound", addedAt: "2026-07-02T10:00:00Z" },
+  { code: "fixed_size_window", name: "Fixed-Size Window", addedAt: "2026-07-03T10:00:00Z" },
 ];
 
 const DECK_CARDS = [
@@ -398,7 +408,7 @@ const server = createServer((req, res) => {
   // content-type, so the browser sends a preflight. No credentials are used
   // (Bearer header, not cookies), so a wildcard origin is safe and simplest.
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Authorization, Content-Type");
 
   const path = new URL(req.url, `http://127.0.0.1:${PORT}`).pathname;
@@ -478,6 +488,33 @@ const server = createServer((req, res) => {
       const bearer = (req.headers.authorization ?? "").replace(/^Bearer\s+/i, "");
       if (kindOf(bearer) !== "LIVE") return fail(res, 401, "unauthorized", "stub: session invalid");
       return send(res, 200, { data: DECK_CARDS, meta: { nextCursor: null } });
+    }
+
+    // ---- Practice set fixtures (/problems, /cards launcher) ------------
+    if (path === `${PREFIX}/me/practice` && req.method === "GET") {
+      const bearer = (req.headers.authorization ?? "").replace(/^Bearer\s+/i, "");
+      if (kindOf(bearer) !== "LIVE") return fail(res, 401, "unauthorized", "stub: session invalid");
+      return ok(res, { subpatterns: PRACTICE });
+    }
+
+    if (path === `${PREFIX}/me/practice/subpatterns` && req.method === "POST") {
+      const bearer = (req.headers.authorization ?? "").replace(/^Bearer\s+/i, "");
+      if (kindOf(bearer) !== "LIVE") return fail(res, 401, "unauthorized", "stub: session invalid");
+      if (!body.code) return fail(res, 400, "validation_error", "stub: code required");
+      if (!PRACTICE.some((item) => item.code === body.code)) {
+        PRACTICE.push({ code: body.code, name: body.code, addedAt: new Date().toISOString() });
+      }
+      return ok(res, { code: body.code, active: true });
+    }
+
+    if (req.method === "DELETE" && path.startsWith(`${PREFIX}/me/practice/subpatterns/`)) {
+      const bearer = (req.headers.authorization ?? "").replace(/^Bearer\s+/i, "");
+      if (kindOf(bearer) !== "LIVE") return fail(res, 401, "unauthorized", "stub: session invalid");
+      const code = decodeURIComponent(path.split("/").at(-1));
+      PRACTICE = PRACTICE.filter((item) => item.code !== code);
+      res.writeHead(204);
+      res.end();
+      return;
     }
 
     // ---- Card session fixtures (e2e for /cards/session) ----------------

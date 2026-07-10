@@ -26,6 +26,8 @@ export type ProblemListItem = {
   nextReviewAt: string | null;
   lastRating: "hard" | "normal" | "easy" | string | null;
   solvedAt: string | null;
+  /** Сколько подсказок ассистента реально выдано по задаче. */
+  hintsUsed: number;
   createdAt: string;
   updatedAt: string;
 };

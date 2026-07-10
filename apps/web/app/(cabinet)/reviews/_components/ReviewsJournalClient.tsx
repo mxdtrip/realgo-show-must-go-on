@@ -10,7 +10,7 @@ import { CabinetPanel, StatusPill } from "../../_components";
 type Tone = "default" | "accent" | "success" | "warning" | "danger";
 type LoadState = "loading" | "loaded" | "error";
 
-type ProblemsPageCopy = Readonly<{
+type ReviewsJournalCopy = Readonly<{
   eyebrow: string;
   title: string;
   description: string;
@@ -29,15 +29,20 @@ type ProblemsPageCopy = Readonly<{
   loadMore: string;
   dueNow: string;
   noReview: string;
+  noValue: string;
+  hintsNone: string;
   columns: Readonly<{
     problem: string;
     platform: string;
     pattern: string;
     status: string;
+    hints: string;
+    rating: string;
     next: string;
   }>;
   statuses: readonly (readonly [string, string, string])[];
   difficulty: Readonly<Record<string, string>>;
+  ratings: Readonly<Record<string, string>>;
 }>;
 
 const nextReviewFormatter = new Intl.DateTimeFormat("ru-RU", {
@@ -48,12 +53,19 @@ const nextReviewFormatter = new Intl.DateTimeFormat("ru-RU", {
 });
 
 const difficultyTone: Record<string, string> = {
-  easy: "success",
-  medium: "warning",
-  hard: "danger",
+  easy: "easy",
+  medium: "medium",
+  hard: "hard",
 };
 
-function formatNextReview(value: string | null, copy: ProblemsPageCopy) {
+/** Самооценка из попапа расширения → тон бейджа (как в остальном кабинете). */
+const ratingTone: Record<string, string> = {
+  hard: "warning",
+  normal: "accent",
+  easy: "success",
+};
+
+function formatNextReview(value: string | null, copy: ReviewsJournalCopy) {
   if (!value) return { label: copy.noReview, due: false };
   const next = new Date(value);
   if (Number.isNaN(next.getTime())) return { label: copy.noReview, due: false };
@@ -61,9 +73,9 @@ function formatNextReview(value: string | null, copy: ProblemsPageCopy) {
   return { label: nextReviewFormatter.format(next).replace(".", ""), due: false };
 }
 
-/** Журнал решённого: всё, что захватило расширение (плюс сохранённое вручную).
-    Здесь смотрят и управляют, работа на сегодня живёт в /reviews. */
-export function ProblemsPageClient({ copy }: Readonly<{ copy: ProblemsPageCopy }>) {
+/** Журнал решённого на платформах: что зафиксировало расширение, сколько
+    подсказок потрачено и как пользователь сам оценил задачу. */
+export function ReviewsJournalClient({ copy }: Readonly<{ copy: ReviewsJournalCopy }>) {
   const [problems, setProblems] = useState<ProblemListItem[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [loadState, setLoadState] = useState<LoadState>("loading");
@@ -103,7 +115,7 @@ export function ProblemsPageClient({ copy }: Readonly<{ copy: ProblemsPageCopy }
       setProblems((current) => [...current, ...response.data]);
       setNextCursor(response.meta?.nextCursor ?? null);
     } catch {
-      // Кнопка остаётся — можно повторить; список уже показанного не трогаем.
+      // Кнопка остаётся — можно повторить; уже показанное не трогаем.
     } finally {
       setLoadingMore(false);
     }
@@ -195,13 +207,15 @@ export function ProblemsPageClient({ copy }: Readonly<{ copy: ProblemsPageCopy }
                 <th>{copy.columns.platform}</th>
                 <th>{copy.columns.pattern}</th>
                 <th>{copy.columns.status}</th>
+                <th>{copy.columns.hints}</th>
+                <th>{copy.columns.rating}</th>
                 <th>{copy.columns.next}</th>
               </tr>
             </thead>
             <tbody>
               {loadState === "loading" ? (
                 <tr>
-                  <td className="data-table__empty" colSpan={5} role="status" aria-live="polite">
+                  <td className="data-table__empty" colSpan={7} role="status" aria-live="polite">
                     {copy.loading}
                   </td>
                 </tr>
@@ -209,7 +223,7 @@ export function ProblemsPageClient({ copy }: Readonly<{ copy: ProblemsPageCopy }
 
               {loadState === "error" ? (
                 <tr>
-                  <td className="data-table__empty" colSpan={5} role="alert">
+                  <td className="data-table__empty" colSpan={7} role="alert">
                     <strong>{copy.errorTitle}</strong>
                     {error ? <> · {error}</> : null}{" "}
                     <button
@@ -228,6 +242,7 @@ export function ProblemsPageClient({ copy }: Readonly<{ copy: ProblemsPageCopy }
                     const meta = statusMeta.get(item.status);
                     const next = formatNextReview(item.nextReviewAt, copy);
                     const difficulty = copy.difficulty[item.difficulty];
+                    const rating = item.lastRating ? copy.ratings[item.lastRating] : null;
                     return (
                       <tr key={item.id}>
                         <td>
@@ -243,8 +258,8 @@ export function ProblemsPageClient({ copy }: Readonly<{ copy: ProblemsPageCopy }
                             </a>
                             {difficulty ? (
                               <span
-                                className={`problem-cell__difficulty problem-cell__difficulty--${
-                                  difficultyTone[item.difficulty] ?? "default"
+                                className={`difficulty-text difficulty-text--${
+                                  difficultyTone[item.difficulty] ?? "unknown"
                                 }`}
                               >
                                 {difficulty}
@@ -261,13 +276,25 @@ export function ProblemsPageClient({ copy }: Readonly<{ copy: ProblemsPageCopy }
                               {item.pattern.name}
                             </Link>
                           ) : (
-                            "—"
+                            copy.noValue
                           )}
                         </td>
                         <td>
                           <StatusPill tone={(meta?.tone ?? "default") as Tone}>
                             {meta?.label ?? item.status}
                           </StatusPill>
+                        </td>
+                        <td className="data-table__mono">
+                          {item.hintsUsed > 0 ? item.hintsUsed : copy.hintsNone}
+                        </td>
+                        <td>
+                          {rating ? (
+                            <span className={`review-badge review-badge--${ratingTone[item.lastRating ?? ""] ?? "default"}`}>
+                              {rating}
+                            </span>
+                          ) : (
+                            <span className="data-table__mono">{copy.noValue}</span>
+                          )}
                         </td>
                         <td className={next.due ? "data-table__mono problem-next--due" : "data-table__mono"}>
                           {next.label}
@@ -279,7 +306,7 @@ export function ProblemsPageClient({ copy }: Readonly<{ copy: ProblemsPageCopy }
 
               {loadState === "loaded" && visible.length === 0 ? (
                 <tr>
-                  <td className="data-table__empty" colSpan={5}>
+                  <td className="data-table__empty" colSpan={7}>
                     {problems.length === 0 ? (
                       <>
                         {copy.emptyAll}{" "}

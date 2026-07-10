@@ -8,7 +8,13 @@ import {
   type NodeDetail,
   type PracticeProblem,
 } from "../../../../_api/atlas";
+import {
+  addPracticeSubpattern,
+  getPractice,
+  removePracticeSubpattern,
+} from "../../../../_api/practice";
 import { ApiError } from "../../../../_api/types";
+import { useToast } from "../../../../_toast";
 import { CabinetPanel } from "../../../_components";
 import { PatternProfile, ProfileSection } from "./PatternProfile";
 import type { getDictionary } from "../../../../_content/i18n";
@@ -126,6 +132,64 @@ export function AtlasNodeClient({
   );
 }
 
+// Тумблер «добавить в практику»: включает подпаттерн в личный practice-набор,
+// по которому идёт большая кнопка «начать практику» на /cards и страница /problems.
+function PracticeToggle({
+  code,
+  copy,
+}: Readonly<{ code: string; copy: NodeCopy["practiceToggle"] }>) {
+  const [active, setActive] = useState<boolean | null>(null);
+  const [busy, setBusy] = useState(false);
+  const toast = useToast();
+
+  useEffect(() => {
+    const controller = new AbortController();
+    getPractice(controller.signal)
+      .then((practice) => {
+        setActive(practice.subpatterns.some((item) => item.code === code));
+      })
+      .catch(() => {
+        // Не смогли узнать состояние — кнопку не показываем.
+      });
+    return () => controller.abort();
+  }, [code]);
+
+  if (active === null) return null;
+
+  const toggle = async () => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      if (active) {
+        await removePracticeSubpattern(code);
+        setActive(false);
+        toast.success(copy.removedToast);
+      } else {
+        await addPracticeSubpattern(code);
+        setActive(true);
+        toast.success(copy.addedToast);
+      }
+    } catch (e: unknown) {
+      toast.error(e instanceof ApiError ? e.message : copy.failed);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <button
+      className={active ? "practice-toggle is-active" : "practice-toggle"}
+      disabled={busy}
+      type="button"
+      aria-pressed={active}
+      onClick={() => void toggle()}
+    >
+      <span aria-hidden="true">{active ? "✓" : "+"}</span>
+      {active ? copy.active : copy.add}
+    </button>
+  );
+}
+
 function SubpatternProfile({
   detail,
   copy,
@@ -188,6 +252,7 @@ function SubpatternProfile({
               {copy.problems.difficultyLabel}: <em>{difficultyLine}</em>
             </p>
           ) : null}
+          <PracticeToggle code={detail.code} copy={copy.practiceToggle} />
         </div>
         <Link className="pattern-profile__cta" href={`/patterns/${detail.code}/session`}>
           <span className="pattern-profile__sub-head">

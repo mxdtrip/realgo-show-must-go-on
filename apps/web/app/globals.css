@@ -2305,6 +2305,24 @@ a.cabinet-panel__meta:hover {
   gap: 14px;
 }
 
+/* Полноширинный вариант next-up: лаунчер практики на /cards. */
+.next-up--wide {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 22px;
+  min-width: 0;
+  margin: 0;
+  justify-self: stretch;
+}
+
+@media (max-width: 860px) {
+  .next-up--wide {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
 .heatmap {
   display: flex;
   flex-direction: column;
@@ -7718,13 +7736,10 @@ a.roadmap-step__practice-card:hover {
 .atlas-difficulty-badge {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  min-height: 21px;
-  border: 1px solid;
-  border-radius: 999px;
-  padding: 3px 7px;
-  font-size: 10px;
-  font-weight: 700;
+  gap: 4px;
+  font-family: var(--font-stack-mono);
+  font-size: 10.5px;
+  font-weight: 600;
   line-height: 1;
   letter-spacing: 0.02em;
   text-transform: lowercase;
@@ -7736,21 +7751,15 @@ a.roadmap-step__practice-card:hover {
 }
 
 .atlas-difficulty-badge--easy {
-  border-color: rgba(63, 185, 80, 0.36);
-  color: var(--success-fg);
-  background: rgba(46, 160, 67, 0.12);
+  color: var(--success-bright);
 }
 
 .atlas-difficulty-badge--medium {
-  border-color: rgba(210, 153, 34, 0.4);
-  color: #e3b341;
-  background: rgba(210, 153, 34, 0.12);
+  color: var(--warning-bright);
 }
 
 .atlas-difficulty-badge--hard {
-  border-color: rgba(248, 81, 73, 0.4);
-  color: #ff7b72;
-  background: rgba(248, 81, 73, 0.12);
+  color: var(--danger-bright);
 }
 
 .atlas-sub__difficulty .atlas-difficulty-badges {
@@ -7758,9 +7767,7 @@ a.roadmap-step__practice-card:hover {
 }
 
 .atlas-sub__difficulty .atlas-difficulty-badge {
-  min-height: 19px;
-  padding: 2px 6px;
-  font-size: 9px;
+  font-size: 9.5px;
 }
 
 .atlas-family__tasks,
@@ -8771,22 +8778,27 @@ a.roadmap-step__practice-card:hover {
   font-size: 10px;
 }
 
-.problem-cell__difficulty {
+/* Единый стиль сложности: без обводки и фона, чисто цветной текст. */
+.difficulty-text {
   font-family: var(--font-stack-mono);
   font-size: 10.5px;
   white-space: nowrap;
 }
 
-.problem-cell__difficulty--success {
+.difficulty-text--easy {
   color: var(--success-bright);
 }
 
-.problem-cell__difficulty--warning {
+.difficulty-text--medium {
   color: var(--warning-bright);
 }
 
-.problem-cell__difficulty--danger {
+.difficulty-text--hard {
   color: var(--danger-bright);
+}
+
+.difficulty-text--unknown {
+  color: var(--text-faint);
 }
 
 .problem-cell__pattern {
@@ -8906,4 +8918,151 @@ a.roadmap-step__practice-card:hover {
     justify-content: space-between;
     width: 100%;
   }
+}
+
+
+/* ---------- /problems practice progress ---------- */
+
+.practice-list {
+  display: grid;
+}
+
+.practice-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px 18px;
+  padding: 13px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  transition: background 0.16s ease;
+}
+
+.practice-item:last-child {
+  border-bottom: 0;
+}
+
+.practice-item:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.practice-item__main {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.practice-item__title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.practice-item__name {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 13.5px;
+  font-weight: 600;
+  text-decoration: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.practice-item__name:hover {
+  color: var(--accent-bright);
+}
+
+.practice-item__families {
+  margin: 0;
+  overflow: hidden;
+  color: var(--text-faint);
+  font-size: 11.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.practice-item__progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 420px;
+}
+
+.practice-item__progress .progress-line {
+  flex: 1;
+}
+
+.practice-item__progress em {
+  color: var(--text-dim);
+  font-family: var(--font-stack-mono);
+  font-size: 11px;
+  font-style: normal;
+  font-variant-numeric: tabular-nums;
+}
+
+.practice-item__side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.practice-item__stats {
+  color: var(--text-faint);
+  font-family: var(--font-stack-mono);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+@media (max-width: 720px) {
+  .practice-item {
+    grid-template-columns: 1fr;
+  }
+
+  .practice-item__side {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+  }
+}
+
+/* ---------- practice toggle (atlas subpattern hero) ---------- */
+
+.practice-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  width: fit-content;
+  margin-top: 10px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 7px 12px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-dim);
+  font-family: var(--font-stack-mono);
+  font-size: 11.5px;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background 0.16s ease,
+    border-color 0.16s ease,
+    color 0.16s ease;
+}
+
+.practice-toggle:hover:not(:disabled) {
+  border-color: rgba(88, 166, 255, 0.4);
+  background: rgba(56, 139, 253, 0.1);
+  color: var(--text);
+}
+
+.practice-toggle:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.practice-toggle.is-active {
+  border-color: rgba(63, 185, 80, 0.4);
+  background: rgba(63, 185, 80, 0.1);
+  color: var(--success-bright);
 }

@@ -1,8 +1,8 @@
 import { getDictionary } from "../../_content/i18n";
-import { ProblemsPageClient } from "./_components/ProblemsPageClient";
+import { PracticeProgressClient } from "./_components/PracticeProgressClient";
 
 export default function ProblemsPage() {
   const page = getDictionary().cabinet.pages.problems;
 
-  return <ProblemsPageClient copy={page} />;
+  return <PracticeProgressClient copy={page} />;
 }

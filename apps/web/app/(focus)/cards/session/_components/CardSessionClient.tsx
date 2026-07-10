@@ -4,7 +4,7 @@ import type { ComponentProps } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { ApiError } from "../../../../_api/types";
-import { getCardSession, rateCard, toReviewCards } from "../../../../_api/cards";
+import { getCardSession, rateCard, toReviewCards, type SessionScope } from "../../../../_api/cards";
 import { FocusCardReviewSession } from "../../../../(cabinet)/cards/_components/FocusCardReviewSession";
 import type { ReviewCard, ReviewRating } from "../../../../(cabinet)/cards/_state/useCardReviewSession";
 
@@ -15,11 +15,14 @@ export function CardSessionClient({
   copy,
   errorFallback,
   mockCards,
+  scope = "due",
 }: Readonly<{
   brand: string;
   copy: ComponentProps<typeof FocusCardReviewSession>["copy"];
   errorFallback: string;
   mockCards: readonly ReviewCard[];
+  /** due — обычное повторение; practice — все карточки активных подпаттернов. */
+  scope?: SessionScope;
 }>) {
   const [cards, setCards] = useState<readonly ReviewCard[]>([]);
   const [loadState, setLoadState] = useState<LoadState>("loading");
@@ -29,7 +32,7 @@ export function CardSessionClient({
   useEffect(() => {
     const controller = new AbortController();
 
-    getCardSession({ scope: "due" }, controller.signal)
+    getCardSession({ scope }, controller.signal)
       .then((session) => {
         sessionIdRef.current = session.sessionId;
         setCards(toReviewCards(session.cards));
@@ -52,7 +55,7 @@ export function CardSessionClient({
       });
 
     return () => controller.abort();
-  }, [errorFallback, mockCards]);
+  }, [errorFallback, mockCards, scope]);
 
   const persistRating = useCallback((cardId: string, rating: ReviewRating, reviewedAt: string) => {
     const sessionId = sessionIdRef.current;

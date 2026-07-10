@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { ApiError } from "../../../_api/types";
 import { cardTypeLabel, getCardSession, getCards, type CardListItem } from "../../../_api/cards";
+import { getPractice } from "../../../_api/practice";
 import { CabinetPanel, StatusPill } from "../../_components";
 import { CabinetIcon } from "../../_icons";
 
@@ -38,6 +39,15 @@ type CardsPageCopy = Readonly<{
   errorTitle: string;
   retry: string;
   loadMore: string;
+  launcher: Readonly<{
+    eyebrow: string;
+    title: string;
+    metaUnits: Readonly<{ subpatterns: string; cards: string; minutes: string }>;
+    emptyTitle: string;
+    emptyMeta: string;
+    start: string;
+    manage: string;
+  }>;
 }>;
 
 const nextReviewFormatter = new Intl.DateTimeFormat("ru-RU", {
@@ -68,6 +78,11 @@ export function CardsPageClient({ copy }: Readonly<{ copy: CardsPageCopy }>) {
   const [typeFilter, setTypeFilter] = useState("all");
   const [revealedId, setRevealedId] = useState<number | null>(null);
   const [live, setLive] = useState<{ dueCount: number; estimatedMinutes: number } | null>(null);
+  const [practice, setPractice] = useState<{
+    subpatterns: number;
+    cards: number;
+    minutes: number;
+  } | null>(null);
 
   // Авторитетные цифры «сколько к повторению» — из сессионного эндпоинта,
   // той же выборки, которую откроет CTA. Ошибка не критична: остаётся
@@ -80,6 +95,26 @@ export function CardsPageClient({ copy }: Readonly<{ copy: CardsPageCopy }>) {
       })
       .catch(() => {
         // Фолбэк: считаем из списка ниже.
+      });
+    return () => controller.abort();
+  }, []);
+
+  // Лаунчер практики: те же цифры, которые увидит /cards/session?scope=practice.
+  useEffect(() => {
+    const controller = new AbortController();
+    Promise.all([
+      getPractice(controller.signal),
+      getCardSession({ scope: "practice" }, controller.signal),
+    ])
+      .then(([practiceSet, session]) => {
+        setPractice({
+          subpatterns: practiceSet.subpatterns.length,
+          cards: session.cards.length,
+          minutes: session.estimatedMinutes,
+        });
+      })
+      .catch(() => {
+        // Лаунчер показывает пустое состояние.
       });
     return () => controller.abort();
   }, []);
@@ -169,6 +204,31 @@ export function CardsPageClient({ copy }: Readonly<{ copy: CardsPageCopy }>) {
           </span>
         </div>
       </section>
+
+      <aside className="next-up next-up--wide">
+        <div className="next-up__body">
+          <span className="next-up__eyebrow">{copy.launcher.eyebrow}</span>
+          <strong className="next-up__title">
+            {practice && practice.subpatterns > 0 ? copy.launcher.title : copy.launcher.emptyTitle}
+          </strong>
+          <span className="next-up__meta">
+            {practice && practice.subpatterns > 0
+              ? `${practice.subpatterns} ${copy.launcher.metaUnits.subpatterns} · ${practice.cards} ${copy.launcher.metaUnits.cards} · ~${practice.minutes} ${copy.launcher.metaUnits.minutes}`
+              : copy.launcher.emptyMeta}
+          </span>
+        </div>
+        <div className="next-up__actions">
+          {practice && practice.subpatterns > 0 ? (
+            <Link className="cabinet-cta" href="/cards/session?scope=practice">
+              {copy.launcher.start}
+              <CabinetIcon name="arrow" />
+            </Link>
+          ) : null}
+          <Link className="cabinet-ghost-link" href="/problems">
+            {copy.launcher.manage}
+          </Link>
+        </div>
+      </aside>
 
       <div className="cabinet-toolbar">
         <div className="cabinet-search">
