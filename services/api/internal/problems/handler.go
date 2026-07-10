@@ -71,7 +71,7 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	}
 
 	body := buildListResponse(items, pageLimit)
-	response.JSONWithMeta(w, http.StatusOK, body.Data, body.Meta)
+	response.JSONWithMeta(w, http.StatusOK, body.Data, response.Meta{NextCursor: body.Meta.NextCursor})
 }
 
 // GET /me/problems/{problemId}

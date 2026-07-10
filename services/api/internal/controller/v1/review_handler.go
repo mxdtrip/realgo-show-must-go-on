@@ -76,7 +76,7 @@ func (h *ReviewHandler) GetQueue(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response.JSONWithMeta(w, http.StatusOK, resp.Data, resp.Meta)
+	response.JSONWithMeta(w, http.StatusOK, resp.Data, response.Meta{NextCursor: resp.Meta.NextCursor})
 }
 
 // RateReview: POST /me/reviews/{reviewId}/rate

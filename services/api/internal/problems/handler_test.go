@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/mxdtrip/freeburger/services/api/internal/auth"
+	"github.com/mxdtrip/freeburger/services/api/internal/server/response"
 )
 
 func TestListRequiresAuth(t *testing.T) {
@@ -190,6 +191,6 @@ func (f *fakeRepository) Save(_ context.Context, _, _ int64) (string, error) {
 }
 
 type listEnvelope struct {
-	Data []Problem `json:"data"`
-	Meta ListMeta  `json:"meta"`
+	Data []Problem     `json:"data"`
+	Meta response.Meta `json:"meta"`
 }

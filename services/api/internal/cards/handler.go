@@ -80,7 +80,7 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response.JSONWithMeta(w, http.StatusOK, items, ListMeta{NextCursor: nextCursor})
+	response.JSONWithMeta(w, http.StatusOK, items, response.Meta{NextCursor: nextCursor})
 }
 
 func (h *Handler) Session(w http.ResponseWriter, r *http.Request) {
