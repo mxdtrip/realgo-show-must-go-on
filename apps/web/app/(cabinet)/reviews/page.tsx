@@ -1,19 +1,8 @@
 import { getDictionary } from "../../_content/i18n";
-import { ReviewsPageClient } from "./_components/ReviewsPageClient";
+import { ReviewsJournalClient } from "./_components/ReviewsJournalClient";
 
 export default function ReviewsPage() {
-  const copy = getDictionary().cabinet;
-  const page = copy.pages.reviews;
+  const page = getDictionary().cabinet.pages.reviews;
 
-  return (
-    <ReviewsPageClient
-      copy={{
-        startSession: copy.common.startSession,
-        hard: copy.common.hard,
-        normal: copy.common.normal,
-        easy: copy.common.easy,
-        page,
-      }}
-    />
-  );
+  return <ReviewsJournalClient copy={page.journal} />;
 }

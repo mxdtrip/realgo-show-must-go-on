@@ -29,7 +29,7 @@ func (f *fakeAssistantRepo) AssistantProblemContext(_ context.Context, platform,
 	return f.ctxInput, nil
 }
 
-func (f *fakeAssistantRepo) LogAssistantHintRequest(_ context.Context, _ int64, _ string, status string) error {
+func (f *fakeAssistantRepo) LogAssistantHintRequest(_ context.Context, _ int64, _ *int64, _ string, status string) error {
 	f.logs = append(f.logs, status)
 	return nil
 }

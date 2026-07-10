@@ -36,8 +36,11 @@ type Problem struct {
 	NextReviewAt *time.Time      `json:"nextReviewAt"`
 	LastRating   *string         `json:"lastRating"`
 	SolvedAt     *time.Time      `json:"solvedAt"`
-	CreatedAt    time.Time       `json:"createdAt"`
-	UpdatedAt    time.Time       `json:"updatedAt"`
+	// HintsUsed — сколько подсказок ассистента реально выдано по задаче
+	// (успешные assistant_hint-запросы этого пользователя).
+	HintsUsed int       `json:"hintsUsed"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
 }
 
 type ProblemPattern struct {

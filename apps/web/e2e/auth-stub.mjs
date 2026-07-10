@@ -86,6 +86,126 @@ const STUB_RELEVANCE = {
   },
 };
 
+// ---- Review hub fixtures (/reviews, /problems, /cards deck) --------------
+// dueAt/nextReviewAt lean on "now" so the UI renders the deterministic
+// "today / due now" branches regardless of when the suite runs.
+const NOW_ISO = new Date().toISOString();
+const PAST_ISO = new Date(Date.now() - 3 * 3600_000).toISOString();
+const FUTURE_ISO = new Date(Date.now() + 26 * 3600_000).toISOString();
+
+const REVIEW_QUEUE = [
+  {
+    id: 501,
+    entityType: "problem",
+    entityId: 41,
+    title: "Stub Problem: Koko Eating Bananas",
+    meta: "Binary Search · medium",
+    typeLabel: "problem review",
+    dueAt: NOW_ISO,
+    status: "due",
+    lastRating: "hard",
+    attempts: 3,
+    entityUrl: "https://example.test/koko",
+    patternCode: "binary_search_on_answer",
+  },
+  {
+    id: 502,
+    entityType: "card",
+    entityId: 9101,
+    title: "Stub card: which approach fits a sorted array?",
+    meta: "Two Pointers · pattern_recognition",
+    typeLabel: "card review",
+    dueAt: NOW_ISO,
+    status: "due",
+    lastRating: null,
+    attempts: 0,
+    entityUrl: "",
+    patternCode: "two_pointers",
+  },
+  {
+    id: 503,
+    entityType: "pattern",
+    entityId: 7,
+    title: "Sliding Window",
+    meta: "Pattern · weak confidence",
+    typeLabel: "pattern review",
+    dueAt: NOW_ISO,
+    status: "due",
+    lastRating: "normal",
+    attempts: 2,
+    entityUrl: "",
+    patternCode: "sliding_window",
+  },
+];
+
+const PROBLEMS = [
+  {
+    id: 41,
+    externalId: "koko-eating-bananas",
+    title: "Stub Problem: Koko Eating Bananas",
+    url: "https://example.test/koko",
+    platform: "leetcode",
+    difficulty: "medium",
+    pattern: { id: "binary_search_on_answer", name: "Binary Search on Answer" },
+    status: "reviewing",
+    nextReviewAt: PAST_ISO,
+    lastRating: "hard",
+    solvedAt: PAST_ISO,
+    hintsUsed: 2,
+    createdAt: "2026-06-01T10:00:00Z",
+    updatedAt: PAST_ISO,
+  },
+  {
+    id: 42,
+    externalId: "two-sum-stub",
+    title: "Stub Problem: Two Sum",
+    url: "https://example.test/two-sum",
+    platform: "neetcode",
+    difficulty: "easy",
+    pattern: null,
+    status: "mastered",
+    nextReviewAt: FUTURE_ISO,
+    lastRating: "easy",
+    solvedAt: "2026-06-20T10:00:00Z",
+    hintsUsed: 0,
+    createdAt: "2026-05-20T10:00:00Z",
+    updatedAt: "2026-06-20T10:00:00Z",
+  },
+];
+
+// Practice set: statuses derive from the atlas mastery fixtures above
+// (unstable 41% -> "в работе", mastered 92% -> "освоен", not_started -> "добавлен").
+let PRACTICE = [
+  { code: "binary_search_on_answer", name: "Binary Search on Answer", addedAt: "2026-07-01T10:00:00Z" },
+  { code: "lower_upper_bound", name: "Lower / Upper Bound", addedAt: "2026-07-02T10:00:00Z" },
+  { code: "fixed_size_window", name: "Fixed-Size Window", addedAt: "2026-07-03T10:00:00Z" },
+];
+
+const DECK_CARDS = [
+  {
+    id: 9101,
+    type: "pattern_recognition",
+    source: { entityType: "pattern", entityId: 11, label: "Two Pointers" },
+    front: "STUB DECK: which approach fits a sorted array?",
+    back: "STUB DECK BACK: two pointers moving inward.",
+    status: "due",
+    nextReviewAt: PAST_ISO,
+    lastRating: "normal",
+    createdAt: "2026-06-01T10:00:00Z",
+  },
+  {
+    id: 9102,
+    type: "edge_case",
+    source: { entityType: "pattern", entityId: 12, label: "Sliding Window" },
+    front: "STUB DECK: what breaks on an empty input?",
+    back: "STUB DECK BACK: guard the zero-length slice first.",
+    status: "mastered",
+    nextReviewAt: FUTURE_ISO,
+    lastRating: "easy",
+    createdAt: "2026-06-02T10:00:00Z",
+  },
+];
+
 // Deterministic card review session for the /cards/session e2e specs.
 const CARD_SESSION = {
   sessionId: "sess_stub",
@@ -288,7 +408,7 @@ const server = createServer((req, res) => {
   // content-type, so the browser sends a preflight. No credentials are used
   // (Bearer header, not cookies), so a wildcard origin is safe and simplest.
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Authorization, Content-Type");
 
   const path = new URL(req.url, `http://127.0.0.1:${PORT}`).pathname;
@@ -334,6 +454,67 @@ const server = createServer((req, res) => {
 
     if (req.method === "POST" && path === `${PREFIX}/auth/logout`) {
       return ok(res, { status: "ok" });
+    }
+
+    // ---- Review hub fixtures (/reviews, /problems, /cards deck) --------
+    if (req.method === "GET" && path === `${PREFIX}/me/reviews/queue`) {
+      const bearer = (req.headers.authorization ?? "").replace(/^Bearer\s+/i, "");
+      if (kindOf(bearer) !== "LIVE") return fail(res, 401, "unauthorized", "stub: session invalid");
+      return send(res, 200, { data: REVIEW_QUEUE, meta: { nextCursor: null } });
+    }
+
+    if (req.method === "POST" && /^\/api\/v1\/me\/reviews\/\d+\/rate$/.test(path)) {
+      const bearer = (req.headers.authorization ?? "").replace(/^Bearer\s+/i, "");
+      if (kindOf(bearer) !== "LIVE") return fail(res, 401, "unauthorized", "stub: session invalid");
+      if (!["hard", "normal", "easy"].includes(body.rating)) {
+        return fail(res, 400, "validation_error", "stub: bad rating");
+      }
+      const reviewId = Number(path.split("/").at(-2));
+      return ok(res, {
+        reviewId,
+        rating: body.rating,
+        nextReviewAt: FUTURE_ISO,
+        status: "completed",
+      });
+    }
+
+    if (req.method === "GET" && path === `${PREFIX}/me/problems`) {
+      const bearer = (req.headers.authorization ?? "").replace(/^Bearer\s+/i, "");
+      if (kindOf(bearer) !== "LIVE") return fail(res, 401, "unauthorized", "stub: session invalid");
+      return send(res, 200, { data: PROBLEMS, meta: { nextCursor: null } });
+    }
+
+    if (req.method === "GET" && path === `${PREFIX}/me/cards`) {
+      const bearer = (req.headers.authorization ?? "").replace(/^Bearer\s+/i, "");
+      if (kindOf(bearer) !== "LIVE") return fail(res, 401, "unauthorized", "stub: session invalid");
+      return send(res, 200, { data: DECK_CARDS, meta: { nextCursor: null } });
+    }
+
+    // ---- Practice set fixtures (/problems, /cards launcher) ------------
+    if (path === `${PREFIX}/me/practice` && req.method === "GET") {
+      const bearer = (req.headers.authorization ?? "").replace(/^Bearer\s+/i, "");
+      if (kindOf(bearer) !== "LIVE") return fail(res, 401, "unauthorized", "stub: session invalid");
+      return ok(res, { subpatterns: PRACTICE });
+    }
+
+    if (path === `${PREFIX}/me/practice/subpatterns` && req.method === "POST") {
+      const bearer = (req.headers.authorization ?? "").replace(/^Bearer\s+/i, "");
+      if (kindOf(bearer) !== "LIVE") return fail(res, 401, "unauthorized", "stub: session invalid");
+      if (!body.code) return fail(res, 400, "validation_error", "stub: code required");
+      if (!PRACTICE.some((item) => item.code === body.code)) {
+        PRACTICE.push({ code: body.code, name: body.code, addedAt: new Date().toISOString() });
+      }
+      return ok(res, { code: body.code, active: true });
+    }
+
+    if (req.method === "DELETE" && path.startsWith(`${PREFIX}/me/practice/subpatterns/`)) {
+      const bearer = (req.headers.authorization ?? "").replace(/^Bearer\s+/i, "");
+      if (kindOf(bearer) !== "LIVE") return fail(res, 401, "unauthorized", "stub: session invalid");
+      const code = decodeURIComponent(path.split("/").at(-1));
+      PRACTICE = PRACTICE.filter((item) => item.code !== code);
+      res.writeHead(204);
+      res.end();
+      return;
     }
 
     // ---- Card session fixtures (e2e for /cards/session) ----------------

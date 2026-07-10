@@ -195,6 +195,25 @@ WHERE (
     (sqlc.arg(scope)::text = 'due' AND rs.next_review_at <= NOW())
     OR (sqlc.arg(scope)::text = 'hard_normal' AND rs.last_rating IN ('hard', 'normal'))
     OR (sqlc.arg(scope)::text = 'all')
+    -- practice: карточки активных подпаттернов пользователя. Прегенерированный
+    -- контент частично висит на family-узлах, поэтому подпаттерн в практике
+    -- подтягивает и карточки своих семейств. ORDER BY ниже уже ставит
+    -- просроченные вперёд, новые следом.
+    OR (
+      sqlc.arg(scope)::text = 'practice'
+      AND (
+        c.pattern_id IN (
+          SELECT up.pattern_id FROM user_practice_patterns up
+          WHERE up.user_id = sqlc.arg(user_id)::bigint
+        )
+        OR c.pattern_id IN (
+          SELECT pfs.family_id
+          FROM user_practice_patterns up
+          JOIN pattern_family_subpatterns pfs ON pfs.subpattern_id = up.pattern_id
+          WHERE up.user_id = sqlc.arg(user_id)::bigint
+        )
+      )
+    )
   )
 ORDER BY
     CASE

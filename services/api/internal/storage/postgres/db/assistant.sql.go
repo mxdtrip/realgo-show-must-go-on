@@ -7,6 +7,8 @@ package db
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const getAssistantProblemContext = `-- name: GetAssistantProblemContext :one
@@ -112,23 +114,30 @@ func (q *Queries) ListAssistantProblemSubpatterns(ctx context.Context, problemID
 }
 
 const logAssistantHintRequest = `-- name: LogAssistantHintRequest :exec
-INSERT INTO ai_request_logs (user_id, feature, provider, model, status)
+INSERT INTO ai_request_logs (user_id, feature, provider, model, status, problem_id)
 VALUES (
     $1::bigint,
     'assistant_hint',
     'gemini',
     $2::text,
-    $3::text
+    $3::text,
+    $4
 )
 `
 
 type LogAssistantHintRequestParams struct {
-	UserID int64
-	Model  string
-	Status string
+	UserID    int64
+	Model     string
+	Status    string
+	ProblemID pgtype.Int8
 }
 
 func (q *Queries) LogAssistantHintRequest(ctx context.Context, arg LogAssistantHintRequestParams) error {
-	_, err := q.db.Exec(ctx, logAssistantHintRequest, arg.UserID, arg.Model, arg.Status)
+	_, err := q.db.Exec(ctx, logAssistantHintRequest,
+		arg.UserID,
+		arg.Model,
+		arg.Status,
+		arg.ProblemID,
+	)
 	return err
 }

@@ -74,11 +74,16 @@ func (r *pgRepository) AssistantProblemContext(ctx context.Context, platform, sl
 	}, nil
 }
 
-func (r *pgRepository) LogAssistantHintRequest(ctx context.Context, userID int64, model, status string) error {
+func (r *pgRepository) LogAssistantHintRequest(ctx context.Context, userID int64, problemID *int64, model, status string) error {
+	var pid pgtype.Int8
+	if problemID != nil {
+		pid = pgtype.Int8{Int64: *problemID, Valid: true}
+	}
 	if err := r.q.LogAssistantHintRequest(ctx, db.LogAssistantHintRequestParams{
-		UserID: userID,
-		Model:  model,
-		Status: status,
+		UserID:    userID,
+		Model:     model,
+		Status:    status,
+		ProblemID: pid,
 	}); err != nil {
 		return fmt.Errorf("ai: log assistant hint request: %w", err)
 	}

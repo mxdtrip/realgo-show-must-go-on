@@ -44,16 +44,18 @@ func (r *pgReviewRepository) QueueReviews(ctx context.Context, userID int64, sta
 	items := make([]entity.ReviewItem, 0, len(rows))
 	for _, row := range rows {
 		items = append(items, entity.ReviewItem{
-			ID:         row.ID,
-			EntityType: entityType(row.ProblemID, row.PatternID, row.CardID),
-			EntityID:   entityID(row.ProblemID, row.PatternID, row.CardID),
-			Title:      title(row.ProblemID, row.CardID, row.ProblemTitle, row.PatternTitle, row.CardQuestion),
-			Meta:       buildMeta(row.CardID, row.PatternTitle, row.ProblemDifficulty, row.CardType),
-			TypeLabel:  typeLabel(row.ProblemID, row.PatternID, row.CardID),
-			DueAt:      row.NextReviewAt.Time,
-			Status:     status,
-			LastRating: stringPtrFromPg(row.LastRating),
-			Attempts:   int(row.ReviewCount.Int32),
+			ID:          row.ID,
+			EntityType:  entityType(row.ProblemID, row.PatternID, row.CardID),
+			EntityID:    entityID(row.ProblemID, row.PatternID, row.CardID),
+			Title:       title(row.ProblemID, row.CardID, row.ProblemTitle, row.PatternTitle, row.CardQuestion),
+			Meta:        buildMeta(row.CardID, row.PatternTitle, row.ProblemDifficulty, row.CardType),
+			TypeLabel:   typeLabel(row.ProblemID, row.PatternID, row.CardID),
+			DueAt:       row.NextReviewAt.Time,
+			Status:      status,
+			LastRating:  stringPtrFromPg(row.LastRating),
+			Attempts:    int(row.ReviewCount.Int32),
+			EntityURL:   row.ProblemUrl.String,
+			PatternCode: row.PatternCode,
 		})
 	}
 	return items, nil

@@ -47,6 +47,12 @@ type ReviewItem struct {
 	Status     string    `json:"status"` // due, upcoming, completed
 	LastRating *string   `json:"lastRating"`
 	Attempts   int       `json:"attempts"`
+	// EntityURL — внешняя ссылка на задачу (перерешать на платформе); пустая
+	// строка, если у элемента очереди нет привязанной задачи.
+	EntityURL string `json:"entityUrl"`
+	// PatternCode — код паттерна для перехода в тренировочную сессию
+	// /patterns/{code}/session; пустая строка, если паттерн не привязан.
+	PatternCode string `json:"patternCode"`
 }
 
 // StatsData для статистики повторений.

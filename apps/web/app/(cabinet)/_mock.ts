@@ -28,7 +28,6 @@ export const overviewStats = cabinet.mock.overviewStats;
 export const reviewQueue = cabinet.mock.reviewQueue;
 export const weakPatterns = cabinet.mock.weakPatterns;
 export const strongPatterns = cabinet.mock.strongPatterns;
-export const problems = cabinet.mock.problems;
 export const roadmapWeeks = cabinet.mock.roadmapWeeks;
 export const cardRecords: readonly MockCard[] = cabinet.mock.cards;
 export const cards = cardRecords.map((card) => ({

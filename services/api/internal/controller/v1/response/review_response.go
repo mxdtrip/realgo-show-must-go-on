@@ -20,6 +20,10 @@ type ReviewItem struct {
 	Status     string    `json:"status"` // due, upcoming, completed
 	LastRating *string   `json:"lastRating"`
 	Attempts   int       `json:"attempts"`
+	// EntityURL — внешняя ссылка «перерешать на платформе» (для problem-элементов).
+	EntityURL string `json:"entityUrl"`
+	// PatternCode — код паттерна для ссылки на /patterns/{code}/session.
+	PatternCode string `json:"patternCode"`
 }
 
 // QueueMeta для пагинации

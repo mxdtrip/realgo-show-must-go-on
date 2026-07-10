@@ -63,16 +63,18 @@ func (s *reviewService) GetQueue(ctx context.Context, userID int64, status strin
 	data := make([]response.ReviewItem, 0, len(items))
 	for _, item := range items {
 		data = append(data, response.ReviewItem{
-			ID:         item.ID,
-			EntityType: item.EntityType,
-			EntityID:   item.EntityID,
-			Title:      item.Title,
-			Meta:       item.Meta,
-			TypeLabel:  item.TypeLabel,
-			DueAt:      item.DueAt,
-			Status:     item.Status,
-			LastRating: item.LastRating,
-			Attempts:   item.Attempts,
+			ID:          item.ID,
+			EntityType:  item.EntityType,
+			EntityID:    item.EntityID,
+			Title:       item.Title,
+			Meta:        item.Meta,
+			TypeLabel:   item.TypeLabel,
+			DueAt:       item.DueAt,
+			Status:      item.Status,
+			LastRating:  item.LastRating,
+			Attempts:    item.Attempts,
+			EntityURL:   item.EntityURL,
+			PatternCode: item.PatternCode,
 		})
 	}
 

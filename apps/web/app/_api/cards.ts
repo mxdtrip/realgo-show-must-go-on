@@ -1,10 +1,11 @@
 "use client";
 
-import { apiFetch } from "./client";
+import { apiFetch, apiFetchEnvelope } from "./client";
 
 export type CardType = "pattern_recognition" | "algorithm_mechanics" | "edge_case";
 export type CardRating = "hard" | "normal" | "easy";
-export type SessionScope = "due" | "hard_normal" | "all";
+export type CardStatus = "new" | "due" | "learning" | "mastered";
+export type SessionScope = "due" | "hard_normal" | "all" | "practice";
 
 export type SessionSourceCard = {
   id: number;
@@ -68,14 +69,56 @@ const cardTypeLabels: Record<CardType, string> = {
   edge_case: "Edge Case",
 };
 
+export function cardTypeLabel(type: string): string {
+  return cardTypeLabels[type as CardType] ?? type;
+}
+
 /** Maps the backend's rich session card shape onto the flat shape FocusCardReviewSession expects. */
 export function toReviewCards(cards: readonly SessionSourceCard[]) {
   return cards.map((card) => ({
     id: String(card.id),
-    type: cardTypeLabels[card.type] ?? card.type,
+    type: cardTypeLabel(card.type),
     source: card.sourceLabel,
     front: card.front,
     back: card.back,
     createdByAi: card.createdByAi === true,
   }));
+}
+
+// ---- Колода: GET /me/cards ------------------------------------------------
+
+export type CardListItem = {
+  id: number;
+  type: CardType | string;
+  source: {
+    entityType: string;
+    entityId: number | null;
+    label: string;
+  };
+  front: string;
+  back: string;
+  status: CardStatus | string;
+  nextReviewAt: string | null;
+  lastRating: CardRating | null;
+  createdAt: string;
+};
+
+export type CardsMeta = {
+  nextCursor: string | null;
+};
+
+export type GetCardsParams = {
+  type?: CardType;
+  patternCode?: string;
+  limit?: number;
+  cursor?: string;
+};
+
+export function getCards(params: GetCardsParams = {}, signal?: AbortSignal) {
+  const query = new URLSearchParams();
+  if (params.type) query.set("type", params.type);
+  if (params.patternCode) query.set("patternCode", params.patternCode);
+  query.set("limit", String(params.limit ?? 100));
+  if (params.cursor) query.set("cursor", params.cursor);
+  return apiFetchEnvelope<CardListItem[], CardsMeta>(`/me/cards?${query}`, { signal });
 }

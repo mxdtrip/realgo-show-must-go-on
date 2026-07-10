@@ -50,7 +50,8 @@ async function rawEnvelopeRequest<T, M = unknown>(
     throw new ApiError(err?.message ?? `Ошибка сервера (${res.status})`, res.status, err?.code ?? "error");
   }
 
-  return payload as ApiEnvelope<T, M>;
+  // 204/пустое тело — валидный успех (DELETE-ручки): отдаём пустой конверт.
+  return (payload ?? {}) as ApiEnvelope<T, M>;
 }
 
 /** Low-level request that unwraps data and throws ApiError on failure. */
