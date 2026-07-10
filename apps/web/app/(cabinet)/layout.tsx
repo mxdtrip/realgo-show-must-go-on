@@ -3,6 +3,7 @@ import Link from "next/link";
 import { CabinetMobileNav } from "../_demo/CabinetMobileNav";
 import { DemoBanner } from "../_demo/DemoBanner";
 import { getDictionary } from "../_content/i18n";
+import { CabinetDueChip } from "./CabinetDueChip";
 import { CabinetGuard } from "./CabinetGuard";
 import { CabinetHotkeys } from "./CabinetHotkeys";
 import { CabinetInterviewCountdown } from "./CabinetInterviewCountdown";
@@ -11,7 +12,6 @@ import { CabinetPath } from "./CabinetPath";
 import { CabinetUserMenu } from "./CabinetUserMenu";
 import { CabinetWelcomeTour } from "./CabinetWelcomeTour";
 import { ReportProblemLauncher } from "./ReportProblemDialog";
-import { reviewQueue } from "./_mock";
 
 export default function CabinetLayout({
   children,
@@ -60,9 +60,7 @@ export default function CabinetLayout({
             <div className="cabinet-topbar__actions">
               <DemoBanner label={copy.demoBadge} title={copy.demoTitle} />
               <ReportProblemLauncher copy={shellCopy.report} />
-              <Link className="cabinet-due-chip" data-tour="due" href="/reviews">
-                {reviewQueue.length} {copy.dueChip}
-              </Link>
+              <CabinetDueChip label={copy.dueChip} />
               <Link className="cabinet-topbar__link cabinet-topbar__back" href="/">
                 {copy.backToMarketing}
               </Link>

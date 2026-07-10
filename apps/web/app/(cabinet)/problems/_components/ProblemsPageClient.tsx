@@ -1,0 +1,314 @@
+"use client";
+
+import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
+
+import { ApiError } from "../../../_api/types";
+import { getProblems, type ProblemListItem } from "../../../_api/problems";
+import { CabinetPanel, StatusPill } from "../../_components";
+
+type Tone = "default" | "accent" | "success" | "warning" | "danger";
+type LoadState = "loading" | "loaded" | "error";
+
+type ProblemsPageCopy = Readonly<{
+  eyebrow: string;
+  title: string;
+  description: string;
+  summaryUnit: string;
+  panelEyebrow: string;
+  panelTitle: string;
+  searchPlaceholder: string;
+  searchAria: string;
+  filterAll: string;
+  empty: string;
+  emptyAll: string;
+  emptyAllCta: string;
+  loading: string;
+  errorTitle: string;
+  retry: string;
+  loadMore: string;
+  dueNow: string;
+  noReview: string;
+  columns: Readonly<{
+    problem: string;
+    platform: string;
+    pattern: string;
+    status: string;
+    next: string;
+  }>;
+  statuses: readonly (readonly [string, string, string])[];
+  difficulty: Readonly<Record<string, string>>;
+}>;
+
+const nextReviewFormatter = new Intl.DateTimeFormat("ru-RU", {
+  day: "2-digit",
+  month: "short",
+  hour: "2-digit",
+  minute: "2-digit",
+});
+
+const difficultyTone: Record<string, string> = {
+  easy: "success",
+  medium: "warning",
+  hard: "danger",
+};
+
+function formatNextReview(value: string | null, copy: ProblemsPageCopy) {
+  if (!value) return { label: copy.noReview, due: false };
+  const next = new Date(value);
+  if (Number.isNaN(next.getTime())) return { label: copy.noReview, due: false };
+  if (next.getTime() <= Date.now()) return { label: copy.dueNow, due: true };
+  return { label: nextReviewFormatter.format(next).replace(".", ""), due: false };
+}
+
+/** Журнал решённого: всё, что захватило расширение (плюс сохранённое вручную).
+    Здесь смотрят и управляют, работа на сегодня живёт в /reviews. */
+export function ProblemsPageClient({ copy }: Readonly<{ copy: ProblemsPageCopy }>) {
+  const [problems, setProblems] = useState<ProblemListItem[]>([]);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [loadState, setLoadState] = useState<LoadState>("loading");
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [error, setError] = useState("");
+  const [reloadVersion, setReloadVersion] = useState(0);
+  const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    setLoadState("loading");
+    setError("");
+
+    getProblems({}, controller.signal)
+      .then((response) => {
+        setProblems(response.data);
+        setNextCursor(response.meta?.nextCursor ?? null);
+        setLoadState("loaded");
+      })
+      .catch((e: unknown) => {
+        if (controller.signal.aborted) return;
+        setProblems([]);
+        setError(e instanceof ApiError ? e.message : copy.errorTitle);
+        setLoadState("error");
+      });
+
+    return () => controller.abort();
+  }, [copy.errorTitle, reloadVersion]);
+
+  const loadMore = async () => {
+    if (!nextCursor || loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const response = await getProblems({ cursor: nextCursor });
+      setProblems((current) => [...current, ...response.data]);
+      setNextCursor(response.meta?.nextCursor ?? null);
+    } catch {
+      // Кнопка остаётся — можно повторить; список уже показанного не трогаем.
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+  const statusMeta = new Map(copy.statuses.map(([key, label, tone]) => [key, { label, tone }]));
+
+  const visible = useMemo(() => {
+    const needle = query.trim().toLowerCase();
+    return problems.filter((item) => {
+      if (statusFilter !== "all" && item.status !== statusFilter) return false;
+      if (!needle) return true;
+      return (
+        item.title.toLowerCase().includes(needle) ||
+        (item.pattern?.name.toLowerCase().includes(needle) ?? false)
+      );
+    });
+  }, [problems, query, statusFilter]);
+
+  const countLabel = loadState === "loading" ? "..." : problems.length;
+
+  return (
+    <main className="cabinet-page">
+      <section className="cabinet-page-head">
+        <div>
+          <span className="cabinet-eyebrow">{copy.eyebrow}</span>
+          <h1>{copy.title}</h1>
+          <p>{copy.description}</p>
+        </div>
+        <div className="cabinet-page-head__actions">
+          <span className="cabinet-next-hint">
+            <em>{countLabel}</em> {copy.summaryUnit}
+          </span>
+        </div>
+      </section>
+
+      <div className="cabinet-toolbar">
+        <div className="cabinet-search">
+          <input
+            aria-label={copy.searchAria}
+            placeholder={copy.searchPlaceholder}
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+          />
+        </div>
+        <div className="filter-tabs">
+          <button
+            className={statusFilter === "all" ? "is-active" : undefined}
+            type="button"
+            aria-pressed={statusFilter === "all"}
+            onClick={() => setStatusFilter("all")}
+          >
+            {copy.filterAll}
+            <em>{problems.length}</em>
+          </button>
+          {copy.statuses.map(([key, label]) => {
+            const count = problems.filter((item) => item.status === key).length;
+            return (
+              <button
+                className={statusFilter === key ? "is-active" : undefined}
+                key={key}
+                type="button"
+                aria-pressed={statusFilter === key}
+                onClick={() => setStatusFilter(key)}
+              >
+                {label}
+                <em>{count}</em>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <CabinetPanel
+        eyebrow={copy.panelEyebrow}
+        title={copy.panelTitle}
+        meta={
+          <span className="cabinet-panel__meta">
+            {visible.length} / {problems.length}
+          </span>
+        }
+      >
+        <div className="data-table-wrap">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>{copy.columns.problem}</th>
+                <th>{copy.columns.platform}</th>
+                <th>{copy.columns.pattern}</th>
+                <th>{copy.columns.status}</th>
+                <th>{copy.columns.next}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loadState === "loading" ? (
+                <tr>
+                  <td className="data-table__empty" colSpan={5} role="status" aria-live="polite">
+                    {copy.loading}
+                  </td>
+                </tr>
+              ) : null}
+
+              {loadState === "error" ? (
+                <tr>
+                  <td className="data-table__empty" colSpan={5} role="alert">
+                    <strong>{copy.errorTitle}</strong>
+                    {error ? <> · {error}</> : null}{" "}
+                    <button
+                      className="review-action review-action--ghost"
+                      type="button"
+                      onClick={() => setReloadVersion((version) => version + 1)}
+                    >
+                      {copy.retry}
+                    </button>
+                  </td>
+                </tr>
+              ) : null}
+
+              {loadState === "loaded"
+                ? visible.map((item) => {
+                    const meta = statusMeta.get(item.status);
+                    const next = formatNextReview(item.nextReviewAt, copy);
+                    const difficulty = copy.difficulty[item.difficulty];
+                    return (
+                      <tr key={item.id}>
+                        <td>
+                          <div className="problem-cell">
+                            <a
+                              className="problem-cell__link"
+                              href={item.url}
+                              rel="noreferrer"
+                              target="_blank"
+                            >
+                              {item.title}
+                              <span aria-hidden="true">↗</span>
+                            </a>
+                            {difficulty ? (
+                              <span
+                                className={`problem-cell__difficulty problem-cell__difficulty--${
+                                  difficultyTone[item.difficulty] ?? "default"
+                                }`}
+                              >
+                                {difficulty}
+                              </span>
+                            ) : null}
+                          </div>
+                        </td>
+                        <td>
+                          <span className="meta-chip">{item.platform}</span>
+                        </td>
+                        <td className="data-table__mono">
+                          {item.pattern ? (
+                            <Link className="problem-cell__pattern" href={`/patterns/${item.pattern.id}`}>
+                              {item.pattern.name}
+                            </Link>
+                          ) : (
+                            "—"
+                          )}
+                        </td>
+                        <td>
+                          <StatusPill tone={(meta?.tone ?? "default") as Tone}>
+                            {meta?.label ?? item.status}
+                          </StatusPill>
+                        </td>
+                        <td className={next.due ? "data-table__mono problem-next--due" : "data-table__mono"}>
+                          {next.label}
+                        </td>
+                      </tr>
+                    );
+                  })
+                : null}
+
+              {loadState === "loaded" && visible.length === 0 ? (
+                <tr>
+                  <td className="data-table__empty" colSpan={5}>
+                    {problems.length === 0 ? (
+                      <>
+                        {copy.emptyAll}{" "}
+                        <Link className="problem-cell__pattern" href="/extension">
+                          {copy.emptyAllCta}
+                        </Link>
+                      </>
+                    ) : (
+                      copy.empty
+                    )}
+                  </td>
+                </tr>
+              ) : null}
+            </tbody>
+          </table>
+        </div>
+        {loadState === "loaded" && nextCursor ? (
+          <div className="data-table-more">
+            <button
+              className="review-action review-action--ghost"
+              disabled={loadingMore}
+              type="button"
+              onClick={() => void loadMore()}
+            >
+              {copy.loadMore}
+            </button>
+          </div>
+        ) : null}
+      </CabinetPanel>
+    </main>
+  );
+}
