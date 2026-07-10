@@ -13,6 +13,7 @@ import (
 
 	"github.com/mxdtrip/freeburger/services/api/internal/auth"
 	reviewresponse "github.com/mxdtrip/freeburger/services/api/internal/controller/v1/response"
+	"github.com/mxdtrip/freeburger/services/api/internal/server/response"
 )
 
 func TestListRequiresAuth(t *testing.T) {
@@ -74,8 +75,8 @@ func TestListReturnsTopLevelDataAndMeta(t *testing.T) {
 	}
 
 	var body struct {
-		Data []Card   `json:"data"`
-		Meta ListMeta `json:"meta"`
+		Data []Card        `json:"data"`
+		Meta response.Meta `json:"meta"`
 	}
 	if err := json.Unmarshal(w.Body.Bytes(), &body); err != nil {
 		t.Fatalf("invalid json: %v", err)
