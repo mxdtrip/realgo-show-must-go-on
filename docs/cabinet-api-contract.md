@@ -67,6 +67,7 @@
 | Reviews | `GET /me/reviews/queue` | Очередь повторений |
 | Reviews | `POST /me/reviews/{reviewId}/rate` | Оценить повторение |
 | Problems | `GET /me/problems` | Список задач |
+| Problems | `GET /me/problems/{problemId}` | Детали одной задачи |
 | Problems | `POST /me/problems` | Сохранить задачу вручную или из extension |
 | Cards | `GET /me/cards` | Список карточек |
 | Cards | `GET /me/cards/session` | Очередь карточек для сессии |
@@ -400,6 +401,45 @@ platform: leetcode | neetcode | codeforces | custom
 difficulty: easy | medium | hard | unknown
 status: saved | reviewing | mastered | archived
 ```
+
+### `GET /me/problems/{problemId}`
+
+Детали одной задачи. Поля идентичны list-item (тот же camelCase контракт) плюс
+`note` — пользовательская заметка, отсутствующая в list. `hintsUsed` показывает,
+сколько успешных подсказок ассистента выдано по этой задаче.
+
+Response:
+
+```json
+{
+  "data": {
+    "id": 42,
+    "externalId": "leetcode_two_sum_ii",
+    "title": "Two Sum II",
+    "url": "https://leetcode.com/problems/two-sum-ii/",
+    "platform": "leetcode",
+    "difficulty": "medium",
+    "pattern": {
+      "id": "two_pointers",
+      "name": "Two Pointers"
+    },
+    "status": "reviewing",
+    "nextReviewAt": "2026-07-01T09:00:00Z",
+    "lastRating": "normal",
+    "solvedAt": "2026-06-28T20:10:00Z",
+    "hintsUsed": 3,
+    "note": "не забыть edge case с пустым массивом",
+    "createdAt": "2026-06-28T20:10:00Z",
+    "updatedAt": "2026-06-30T09:00:00Z"
+  },
+  "meta": {
+    "requestId": "..."
+  }
+}
+```
+
+Ошибки: `404 NOT_FOUND` (задача не найдена или не принадлежит пользователю),
+`400 VALIDATION_ERROR` (нечисловой `problemId`), `401 UNAUTHORIZED` (без токена).
 
 ### `POST /me/problems`
 

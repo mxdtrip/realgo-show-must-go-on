@@ -39,7 +39,9 @@ func (r *pgRepository) GetByID(ctx context.Context, userID, problemID int64) (Pr
 		Platform:   row.Platform,
 		Difficulty: row.Difficulty,
 		Status:     row.Status,
+		HintsUsed:  int(row.HintsUsed),
 		CreatedAt:  timeFromPg(row.CreatedAt),
+		UpdatedAt:  timeFromPg(row.UpdatedAt),
 	}
 	if row.PatternID.Valid && row.PatternName.Valid {
 		d.Pattern = &ProblemPattern{ID: row.PatternID.String, Name: row.PatternName.String}

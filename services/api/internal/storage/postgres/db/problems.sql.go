@@ -107,7 +107,9 @@ SELECT
     COALESCE(rs.last_rating, upp.rating)   AS last_rating,
     upp.solved_at,
     upp.note,
-    COALESCE(p.created_at,'1970-01-01 00:00:00+00'::timestamptz) AS created_at
+    COALESCE(hints.used, 0)                AS hints_used,
+    COALESCE(p.created_at,'1970-01-01 00:00:00+00'::timestamptz) AS created_at,
+    COALESCE(p.updated_at, p.created_at, '1970-01-01 00:00:00+00'::timestamptz) AS updated_at
 FROM problems p
 JOIN platforms pl ON pl.id = p.platform_id
 LEFT JOIN user_problem_progress upp ON upp.user_id = $1::bigint AND upp.problem_id = p.id
@@ -119,6 +121,14 @@ LEFT JOIN LATERAL (
 ) rs ON TRUE
 LEFT JOIN roadmap_items ri ON ri.problem_id = p.id AND ri.roadmap_code = 'neetcode_150'
 LEFT JOIN patterns pt ON pt.id = ri.pattern_id
+LEFT JOIN LATERAL (
+    SELECT COUNT(*)::int AS used
+    FROM ai_request_logs l
+    WHERE l.user_id = $1::bigint
+      AND l.problem_id = p.id
+      AND l.feature = 'assistant_hint'
+      AND l.status = 'success'
+) hints ON TRUE
 WHERE p.id = $2::bigint
 `
 
@@ -141,7 +151,9 @@ type GetUserProblemRow struct {
 	LastRating   pgtype.Text
 	SolvedAt     pgtype.Timestamptz
 	Note         pgtype.Text
+	HintsUsed    int32
 	CreatedAt    pgtype.Timestamptz
+	UpdatedAt    pgtype.Timestamptz
 }
 
 // Single problem with user progress and review schedule.
@@ -162,7 +174,9 @@ func (q *Queries) GetUserProblem(ctx context.Context, arg GetUserProblemParams) 
 		&i.LastRating,
 		&i.SolvedAt,
 		&i.Note,
+		&i.HintsUsed,
 		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
