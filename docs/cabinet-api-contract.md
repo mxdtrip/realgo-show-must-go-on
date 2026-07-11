@@ -1,6 +1,6 @@
 # realgo cabinet API contract
 
-Документ описывает backend endpoint'ы, которые нужны web-личному кабинету realgo и браузерному расширению. Сейчас кабинет работает на моках, поэтому это целевой контракт для замены моков реальными данными.
+Документ описывает backend endpoint'ы, которые нужны web-личному кабинету realgo и браузерному расширению. Кабинет работает на живом API (auth, dashboard, roadmap, reviews, problems, patterns/atlas, cards, extension-статус); моки остались только в отдельных demo-превью, не в основном кабинете. Раздел «MVP endpoint'ы» ниже отражает то, что реально смонтировано в `internal/server/server.go`, включая эндпоинты за пределами исходного MVP (Pattern Atlas, practice hub, AI-генерация карточек, quiz, assistant hints).
 
 ## Базовые договорённости
 
@@ -73,7 +73,19 @@
 | Cards | `GET /me/cards/session` | Очередь карточек для сессии |
 | Cards | `POST /me/cards/{cardId}/rate` | Оценить карточку |
 | Patterns | `GET /me/patterns` | Слабые/сильные паттерны |
+| Patterns | `GET /me/patterns/atlas` | Pattern Atlas: 22 семейства / 111 субпаттернов |
+| Patterns | `GET /me/patterns/atlas/companies` | Список компаний для Company Overlay атласа |
+| Patterns | `GET /me/patterns/atlas/{code}` | Узел атласа (субпаттерн) + relevance по компаниям |
+| Practice | `GET /me/practice` | Список субпаттернов в персональной практике |
+| Practice | `POST /me/practice/subpatterns` | Добавить субпаттерн(ы) в практику (eager-enqueue в review) |
+| Practice | `DELETE /me/practice/subpatterns/{code}` | Убрать субпаттерн из практики |
+| Cards | `POST /me/cards/generate` | AI-генерация карточки (Redis-lock, cache-aside через Postgres) |
+| Quiz | `GET /me/quiz/session` | Сессия квиза по паттерну |
+| Quiz | `POST /me/quiz/{questionId}/answer` | Ответить на вопрос квиза |
+| Quiz | `POST /me/quiz/generate` | AI-генерация вопроса квиза |
+| Assistant | `POST /assistant/hint` | Подсказка ассистента по задаче (3 уровня: nudge/approach/reveal) |
 | Roadmap | `GET /me/roadmap` | План подготовки |
+| Roadmap | `GET /roadmaps/neetcode_150` | Справочник NeetCode 150 (публичный, без auth) |
 | Extension | `POST /extension/events` | События из расширения |
 | Extension | `GET /me/extension/status` | Статус синхронизации |
 | Settings | `PATCH /me/notification-settings` | Настройки уведомлений |
@@ -958,19 +970,25 @@ review entity types: problem, card, pattern
 
 Display labels можно отдавать с backend или хранить на frontend, но API должен всегда возвращать стабильный `id`.
 
-## Что можно отложить после MVP
+## Что реализовано сверх исходного MVP
 
-- AI-генерация карточек.
-- Полная персонализация roadmap под конкретную компанию.
-- Серверные push notifications.
+- AI-генерация карточек (`POST /me/cards/generate`) и квизов (`POST /me/quiz/generate`), cache-aside Redis → Postgres → Gemini.
+- AI-подсказки ассистента по задаче (`POST /assistant/hint`, 3 уровня: nudge → approach → reveal).
+- Pattern Atlas (`GET /me/patterns/atlas*`) — 22 семейства / 111 субпаттернов, Company Overlay по реальному company↔problem датасету.
+- Practice hub (`/me/practice`) — журнал повторений с hints/self-rating, стадии практики на `/me/problems`.
+
+## Что можно отложить дальше
+
+- Полная персонализация roadmap под конкретную компанию (сейчас roadmap строится по NeetCode 150, компания только экспонируется).
+- Серверные push notifications (сейчас — только локальные browser notifications).
 - Экспорт в Anki.
 - Billing/Pro.
 - Командные/менторские функции.
 
 ## Открытые вопросы для backend
 
-1. Где хранится справочник компаний: своя таблица, периодический import из GitHub или live-proxy?
+1. ~~Где хранится справочник компаний~~ — решено: таблица `companies` (миграция `000012`, сид `company-problems`) + curated in-memory каталог aliases в `internal/companies`, см. «Source of truth» в разделе `/companies/search`.
 2. Кто является источником истины для расписания повторений: backend полностью или frontend может локально переупорядочивать текущую сессию?
 3. Нужна ли поддержка нескольких активных целей подготовки у одного пользователя?
 4. Нужно ли сохранять черновики карточных сессий между устройствами?
-5. Какие платформы расширения поддерживаем в MVP: только LeetCode или также NeetCode/custom?
+5. ~~Какие платформы расширения поддерживаем в MVP~~ — решено: HackerRank основная платформа расширения (Interview Kits корпус + `?platform=` фильтр атласа), LeetCode/NeetCode остаются в contract enum как legacy/заглушка.

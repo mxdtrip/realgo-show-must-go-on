@@ -52,3 +52,6 @@ task health
 ## Runbooks
 
 - [Prod-demo deploy runbook](../../docs/prod-demo-deploy-runbook.md)
+- [Cabinet API contract](../../docs/cabinet-api-contract.md) — полный список endpoint'ов
+  (`/me/*`, Pattern Atlas, practice hub, AI-карточки/квизы, assistant hints) с примерами
+  запросов/ответов.
