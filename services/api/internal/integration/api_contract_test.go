@@ -370,9 +370,9 @@ func TestContractRoadmapTargetAfterOnboarding(t *testing.T) {
 	t.Cleanup(func() { h.deleteRefreshTokens(tokens.refresh) })
 
 	patch := h.request(t, http.MethodPatch, "/api/v1/me/profile", tokens.access, map[string]any{
-		"target_company":      "Google",
-		"target_topics":       []string{"two-pointers", "arrays"},
-		"interview_date":      "2026-07-21T09:00:00Z",
+		"target_company":       "Google",
+		"target_topics":        []string{"two-pointers", "arrays"},
+		"interview_date":       "2026-07-21T09:00:00Z",
 		"onboarding_completed": true,
 	})
 	requireSuccessEnvelope(t, patch, http.StatusOK)

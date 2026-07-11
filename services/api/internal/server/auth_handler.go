@@ -244,14 +244,14 @@ func decodeJSON(w http.ResponseWriter, r *http.Request, dst any) bool {
 }
 
 type patchProfileRequest struct {
-	Timezone            *string  `json:"timezone"`
-	InterviewDate       *string  `json:"interview_date"`
-	PrepGoal            *string  `json:"prep_goal"`
-	Grade               *string  `json:"grade"`
-	TargetCompany       *string  `json:"target_company"`
-	TargetPosition      *string  `json:"target_position"`
+	Timezone            *string   `json:"timezone"`
+	InterviewDate       *string   `json:"interview_date"`
+	PrepGoal            *string   `json:"prep_goal"`
+	Grade               *string   `json:"grade"`
+	TargetCompany       *string   `json:"target_company"`
+	TargetPosition      *string   `json:"target_position"`
 	TargetTopics        *[]string `json:"target_topics"`
-	OnboardingCompleted *bool    `json:"onboarding_completed"`
+	OnboardingCompleted *bool     `json:"onboarding_completed"`
 }
 
 var validGrades = map[string]bool{

@@ -10,9 +10,9 @@ type Response struct {
 }
 
 type Target struct {
-	Company       *Company `json:"company"`        // null when user has no target_company
+	Company       *Company `json:"company"` // null when user has no target_company
 	InterviewDate *string  `json:"interviewDate"`
-	Topics        []string `json:"topics"`         // snake_case topic codes, [] when none
+	Topics        []string `json:"topics"` // snake_case topic codes, [] when none
 }
 
 // Company is the enriched target-company object exposed by the roadmap. The
