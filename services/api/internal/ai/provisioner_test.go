@@ -76,9 +76,11 @@ func (f *fakeProvisionRepo) upsertedCount() int {
 // locking plus a small readiness cache — in-process. It satisfies ai's
 // unexported redisClient interface structurally.
 type fakeRedis struct {
-	mu     sync.Mutex
-	locked map[string]bool
-	cache  map[string][]byte
+	mu      sync.Mutex
+	locked  map[string]bool
+	cache   map[string][]byte
+	getErr  error
+	saveErr error
 }
 
 func newFakeRedis() *fakeRedis {
@@ -111,6 +113,9 @@ func (r *fakeRedis) Locked(_ context.Context, key string) (bool, error) {
 func (r *fakeRedis) Save(_ context.Context, key string, value any, _ time.Duration) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+	if r.saveErr != nil {
+		return r.saveErr
+	}
 	r.cache[key] = []byte(fmt.Sprint(value))
 	return nil
 }
@@ -118,6 +123,9 @@ func (r *fakeRedis) Save(_ context.Context, key string, value any, _ time.Durati
 func (r *fakeRedis) Get(_ context.Context, key string) ([]byte, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+	if r.getErr != nil {
+		return nil, r.getErr
+	}
 	v, ok := r.cache[key]
 	if !ok {
 		return nil, goredis.Nil
@@ -280,6 +288,22 @@ func TestProvisioner_Provision_InvalidGenerationNotPersisted(t *testing.T) {
 	}
 }
 
+func TestProvisioner_Provision_StoreFailureIsLogged(t *testing.T) {
+	repo := &fakeProvisionRepo{
+		info:      ai.ProblemInfo{Title: "Two Sum", Platform: "leetcode", Slug: "two-sum"},
+		upsertErr: errors.New("database unavailable"),
+	}
+	provider := aitest.New()
+	p := ai.NewProvisioner(repo, newFakeRedis(), provider, testLogger())
+
+	if err := p.Provision(context.Background(), 1, "leetcode", "two-sum"); err == nil {
+		t.Fatal("expected the storage failure to propagate")
+	}
+	if len(repo.logs) != 1 || repo.logs[0] != "failed" {
+		t.Fatalf("logs = %v, want [failed]", repo.logs)
+	}
+}
+
 func TestProvisioner_ProvisionAsync_ConcurrentCallsGenerateOnce(t *testing.T) {
 	repo := &fakeProvisionRepo{info: ai.ProblemInfo{Title: "Two Sum", Platform: "leetcode", Slug: "two-sum"}}
 	provider := aitest.New()
@@ -347,6 +371,25 @@ func TestProvisioner_Ensure_ReadyFromCacheSkipsRepo(t *testing.T) {
 	}
 	if status != ai.EnsureReady {
 		t.Fatalf("status = %q, want %q (repo has no ready cards, only the cache does)", status, ai.EnsureReady)
+	}
+}
+
+func TestProvisioner_Ensure_CacheErrorsFallBackToRepo(t *testing.T) {
+	repo := &fakeProvisionRepo{
+		info:         ai.ProblemInfo{Platform: "leetcode", Slug: "two-sum"},
+		readyVersion: "fake-v1",
+	}
+	redis := newFakeRedis()
+	redis.getErr = errors.New("redis unavailable")
+	redis.saveErr = errors.New("redis unavailable")
+	p := ai.NewProvisioner(repo, redis, aitest.New(), testLogger())
+
+	status, err := p.Ensure(context.Background(), 1)
+	if err != nil {
+		t.Fatalf("cache degradation must not block the Postgres fallback: %v", err)
+	}
+	if status != ai.EnsureReady {
+		t.Fatalf("status = %q, want %q", status, ai.EnsureReady)
 	}
 }
 

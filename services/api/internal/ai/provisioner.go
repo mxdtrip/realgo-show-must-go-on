@@ -187,13 +187,12 @@ func (p *Provisioner) Provision(ctx context.Context, problemID int64, platform, 
 	}
 
 	if err := p.repo.UpsertGeneratedCards(ctx, problemID, info.Platform, info.Slug, cards, p.provider.PromptVersion()); err != nil {
+		p.logGeneration(ctx, "failed")
 		return fmt.Errorf("ai: store generated cards: %w", err)
 	}
 	p.warmCache(ctx, CacheKey(p.provider.PromptVersion(), platform, slug))
 
-	if err := p.repo.LogGenerationRequest(ctx, p.provider.PromptVersion(), "success"); err != nil {
-		p.logger.Warn("ai: failed to log generation request", slog.Any("err", err))
-	}
+	p.logGeneration(ctx, "success")
 	return nil
 }
 
@@ -244,14 +243,18 @@ func (p *Provisioner) logAndClassify(ctx context.Context, err error) error {
 	if errors.Is(err, ErrUnknownProblem) || errors.Is(err, ErrQuotaExceeded) {
 		status = "refused"
 	}
-	if logErr := p.repo.LogGenerationRequest(ctx, p.provider.PromptVersion(), status); logErr != nil {
-		p.logger.Warn("ai: failed to log generation request", slog.Any("err", logErr))
-	}
+	p.logGeneration(ctx, status)
 	if status == "refused" {
 		return nil
 	}
 	p.logProviderError(err)
 	return fmt.Errorf("ai: generate cards: %w", err)
+}
+
+func (p *Provisioner) logGeneration(ctx context.Context, status string) {
+	if err := p.repo.LogGenerationRequest(ctx, p.provider.PromptVersion(), status); err != nil {
+		p.logger.Warn("ai: failed to log generation request", slog.Any("err", err))
+	}
 }
 
 // logProviderError surfaces the upstream HTTP status code and response body

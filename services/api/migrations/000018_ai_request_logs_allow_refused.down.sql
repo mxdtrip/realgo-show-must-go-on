@@ -1,9 +1,8 @@
 BEGIN;
 
--- Reverting to the narrower constraint would fail if any 'refused' rows were
--- written while this migration was applied; that data loss risk belongs to
--- whoever runs the rollback, same as any other constraint-narrowing down.
-DELETE FROM ai_request_logs WHERE status = 'refused';
+-- Preserve audit rows while mapping the new status back to the closest value
+-- supported by the old constraint.
+UPDATE ai_request_logs SET status = 'failed' WHERE status = 'refused';
 ALTER TABLE ai_request_logs DROP CONSTRAINT ai_request_logs_status_check;
 ALTER TABLE ai_request_logs
     ADD CONSTRAINT ai_request_logs_status_check
