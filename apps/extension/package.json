@@ -41,8 +41,8 @@
       "https://*/*"
     ],
     "host_permissions": [
-      "https://neetcode.io/*",
-      "https://*.neetcode.io/*",
+      "https://www.hackerrank.com/*",
+      "https://hackerrank.com/*",
       "https://leetcode.com/*",
       "https://realgo.dev/*",
       "http://localhost:8080/*"

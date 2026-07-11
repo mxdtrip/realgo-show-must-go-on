@@ -326,9 +326,9 @@ func TestHandle_SubmissionPayload_NonAcceptedRecordsSubmittedOnly(t *testing.T) 
 	svc := newTestService(repo, now)
 
 	_, err := svc.Handle(context.Background(), 7, EventRequest{
-		Platform:       "neetcode",
+		Platform:       "hackerrank",
 		TaskTitle:      "Valid Parentheses",
-		TaskURL:        "https://neetcode.io/problems/valid-parentheses",
+		TaskURL:        "https://www.hackerrank.com/challenges/valid-parentheses/problem",
 		SubmitResult:   "wrong_answer",
 		SubmittedAt:    now.Format(time.RFC3339),
 		UserDifficulty: "hard",

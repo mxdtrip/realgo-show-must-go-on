@@ -18,7 +18,7 @@ const MAX_DESCRIPTION_CHARS = 4000;
 /**
  * Best-effort problem statement scrape: tries each selector in order and
  * returns the first non-empty `innerText`, trimmed and capped. Both LeetCode
- * and NeetCode ship no stable data-* hook for the statement body, so this
+ * and HackerRank ship no stable data-* hook for the statement body, so this
  * degrades to `undefined` rather than guessing wrong.
  */
 export function extractDescription(selectors: string[]): string | undefined {
@@ -61,13 +61,21 @@ export interface PlatformAdapter {
   detectSubmitResult(): SubmitResult;
 }
 
-/** Maps free verdict text found in the DOM to a normalized SubmitResult. */
+/**
+ * Maps free verdict text found in the DOM to a normalized SubmitResult.
+ * Covers both LeetCode-style wording ("Accepted", "Wrong Answer") and
+ * HackerRank's own phrasing ("All test cases passed", "Terminated due to
+ * timeout", "Compilation error") — the two never overlap, so one classifier
+ * safely serves every adapter.
+ */
 export function classifyVerdict(text: string): SubmitResult {
   const t = text.toLowerCase();
+  if (t.includes("all test cases passed")) return "accepted";
   if (/\baccepted\b/.test(t) && !/\bacceptance\b/.test(t)) return "accepted";
   if (t.includes("wrong answer")) return "wrong_answer";
+  if (t.includes("compilation error") || t.includes("compile error")) return "runtime_error";
   if (t.includes("runtime error")) return "runtime_error";
-  if (t.includes("time limit")) return "time_limit";
+  if (t.includes("terminated due to timeout") || t.includes("time limit")) return "time_limit";
   return "unknown";
 }
 

@@ -251,7 +251,7 @@ export const POPUP_CSS = `
   color: #ffa116;
   background: rgba(255, 161, 22, 0.12);
 }
-.realgo-tag--neetcode {
+.realgo-tag--hackerrank {
   border-color: rgba(56, 189, 178, 0.4);
   color: #38bdb2;
   background: rgba(56, 189, 178, 0.12);

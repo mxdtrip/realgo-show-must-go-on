@@ -1,12 +1,12 @@
 import type { Platform } from "../lib/types";
+import { hackerrankAdapter } from "./hackerrank";
 import { leetcodeAdapter } from "./leetcode";
-import { neetcodeAdapter } from "./neetcode";
 import type { PlatformAdapter } from "./types";
 
 export type { PlatformAdapter, TaskInfo } from "./types";
 
-/** All known adapters, in match priority order. NeetCode first (MVP target). */
-export const adapters: PlatformAdapter[] = [neetcodeAdapter, leetcodeAdapter];
+/** All known adapters, in match priority order. HackerRank first (MVP target). */
+export const adapters: PlatformAdapter[] = [hackerrankAdapter, leetcodeAdapter];
 
 /** Returns the adapter for the given URL, or null when no platform matches. */
 export function detectAdapter(url: string = location.href): PlatformAdapter | null {

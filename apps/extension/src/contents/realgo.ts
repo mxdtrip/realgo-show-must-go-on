@@ -21,8 +21,8 @@ import { PopupApp } from "../popup/PopupApp";
 
 export const config: PlasmoCSConfig = {
   matches: [
-    "https://neetcode.io/*",
-    "https://*.neetcode.io/*",
+    "https://www.hackerrank.com/*",
+    "https://hackerrank.com/*",
     "https://leetcode.com/*",
   ],
   run_at: "document_idle",
@@ -329,7 +329,7 @@ function assistantTaskFrom(adapter: PlatformAdapter, info: TaskInfo): AssistantT
 }
 
 function isAssistantPlatform(platform: PlatformAdapter["platform"]): platform is AssistantTask["platform"] {
-  return platform === "leetcode" || platform === "neetcode";
+  return platform === "leetcode" || platform === "hackerrank";
 }
 
 init();

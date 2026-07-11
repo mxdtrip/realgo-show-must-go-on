@@ -12,7 +12,7 @@ import {
  * LeetCode adapter (stub).
  *
  * Laid out through the same interface so LeetCode support is a fill-in job, but
- * NeetCode is the MVP focus — do not over-invest here yet.
+ * HackerRank is the MVP focus — do not over-invest here yet.
  */
 export const leetcodeAdapter: PlatformAdapter = {
   platform: "leetcode",

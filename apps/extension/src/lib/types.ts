@@ -6,7 +6,7 @@
  * wired up, so the Go API client and the web app can share the same contract.
  */
 
-export type Platform = "leetcode" | "neetcode" | "unknown";
+export type Platform = "leetcode" | "hackerrank" | "unknown";
 
 export type SubmitResult =
   | "accepted"
