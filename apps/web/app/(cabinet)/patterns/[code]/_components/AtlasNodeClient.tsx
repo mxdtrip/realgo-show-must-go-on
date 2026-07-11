@@ -52,6 +52,18 @@ function difficultySummary(counts: Record<string, number> | undefined): string {
 // Длинные корпусные списки сворачиваем: сначала витрина, дальше по кнопке.
 const PROBLEMS_PREVIEW_COUNT = 24;
 
+// Выбор площадки делает тулбар атласа (/patterns); страница узла уважает его
+// и просит у API practice-список только выбранной платформы.
+const PLATFORM_KEY = "realgo.atlas.platform";
+
+function storedPlatform(): string {
+  try {
+    return window.localStorage.getItem(PLATFORM_KEY) ?? "";
+  } catch {
+    return "";
+  }
+}
+
 export function AtlasNodeClient({
   code,
   copy,
@@ -67,7 +79,7 @@ export function AtlasNodeClient({
     setLoadState("loading");
     setError("");
 
-    getAtlasNode(code, controller.signal)
+    getAtlasNode(code, storedPlatform(), controller.signal)
       .then((data) => {
         // Субпаттерн = рабочий узел, семейство = страница паттерна;
         // у tool/pattern своих страниц нет.
