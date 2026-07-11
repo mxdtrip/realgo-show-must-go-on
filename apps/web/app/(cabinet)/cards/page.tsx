@@ -7,7 +7,7 @@ import { CabinetPanel } from "../_components";
 import { CabinetIcon } from "../_icons";
 import { getDictionary } from "../../_content/i18n";
 import { getCardSession } from "../../_api/cards";
-import { cardRecords } from "../_mock";
+import { cardRecords } from "./_mock";
 
 type LiveStats = {
   dueCount: number;
