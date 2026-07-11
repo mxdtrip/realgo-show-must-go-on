@@ -475,7 +475,9 @@ func (h *contractHarness) do(t *testing.T, method, path, token string, body io.R
 
 	raw := w.Body.String()
 	var decoded map[string]any
-	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &decoded), raw)
+	if w.Body.Len() > 0 {
+		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &decoded), raw)
+	}
 	return contractResponse{status: w.Code, body: decoded, raw: raw}
 }
 

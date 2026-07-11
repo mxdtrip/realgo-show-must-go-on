@@ -1,6 +1,7 @@
 package companies
 
 import (
+	"context"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -8,12 +9,16 @@ import (
 	"github.com/mxdtrip/freeburger/services/api/internal/server/response"
 )
 
-// Handler has no dependencies (no repo/pool) because Search reads from the
-// static in-memory catalog — see repository.go.
-type Handler struct{}
+type searcher interface {
+	Search(ctx context.Context, query string, limit int) ([]Company, error)
+}
 
-func NewHandler() *Handler {
-	return &Handler{}
+type Handler struct {
+	repo searcher
+}
+
+func NewHandler(repo searcher) *Handler {
+	return &Handler{repo: repo}
 }
 
 func (h *Handler) Search(w http.ResponseWriter, r *http.Request) {
@@ -28,5 +33,11 @@ func (h *Handler) Search(w http.ResponseWriter, r *http.Request) {
 		limit = parsed
 	}
 
-	response.JSON(w, http.StatusOK, Search(r.URL.Query().Get("query"), limit))
+	results, err := h.repo.Search(r.Context(), r.URL.Query().Get("query"), limit)
+	if err != nil {
+		slog.Error("companies: Search failed", slog.Any("err", err))
+		response.Fail(w, http.StatusInternalServerError, "internal_error", "could not search companies")
+		return
+	}
+	response.JSON(w, http.StatusOK, results)
 }

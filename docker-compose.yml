@@ -111,7 +111,9 @@ services:
   # Pattern Atlas content: learning materials + problem<->subpattern links.
   # atlas_demo_companies.yaml is demo-labelled fixture data (source_type=demo,
   # badged in the UI) — appropriate for this demo deployment, never a claim
-  # about real interviews.
+  # about real interviews. atlas_company_problems.csv.gz is the real
+  # community dataset (source_type=dataset) and overrides demo rows on
+  # collisions.
   seed-atlas:
     image: python:3.12-slim
     depends_on:
@@ -122,7 +124,23 @@ services:
       - ./services/api/seeds:/seeds:ro
     environment:
       DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-freeburger}?sslmode=disable
-    command: sh -c "pip install --no-cache-dir -r requirements.txt && python seed_atlas.py atlas_content.yaml atlas_problem_links.yaml atlas_demo_companies.yaml && python seed_atlas_corpus.py atlas_corpus_problems.yaml && python seed_atlas_corpus.py atlas_gap_ledger_problems.yaml && python seed_hackerrank_corpus.py atlas_hackerrank_problems.yaml"
+    command: sh -c "pip install --no-cache-dir -r requirements.txt && python seed_atlas.py atlas_content.yaml atlas_problem_links.yaml atlas_demo_companies.yaml && python seed_atlas_corpus.py atlas_corpus_problems.yaml && python seed_atlas_corpus.py atlas_gap_ledger_problems.yaml && python seed_company_problems.py atlas_company_problems.csv.gz && python seed_hackerrank_corpus.py atlas_hackerrank_problems.yaml"
+    restart: "no"
+
+  # 333 practice cards (3 per v2 subpattern: recognition/mechanics/edge
+  # case), targeting patterns.code for kind='subpattern' rows the migrations
+  # already create — only needs migrate, not seed-atlas/seed-roadmap.
+  seed-subpattern-cards:
+    image: python:3.12-slim
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    working_dir: /seeds
+    volumes:
+      - ./services/api/seeds:/seeds:ro
+    environment:
+      DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-freeburger}?sslmode=disable
+    command: sh -c "pip install --no-cache-dir -r requirements.txt && python seed_cards.py realgo_subpattern_cards.yaml --roadmap ''"
     restart: "no"
 
   seed-users:

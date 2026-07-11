@@ -1,0 +1,2396 @@
+# Realgo Subpattern Practice Cards: 3 cards per v2 subpattern
+# (pattern_recognition / algorithm_mechanics / edge_case), 111
+# subpatterns x 3 = 333 cards. pattern_code targets patterns.code
+# for kind='subpattern' rows from migrations/000015_taxonomy_v2
+# (realgo-v2, positions 1..111) -- NOT the disbanded v1 labels
+# still present in atlas_content.yaml.
+code: realgo_subpattern_cards
+title: Realgo Subpattern Practice Cards
+cards:
+- key: frequency-counting-pattern-recognition
+  type: pattern_recognition
+  pattern_code: frequency_counting
+  question: В условии важны повторы и их количество; нужно найти самый частый/редкий элемент. Какой подпаттерн
+    следует проверить первым?
+  answer: 'Frequency Counting. Считаем, сколько раз встречается каждый элемент. Типичная сложность: обычно
+    O(n) времени, O(k) памяти.'
+- key: frequency-counting-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: frequency_counting
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Frequency Counting»?
+  answer: При встрече элемента увеличивай связанный с ним счётчик. После прохода карта становится полной
+    статистикой частот входа. После обработки префикса каждый счётчик равен точному числу появлений соответствующего
+    значения.
+- key: frequency-counting-edge-case
+  type: edge_case
+  pattern_code: frequency_counting
+  question: Когда подпаттерн «Frequency Counting» нельзя применять напрямую или нужно заменить другой
+    техникой?
+  answer: 'Если важен отсортированный порядок или ближайший сосед; если диапазон значений мал, массив
+    счётчиков может быть проще и быстрее. Стандартная сложность: обычно O(n) времени, O(k) памяти.'
+- key: grouping-canonical-signature-pattern-recognition
+  type: pattern_recognition
+  pattern_code: grouping_canonical_signature
+  question: В условии нужно сгруппировать объекты «одинаковой структуры»; порядок частей может быть неважен.
+    Какой подпаттерн следует проверить первым?
+  answer: 'Grouping / Canonical Signature. Превращаем объект в каноническую подпись: одинаковые по смыслу
+    объекты обязаны получать одинаковый ключ. Типичная сложность: обычно O(n) группировок + стоимость
+    построения signature; сортировка строки даёт до O(m log m) на объект.'
+- key: grouping-canonical-signature-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: grouping_canonical_signature
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Grouping / Canonical
+    Signature»?
+  answer: Для каждого объекта вычисляй каноническую подпись и помещай его в группу с этим ключом. Подпись
+    должна совпадать только у действительно эквивалентных объектов. Эквивалентные объекты получают одинаковый
+    ключ, а неэквивалентные не должны сливаться.
+- key: grouping-canonical-signature-edge-case
+  type: edge_case
+  pattern_code: grouping_canonical_signature
+  question: Когда подпаттерн «Grouping / Canonical Signature» нельзя применять напрямую или нужно заменить
+    другой техникой?
+  answer: 'Если эквивалентность зависит от глобального контекста или подпись почти так же дорога, как
+    прямое сравнение всех объектов. Стандартная сложность: обычно O(n) группировок + стоимость построения
+    signature; сортировка строки даёт до O(m log m) на объект.'
+- key: frequency-of-frequency-bucket-counts-pattern-recognition
+  type: pattern_recognition
+  pattern_code: frequency_of_frequency_buckets
+  question: В условии запросы «есть ли значение с частотой f»; частоты динамически меняются. Какой подпаттерн
+    следует проверить первым?
+  answer: 'Frequency-of-Frequency / Bucket Counts. Нужно знать не только частоту каждого значения, но
+    и количество значений с каждой частотой. Типичная сложность: обычно O(1) на изменение частоты после
+    O(k) памяти.'
+- key: frequency-of-frequency-bucket-counts-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: frequency_of_frequency_buckets
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Frequency-of-Frequency
+    / Bucket Counts»?
+  answer: 'Поддерживай две связанные статистики: частоту каждого значения и число значений с каждой частотой.
+    При изменении частоты сначала убирай вклад из старой корзины, затем добавляй в новую. Любое изменение
+    частоты элемента должно синхронно обновлять статистику старой и новой частоты.'
+- key: frequency-of-frequency-bucket-counts-edge-case
+  type: edge_case
+  pattern_code: frequency_of_frequency_buckets
+  question: Когда подпаттерн «Frequency-of-Frequency / Bucket Counts» нельзя применять напрямую или нужно
+    заменить другой техникой?
+  answer: 'Если частоты считаются один раз и больше не меняются — второй уровень часто избыточен. Стандартная
+    сложность: обычно O(1) на изменение частоты после O(k) памяти.'
+- key: membership-and-deduplication-pattern-recognition
+  type: pattern_recognition
+  pattern_code: membership_deduplication
+  question: В условии дубликаты; уникальные элементы. Какой подпаттерн следует проверить первым?
+  answer: 'Membership & Deduplication. Set хранит факт: видели значение раньше или нет. Типичная сложность:
+    обычно O(n) времени, O(k) памяти.'
+- key: membership-and-deduplication-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: membership_deduplication
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Membership & Deduplication»?
+  answer: Перед обработкой элемента проверяй, встречался ли он раньше, затем при необходимости добавляй
+    его в множество. Множество хранит только факт присутствия, без частоты и позиции. Множество содержит
+    ровно те значения, которые уже должны считаться известными.
+- key: membership-and-deduplication-edge-case
+  type: edge_case
+  pattern_code: membership_deduplication
+  question: Когда подпаттерн «Membership & Deduplication» нельзя применять напрямую или нужно заменить
+    другой техникой?
+  answer: 'Если требуется порядок, predecessor/successor или минимум/максимум в динамическом наборе. Стандартная
+    сложность: обычно O(n) времени, O(k) памяти.'
+- key: complement-lookup-pair-mapping-pattern-recognition
+  type: pattern_recognition
+  pattern_code: complement_lookup
+  question: В условии пара с заданной суммой; для x можно вычислить need. Какой подпаттерн следует проверить
+    первым?
+  answer: 'Complement Lookup / Pair Mapping. Для текущего элемента вычисляем, какого партнёра не хватает
+    до ответа, и ищем именно его. Типичная сложность: обычно O(n) времени, O(k) памяти.'
+- key: complement-lookup-pair-mapping-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: complement_lookup
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Complement Lookup
+    / Pair Mapping»?
+  answer: Для текущего элемента вычисляй единственное дополняющее значение, необходимое для ответа. Сначала
+    ищи дополнение среди уже обработанных элементов, затем сохраняй текущий. Для текущего элемента проверяется
+    только то дополнение, которое способно завершить требуемую пару.
+- key: complement-lookup-pair-mapping-edge-case
+  type: edge_case
+  pattern_code: complement_lookup
+  question: Когда подпаттерн «Complement Lookup / Pair Mapping» нельзя применять напрямую или нужно заменить
+    другой техникой?
+  answer: 'Если условие пары нельзя выразить через компактный need, нужен ближайший элемент в порядке
+    или требуются все комбинации с более сложными ограничениями. Стандартная сложность: обычно O(n) времени,
+    O(k) памяти.'
+- key: sorted-pair-triplet-search-pattern-recognition
+  type: pattern_recognition
+  pattern_code: sorted_pair_triplet_search
+  question: В условии массив отсортирован или допустима сортировка; ищется пара/тройка. Какой подпаттерн
+    следует проверить первым?
+  answer: 'Sorted Pair / Triplet Search. В отсортированном массиве ставим указатели с двух сторон и по
+    текущему результату решаем, какую сторону безопасно сдвинуть. Типичная сложность: для 2Sum на sorted
+    array O(n); 3Sum обычно O(n²) после сортировки.'
+- key: sorted-pair-triplet-search-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: sorted_pair_triplet_search
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Sorted Pair / Triplet
+    Search»?
+  answer: Сравнивай результат крайних кандидатов с целью. Если результат слишком мал, сдвигай левую границу;
+    если слишком велик — правую. Каждый сдвиг границы исключает целый класс пар благодаря сортировке.
+- key: sorted-pair-triplet-search-edge-case
+  type: edge_case
+  pattern_code: sorted_pair_triplet_search
+  question: Когда подпаттерн «Sorted Pair / Triplet Search» нельзя применять напрямую или нужно заменить
+    другой техникой?
+  answer: 'Если порядок нельзя менять и нет другого способа использовать отсортированность. Стандартная
+    сложность: для 2Sum на sorted array O(n); 3Sum обычно O(n²) после сортировки.'
+- key: converging-validation-palindrome-scan-pattern-recognition
+  type: pattern_recognition
+  pattern_code: converging_validation_palindrome
+  question: В условии палиндром; зеркальная симметрия. Какой подпаттерн следует проверить первым?
+  answer: 'Converging Validation / Palindrome Scan. Два указателя идут навстречу и проверяют согласованные
+    пары элементов с краёв. Типичная сложность: обычно O(n) времени, O(1) доп. памяти.'
+- key: converging-validation-palindrome-scan-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: converging_validation_palindrome
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Converging Validation
+    / Palindrome Scan»?
+  answer: Сравнивай согласованную пару элементов на границах и после успешной проверки сужай диапазон.
+    При несовпадении либо заверши проверку, либо выполни ровно разрешённое условием ветвление. Всё за
+    текущими границами уже проверено и больше не требует внимания.
+- key: converging-validation-palindrome-scan-edge-case
+  type: edge_case
+  pattern_code: converging_validation_palindrome
+  question: Когда подпаттерн «Converging Validation / Palindrome Scan» нельзя применять напрямую или нужно
+    заменить другой техникой?
+  answer: 'Если решение зависит от произвольных пар, а не от согласованного сужения с краёв. Стандартная
+    сложность: обычно O(n) времени, O(1) доп. памяти.'
+- key: same-direction-read-write-pattern-recognition
+  type: pattern_recognition
+  pattern_code: same_direction_read_write
+  question: В условии изменить массив на месте; удалить элементы/дубликаты. Какой подпаттерн следует проверить
+    первым?
+  answer: 'Same-Direction Read/Write. Один указатель читает все элементы, второй показывает, куда записать
+    следующий сохраняемый элемент. Типичная сложность: обычно O(n) времени, O(1) памяти.'
+- key: same-direction-read-write-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: same_direction_read_write
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Same-Direction Read/Write»?
+  answer: Один указатель последовательно читает вход, второй отмечает позицию следующей записи. Каждый
+    сохраняемый элемент записывается в конец уже построенного корректного префикса. Построенный префикс
+    всегда содержит точный результат для уже прочитанной части входа.
+- key: same-direction-read-write-edge-case
+  type: edge_case
+  pattern_code: same_direction_read_write
+  question: Когда подпаттерн «Same-Direction Read/Write» нельзя применять напрямую или нужно заменить
+    другой техникой?
+  answer: 'Если итоговый порядок существенно меняется или для решения нужна глобальная перестановка. Стандартная
+    сложность: обычно O(n) времени, O(1) памяти.'
+- key: fast-and-slow-pointers-pattern-recognition
+  type: pattern_recognition
+  pattern_code: fast_slow_pointers
+  question: В условии linked list; повторяющееся применение next. Какой подпаттерн следует проверить первым?
+  answer: 'Fast & Slow Pointers. Два указателя идут по одной цепочке переходов с разной скоростью. Типичная
+    сложность: обычно O(n) времени, O(1) памяти.'
+- key: fast-and-slow-pointers-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: fast_slow_pointers
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Fast & Slow Pointers»?
+  answer: Медленный и быстрый указатели движутся по одной цепочке с разной скоростью. Разность скоростей
+    позволяет найти середину или обнаружить цикл без дополнительной памяти. Разность скоростей сохраняется
+    и превращает скрытую периодичность в наблюдаемую встречу.
+- key: fast-and-slow-pointers-edge-case
+  type: edge_case
+  pattern_code: fast_slow_pointers
+  question: Когда подпаттерн «Fast & Slow Pointers» нельзя применять напрямую или нужно заменить другой
+    техникой?
+  answer: 'Если из состояния есть несколько следующих состояний или нужно помнить множество ветвей. Стандартная
+    сложность: обычно O(n) времени, O(1) памяти.'
+- key: fixed-size-window-pattern-recognition
+  type: pattern_recognition
+  pattern_code: fixed_size_window
+  question: В условии непрерывный участок; размер k задан заранее. Какой подпаттерн следует проверить
+    первым?
+  answer: 'Fixed-Size Window. Окно всегда содержит ровно k соседних элементов. Типичная сложность: O(n)
+    времени; обновление окна O(1) после первого окна.'
+- key: fixed-size-window-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: fixed_size_window
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Fixed-Size Window»?
+  answer: При сдвиге один элемент выходит слева, один входит справа. Состояние обновляется дельтой, а
+    не пересчитывается. Перед оценкой ответа состояние описывает ровно последние k элементов.
+- key: fixed-size-window-edge-case
+  type: edge_case
+  pattern_code: fixed_size_window
+  question: Когда подпаттерн «Fixed-Size Window» нельзя применять напрямую или нужно заменить другой техникой?
+  answer: 'Если размер подходящего участка неизвестен и должен адаптироваться. Стандартная сложность:
+    O(n) времени; обновление окна O(1) после первого окна.'
+- key: longest-valid-variable-window-pattern-recognition
+  type: pattern_recognition
+  pattern_code: longest_valid_window
+  question: В условии longest / maximum length; условие можно обновлять при добавлении и удалении. Какой
+    подпаттерн следует проверить первым?
+  answer: 'Longest Valid Variable Window. Ищем самый длинный непрерывный участок, удовлетворяющий условию.
+    Типичная сложность: часто O(n), если каждый указатель движется только вперёд.'
+- key: longest-valid-variable-window-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: longest_valid_window
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Longest Valid Variable
+    Window»?
+  answer: Добавляем right. Пока окно невалидно, двигаем left и удаляем его вклад. После цикла сжатия текущее
+    окно валидно; все более левые старты для этого right уже либо проверены, либо доказанно плохи.
+- key: longest-valid-variable-window-edge-case
+  type: edge_case
+  pattern_code: longest_valid_window
+  question: Когда подпаттерн «Longest Valid Variable Window» нельзя применять напрямую или нужно заменить
+    другой техникой?
+  answer: 'Если валидность немонотонна относительно удаления слева. Стандартная сложность: часто O(n),
+    если каждый указатель движется только вперёд.'
+- key: shortest-valid-variable-window-pattern-recognition
+  type: pattern_recognition
+  pattern_code: shortest_valid_window
+  question: В условии minimum length / smallest window; как только условие достигнуто, можно выкидывать
+    лишнее слева. Какой подпаттерн следует проверить первым?
+  answer: 'Shortest Valid Variable Window. Ищем самый короткий участок, который уже удовлетворяет условию.
+    Типичная сложность: часто O(n), если условие монотонно при сжатии.'
+- key: shortest-valid-variable-window-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: shortest_valid_window
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Shortest Valid Variable
+    Window»?
+  answer: Расширяем right, пока окно невалидно. Когда стало валидным, обновляем минимум и продолжаем сжимать
+    слева до первого нарушения. Для каждого right мы пытаемся найти самый правый left, при котором окно
+    ещё валидно.
+- key: shortest-valid-variable-window-edge-case
+  type: edge_case
+  pattern_code: shortest_valid_window
+  question: Когда подпаттерн «Shortest Valid Variable Window» нельзя применять напрямую или нужно заменить
+    другой техникой?
+  answer: 'Если условие нельзя предсказуемо поддерживать при сжатии. Стандартная сложность: часто O(n),
+    если условие монотонно при сжатии.'
+- key: frequency-coverage-window-pattern-recognition
+  type: pattern_recognition
+  pattern_code: frequency_coverage_window
+  question: В условии minimum window substring; анаграммы в строке. Какой подпаттерн следует проверить
+    первым?
+  answer: 'Frequency / Coverage Window. Окно валидно, когда содержит нужные элементы в нужном количестве.
+    Типичная сложность: часто O(n) времени, O(|alphabet|) или O(k) памяти.'
+- key: frequency-coverage-window-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: frequency_coverage_window
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Frequency / Coverage
+    Window»?
+  answer: Сравнивай частоты текущего окна с требуемыми и отдельно считай, сколько различных требований
+    выполнено полностью. Меняй этот счётчик только в момент пересечения нужного порога. Окно считается
+    покрывающим шаблон только после полного выполнения каждого отдельного требования.
+- key: frequency-coverage-window-edge-case
+  type: edge_case
+  pattern_code: frequency_coverage_window
+  question: Когда подпаттерн «Frequency / Coverage Window» нельзя применять напрямую или нужно заменить
+    другой техникой?
+  answer: 'Если нужен фиксированный размер без отдельного покрытия или условие не локализуется в частотах
+    окна. Стандартная сложность: часто O(n) времени, O(|alphabet|) или O(k) памяти.'
+- key: 1d-prefix-sum-range-query-pattern-recognition
+  type: pattern_recognition
+  pattern_code: prefix_sum_range_query
+  question: В условии много запросов суммы на [l,r]; массив почти не меняется. Какой подпаттерн следует
+    проверить первым?
+  answer: '1D Prefix Sum / Range Query. Заранее считаем накопленные суммы, чтобы любой статический диапазон
+    получать по двум значениям. Типичная сложность: build O(n), query O(1).'
+- key: 1d-prefix-sum-range-query-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: prefix_sum_range_query
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «1D Prefix Sum / Range
+    Query»?
+  answer: Построй массив накопленных сумм, где каждая позиция хранит сумму префикса. Сумму диапазона получай
+    как разность префикса до правой границы и префикса до левой. Каждое сохранённое значение описывает
+    агрегат строго определённого префикса.
+- key: 1d-prefix-sum-range-query-edge-case
+  type: edge_case
+  pattern_code: prefix_sum_range_query
+  question: Когда подпаттерн «1D Prefix Sum / Range Query» нельзя применять напрямую или нужно заменить
+    другой техникой?
+  answer: 'При частых обновлениях элементов: пересчёт хвоста префиксов дорог. Стандартная сложность: build
+    O(n), query O(1).'
+- key: prefix-balance-hash-map-pattern-recognition
+  type: pattern_recognition
+  pattern_code: prefix_balance_hashmap
+  question: В условии подмассив с суммой target; равное число двух типов. Какой подпаттерн следует проверить
+    первым?
+  answer: 'Prefix Balance + Hash Map. Преобразуем задачу о подмассиве в задачу о двух префиксных состояниях.
+    Типичная сложность: обычно O(n) времени, O(n) памяти.'
+- key: prefix-balance-hash-map-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: prefix_balance_hashmap
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Prefix Balance + Hash
+    Map»?
+  answer: Храни для каждого префиксного состояния его предыдущие появления. Текущий диапазон определяется
+    разностью текущего и подходящего прошлого префикса. Любой рассматриваемый диапазон представляется
+    разностью двух корректных префиксных состояний.
+- key: prefix-balance-hash-map-edge-case
+  type: edge_case
+  pattern_code: prefix_balance_hashmap
+  question: Когда подпаттерн «Prefix Balance + Hash Map» нельзя применять напрямую или нужно заменить
+    другой техникой?
+  answer: 'Если состояние нельзя компактно представить накопленным значением. Стандартная сложность: обычно
+    O(n) времени, O(n) памяти.'
+- key: difference-array-range-updates-pattern-recognition
+  type: pattern_recognition
+  pattern_code: difference_array
+  question: В условии операции add v to [l,r]; итог нужен после всех обновлений. Какой подпаттерн следует
+    проверить первым?
+  answer: 'Difference Array / Range Updates. Много обновлений диапазонов выполняются через отметки начала
+    и конца влияния. Типичная сложность: O(n + q) для offline range updates после финального prefix pass.'
+- key: difference-array-range-updates-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: difference_array
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Difference Array /
+    Range Updates»?
+  answer: На левой границе диапазона добавляй изменение, а сразу после правой границы отменяй его. Один
+    префиксный проход затем восстанавливает итоговые значения. Разностная структура хранит изменение активного
+    эффекта, а не итоговое значение позиции.
+- key: difference-array-range-updates-edge-case
+  type: edge_case
+  pattern_code: difference_array
+  question: Когда подпаттерн «Difference Array / Range Updates» нельзя применять напрямую или нужно заменить
+    другой техникой?
+  answer: 'Если после каждого update сразу нужен query по диапазону. Стандартная сложность: O(n + q) для
+    offline range updates после финального prefix pass.'
+- key: fenwick-tree-bit-pattern-recognition
+  type: pattern_recognition
+  pattern_code: fenwick_tree_bit
+  question: В условии массив меняется; много prefix/range sum запросов. Какой подпаттерн следует проверить
+    первым?
+  answer: 'Fenwick Tree / BIT. Компактная структура для point update + prefix aggregate за O(log n). Типичная
+    сложность: update/query O(log n), память O(n).'
+- key: fenwick-tree-bit-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: fenwick_tree_bit
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Fenwick Tree / BIT»?
+  answer: Каждая ячейка хранит агрегат блока, длина которого задаётся младшим установленным битом её индекса.
+    Префиксный запрос раскладывает диапазон на непересекающиеся такие блоки. Префикс всегда раскладывается
+    на корректные непересекающиеся блоки Fenwick Tree.
+- key: fenwick-tree-bit-edge-case
+  type: edge_case
+  pattern_code: fenwick_tree_bit
+  question: Когда подпаттерн «Fenwick Tree / BIT» нельзя применять напрямую или нужно заменить другой
+    техникой?
+  answer: 'Если операция плохо сочетается с префиксным разложением или нужны сложные диапазонные обновления.
+    Стандартная сложность: update/query O(log n), память O(n).'
+- key: segment-tree-lazy-propagation-pattern-recognition
+  type: pattern_recognition
+  pattern_code: segment_tree_lazy
+  question: В условии много range queries; данные меняются. Какой подпаттерн следует проверить первым?
+  answer: 'Segment Tree / Lazy Propagation. Дерево разбивает массив на интервалы. Типичная сложность:
+    build O(n), query/update обычно O(log n); lazy range operations O(log n).'
+- key: segment-tree-lazy-propagation-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: segment_tree_lazy
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Segment Tree / Lazy
+    Propagation»?
+  answer: Каждый узел хранит агрегат своего диапазона и объединяет ответы детей. При полном массовом обновлении
+    обнови агрегат сразу и сохрани lazy-тег до момента, когда потребуется спуск. Значение узла всегда
+    корректно для его диапазона; lazy означает «агрегат уже учёл действие, дети ещё могут не учитывать».
+- key: segment-tree-lazy-propagation-edge-case
+  type: edge_case
+  pattern_code: segment_tree_lazy
+  question: Когда подпаттерн «Segment Tree / Lazy Propagation» нельзя применять напрямую или нужно заменить
+    другой техникой?
+  answer: 'Для статической суммы Prefix Sum проще; для point update + prefix sum Fenwick обычно легче.
+    Стандартная сложность: build O(n), query/update обычно O(log n); lazy range operations O(log n).'
+- key: ordered-set-multiset-sorted-map-pattern-recognition
+  type: pattern_recognition
+  pattern_code: ordered_set_sorted_map
+  question: В условии predecessor/successor; ближайший меньший/больший. Какой подпаттерн следует проверить
+    первым?
+  answer: 'Ordered Set / Multiset / Sorted Map. Динамическая структура сохраняет элементы в порядке, поддерживая
+    вставки, удаления и поиск соседей. Типичная сложность: обычно O(log n) на insert/delete/lower_bound.'
+- key: ordered-set-multiset-sorted-map-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: ordered_set_sorted_map
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Ordered Set / Multiset
+    / Sorted Map»?
+  answer: Поддерживай элементы в сбалансированной упорядоченной структуре. Вставка, удаление и поиск ближайшей
+    границы обновляют тот же текущий отсортированный набор. Структура всегда отражает текущий мультимножество
+    в отсортированном порядке.
+- key: ordered-set-multiset-sorted-map-edge-case
+  type: edge_case
+  pattern_code: ordered_set_sorted_map
+  question: Когда подпаттерн «Ordered Set / Multiset / Sorted Map» нельзя применять напрямую или нужно
+    заменить другой техникой?
+  answer: 'Если порядок не нужен — hashing обычно проще и быстрее по константам. Стандартная сложность:
+    обычно O(log n) на insert/delete/lower_bound.'
+- key: coordinate-compression-offline-range-query-pattern-recognition
+  type: pattern_recognition
+  pattern_code: coordinate_compression_offline
+  question: В условии координаты огромны и разрежены либо запросы можно обработать не в исходном порядке;
+    нужно сохранить порядок значений или исходные индексы ответов. Какой подпаттерн следует проверить
+    первым?
+  answer: 'Coordinate Compression / Offline Range Query. Coordinate Compression меняет представление значений,
+    а Offline Processing — порядок обработки запросов. Типичная сложность: compression O(n log n); offline
+    — зависит от структуры, часто O((n+q) log n).'
+- key: coordinate-compression-offline-range-query-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: coordinate_compression_offline
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Coordinate Compression
+    / Offline Range Query»?
+  answer: Compression меняет представление координат, сохраняя порядок. Offline processing меняет порядок
+    обработки запросов, сохраняя их исходные ID. Compression обязана сохранять нужные отношения порядка;
+    offline-обработка обязана вернуть ответы к исходным ID запросов.
+- key: coordinate-compression-offline-range-query-edge-case
+  type: edge_case
+  pattern_code: coordinate_compression_offline
+  question: Когда подпаттерн «Coordinate Compression / Offline Range Query» нельзя применять напрямую
+    или нужно заменить другой техникой?
+  answer: 'Online API требует ответ до появления будущих запросов; тогда перестановка невозможна. Стандартная
+    сложность: compression O(n log n); offline — зависит от структуры, часто O((n+q) log n).'
+- key: exact-search-on-monotone-space-pattern-recognition
+  type: pattern_recognition
+  pattern_code: exact_search_monotone
+  question: В условии данные отсортированы; сравнение с mid однозначно говорит, какую половину отбросить.
+    Какой подпаттерн следует проверить первым?
+  answer: 'Exact Search on Monotone Space. Ищем конкретное значение в отсортированном пространстве. Типичная
+    сложность: O(log n).'
+- key: exact-search-on-monotone-space-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: exact_search_monotone
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Exact Search on Monotone
+    Space»?
+  answer: Сравнивай средний элемент с искомым и отбрасывай половину, которая гарантированно не может содержать
+    ответ. Поисковый диапазон всегда сохраняет все ещё возможные позиции. Если ответ существует, он остаётся
+    внутри текущего поискового диапазона.
+- key: exact-search-on-monotone-space-edge-case
+  type: edge_case
+  pattern_code: exact_search_monotone
+  question: Когда подпаттерн «Exact Search on Monotone Space» нельзя применять напрямую или нужно заменить
+    другой техникой?
+  answer: 'Если нет порядка/монотонного свойства, позволяющего безопасно отбрасывать половину. Стандартная
+    сложность: O(log n).'
+- key: lower-upper-bound-pattern-recognition
+  type: pattern_recognition
+  pattern_code: lower_upper_bound
+  question: В условии первый = x; первый x. Какой подпаттерн следует проверить первым?
+  answer: 'Lower / Upper Bound. Binary Search ищет не обязательно элемент, а первую позицию, где меняется
+    истинность предиката. Типичная сложность: O(log n).'
+- key: lower-upper-bound-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: lower_upper_bound
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Lower / Upper Bound»?
+  answer: Рассматривай условие на индексах как последовательность false, затем true. Сужай диапазон так,
+    чтобы сохранить первый индекс, где условие стало истинным. Формулируй точный булев предикат и ищи
+    его первую истинную позицию.
+- key: lower-upper-bound-edge-case
+  type: edge_case
+  pattern_code: lower_upper_bound
+  question: Когда подпаттерн «Lower / Upper Bound» нельзя применять напрямую или нужно заменить другой
+    техникой?
+  answer: 'Если истинность предиката переключается много раз. Стандартная сложность: O(log n).'
+- key: binary-search-on-answer-pattern-recognition
+  type: pattern_recognition
+  pattern_code: binary_search_on_answer
+  question: В условии «минимизировать максимум»; «максимизировать минимум». Какой подпаттерн следует проверить
+    первым?
+  answer: 'Binary Search on Answer. Ищем не элемент входа, а минимально/максимально допустимое значение
+    ответа. Типичная сложность: O(log R) по размеру пространства ответа.'
+- key: binary-search-on-answer-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: binary_search_on_answer
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Binary Search on Answer»?
+  answer: Задай упорядоченное пространство возможных ответов и монотонную проверку допустимости. Проверяй
+    середину и сохраняй ту половину, где находится искомая граница. Проверка допустимости меняет значение
+    только один раз на всём пространстве ответов.
+- key: binary-search-on-answer-edge-case
+  type: edge_case
+  pattern_code: binary_search_on_answer
+  question: Когда подпаттерн «Binary Search on Answer» нельзя применять напрямую или нужно заменить другой
+    техникой?
+  answer: 'Если feasible(x) может стать true, потом false, потом снова true. Стандартная сложность: O(log
+    R) по размеру пространства ответа.'
+- key: rotated-peak-implicit-sorted-search-pattern-recognition
+  type: pattern_recognition
+  pattern_code: rotated_peak_search
+  question: В условии вход почти отсортирован, но циклически сдвинут; нужен локальный peak. Какой подпаттерн
+    следует проверить первым?
+  answer: 'Rotated / Peak / Implicit Sorted Search. Три родственника Binary Search, но с разными причинами
+    выбора половины. Типичная сложность: обычно O(log n) или O(log R), но зависит от варианта.'
+- key: rotated-peak-implicit-sorted-search-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: rotated_peak_search
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Rotated / Peak / Implicit
+    Sorted Search»?
+  answer: 'На каждом шаге сначала определяем структурный факт о mid — какая половина отсортирована, куда
+    направлен склон или какая сторона виртуального пространства допустима — и только затем отбрасываем
+    половину. Не используй «магический binary search»: для каждого варианта назови конкретный факт, который
+    делает одну половину безопасно отбрасываемой.'
+- key: rotated-peak-implicit-sorted-search-edge-case
+  type: edge_case
+  pattern_code: rotated_peak_search
+  question: Когда подпаттерн «Rotated / Peak / Implicit Sorted Search» нельзя применять напрямую или нужно
+    заменить другой техникой?
+  answer: 'При дубликатах rotated search может терять сильное различение половин и требовать специальных
+    случаев. Стандартная сложность: обычно O(log n) или O(log R), но зависит от варианта.'
+- key: merge-overlapping-intervals-pattern-recognition
+  type: pattern_recognition
+  pattern_code: merge_overlapping_intervals
+  question: В условии overlapping intervals; union of ranges. Какой подпаттерн следует проверить первым?
+  answer: 'Merge Overlapping Intervals. После сортировки объединяем интервалы, которые пересекаются или
+    соприкасаются по правилам задачи. Типичная сложность: O(n log n) из-за сортировки.'
+- key: merge-overlapping-intervals-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: merge_overlapping_intervals
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Merge Overlapping
+    Intervals»?
+  answer: Отсортируй интервалы по началу и поддерживай последний объединённый интервал. Пересекающийся
+    интервал расширяет его правую границу, непересекающийся начинает новый блок. Все уже обработанные
+    интервалы представлены минимальным непересекающимся списком, а последний блок — единственный, который
+    ещё может слиться со следующим.
+- key: merge-overlapping-intervals-edge-case
+  type: edge_case
+  pattern_code: merge_overlapping_intervals
+  question: Когда подпаттерн «Merge Overlapping Intervals» нельзя применять напрямую или нужно заменить
+    другой техникой?
+  answer: 'Если запросы динамические и интервалы постоянно добавляются/удаляются. Стандартная сложность:
+    O(n log n) из-за сортировки.'
+- key: interval-insertion-intersection-pattern-recognition
+  type: pattern_recognition
+  pattern_code: interval_insertion_intersection
+  question: В условии интервалы уже sorted/non-overlapping; вставить один новый interval. Какой подпаттерн
+    следует проверить первым?
+  answer: 'Interval Insertion / Intersection. Работаем с уже упорядоченными интервалами: вставляем новый
+    диапазон или пересекаем два списка. Типичная сложность: обычно O(n + m) после сортировки; insertion
+    может быть O(n).'
+- key: interval-insertion-intersection-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: interval_insertion_intersection
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Interval Insertion
+    / Intersection»?
+  answer: При вставке сначала пропусти интервалы строго слева, затем объедини все пересекающиеся и после
+    этого добавь интервалы справа. При пересечении двух списков двигай границу интервала, который заканчивается
+    раньше. Уже пройденный интервал никогда не сможет пересечься с будущим из-за сохранённого порядка.
+- key: interval-insertion-intersection-edge-case
+  type: edge_case
+  pattern_code: interval_insertion_intersection
+  question: Когда подпаттерн «Interval Insertion / Intersection» нельзя применять напрямую или нужно заменить
+    другой техникой?
+  answer: 'Если вход не упорядочен и содержит произвольные перекрытия — сначала нужна сортировка/merge.
+    Стандартная сложность: обычно O(n + m) после сортировки; insertion может быть O(n).'
+- key: sweep-line-event-counting-pattern-recognition
+  type: pattern_recognition
+  pattern_code: sweep_line_event_counting
+  question: В условии максимум одновременных событий; количество активных интервалов. Какой подпаттерн
+    следует проверить первым?
+  answer: 'Sweep Line / Event Counting. Интервалы превращаются в события на оси: «что-то началось» и «что-то
+    закончилось». Типичная сложность: обычно O(n log n) из-за сортировки событий.'
+- key: sweep-line-event-counting-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: sweep_line_event_counting
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Sweep Line / Event
+    Counting»?
+  answer: Создаём события (coordinate, delta) и сортируем. Но порядок событий при одинаковой координате
+    — часть модели. После обработки всех событий в координате x счётчик active точно описывает выбранную
+    семантику «что активно около x».
+- key: sweep-line-event-counting-edge-case
+  type: edge_case
+  pattern_code: sweep_line_event_counting
+  question: Когда подпаттерн «Sweep Line / Event Counting» нельзя применять напрямую или нужно заменить
+    другой техникой?
+  answer: 'Если события приходят онлайн и нужна динамическая обработка без возможности полной сортировки.
+    Стандартная сложность: обычно O(n log n) из-за сортировки событий.'
+- key: matching-nesting-stack-pattern-recognition
+  type: pattern_recognition
+  pattern_code: matching_nesting_stack
+  question: В условии matching pairs; nested structure. Какой подпаттерн следует проверить первым?
+  answer: 'Matching / Nesting Stack. Стек хранит незакрытые конструкции: скобки, теги, вложенные блоки.
+    Типичная сложность: O(n) времени, O(n) стека в худшем случае.'
+- key: matching-nesting-stack-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: matching_nesting_stack
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Matching / Nesting
+    Stack»?
+  answer: 'Открывающий токен кладём в стек. На закрывающем проверяем вершину: именно она обязана быть
+    парой. Стек содержит незакрытые конструкции в порядке вложенности; вершина — ближайшая ожидающая закрытия.'
+- key: matching-nesting-stack-edge-case
+  type: edge_case
+  pattern_code: matching_nesting_stack
+  question: Когда подпаттерн «Matching / Nesting Stack» нельзя применять напрямую или нужно заменить другой
+    техникой?
+  answer: 'Если соответствие не вложенное, а произвольное. Стандартная сложность: O(n) времени, O(n) стека
+    в худшем случае.'
+- key: expression-evaluation-stack-pattern-recognition
+  type: pattern_recognition
+  pattern_code: expression_evaluation_stack
+  question: В условии calculator; postfix/RPN. Какой подпаттерн следует проверить первым?
+  answer: 'Expression / Evaluation Stack. Стек помогает вычислять выражения, когда операции имеют вложенность
+    и приоритет. Типичная сложность: обычно O(n) времени, O(n) памяти.'
+- key: expression-evaluation-stack-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: expression_evaluation_stack
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Expression / Evaluation
+    Stack»?
+  answer: 'Postfix/RPN: число кладём в стек; оператор снимает нужное число аргументов, вычисляет и возвращает
+    результат. В стеке остаётся только то, что пока нельзя безопасно вычислить из-за будущего контекста.'
+- key: expression-evaluation-stack-edge-case
+  type: edge_case
+  pattern_code: expression_evaluation_stack
+  question: Когда подпаттерн «Expression / Evaluation Stack» нельзя применять напрямую или нужно заменить
+    другой техникой?
+  answer: 'Если грамматика сложнее простых операторов и скобок — нужен полноценный parser. Стандартная
+    сложность: обычно O(n) времени, O(n) памяти.'
+- key: monotonic-stack-pattern-recognition
+  type: pattern_recognition
+  pattern_code: monotonic_stack
+  question: В условии next greater/smaller; previous greater/smaller. Какой подпаттерн следует проверить
+    первым?
+  answer: 'Monotonic Stack. Стек хранит кандидатов в монотонном порядке, чтобы быстро найти ближайший
+    больший/меньший элемент. Типичная сложность: O(n): каждый элемент входит/выходит из стека не более
+    одного раза.'
+- key: monotonic-stack-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: monotonic_stack
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Monotonic Stack»?
+  answer: Например, для next greater поддерживаем убывающий стек индексов. Когда приходит x, он является
+    ответом для всех меньших элементов на вершине — они удаляются. Элемент выбрасывается только когда
+    найден новый элемент, который делает его бесполезным для всех будущих позиций.
+- key: monotonic-stack-edge-case
+  type: edge_case
+  pattern_code: monotonic_stack
+  question: Когда подпаттерн «Monotonic Stack» нельзя применять напрямую или нужно заменить другой техникой?
+  answer: 'Если нужен глобальный максимум без понятия ближайшего/границы — heap или обычный scan проще.
+    Стандартная сложность: O(n): каждый элемент входит/выходит из стека не более одного раза.'
+- key: monotonic-deque-pattern-recognition
+  type: pattern_recognition
+  pattern_code: monotonic_deque
+  question: В условии sliding window maximum/minimum; фиксированное окно. Какой подпаттерн следует проверить
+    первым?
+  answer: 'Monotonic Deque. Двусторонняя очередь хранит кандидатов на min/max текущего окна в монотонном
+    порядке. Типичная сложность: O(n): каждый элемент входит/выходит из deque не более одного раза.'
+- key: monotonic-deque-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: monotonic_deque
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Monotonic Deque»?
+  answer: Храни в deque только недоминируемые кандидаты и их индексы. Удаляй слабые элементы с хвоста,
+    а вышедшие из окна — с головы. Значения в deque монотонны, индексы возрастают, а голова всегда лучший
+    живой кандидат.
+- key: monotonic-deque-edge-case
+  type: edge_case
+  pattern_code: monotonic_deque
+  question: Когда подпаттерн «Monotonic Deque» нельзя применять напрямую или нужно заменить другой техникой?
+  answer: 'Если запросы не образуют последовательные окна или нужны произвольные удаления. Стандартная
+    сложность: O(n): каждый элемент входит/выходит из deque не более одного раза.'
+- key: top-k-bounded-heap-pattern-recognition
+  type: pattern_recognition
+  pattern_code: top_k_bounded_heap
+  question: В условии top k; kth largest/smallest. Какой подпаттерн следует проверить первым?
+  answer: 'Top K / Bounded Heap. Храним только k лучших элементов, а не сортируем весь набор. Типичная
+    сложность: O(n log k) времени, O(k) памяти.'
+- key: top-k-bounded-heap-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: top_k_bounded_heap
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Top K / Bounded Heap»?
+  answer: 'Для k largest держим min-heap размера не более k: вершина — худший среди текущих лучших. Новый
+    элемент лучше вершины — заменяем. Heap содержит лучшие k элементов обработанного префикса; вершина
+    — граница попадания в top k.'
+- key: top-k-bounded-heap-edge-case
+  type: edge_case
+  pattern_code: top_k_bounded_heap
+  question: Когда подпаттерн «Top K / Bounded Heap» нельзя применять напрямую или нужно заменить другой
+    техникой?
+  answer: 'Если нужен полный порядок всех элементов. Стандартная сложность: O(n log k) времени, O(k) памяти.'
+- key: two-heaps-streaming-median-pattern-recognition
+  type: pattern_recognition
+  pattern_code: two_heaps_streaming_median
+  question: В условии online median; поток вставок. Какой подпаттерн следует проверить первым?
+  answer: 'Two Heaps / Streaming Median. Две кучи делят числа на нижнюю и верхнюю половины. Типичная сложность:
+    O(log n) на insertion, O(1) на median.'
+- key: two-heaps-streaming-median-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: two_heaps_streaming_median
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Two Heaps / Streaming
+    Median»?
+  answer: Max-heap хранит нижнюю половину чисел, min-heap — верхнюю. После каждой вставки восстанавливай
+    порядок между половинами и разницу размеров не более одного. Все элементы нижней половины не больше
+    элементов верхней, а размеры половин сбалансированы.
+- key: two-heaps-streaming-median-edge-case
+  type: edge_case
+  pattern_code: two_heaps_streaming_median
+  question: Когда подпаттерн «Two Heaps / Streaming Median» нельзя применять напрямую или нужно заменить
+    другой техникой?
+  answer: 'Если нужны произвольные квантили или удаления старых элементов — потребуются дополнительные
+    структуры/ленивое удаление. Стандартная сложность: O(log n) на insertion, O(1) на median.'
+- key: k-way-merge-best-first-heap-pattern-recognition
+  type: pattern_recognition
+  pattern_code: k_way_merge_best_first
+  question: В условии merge k sorted lists; kth smallest in sorted structure. Какой подпаттерн следует
+    проверить первым?
+  answer: 'K-way Merge / Best-First Heap. Когда есть несколько источников, каждый со своим «следующим
+    кандидатом», heap выбирает глобально лучший следующий. Типичная сложность: обычно O(N log k), где
+    k — число источников.'
+- key: k-way-merge-best-first-heap-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: k_way_merge_best_first
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «K-way Merge / Best-First
+    Heap»?
+  answer: Кладём в heap первый кандидат каждого источника. Извлекли лучший — добавили следующий только
+    из того источника, откуда он пришёл. Heap содержит минимальный ещё не обработанный кандидат каждого
+    активного источника.
+- key: k-way-merge-best-first-heap-edge-case
+  type: edge_case
+  pattern_code: k_way_merge_best_first
+  question: Когда подпаттерн «K-way Merge / Best-First Heap» нельзя применять напрямую или нужно заменить
+    другой техникой?
+  answer: 'Если внутри источников нет порядка, позволяющего представить их одним frontier-кандидатом.
+    Стандартная сложность: обычно O(N log k), где k — число источников.'
+- key: dummy-node-sentinel-rewiring-pattern-recognition
+  type: pattern_recognition
+  pattern_code: dummy_node_rewiring
+  question: В условии удаление/вставка у head; построение нового списка. Какой подпаттерн следует проверить
+    первым?
+  answer: 'Dummy Node / Sentinel Rewiring. Фиктивный узел ставится перед настоящей головой, чтобы операции
+    с первым элементом перестали быть особым случаем. Типичная сложность: обычно O(n) времени, O(1) доп.
+    памяти.'
+- key: dummy-node-sentinel-rewiring-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: dummy_node_rewiring
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Dummy Node / Sentinel
+    Rewiring»?
+  answer: Поставь фиктивный узел перед настоящей головой и выполняй изменения через ссылку его последователя.
+    Тогда удаление или вставка у головы не требует отдельной ветки. Фиктивный узел стабилизирует точку
+    входа даже при изменении настоящей головы.
+- key: dummy-node-sentinel-rewiring-edge-case
+  type: edge_case
+  pattern_code: dummy_node_rewiring
+  question: Когда подпаттерн «Dummy Node / Sentinel Rewiring» нельзя применять напрямую или нужно заменить
+    другой техникой?
+  answer: 'Если структура не страдает от граничных случаев головы. Стандартная сложность: обычно O(n)
+    времени, O(1) доп. памяти.'
+- key: in-place-reversal-pattern-recognition
+  type: pattern_recognition
+  pattern_code: in_place_reversal
+  question: В условии reverse linked list; reverse sublist/group. Какой подпаттерн следует проверить первым?
+  answer: 'In-Place Reversal. Разворачиваем направление ссылок без дополнительного списка. Типичная сложность:
+    O(n) времени, O(1) памяти.'
+- key: in-place-reversal-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: in_place_reversal
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «In-Place Reversal»?
+  answer: Перед перенаправлением текущей ссылки сохрани следующий узел. Затем разверни ссылку назад и
+    сдвинь оба указателя вперёд. Prev — уже развёрнутый префикс, cur — первый ещё не обработанный узел;
+    путь вперёд нельзя потерять.
+- key: in-place-reversal-edge-case
+  type: edge_case
+  pattern_code: in_place_reversal
+  question: Когда подпаттерн «In-Place Reversal» нельзя применять напрямую или нужно заменить другой техникой?
+  answer: 'Если нужен persistent список без мутации исходной структуры. Стандартная сложность: O(n) времени,
+    O(1) памяти.'
+- key: merge-split-reconnect-lists-pattern-recognition
+  type: pattern_recognition
+  pattern_code: merge_split_reconnect
+  question: В условии reorder list; merge sorted lists. Какой подпаттерн следует проверить первым?
+  answer: 'Merge / Split / Reconnect Lists. Список делится на части, части обрабатываются и затем безопасно
+    соединяются. Типичная сложность: обычно O(n) времени, O(1) доп. памяти.'
+- key: merge-split-reconnect-lists-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: merge_split_reconnect
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Merge / Split / Reconnect
+    Lists»?
+  answer: До изменения связей явно зафиксируй точку разреза, головы частей и порядок обратного соединения.
+    Ни одна ссылка на ещё не обработанную часть не должна потеряться. Каждый исходный узел в любой момент
+    либо принадлежит известной части, либо сохранён временной ссылкой; «потерянных» участков нет.
+- key: merge-split-reconnect-lists-edge-case
+  type: edge_case
+  pattern_code: merge_split_reconnect
+  question: Когда подпаттерн «Merge / Split / Reconnect Lists» нельзя применять напрямую или нужно заменить
+    другой техникой?
+  answer: 'Если требуется случайный доступ к индексам — массив может быть естественнее. Стандартная сложность:
+    обычно O(n) времени, O(1) доп. памяти.'
+- key: cache-eviction-design-pattern-recognition
+  type: pattern_recognition
+  pattern_code: cache_eviction_design
+  question: В условии есть ограниченная ёмкость и операции доступа по ключу; нужно удалять элемент по
+    политике давности или частоты. Какой подпаттерн следует проверить первым?
+  answer: 'Cache / Eviction Design. Кэш сочетает быстрый поиск по ключу с политикой удаления. Типичная
+    сложность: LRU операции O(1); LFU обычно стремится к O(1) average при сложной композиции структур.'
+- key: cache-eviction-design-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: cache_eviction_design
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Cache / Eviction Design»?
+  answer: 'Разделяем две обязанности: Hash Map находит элемент, а отдельная структура порядка/частот делает
+    жертву eviction доступной без линейного поиска. Политика eviction должна быть представлена структурой
+    напрямую; нельзя каждый раз линейно искать «худший» ключ.'
+- key: cache-eviction-design-edge-case
+  type: edge_case
+  pattern_code: cache_eviction_design
+  question: Когда подпаттерн «Cache / Eviction Design» нельзя применять напрямую или нужно заменить другой
+    техникой?
+  answer: 'Если capacity мала и сложность не важна, простая реализация может быть разумнее. Стандартная
+    сложность: LRU операции O(1); LFU обычно стремится к O(1) average при сложной композиции структур.'
+- key: composite-o-1-data-structures-pattern-recognition
+  type: pattern_recognition
+  pattern_code: composite_o1_structures
+  question: В условии insert/delete/getRandom O(1); min stack. Какой подпаттерн следует проверить первым?
+  answer: 'Composite O(1) Data Structures. Собираем несколько структур так, чтобы каждая компенсировала
+    слабость другой и API выполнялся за ожидаемое O(1). Типичная сложность: цель — O(1) average на заявленные
+    операции.'
+- key: composite-o-1-data-structures-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: composite_o1_structures
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Composite O(1) Data
+    Structures»?
+  answer: Разложи требуемые операции между несколькими структурами, каждая из которых закрывает своё узкое
+    место. Любое изменение синхронно отражай во всех индексах и связях. Все внутренние представления одной
+    сущности должны обновляться атомарно и оставаться согласованными.
+- key: composite-o-1-data-structures-edge-case
+  type: edge_case
+  pattern_code: composite_o1_structures
+  question: Когда подпаттерн «Composite O(1) Data Structures» нельзя применять напрямую или нужно заменить
+    другой техникой?
+  answer: 'Если требование O(1) не нужно и простая структура существенно понятнее. Стандартная сложность:
+    цель — O(1) average на заявленные операции.'
+- key: iterator-stream-snapshot-state-pattern-recognition
+  type: pattern_recognition
+  pattern_code: iterator_stream_snapshot
+  question: В условии объект должен продолжать работу между вызовами либо читать старую версию состояния;
+    нужно сохранить курсор, буфер или историю версий. Какой подпаттерн следует проверить первым?
+  answer: 'Iterator / Stream / Snapshot State. Объект сохраняет между вызовами курсор, непрочитанный буфер
+    или историю версий. Типичная сложность: iterator/read обычно амортизированно O(1) на элемент; snapshot
+    get часто O(log changes).'
+- key: iterator-stream-snapshot-state-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: iterator_stream_snapshot
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Iterator / Stream
+    / Snapshot State»?
+  answer: 'Определяем, что должно пережить границу вызова: cursor, непрочитанный buffer или version history.
+    Храним именно это минимальное продолжение состояния. Между вызовами хранится минимальное состояние,
+    достаточное, чтобы продолжить ровно с логической точки остановки или восстановить нужную версию.'
+- key: iterator-stream-snapshot-state-edge-case
+  type: edge_case
+  pattern_code: iterator_stream_snapshot
+  question: Когда подпаттерн «Iterator / Stream / Snapshot State» нельзя применять напрямую или нужно
+    заменить другой техникой?
+  answer: 'Если каждый вызов независим и состояние не должно переживать границу API. Стандартная сложность:
+    iterator/read обычно амортизированно O(1) на элемент; snapshot get часто O(log changes).'
+- key: root-to-leaf-path-state-pattern-recognition
+  type: pattern_recognition
+  pattern_code: root_to_leaf_path_state
+  question: В условии path sum; последовательность root-to-leaf. Какой подпаттерн следует проверить первым?
+  answer: 'Root-to-Leaf Path State. Во время DFS переносим состояние текущего пути от корня к потомку.
+    Типичная сложность: O(n); память O(h) recursion stack.'
+- key: root-to-leaf-path-state-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: root_to_leaf_path_state
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Root-to-Leaf Path
+    State»?
+  answer: 'В вызов передаём state пути: сумму, максимум, список, маску. Для sibling-ветвей состояние должно
+    быть независимым или корректно откатываться. При входе в узел state описывает ровно путь от корня
+    до текущей позиции согласно выбранному контракту.'
+- key: root-to-leaf-path-state-edge-case
+  type: edge_case
+  pattern_code: root_to_leaf_path_state
+  question: Когда подпаттерн «Root-to-Leaf Path State» нельзя применять напрямую или нужно заменить другой
+    техникой?
+  answer: 'Если ответ узла зависит от результатов обоих поддеревьев. Стандартная сложность: O(n); память
+    O(h) recursion stack.'
+- key: postorder-subtree-aggregation-pattern-recognition
+  type: pattern_recognition
+  pattern_code: postorder_subtree_aggregation
+  question: В условии height/diameter; subtree sum. Какой подпаттерн следует проверить первым?
+  answer: 'Postorder Subtree Aggregation. Сначала решаем детей, затем из их результатов вычисляем состояние
+    родителя. Типичная сложность: O(n); память O(h).'
+- key: postorder-subtree-aggregation-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: postorder_subtree_aggregation
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Postorder Subtree
+    Aggregation»?
+  answer: Функция возвращает компактный summary поддерева. Родитель объединяет left_summary, right_summary
+    и своё значение. Когда обрабатывается узел, summaries его детей уже окончательно корректны.
+- key: postorder-subtree-aggregation-edge-case
+  type: edge_case
+  pattern_code: postorder_subtree_aggregation
+  question: Когда подпаттерн «Postorder Subtree Aggregation» нельзя применять напрямую или нужно заменить
+    другой техникой?
+  answer: 'Если нужна обработка по уровням или кратчайшее число рёбер. Стандартная сложность: O(n); память
+    O(h).'
+- key: tree-construction-serialization-pattern-recognition
+  type: pattern_recognition
+  pattern_code: tree_construction_serialization
+  question: В условии preorder + inorder; serialize/deserialize. Какой подпаттерн следует проверить первым?
+  answer: 'Tree Construction / Serialization. Строим дерево из обходов/описания или кодируем дерево так,
+    чтобы его форму можно было восстановить. Типичная сложность: обычно O(n) времени и O(n) памяти.'
+- key: tree-construction-serialization-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: tree_construction_serialization
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Tree Construction
+    / Serialization»?
+  answer: Для reconstruction используем свойства обходов и границы подзадач. Для serialization нужно кодировать
+    не только значения, но и структуру. Формат должен содержать достаточно информации, чтобы декодер восстановил
+    и значения, и отсутствие детей.
+- key: tree-construction-serialization-edge-case
+  type: edge_case
+  pattern_code: tree_construction_serialization
+  question: Когда подпаттерн «Tree Construction / Serialization» нельзя применять напрямую или нужно заменить
+    другой техникой?
+  answer: 'Если дерево не является бинарным или формат имеет другие правила — контракт нужно изменить.
+    Стандартная сложность: обычно O(n) времени и O(n) памяти.'
+- key: bfs-level-order-pattern-recognition
+  type: pattern_recognition
+  pattern_code: bfs_level_order
+  question: В условии level order; average/right view per level. Какой подпаттерн следует проверить первым?
+  answer: 'BFS Level Order. Обходим дерево слоями по расстоянию от корня. Типичная сложность: O(n) времени,
+    до O(width) памяти.'
+- key: bfs-level-order-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: bfs_level_order
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «BFS Level Order»?
+  answer: Перед обработкой слоя зафиксируй число элементов, уже находящихся в очереди. Обработай ровно
+    их, а добавленных детей оставь для следующего слоя. В начале шага очередь содержит все и только вершины
+    текущего уровня.
+- key: bfs-level-order-edge-case
+  type: edge_case
+  pattern_code: bfs_level_order
+  question: Когда подпаттерн «BFS Level Order» нельзя применять напрямую или нужно заменить другой техникой?
+  answer: 'Если нужен снизу-вверх summary поддерева — postorder проще. Стандартная сложность: O(n) времени,
+    до O(width) памяти.'
+- key: bst-ordering-bounds-pattern-recognition
+  type: pattern_recognition
+  pattern_code: bst_ordering_bounds
+  question: В условии validate BST; search/kth. Какой подпаттерн следует проверить первым?
+  answer: 'BST Ordering / Bounds. Используем глобальный порядок BST, а не только сравнение узла с непосредственными
+    детьми. Типичная сложность: обычно O(h) для поиска; в balanced BST O(log n).'
+- key: bst-ordering-bounds-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: bst_ordering_bounds
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «BST Ordering / Bounds»?
+  answer: Передавай каждой вершине допустимый диапазон значений. Левое поддерево сужает верхнюю границу,
+    правое — нижнюю. Каждый узел должен удовлетворять ограничениям всех предков, а не только родителя.
+- key: bst-ordering-bounds-edge-case
+  type: edge_case
+  pattern_code: bst_ordering_bounds
+  question: Когда подпаттерн «BST Ordering / Bounds» нельзя применять напрямую или нужно заменить другой
+    техникой?
+  answer: 'Если дерево не BST или содержит дубликаты с отдельной политикой, которую не учли. Стандартная
+    сложность: обычно O(h) для поиска; в balanced BST O(log n).'
+- key: binary-lifting-jump-pointers-pattern-recognition
+  type: pattern_recognition
+  pattern_code: binary_lifting_jump_pointers
+  question: В условии много запросов k-th ancestor; LCA. Какой подпаттерн следует проверить первым?
+  answer: 'Binary Lifting / Jump Pointers. Предвычисляем прыжки длиной 1,2,4,8,..., чтобы быстро подниматься
+    по дереву/цепочке и отвечать на ancestor/LCA-запросы. Типичная сложность: preprocess O(n log n), jump/LCA
+    query обычно O(log n).'
+- key: binary-lifting-jump-pointers-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: binary_lifting_jump_pointers
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Binary Lifting / Jump
+    Pointers»?
+  answer: Предвычисли предков каждой вершины на расстояниях степеней двойки. Любой большой подъём выполняй
+    как сумму заранее подготовленных прыжков. Каждый подготовленный переход означает ровно заданное число
+    родительских шагов.
+- key: binary-lifting-jump-pointers-edge-case
+  type: edge_case
+  pattern_code: binary_lifting_jump_pointers
+  question: Когда подпаттерн «Binary Lifting / Jump Pointers» нельзя применять напрямую или нужно заменить
+    другой техникой?
+  answer: 'Если дерево часто меняет родительские связи — таблицу трудно поддерживать. Стандартная сложность:
+    preprocess O(n log n), jump/LCA query обычно O(log n).'
+- key: connected-components-flood-fill-pattern-recognition
+  type: pattern_recognition
+  pattern_code: connected_components_flood_fill
+  question: В условии islands/provinces/regions; число отдельных групп. Какой подпаттерн следует проверить
+    первым?
+  answer: 'Connected Components / Flood Fill. Из каждой ещё не посещённой вершины запускаем DFS/BFS и
+    помечаем всю достижимую область. Типичная сложность: O(V+E).'
+- key: connected-components-flood-fill-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: connected_components_flood_fill
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Connected Components
+    / Flood Fill»?
+  answer: Внешний цикл ищет новый непосещённый старт. Один запуск обхода полностью закрашивает одну компоненту.
+    После завершения обхода из start посещены все вершины его компоненты; ни одна из них больше не начнёт
+    новую компоненту.
+- key: connected-components-flood-fill-edge-case
+  type: edge_case
+  pattern_code: connected_components_flood_fill
+  question: Когда подпаттерн «Connected Components / Flood Fill» нельзя применять напрямую или нужно заменить
+    другой техникой?
+  answer: 'Если граф динамически получает рёбра и нужны онлайн-запросы связности — DSU может быть лучше.
+    Стандартная сложность: O(V+E).'
+- key: cycle-detection-by-traversal-pattern-recognition
+  type: pattern_recognition
+  pattern_code: cycle_detection_traversal
+  question: В условии «есть ли цикл»; dependency graph. Какой подпаттерн следует проверить первым?
+  answer: 'Cycle Detection by Traversal. Определяем цикл по состоянию обхода. Типичная сложность: O(V+E).'
+- key: cycle-detection-by-traversal-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: cycle_detection_traversal
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Cycle Detection by
+    Traversal»?
+  answer: 'Состояние посещения должно различать активный текущий путь и уже завершённую область. В directed
+    graph это цвета visiting/done; в undirected graph — visited плюс исключение родительского ребра. Сначала
+    спроси: граф направленный?'
+- key: cycle-detection-by-traversal-edge-case
+  type: edge_case
+  pattern_code: cycle_detection_traversal
+  question: Когда подпаттерн «Cycle Detection by Traversal» нельзя применять напрямую или нужно заменить
+    другой техникой?
+  answer: 'Для linked list естественнее Fast & Slow Pointers. Стандартная сложность: O(V+E).'
+- key: multi-source-bfs-pattern-recognition
+  type: pattern_recognition
+  pattern_code: multi_source_bfs
+  question: В условии расстояние до ближайшего из многих источников; распространение волны/гнили/огня.
+    Какой подпаттерн следует проверить первым?
+  answer: 'Multi-Source BFS. BFS стартует сразу из всех источников расстояния 0. Типичная сложность: O(V+E).'
+- key: multi-source-bfs-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: multi_source_bfs
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Multi-Source BFS»?
+  answer: До начала BFS добавь в очередь все источники с нулевым расстоянием. Общая волна затем распространяется
+    так, будто существует один виртуальный источник. Первая достигшая вершину волна приходит от ближайшего
+    источника.
+- key: multi-source-bfs-edge-case
+  type: edge_case
+  pattern_code: multi_source_bfs
+  question: Когда подпаттерн «Multi-Source BFS» нельзя применять напрямую или нужно заменить другой техникой?
+  answer: 'Если веса рёбер различаются — нужен multi-source Dijkstra или другая техника. Стандартная сложность:
+    O(V+E).'
+- key: implicit-state-space-graph-search-pattern-recognition
+  type: pattern_recognition
+  pattern_code: state_space_graph_search
+  question: В условии puzzle/lock/word transformation; состояния огромны, но локально можно перечислить
+    ходы. Какой подпаттерн следует проверить первым?
+  answer: 'Implicit / State-Space Graph Search. Граф не дан списком рёбер. Типичная сложность: O(number
+    of reachable states + transitions).'
+- key: implicit-state-space-graph-search-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: state_space_graph_search
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Implicit / State-Space
+    Graph Search»?
+  answer: 'Определи каноническое состояние, функцию переходов и visited по состояниям. Выбор BFS, Dijkstra
+    или другой очереди зависит от стоимости переходов. Не строй весь граф заранее: генерируй только состояния,
+    до которых реально дошёл поиск.'
+- key: implicit-state-space-graph-search-edge-case
+  type: edge_case
+  pattern_code: state_space_graph_search
+  question: Когда подпаттерн «Implicit / State-Space Graph Search» нельзя применять напрямую или нужно
+    заменить другой техникой?
+  answer: 'Если пространство состояний слишком велико и нет эффективного pruning/эвристики. Стандартная
+    сложность: O(number of reachable states + transitions).'
+- key: eulerian-path-circuit-pattern-recognition
+  type: pattern_recognition
+  pattern_code: eulerian_path_circuit
+  question: В условии itinerary из всех билетов; use every edge exactly once. Какой подпаттерн следует
+    проверить первым?
+  answer: 'Eulerian Path / Circuit. Нужно пройти каждое ребро ровно один раз. Типичная сложность: Hierholzer
+    O(E).'
+- key: eulerian-path-circuit-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: eulerian_path_circuit
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Eulerian Path / Circuit»?
+  answer: Иди по неиспользованным рёбрам, а вершину добавляй в маршрут только после исчерпания всех выходов
+    из неё. Финальный маршрут формируется в обратном порядке выхода. Вершина попадает в финальный маршрут
+    только когда все доступные из неё неиспользованные рёбра уже исчерпаны.
+- key: eulerian-path-circuit-edge-case
+  type: edge_case
+  pattern_code: eulerian_path_circuit
+  question: Когда подпаттерн «Eulerian Path / Circuit» нельзя применять напрямую или нужно заменить другой
+    техникой?
+  answer: 'Если требуется посетить каждую вершину один раз — это другая, обычно намного более сложная
+    задача. Стандартная сложность: Hierholzer O(E).'
+- key: low-link-bridges-articulation-pattern-recognition
+  type: pattern_recognition
+  pattern_code: low_link_bridges_articulation
+  question: В условии critical connections; удаление ребра разрывает граф. Какой подпаттерн следует проверить
+    первым?
+  answer: 'Low-Link / Bridges / Articulation. DFS вычисляет, может ли поддерево вернуться к более раннему
+    предку обходным путём, не используя родительское ребро. Типичная сложность: O(V+E).'
+- key: low-link-bridges-articulation-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: low_link_bridges_articulation
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Low-Link / Bridges
+    / Articulation»?
+  answer: В DFS храни время входа и минимальное время входа, достижимое из поддерева обходным путём. После
+    возврата из ребёнка обновляй low и сравнивай его с временем входа родителя. Tin говорит «когда вошли»,
+    low — «насколько высоко поддерево умеет вернуться в обход родительского ребра».
+- key: low-link-bridges-articulation-edge-case
+  type: edge_case
+  pattern_code: low_link_bridges_articulation
+  question: Когда подпаттерн «Low-Link / Bridges / Articulation» нельзя применять напрямую или нужно заменить
+    другой техникой?
+  answer: 'Для динамических удалений/добавлений рёбер нужны более сложные структуры. Стандартная сложность:
+    O(V+E).'
+- key: bipartite-coloring-pattern-recognition
+  type: pattern_recognition
+  pattern_code: bipartite_coloring
+  question: В условии разделить на две несовместимые группы; enemies/opposite teams. Какой подпаттерн
+    следует проверить первым?
+  answer: 'Bipartite Coloring. Проверяем, можно ли покрасить вершины в два цвета так, чтобы каждое ребро
+    соединяло разные цвета. Типичная сложность: O(V+E).'
+- key: bipartite-coloring-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: bipartite_coloring
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Bipartite Coloring»?
+  answer: Обход присваивает соседним вершинам противоположные цвета. Ребро между вершинами одного цвета
+    немедленно доказывает невозможность двудольного разбиения. Каждое проверенное ребро должно соединять
+    вершины противоположных цветов.
+- key: bipartite-coloring-edge-case
+  type: edge_case
+  pattern_code: bipartite_coloring
+  question: Когда подпаттерн «Bipartite Coloring» нельзя применять напрямую или нужно заменить другой
+    техникой?
+  answer: 'Если ограничений больше двух типов или отношения не сводятся к «должны отличаться». Стандартная
+    сложность: O(V+E).'
+- key: strongly-connected-components-pattern-recognition
+  type: pattern_recognition
+  pattern_code: strongly_connected_components
+  question: В условии mutual reachability; compress directed cycles/groups. Какой подпаттерн следует проверить
+    первым?
+  answer: 'Strongly Connected Components. В directed graph SCC — максимальная группа вершин, где каждая
+    достижима из каждой. Типичная сложность: Kosaraju/Tarjan O(V+E).'
+- key: strongly-connected-components-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: strongly_connected_components
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Strongly Connected
+    Components»?
+  answer: Нужно найти максимальные блоки взаимной достижимости и затем мысленно сжать каждый блок в одну
+    вершину. Kosaraju делает это двумя проходами и transpose-графом; Tarjan — одним DFS через discovery/low-link
+    и стек активных кандидатов. SCC — не просто «вершины на цикле», а максимальный блок взаимной достижимости;
+    выбранный алгоритм должен доказуемо отделять такие блоки.
+- key: strongly-connected-components-edge-case
+  type: edge_case
+  pattern_code: strongly_connected_components
+  question: Когда подпаттерн «Strongly Connected Components» нельзя применять напрямую или нужно заменить
+    другой техникой?
+  answer: 'Если граф undirected и нужны обычные компоненты — простой DFS/BFS легче. Стандартная сложность:
+    Kosaraju/Tarjan O(V+E).'
+- key: kahn-in-degree-bfs-pattern-recognition
+  type: pattern_recognition
+  pattern_code: kahn_in_degree_bfs
+  question: В условии prerequisites; DAG order. Какой подпаттерн следует проверить первым?
+  answer: 'Kahn In-Degree BFS. Строим топологический порядок, начиная с вершин без невыполненных зависимостей.
+    Типичная сложность: O(V+E).'
+- key: kahn-in-degree-bfs-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: kahn_in_degree_bfs
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Kahn In-Degree BFS»?
+  answer: Считаем indegree. Все вершины с 0 кладём в queue. В очереди находятся вершины, у которых среди
+    ещё не обработанных вершин нет входящих зависимостей.
+- key: kahn-in-degree-bfs-edge-case
+  type: edge_case
+  pattern_code: kahn_in_degree_bfs
+  question: Когда подпаттерн «Kahn In-Degree BFS» нельзя применять напрямую или нужно заменить другой
+    техникой?
+  answer: 'Если нужен один из DFS-порядков или задача естественнее решается postorder. Стандартная сложность:
+    O(V+E).'
+- key: dfs-postorder-topological-sort-pattern-recognition
+  type: pattern_recognition
+  pattern_code: dfs_postorder_toposort
+  question: В условии topological order; dependency DFS естественен. Какой подпаттерн следует проверить
+    первым?
+  answer: 'DFS Postorder Topological Sort. В DAG вершина добавляется в порядок после всех вершин, зависящих
+    от её исходящих переходов; затем список разворачивается. Типичная сложность: O(V+E).'
+- key: dfs-postorder-topological-sort-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: dfs_postorder_toposort
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «DFS Postorder Topological
+    Sort»?
+  answer: DFS использует unvisited/visiting/done. После завершения всех соседей добавляем v в postorder.
+    Когда v попадает в postorder, все достижимые по её исходящим dependency-рёбрам вершины уже завершены.
+- key: dfs-postorder-topological-sort-edge-case
+  type: edge_case
+  pattern_code: dfs_postorder_toposort
+  question: Когда подпаттерн «DFS Postorder Topological Sort» нельзя применять напрямую или нужно заменить
+    другой техникой?
+  answer: 'При очень глубоком графе рекурсия может быть неудобна без iterative DFS. Стандартная сложность:
+    O(V+E).'
+- key: dependency-scheduling-feasibility-pattern-recognition
+  type: pattern_recognition
+  pattern_code: dependency_scheduling
+  question: В условии есть зависимости между объектами; нужно определить, можно ли выполнить все требования
+    или получить допустимый порядок. Какой подпаттерн следует проверить первым?
+  answer: 'Dependency Scheduling / Feasibility. Сюжетные зависимости переводятся в ориентированный граф,
+    после чего проверяется выполнимость или строится допустимый порядок. Типичная сложность: O(V+E) после
+    построения dependency graph.'
+- key: dependency-scheduling-feasibility-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: dependency_scheduling
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Dependency Scheduling
+    / Feasibility»?
+  answer: Сначала выбери и зафиксируй направление зависимости, например от prerequisite к зависимому объекту.
+    Затем применяй топологическую проверку к уже корректно построенному графу. Топологическая проверка
+    корректна только для правильно направленных зависимостей.
+- key: dependency-scheduling-feasibility-edge-case
+  type: edge_case
+  pattern_code: dependency_scheduling
+  question: Когда подпаттерн «Dependency Scheduling / Feasibility» нельзя применять напрямую или нужно
+    заменить другой техникой?
+  answer: 'Если ограничения содержат веса времени/ресурсы/параллельные мощности — одной топологии может
+    быть мало. Стандартная сложность: O(V+E) после построения dependency graph.'
+- key: online-connectivity-component-merging-pattern-recognition
+  type: pattern_recognition
+  pattern_code: online_connectivity
+  question: В условии рёбра добавляются динамически; нужно быстро отвечать, находятся ли два объекта в
+    одной компоненте. Какой подпаттерн следует проверить первым?
+  answer: 'Online Connectivity / Component Merging. Быстро объединяем компоненты и проверяем, принадлежат
+    ли два элемента одной группе. Типичная сложность: амортизированно почти O(1) на find/union: O(α(n)).'
+- key: online-connectivity-component-merging-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: online_connectivity
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Online Connectivity
+    / Component Merging»?
+  answer: Каждая компонента хранит представителя, а объединение связывает представителей двух разных компонент.
+    Сжатие путей и объединение по размеру ускоряют будущие запросы. Два элемента связаны тогда и только
+    тогда, когда имеют одного представителя компоненты.
+- key: online-connectivity-component-merging-edge-case
+  type: edge_case
+  pattern_code: online_connectivity
+  question: Когда подпаттерн «Online Connectivity / Component Merging» нельзя применять напрямую или нужно
+    заменить другой техникой?
+  answer: 'DSU плохо отвечает на удаление рёбер и не хранит путь между вершинами. Стандартная сложность:
+    амортизированно почти O(1) на find/union: O(α(n)).'
+- key: redundant-edge-dsu-cycle-detection-pattern-recognition
+  type: pattern_recognition
+  pattern_code: dsu_cycle_detection
+  question: В условии redundant connection; найти первое/последнее лишнее ребро. Какой подпаттерн следует
+    проверить первым?
+  answer: 'Redundant Edge / DSU Cycle Detection. В undirected graph обрабатываем рёбра по одному. Типичная
+    сложность: амортизированно O(E α(V)).'
+- key: redundant-edge-dsu-cycle-detection-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: dsu_cycle_detection
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Redundant Edge / DSU
+    Cycle Detection»?
+  answer: Для каждого ребра проверь, находятся ли его концы уже в одной DSU-компоненте. Если да, ребро
+    замыкает цикл; иначе объедини компоненты. DSU хранит связность, созданную только ранее принятыми рёбрами.
+- key: redundant-edge-dsu-cycle-detection-edge-case
+  type: edge_case
+  pattern_code: dsu_cycle_detection
+  question: Когда подпаттерн «Redundant Edge / DSU Cycle Detection» нельзя применять напрямую или нужно
+    заменить другой техникой?
+  answer: 'Если нужно перечислить цикл или анализировать направление рёбер. Стандартная сложность: амортизированно
+    O(E α(V)).'
+- key: kruskal-style-connectivity-pattern-recognition
+  type: pattern_recognition
+  pattern_code: kruskal_connectivity
+  question: В условии minimum spanning tree/forest; соединить все точки минимальной общей стоимостью.
+    Какой подпаттерн следует проверить первым?
+  answer: 'Kruskal-Style Connectivity. Сортируем рёбра по стоимости и добавляем самые дешёвые, если они
+    соединяют разные компоненты. Типичная сложность: O(E log E) из-за сортировки рёбер.'
+- key: kruskal-style-connectivity-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: kruskal_connectivity
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Kruskal-Style Connectivity»?
+  answer: Просматривай рёбра по возрастанию веса и добавляй только те, что соединяют разные DSU-компоненты.
+    Такое ребро расширяет лес, не создавая цикл. Выбранные рёбра образуют лес без циклов; каждое принятое
+    ребро — самый дешёвый доступный способ соединить две текущие компоненты в порядке Kruskal.
+- key: kruskal-style-connectivity-edge-case
+  type: edge_case
+  pattern_code: kruskal_connectivity
+  question: Когда подпаттерн «Kruskal-Style Connectivity» нельзя применять напрямую или нужно заменить
+    другой техникой?
+  answer: 'Для directed MST или динамических сложных ограничений нужны другие алгоритмы. Стандартная сложность:
+    O(E log E) из-за сортировки рёбер.'
+- key: unweighted-shortest-path-bfs-pattern-recognition
+  type: pattern_recognition
+  pattern_code: unweighted_shortest_path_bfs
+  question: В условии minimum number of moves; все рёбра имеют одинаковую стоимость. Какой подпаттерн
+    следует проверить первым?
+  answer: 'Unweighted Shortest Path BFS. В графе, где каждый шаг стоит одинаково, BFS впервые достигает
+    вершину по кратчайшему числу рёбер. Типичная сложность: O(V+E).'
+- key: unweighted-shortest-path-bfs-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: unweighted_shortest_path_bfs
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Unweighted Shortest
+    Path BFS»?
+  answer: Обрабатывай вершины слоями расстояния и помечай вершину посещённой в момент постановки в очередь.
+    Первое обнаружение даёт минимальное число рёбер от источника. Первая постановка вершины в очередь
+    фиксирует её минимальное расстояние в невзвешенном графе.
+- key: unweighted-shortest-path-bfs-edge-case
+  type: edge_case
+  pattern_code: unweighted_shortest_path_bfs
+  question: Когда подпаттерн «Unweighted Shortest Path BFS» нельзя применять напрямую или нужно заменить
+    другой техникой?
+  answer: 'Если стоимость рёбер различается. Стандартная сложность: O(V+E).'
+- key: dijkstra-for-nonnegative-weights-pattern-recognition
+  type: pattern_recognition
+  pattern_code: dijkstra_nonnegative
+  question: В условии weighted graph; веса = 0. Какой подпаттерн следует проверить первым?
+  answer: 'Dijkstra for Nonnegative Weights. Находит shortest paths от источника при неотрицательных весах.
+    Типичная сложность: обычно O((V+E) log V) с binary heap.'
+- key: dijkstra-for-nonnegative-weights-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: dijkstra_nonnegative
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Dijkstra for Nonnegative
+    Weights»?
+  answer: Извлекай из min-heap вершину с наименьшей текущей дистанцией и релаксируй её исходящие рёбра.
+    Устаревшие записи heap пропускай. При неотрицательных весах минимальный извлечённый актуальный distance
+    нельзя улучшить путём через ещё более далёкую вершину.
+- key: dijkstra-for-nonnegative-weights-edge-case
+  type: edge_case
+  pattern_code: dijkstra_nonnegative
+  question: Когда подпаттерн «Dijkstra for Nonnegative Weights» нельзя применять напрямую или нужно заменить
+    другой техникой?
+  answer: 'При отрицательных рёбрах базовое доказательство ломается. Стандартная сложность: обычно O((V+E)
+    log V) с binary heap.'
+- key: relaxation-based-paths-0-1-bfs-bellman-ford-pattern-recognition
+  type: pattern_recognition
+  pattern_code: relaxation_based_paths
+  question: В условии рёбра имеют веса только 0 и 1 либо встречаются отрицательные веса; обычные BFS или
+    Dijkstra не покрывают ограничения. Какой подпаттерн следует проверить первым?
+  answer: 'Relaxation-Based Paths: 0-1 BFS / Bellman-Ford. Выбор алгоритма кратчайшего пути определяется
+    классом весов: ноль или один требуют 0-1 BFS, отрицательные рёбра — Bellman-Ford или специальный алгоритм.
+    Типичная сложность: 0-1 BFS O(V+E); Bellman-Ford O(VE).'
+- key: relaxation-based-paths-0-1-bfs-bellman-ford-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: relaxation_based_paths
+  question: 'Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Relaxation-Based
+    Paths: 0-1 BFS / Bellman-Ford»?'
+  answer: Сначала классифицируй веса рёбер. Для весов ноль или один поддерживай порядок кандидатов deque-ом,
+    а при отрицательных рёбрах многократно релаксируй все рёбра. Корректный алгоритм кратчайшего пути
+    определяется прежде всего допустимым классом весов.
+- key: relaxation-based-paths-0-1-bfs-bellman-ford-edge-case
+  type: edge_case
+  pattern_code: relaxation_based_paths
+  question: 'Когда подпаттерн «Relaxation-Based Paths: 0-1 BFS / Bellman-Ford» нельзя применять напрямую
+    или нужно заменить другой техникой?'
+  answer: 'Для all-pairs shortest paths или специальных DAG-графов могут быть более подходящие алгоритмы.
+    Стандартная сложность: 0-1 BFS O(V+E); Bellman-Ford O(VE).'
+- key: subsets-combinations-pattern-recognition
+  type: pattern_recognition
+  pattern_code: subsets_combinations
+  question: В условии all subsets; choose k elements. Какой подпаттерн следует проверить первым?
+  answer: 'Subsets / Combinations. Перебираем выбор подмножества или комбинации без учёта порядка элементов
+    внутри выбора. Типичная сложность: обычно пропорционально числу сгенерированных решений; subsets O(2^n).'
+- key: subsets-combinations-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: subsets_combinations
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Subsets / Combinations»?
+  answer: 'Типичная рекурсия хранит start: следующий выбор разрешён только из суффикса, поэтому одна комбинация
+    не генерируется во всех перестановках. Path содержит выбранные элементы в каноническом порядке индексов;
+    всё раньше start больше не рассматривается.'
+- key: subsets-combinations-edge-case
+  type: edge_case
+  pattern_code: subsets_combinations
+  question: Когда подпаттерн «Subsets / Combinations» нельзя применять напрямую или нужно заменить другой
+    техникой?
+  answer: 'Если варианты огромны, а нужен только count/optimum — DP или комбинаторика могут быть лучше
+    полного перечисления. Стандартная сложность: обычно пропорционально числу сгенерированных решений;
+    subsets O(2^n).'
+- key: permutations-used-state-pattern-recognition
+  type: pattern_recognition
+  pattern_code: permutations_used_state
+  question: В условии permutations; arrange/order. Какой подпаттерн следует проверить первым?
+  answer: 'Permutations / Used-State. Строим упорядоченные последовательности; один и тот же набор элементов
+    в другом порядке считается другим ответом. Типичная сложность: обычно O(n·n!) с учётом вывода.'
+- key: permutations-used-state-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: permutations_used_state
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Permutations / Used-State»?
+  answer: На каждой глубине выбирай любой ещё не использованный элемент и добавляй его в текущий префикс
+    перестановки. После возврата освобождай элемент для других ветвей. Текущий путь содержит ровно элементы,
+    уже занявшие позиции в строящейся перестановке.
+- key: permutations-used-state-edge-case
+  type: edge_case
+  pattern_code: permutations_used_state
+  question: Когда подпаттерн «Permutations / Used-State» нельзя применять напрямую или нужно заменить
+    другой техникой?
+  answer: 'Если нужен только лучший порядок и есть специальная структура — greedy/DP могут избежать n!.
+    Стандартная сложность: обычно O(n·n!) с учётом вывода.'
+- key: constraint-placement-pattern-recognition
+  type: pattern_recognition
+  pattern_code: constraint_placement
+  question: В условии N-Queens; Sudoku. Какой подпаттерн следует проверить первым?
+  answer: 'Constraint Placement. Размещаем объекты по позициям, соблюдая ограничения, и отсекаем ветвь
+    сразу после нарушения. Типичная сложность: экспоненциально в худшем случае; pruning определяет практику.'
+- key: constraint-placement-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: constraint_placement
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Constraint Placement»?
+  answer: Выбираем следующую переменную/позицию, перебираем допустимые значения, обновляем быстрые структуры
+    ограничений и откатываем. Частичное размещение всегда валидно; невалидная ветвь не углубляется ни
+    на один лишний уровень.
+- key: constraint-placement-edge-case
+  type: edge_case
+  pattern_code: constraint_placement
+  question: Когда подпаттерн «Constraint Placement» нельзя применять напрямую или нужно заменить другой
+    техникой?
+  answer: 'Если ограничения имеют перекрывающиеся подзадачи с компактным state — memoization/DP может
+    быть эффективнее. Стандартная сложность: экспоненциально в худшем случае; pruning определяет практику.'
+- key: path-construction-word-search-pattern-recognition
+  type: pattern_recognition
+  pattern_code: path_construction_word_search
+  question: В условии word search; path with no repeated cell. Какой подпаттерн следует проверить первым?
+  answer: 'Path Construction / Word Search. Строим путь шаг за шагом по графу/сетке, причём текущее решение
+    определяет, куда можно идти дальше. Типичная сложность: экспоненциально в худшем случае; для grid
+    word search часто O(RC·branch^L).'
+- key: path-construction-word-search-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: path_construction_word_search
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Path Construction
+    / Word Search»?
+  answer: DFS хранит текущую позицию, прогресс по цели и visited текущего пути. После возврата visited
+    откатывается, если вершину разрешено использовать в другой ветви. Visited описывает именно текущий
+    путь, а не все вершины, когда-либо виденные во всех ветвях.
+- key: path-construction-word-search-edge-case
+  type: edge_case
+  pattern_code: path_construction_word_search
+  question: Когда подпаттерн «Path Construction / Word Search» нельзя применять напрямую или нужно заменить
+    другой техникой?
+  answer: 'Если нужен только кратчайший путь в невзвешенном графе — BFS лучше. Стандартная сложность:
+    экспоненциально в худшем случае; для grid word search часто O(RC·branch^L).'
+- key: randomized-sampling-reservoir-rejection-pattern-recognition
+  type: pattern_recognition
+  pattern_code: randomized_sampling_reservoir
+  question: В условии нужно выбирать случайный исход равномерно или по весам; поток может иметь неизвестную
+    длину либо генератор создаёт лишние исходы. Какой подпаттерн следует проверить первым?
+  answer: 'Randomized Sampling / Reservoir / Rejection. Метод случайной выборки выбирается по целевому
+    распределению, доступной памяти и способу получения случайных исходов. Типичная сложность: sampling
+    cost зависит от метода; reservoir O(n) scan и O(k) memory; rejection — expected time.'
+- key: randomized-sampling-reservoir-rejection-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: randomized_sampling_reservoir
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Randomized Sampling
+    / Reservoir / Rejection»?
+  answer: 'Сначала формулируем целевую вероятность каждого исхода. Затем выбираем механизм: prefix weights,
+    reservoir replacement или rejection равновероятного хвоста. Случайный алгоритм считается корректным
+    только после доказательства итогового распределения.'
+- key: randomized-sampling-reservoir-rejection-edge-case
+  type: edge_case
+  pattern_code: randomized_sampling_reservoir
+  question: Когда подпаттерн «Randomized Sampling / Reservoir / Rejection» нельзя применять напрямую или
+    нужно заменить другой техникой?
+  answer: 'Если требуется криптографическая случайность — стандартный PRNG задачи может быть недостаточен.
+    Стандартная сложность: sampling cost зависит от метода; reservoir O(n) scan и O(k) memory; rejection
+    — expected time.'
+- key: interactive-query-strategy-pattern-recognition
+  type: pattern_recognition
+  pattern_code: interactive_query_strategy
+  question: В условии hidden object; guess, query, oracle. Какой подпаттерн следует проверить первым?
+  answer: 'Interactive Query Strategy. Алгоритм узнаёт скрытый объект через ограниченный oracle/API и
+    адаптирует следующий запрос к предыдущим ответам. Типичная сложность: оценивается числом запросов;
+    цель — минимизировать worst-case/expected queries.'
+- key: interactive-query-strategy-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: interactive_query_strategy
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Interactive Query
+    Strategy»?
+  answer: Храни множество кандидатов, совместимых со всеми ответами. Каждый запрос должен хорошо разделять
+    это множество, после чего несовместимые варианты удаляются. После каждого ответа candidates содержит
+    все и только объекты, совместимые со всей query history.
+- key: interactive-query-strategy-edge-case
+  type: edge_case
+  pattern_code: interactive_query_strategy
+  question: Когда подпаттерн «Interactive Query Strategy» нельзя применять напрямую или нужно заменить
+    другой техникой?
+  answer: 'Если query дорогой, шумный или ответы вероятностны — может потребоваться статистическая стратегия.
+    Стандартная сложность: оценивается числом запросов; цель — минимизировать worst-case/expected queries.'
+- key: greedy-pairing-matching-pattern-recognition
+  type: pattern_recognition
+  pattern_code: greedy_pairing_matching
+  question: В условии pairing people/items; минимизировать число пар/контейнеров/стоимость. Какой подпаттерн
+    следует проверить первым?
+  answer: 'Greedy Pairing / Matching. Формируем пары, используя порядок, чтобы крайние элементы определяли
+    безопасный выбор. Типичная сложность: часто O(n log n) из-за сортировки.'
+- key: greedy-pairing-matching-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: greedy_pairing_matching
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Greedy Pairing / Matching»?
+  answer: Часто рассматриваем самый сильный/тяжёлый объект. Если он может быть спарен с самым слабым —
+    делаем это; если не может, то с более сильным тем более не сможет и идёт один. Экстремальный объект
+    должен быть обработан сейчас, а выбранный партнёр не должен тратить более ценный ресурс без необходимости.
+- key: greedy-pairing-matching-edge-case
+  type: edge_case
+  pattern_code: greedy_pairing_matching
+  question: Когда подпаттерн «Greedy Pairing / Matching» нельзя применять напрямую или нужно заменить
+    другой техникой?
+  answer: 'Если совместимость немонотонна после сортировки или пары имеют сложную глобальную стоимость.
+    Стандартная сложность: часто O(n log n) из-за сортировки.'
+- key: resource-assignment-pattern-recognition
+  type: pattern_recognition
+  pattern_code: resource_assignment
+  question: В условии workers/jobs; cookies/children. Какой подпаттерн следует проверить первым?
+  answer: 'Resource Assignment. Есть требования и ресурсы. Типичная сложность: часто O(n log n) из-за
+    сортировки/heap.'
+- key: resource-assignment-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: resource_assignment
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Resource Assignment»?
+  answer: Сортируем обе стороны. Для очередного demand продвигаем resource pointer до первого достаточного.
+    Не расходуй ресурс сильнее необходимого, если более слабый уже удовлетворяет текущий demand.
+- key: resource-assignment-edge-case
+  type: edge_case
+  pattern_code: resource_assignment
+  question: Когда подпаттерн «Resource Assignment» нельзя применять напрямую или нужно заменить другой
+    техникой?
+  answer: 'Если один ресурс может дробиться, переиспользоваться или влияет на несколько требований сложным
+    образом. Стандартная сложность: часто O(n log n) из-за сортировки/heap.'
+- key: exchange-argument-ordering-pattern-recognition
+  type: pattern_recognition
+  pattern_code: exchange_argument_ordering
+  question: В условии sort by custom comparator; порядок влияет на сумму/строку/штраф. Какой подпаттерн
+    следует проверить первым?
+  answer: 'Exchange-Argument Ordering. Нужно выбрать порядок объектов. Типичная сложность: обычно O(n
+    log n) из-за ordering.'
+- key: exchange-argument-ordering-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: exchange_argument_ordering
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Exchange-Argument
+    Ordering»?
+  answer: 'Выводим локальное условие: когда a должно быть раньше b? Например, для largest number сравниваем
+    конкатенации ab и ba. Comparator должен следовать из влияния двух порядков одной пары на глобальную
+    цель, а не из догадки вроде «сортируем по самому большому полю».'
+- key: exchange-argument-ordering-edge-case
+  type: edge_case
+  pattern_code: exchange_argument_ordering
+  question: Когда подпаттерн «Exchange-Argument Ordering» нельзя применять напрямую или нужно заменить
+    другой техникой?
+  answer: 'Если эффект пары зависит от дальнего контекста и соседний swap нельзя анализировать локально.
+    Стандартная сложность: обычно O(n log n) из-за ordering.'
+- key: local-choice-with-invariant-pattern-recognition
+  type: pattern_recognition
+  pattern_code: local_choice_invariant
+  question: В условии решение строится одним проходом; после выбора назад не возвращаемся. Какой подпаттерн
+    следует проверить первым?
+  answer: 'Local Choice with Invariant. Общий greedy-подпаттерн, когда на каждом шаге делается локальный
+    выбор и поддерживается сильное доказуемое состояние. Типичная сложность: часто O(n) или O(n log n);
+    зависит от поддерживаемого инварианта.'
+- key: local-choice-with-invariant-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: local_choice_invariant
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Local Choice with
+    Invariant»?
+  answer: Сначала сформулируй конкретный инвариант, например максимальную достижимую позицию, текущий
+    запас ресурса или лучший доминирующий кандидат. Каждый greedy-шаг обязан сохранять этот инвариант.
+    Назови, что именно greedy-состояние означает после каждого префикса и почему отброшенная альтернатива
+    уже не может стать лучше.
+- key: local-choice-with-invariant-edge-case
+  type: edge_case
+  pattern_code: local_choice_invariant
+  question: Когда подпаттерн «Local Choice with Invariant» нельзя применять напрямую или нужно заменить
+    другой техникой?
+  answer: 'Когда локально худший выбор может открыть глобально лучший путь и нет exchange/dominance доказательства.
+    Стандартная сложность: часто O(n) или O(n log n); зависит от поддерживаемого инварианта.'
+- key: greedy-scheduling-interval-selection-pattern-recognition
+  type: pattern_recognition
+  pattern_code: greedy_scheduling
+  question: В условии maximum number of non-overlapping intervals; minimum removals. Какой подпаттерн
+    следует проверить первым?
+  answer: 'Greedy Scheduling / Interval Selection. Выбираем совместимые интервалы или распределяем ресурсы
+    по времени, используя порядок концов/начал. Типичная сложность: обычно O(n log n) из-за сортировки.'
+- key: greedy-scheduling-interval-selection-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: greedy_scheduling
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Greedy Scheduling
+    / Interval Selection»?
+  answer: 'Классический activity selection: сортируем по времени окончания и всегда берём совместимый
+    интервал с самым ранним концом. Он оставляет максимум пространства будущим интервалам. Среди решений
+    с тем же числом уже выбранных интервалов greedy заканчивает не позже альтернативы и поэтому не имеет
+    меньше будущих возможностей.'
+- key: greedy-scheduling-interval-selection-edge-case
+  type: edge_case
+  pattern_code: greedy_scheduling
+  question: Когда подпаттерн «Greedy Scheduling / Interval Selection» нельзя применять напрямую или нужно
+    заменить другой техникой?
+  answer: 'Если интервалы имеют веса/прибыли — weighted interval scheduling обычно требует DP. Стандартная
+    сложность: обычно O(n log n) из-за сортировки.'
+- key: take-skip-dp-pattern-recognition
+  type: pattern_recognition
+  pattern_code: dp_take_skip
+  question: В условии нельзя брать соседние элементы; choose subset under local conflicts. Какой подпаттерн
+    следует проверить первым?
+  answer: 'Take / Skip DP. Для позиции решаем: взять текущий объект или пропустить. Типичная сложность:
+    обычно O(n) для 1D вариантов.'
+- key: take-skip-dp-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: dp_take_skip
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Take / Skip DP»?
+  answer: 'Для каждого элемента сравни два перехода: взять его и перейти из совместимого предыдущего состояния
+    либо пропустить и сохранить предыдущий optimum. Разбей все оптимальные решения на исчерпывающие случаи
+    «взяли текущий / не взяли текущий».'
+- key: take-skip-dp-edge-case
+  type: edge_case
+  pattern_code: dp_take_skip
+  question: Когда подпаттерн «Take / Skip DP» нельзя применять напрямую или нужно заменить другой техникой?
+  answer: 'Если выбор текущего элемента влияет на далёкое состояние, которое не помещается в маленький
+    DP-state. Стандартная сложность: обычно O(n) для 1D вариантов.'
+- key: prefix-partition-dp-pattern-recognition
+  type: pattern_recognition
+  pattern_code: dp_prefix_partition
+  question: В условии split string/array into segments; word break. Какой подпаттерн следует проверить
+    первым?
+  answer: 'Prefix / Partition DP. Dp[i] описывает лучший/возможный ответ для первых i элементов, а переход
+    перебирает последнюю часть, на которой заканчивается решение. Типичная сложность: часто O(n²); ускорения
+    зависят от структуры перехода.'
+- key: prefix-partition-dp-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: dp_prefix_partition
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Prefix / Partition
+    DP»?
+  answer: Пусть состояние отвечает за лучший результат на префиксе. Перебирай начало последнего блока
+    и объединяй решение предыдущего префикса со стоимостью этого блока. Любое решение префикса имеет последнюю
+    границу; перебор всех возможных последних границ покрывает все решения без пропусков.
+- key: prefix-partition-dp-edge-case
+  type: edge_case
+  pattern_code: dp_prefix_partition
+  question: Когда подпаттерн «Prefix / Partition DP» нельзя применять напрямую или нужно заменить другой
+    техникой?
+  answer: 'Если O(n²) перебор границ слишком дорог и нет оптимизации. Стандартная сложность: часто O(n²);
+    ускорения зависят от структуры перехода.'
+- key: counting-ways-dp-pattern-recognition
+  type: pattern_recognition
+  pattern_code: dp_counting_ways
+  question: В условии number of ways; count sequences/combinations. Какой подпаттерн следует проверить
+    первым?
+  answer: 'Counting Ways DP. DP считает число способов достичь state. Типичная сложность: обычно O(number_of_states
+    × transitions).'
+- key: counting-ways-dp-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: dp_counting_ways
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Counting Ways DP»?
+  answer: Каждое состояние накапливает число способов, пришедших из допустимых предыдущих состояний. Порядок
+    обхода должен соответствовать тому, различается ли порядок выбранных объектов. Состояние считает именно
+    ту единицу способа, которая была определена до построения переходов.
+- key: counting-ways-dp-edge-case
+  type: edge_case
+  pattern_code: dp_counting_ways
+  question: Когда подпаттерн «Counting Ways DP» нельзя применять напрямую или нужно заменить другой техникой?
+  answer: 'Если число способов выводится прямой формулой комбинаторики без большого state-space. Стандартная
+    сложность: обычно O(number_of_states × transitions).'
+- key: 2d-grid-dp-pattern-recognition
+  type: pattern_recognition
+  pattern_code: dp_2d_grid
+  question: В условии grid paths; min/max cost to cell. Какой подпаттерн следует проверить первым?
+  answer: '2D Grid DP. State привязан к клетке, а ответ в ней строится из уже вычисленных соседних состояний.
+    Типичная сложность: обычно O(RC).'
+- key: 2d-grid-dp-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: dp_2d_grid
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «2D Grid DP»?
+  answer: Определи значение состояния для клетки и переходы из уже вычисленных соседей. Обходи таблицу
+    в порядке, при котором все зависимости готовы. Перед вычислением клетки все states, от которых зависит
+    переход, уже известны.
+- key: 2d-grid-dp-edge-case
+  type: edge_case
+  pattern_code: dp_2d_grid
+  question: Когда подпаттерн «2D Grid DP» нельзя применять напрямую или нужно заменить другой техникой?
+  answer: 'При циклических зависимостях без естественного topological order. Стандартная сложность: обычно
+    O(RC).'
+- key: 0-1-knapsack-subset-dp-pattern-recognition
+  type: pattern_recognition
+  pattern_code: dp_01_knapsack
+  question: В условии subset sum; choose items within capacity. Какой подпаттерн следует проверить первым?
+  answer: '0/1 Knapsack / Subset DP. Каждый предмет можно использовать не более одного раза. Типичная
+    сложность: обычно O(n·W) pseudo-polynomial.'
+- key: 0-1-knapsack-subset-dp-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: dp_01_knapsack
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «0/1 Knapsack / Subset
+    DP»?
+  answer: Для каждого предмета обновляй вместимость справа налево. Тогда источник перехода ещё не содержит
+    текущий предмет, и его нельзя взять повторно. После обработки первых i предметов DP использует каждый
+    из них максимум один раз.
+- key: 0-1-knapsack-subset-dp-edge-case
+  type: edge_case
+  pattern_code: dp_01_knapsack
+  question: Когда подпаттерн «0/1 Knapsack / Subset DP» нельзя применять напрямую или нужно заменить другой
+    техникой?
+  answer: 'Если количество копий предмета неограниченно или имеет отдельный лимит. Стандартная сложность:
+    обычно O(n·W) pseudo-polynomial.'
+- key: unbounded-knapsack-coin-change-pattern-recognition
+  type: pattern_recognition
+  pattern_code: dp_unbounded_knapsack
+  question: В условии unlimited coins; повторное использование номинала. Какой подпаттерн следует проверить
+    первым?
+  answer: 'Unbounded Knapsack / Coin Change. Каждый тип предмета можно использовать многократно. Типичная
+    сложность: обычно O(n·W) pseudo-polynomial.'
+- key: unbounded-knapsack-coin-change-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: dp_unbounded_knapsack
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Unbounded Knapsack
+    / Coin Change»?
+  answer: Для каждого типа предмета или монеты обновляй вместимость слева направо. Тогда новое состояние
+    уже может повторно использовать текущий тип. Направление DP-цикла кодирует, можно ли повторно использовать
+    текущий предмет в том же этапе.
+- key: unbounded-knapsack-coin-change-edge-case
+  type: edge_case
+  pattern_code: dp_unbounded_knapsack
+  question: Когда подпаттерн «Unbounded Knapsack / Coin Change» нельзя применять напрямую или нужно заменить
+    другой техникой?
+  answer: 'Если число копий ограничено конкретным k — bounded knapsack требует другой обработки. Стандартная
+    сложность: обычно O(n·W) pseudo-polynomial.'
+- key: sequence-dp-lis-lcs-pattern-recognition
+  type: pattern_recognition
+  pattern_code: dp_sequence_lis_lcs
+  question: В условии нужно сохранить относительный порядок элементов с возможными пропусками; ищется
+    возрастающая подпоследовательность или общая подпоследовательность двух последовательностей. Какой
+    подпаттерн следует проверить первым?
+  answer: 'Sequence DP: LIS / LCS. LIS и LCS сохраняют относительный порядок элементов, но используют
+    разные состояния и переходы. Типичная сложность: LIS O(n²) или O(n log n); LCS O(nm).'
+- key: sequence-dp-lis-lcs-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: dp_sequence_lis_lcs
+  question: 'Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Sequence DP: LIS
+    / LCS»?'
+  answer: Для LIS состояние фиксирует конец подпоследовательности или минимальный хвост каждой длины.
+    Для LCS состояние фиксирует пару префиксов двух последовательностей. LIS и LCS сохраняют порядок,
+    но используют разные оси состояния и не должны смешиваться.
+- key: sequence-dp-lis-lcs-edge-case
+  type: edge_case
+  pattern_code: dp_sequence_lis_lcs
+  question: 'Когда подпаттерн «Sequence DP: LIS / LCS» нельзя применять напрямую или нужно заменить другой
+    техникой?'
+  answer: 'Если порядок не важен — задача может быть про множества/частоты. Стандартная сложность: LIS
+    O(n²) или O(n log n); LCS O(nm).'
+- key: state-machine-interval-dp-pattern-recognition
+  type: pattern_recognition
+  pattern_code: dp_state_machine_interval
+  question: В условии состояние задаётся небольшим числом режимов либо двумя границами интервала; ответ
+    строится из переходов между режимами или из меньших интервалов. Какой подпаттерн следует проверить
+    первым?
+  answer: 'State-Machine / Interval DP. State-Machine DP моделирует конечные режимы системы, а Interval
+    DP строит ответы между двумя границами. Типичная сложность: State-Machine часто O(n·states); Interval
+    DP обычно O(n²)–O(n³).'
+- key: state-machine-interval-dp-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: dp_state_machine_interval
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «State-Machine / Interval
+    DP»?
+  answer: State-Machine DP переносит лучший результат между конечным набором режимов на каждом шаге. Interval
+    DP строит ответы для больших интервалов из уже вычисленных меньших интервалов. State-Machine отвечает
+    за режим после шага, а Interval DP — за ответ между двумя границами.
+- key: state-machine-interval-dp-edge-case
+  type: edge_case
+  pattern_code: dp_state_machine_interval
+  question: Когда подпаттерн «State-Machine / Interval DP» нельзя применять напрямую или нужно заменить
+    другой техникой?
+  answer: 'Если число режимов растёт вместе с полной историей и state нельзя компактно замкнуть; для Interval
+    DP — если переходы не сводятся к меньшим интервалам или O(n²/³) неприемлемо. Стандартная сложность:
+    State-Machine часто O(n·states); Interval DP обычно O(n²)–O(n³).'
+- key: digit-dp-positional-counting-pattern-recognition
+  type: pattern_recognition
+  pattern_code: dp_digit_positional
+  question: В условии count numbers <= N; ограничение на цифры/число повторов/сумму цифр. Какой подпаттерн
+    следует проверить первым?
+  answer: 'Digit DP / Positional Counting. Считаем числа в диапазоне 0..N, строя число слева направо по
+    цифрам и запоминая, насколько текущий префикс ограничен цифрами N. Типичная сложность: обычно O(num_digits
+    × product_of_state_dimensions × 10).'
+- key: digit-dp-positional-counting-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: dp_digit_positional
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Digit DP / Positional
+    Counting»?
+  answer: 'Храни позицию цифры, признак tight, признак начала числа и состояние проверяемого свойства.
+    Выбор меньшей цифры снимает tight и делает оставшийся суффикс свободным. Tight означает: «мы всё ещё
+    точно совпадаем с префиксом N и потому ограничены следующей цифрой N».'
+- key: digit-dp-positional-counting-edge-case
+  type: edge_case
+  pattern_code: dp_digit_positional
+  question: Когда подпаттерн «Digit DP / Positional Counting» нельзя применять напрямую или нужно заменить
+    другой техникой?
+  answer: 'Если N мало или свойство имеет простую закрытую формулу. Стандартная сложность: обычно O(num_digits
+    × product_of_state_dimensions × 10).'
+- key: trie-prefix-search-pattern-recognition
+  type: pattern_recognition
+  pattern_code: trie_prefix_search
+  question: В условии prefix search; autocomplete. Какой подпаттерн следует проверить первым?
+  answer: 'Trie Prefix Search. Trie хранит строки по символам так, что общий префикс физически разделяется
+    между словами. Типичная сложность: операция O(length of key); память пропорциональна числу trie nodes.'
+- key: trie-prefix-search-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: trie_prefix_search
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Trie Prefix Search»?
+  answer: Каждый узел соответствует префиксу. Ребро — следующий символ. Путь от корня до узла кодирует
+    ровно один префикс; все слова под узлом имеют этот префикс.
+- key: trie-prefix-search-edge-case
+  type: edge_case
+  pattern_code: trie_prefix_search
+  question: Когда подпаттерн «Trie Prefix Search» нельзя применять напрямую или нужно заменить другой
+    техникой?
+  answer: 'Если запросов мало или алфавит огромен и память критична; sorted array + binary search иногда
+    проще. Стандартная сложность: операция O(length of key); память пропорциональна числу trie nodes.'
+- key: rolling-hash-rabin-karp-pattern-recognition
+  type: pattern_recognition
+  pattern_code: rolling_hash_rabin_karp
+  question: В условии много сравнений подстрок одинаковой длины; поиск pattern. Какой подпаттерн следует
+    проверить первым?
+  answer: 'Rolling Hash / Rabin-Karp. Подстроке сопоставляется числовой hash, который можно быстро обновлять
+    при сдвиге окна. Типичная сложность: precompute O(n), substring hash O(1); поиск зависит от схемы.'
+- key: rolling-hash-rabin-karp-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: rolling_hash_rabin_karp
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Rolling Hash / Rabin-Karp»?
+  answer: При сдвиге окна удаляй вклад ушедшего символа, сдвигай оставшийся hash и добавляй новый символ.
+    Совпадение hash считай только кандидатом на равенство строк. Hash соседнего окна вычисляется из предыдущего
+    за постоянное число операций, но коллизии остаются возможны.
+- key: rolling-hash-rabin-karp-edge-case
+  type: edge_case
+  pattern_code: rolling_hash_rabin_karp
+  question: Когда подпаттерн «Rolling Hash / Rabin-Karp» нельзя применять напрямую или нужно заменить
+    другой техникой?
+  answer: 'Если collision недопустим без дополнительной проверки; тогда используют double hash или точную
+    структуру. Стандартная сложность: precompute O(n), substring hash O(1); поиск зависит от схемы.'
+- key: kmp-prefix-function-pattern-recognition
+  type: pattern_recognition
+  pattern_code: kmp_prefix_function
+  question: В условии точный поиск подстроки; repeated prefix/suffix structure. Какой подпаттерн следует
+    проверить первым?
+  answer: 'KMP / Prefix Function. KMP ищет pattern в тексте, не возвращаясь назад по тексту после mismatch.
+    Типичная сложность: O(n+m).'
+- key: kmp-prefix-function-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: kmp_prefix_function
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «KMP / Prefix Function»?
+  answer: Prefix function хранит длину наибольшего уже совпавшего префикса, который одновременно является
+    суффиксом текущего фрагмента. При несовпадении переходи к следующей возможной длине, не возвращая
+    указатель текста назад. После несовпадения сохраняется максимальная часть совпадения, которая ещё
+    может быть началом pattern.
+- key: kmp-prefix-function-edge-case
+  type: edge_case
+  pattern_code: kmp_prefix_function
+  question: Когда подпаттерн «KMP / Prefix Function» нельзя применять напрямую или нужно заменить другой
+    техникой?
+  answer: 'Для сложных множественных patterns Aho-Corasick/Trie могут быть естественнее. Стандартная сложность:
+    O(n+m).'
+- key: linear-string-scan-parsing-pattern-recognition
+  type: pattern_recognition
+  pattern_code: linear_string_scan_parsing
+  question: В условии parse simple format; count/normalize runs. Какой подпаттерн следует проверить первым?
+  answer: 'Linear String Scan / Parsing. Один проход по строке извлекает токены или вычисляет ответ, поддерживая
+    небольшой локальный state. Типичная сложность: обычно O(n).'
+- key: linear-string-scan-parsing-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: linear_string_scan_parsing
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Linear String Scan
+    / Parsing»?
+  answer: 'Определяем, что означает текущая позиция и какие переменные достаточны: начало токена, знак,
+    текущее число, previous char, длина серии. После обработки префикса все завершённые токены окончательны,
+    а state описывает только незавершённый хвост.'
+- key: linear-string-scan-parsing-edge-case
+  type: edge_case
+  pattern_code: linear_string_scan_parsing
+  question: Когда подпаттерн «Linear String Scan / Parsing» нельзя применять напрямую или нужно заменить
+    другой техникой?
+  answer: 'При вложенной структуре или сложных приоритетах. Стандартная сложность: обычно O(n).'
+- key: finite-state-parser-token-recognition-pattern-recognition
+  type: pattern_recognition
+  pattern_code: finite_state_parser
+  question: В условии validate number/token; формат имеет несколько фаз. Какой подпаттерн следует проверить
+    первым?
+  answer: 'Finite-State Parser / Token Recognition. Парсер представляется конечным автоматом: текущий
+    режим определяет, какие символы допустимы и в какой режим переходить. Типичная сложность: обычно O(n)
+    по длине входа.'
+- key: finite-state-parser-token-recognition-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: finite_state_parser
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Finite-State Parser
+    / Token Recognition»?
+  answer: Определи конечный набор состояний и допустимые переходы для каждого типа символа. Строка корректна
+    только если все переходы существуют и финальное состояние принимающее. State полностью суммирует всё
+    прошлое, что ещё важно для допустимости будущих символов.
+- key: finite-state-parser-token-recognition-edge-case
+  type: edge_case
+  pattern_code: finite_state_parser
+  question: Когда подпаттерн «Finite-State Parser / Token Recognition» нельзя применять напрямую или нужно
+    заменить другой техникой?
+  answer: 'Для рекурсивных грамматик вроде произвольной вложенности скобок нужен стек/parser. Стандартная
+    сложность: обычно O(n) по длине входа.'
+- key: palindrome-expansion-manacher-pattern-recognition
+  type: pattern_recognition
+  pattern_code: palindrome_expansion_manacher
+  question: В условии нужно найти или посчитать палиндромы вокруг всех центров; квадратичное расширение
+    может быть слишком медленным. Какой подпаттерн следует проверить первым?
+  answer: 'Palindrome Expansion / Manacher. Палиндром определяется центром и радиусом. Типичная сложность:
+    center expansion O(n²); Manacher O(n).'
+- key: palindrome-expansion-manacher-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: palindrome_expansion_manacher
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Palindrome Expansion
+    / Manacher»?
+  answer: 'Обе техники хранят радиус вокруг центра. Center Expansion проверяет его с нуля; Manacher переиспользует
+    гарантированную зеркальную часть внутри самой правой известной палиндромной границы. Manacher не «угадывает»
+    радиус из зеркала: он переиспользует только гарантированную часть внутри текущей right boundary, а
+    всё за границей проверяет явно.'
+- key: palindrome-expansion-manacher-edge-case
+  type: edge_case
+  pattern_code: palindrome_expansion_manacher
+  question: Когда подпаттерн «Palindrome Expansion / Manacher» нельзя применять напрямую или нужно заменить
+    другой техникой?
+  answer: 'Если нужен один простой longest palindrome при умеренном n, center expansion часто намного
+    проще и достаточно быстро. Стандартная сложность: center expansion O(n²); Manacher O(n).'
+- key: suffix-structures-pattern-recognition
+  type: pattern_recognition
+  pattern_code: suffix_structures
+  question: В условии нужно выполнять много запросов о подстроках и общих префиксах суффиксов; обычный
+    поиск каждого совпадения слишком дорог. Какой подпаттерн следует проверить первым?
+  answer: 'Suffix Structures. Suffix structures переиспользуют общность между суффиксами и подстроками
+    для быстрых строковых запросов. Типичная сложность: suffix array обычно O(n log n) build в учебных
+    реализациях; suffix automaton O(n) build; suffix tree теоретически O(n).'
+- key: suffix-structures-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: suffix_structures
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Suffix Structures»?
+  answer: 'Организуем множество суффиксов/подстрок так, чтобы общие префиксы и продолжения переиспользовались.
+    Конкретное представление принципиально различается: sorted suffixes, compressed suffix trie или automaton
+    states. Выбранная структура должна явно хранить переиспользуемую общность между суффиксами/подстроками
+    и ускорять конкретный тип запросов.'
+- key: suffix-structures-edge-case
+  type: edge_case
+  pattern_code: suffix_structures
+  question: Когда подпаттерн «Suffix Structures» нельзя применять напрямую или нужно заменить другой техникой?
+  answer: 'Для одного простого pattern search KMP обычно проще; для умеренных ограничений rolling hash
+    может быть практичнее. Стандартная сложность: suffix array обычно O(n log n) build в учебных реализациях;
+    suffix automaton O(n) build; suffix tree теоретически O(n).'
+- key: xor-cancellation-pattern-recognition
+  type: pattern_recognition
+  pattern_code: xor_cancellation
+  question: В условии every element appears twice except one; parity of occurrences. Какой подпаттерн
+    следует проверить первым?
+  answer: 'XOR Cancellation. XOR обладает свойствами x^x=0, x^0=x и коммутативностью, поэтому одинаковые
+    значения могут взаимно уничтожаться. Типичная сложность: O(n) времени, O(1) памяти для классического
+    cancellation.'
+- key: xor-cancellation-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: xor_cancellation
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «XOR Cancellation»?
+  answer: XOR всех элементов оставляет значения с нечётной кратностью согласно битовой паритетной модели.
+    XOR хранит паритет каждого бита; одинаковая пара полностью отменяется.
+- key: xor-cancellation-edge-case
+  type: edge_case
+  pattern_code: xor_cancellation
+  question: Когда подпаттерн «XOR Cancellation» нельзя применять напрямую или нужно заменить другой техникой?
+  answer: 'Если элементы повторяются по произвольным количествам и нужен exact count. Стандартная сложность:
+    O(n) времени, O(1) памяти для классического cancellation.'
+- key: bitmask-state-enumeration-pattern-recognition
+  type: pattern_recognition
+  pattern_code: bitmask_state_enumeration
+  question: В условии n мал, часто <=20; subsets. Какой подпаттерн следует проверить первым?
+  answer: 'Bitmask State / Enumeration. Набор из m булевых признаков кодируем одним целым числом: бит
+    i означает, выбран/активен ли объект i. Типичная сложность: полный перебор masks O(2^m); DP по mask
+    часто O(2^m·poly(m)).'
+- key: bitmask-state-enumeration-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: bitmask_state_enumeration
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Bitmask State / Enumeration»?
+  answer: Каждый бит целого числа кодирует один булев признак. Переходы добавляют, удаляют или проверяют
+    отдельные признаки, не создавая отдельный массив состояния. Каждая комбинация булевых признаков имеет
+    единственное битовое представление.
+- key: bitmask-state-enumeration-edge-case
+  type: edge_case
+  pattern_code: bitmask_state_enumeration
+  question: Когда подпаттерн «Bitmask State / Enumeration» нельзя применять напрямую или нужно заменить
+    другой техникой?
+  answer: 'Если m велик: 2^m states взрываются. Стандартная сложность: полный перебор masks O(2^m); DP
+    по mask часто O(2^m·poly(m)).'
+- key: bit-tricks-submask-iteration-pattern-recognition
+  type: pattern_recognition
+  pattern_code: bit_tricks_submask
+  question: В условии свойства power of two/popcount; нужен младший установленный бит. Какой подпаттерн
+    следует проверить первым?
+  answer: 'Bit Tricks / Submask Iteration. Это набор нескольких разных низкоуровневых приёмов. Типичная
+    сложность: bit trick обычно O(1); все submasks одной mask O(2^popcount(mask)).'
+- key: bit-tricks-submask-iteration-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: bit_tricks_submask
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Bit Tricks / Submask
+    Iteration»?
+  answer: 'Каждый приём использует конкретное изменение двоичного хвоста при x-1, -x или маскировании.
+    Выбираем формулу по требуемой операции, а не по факту «в задаче есть биты». Не запоминай «магическую
+    формулу» без двоичного примера: каждый bit trick корректен из-за конкретного поведения переноса при
+    ±1 и маскирования.'
+- key: bit-tricks-submask-iteration-edge-case
+  type: edge_case
+  pattern_code: bit_tricks_submask
+  question: Когда подпаттерн «Bit Tricks / Submask Iteration» нельзя применять напрямую или нужно заменить
+    другой техникой?
+  answer: 'Если битовая кодировка не отражает естественную структуру задачи, код станет менее понятным
+    без выгоды. Стандартная сложность: bit trick обычно O(1); все submasks одной mask O(2^popcount(mask)).'
+- key: directional-grid-matrix-traversal-pattern-recognition
+  type: pattern_recognition
+  pattern_code: directional_traversal_simulation
+  question: В условии spiral traversal; diagonal order. Какой подпаттерн следует проверить первым?
+  answer: 'Directional Grid / Matrix Traversal. Двигаемся по матрице по заданным направлениям и явно контролируем
+    координаты, границы и смену направления. Типичная сложность: обычно O(RC).'
+- key: directional-grid-matrix-traversal-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: directional_traversal_simulation
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Directional Grid /
+    Matrix Traversal»?
+  answer: Храни текущую клетку и направление. Перед каждым движением проверяй границу, посещённость и
+    препятствие; при невозможном шаге меняй направление по правилу задачи. Текущая позиция и направление
+    всегда описывают следующий локальный шаг; каждое изменение направления вызвано конкретным граничным
+    условием.
+- key: directional-grid-matrix-traversal-edge-case
+  type: edge_case
+  pattern_code: directional_traversal_simulation
+  question: Когда подпаттерн «Directional Grid / Matrix Traversal» нельзя применять напрямую или нужно
+    заменить другой техникой?
+  answer: 'Если задача о кратчайшем пути между клетками — graph search, а не простая directional traversal.
+    Стандартная сложность: обычно O(RC).'
+- key: in-place-transform-boundary-layers-pattern-recognition
+  type: pattern_recognition
+  pattern_code: in_place_transform_boundary
+  question: В условии rotate matrix in-place; transpose/reflect. Какой подпаттерн следует проверить первым?
+  answer: 'In-Place Transform / Boundary Layers. Матрица преобразуется без полной копии, часто слой за
+    слоем или через композицию простых операций. Типичная сложность: обычно O(RC) времени, O(1) доп. памяти.'
+- key: in-place-transform-boundary-layers-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: in_place_transform_boundary
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «In-Place Transform
+    / Boundary Layers»?
+  answer: Разбей преобразование на обратимые локальные операции, например транспонирование и отражение,
+    либо обрабатывай четыре симметричные позиции одного слоя циклом. Перед перезаписью значения сохрани
+    все данные текущего цикла, которые ещё понадобятся; завершённые слои больше не меняются.
+- key: in-place-transform-boundary-layers-edge-case
+  type: edge_case
+  pattern_code: in_place_transform_boundary
+  question: Когда подпаттерн «In-Place Transform / Boundary Layers» нельзя применять напрямую или нужно
+    заменить другой техникой?
+  answer: 'Если разрешена дополнительная матрица и простота важнее памяти, out-of-place решение может
+    быть лучше. Стандартная сложность: обычно O(RC) времени, O(1) доп. памяти.'
+- key: process-event-simulation-pattern-recognition
+  type: pattern_recognition
+  pattern_code: process_event_simulation
+  question: В условии queue/process/server/game turns; правила перехода детерминированы. Какой подпаттерн
+    следует проверить первым?
+  answer: 'Process / Event Simulation. Явно моделируем состояние системы во времени или по последовательности
+    событий. Типичная сложность: обычно пропорционально числу событий/шагов; heap-симуляция часто O(E
+    log E).'
+- key: process-event-simulation-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: process_event_simulation
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Process / Event Simulation»?
+  answer: Полностью опиши состояние процесса, следующий event и функцию применения события. После каждого
+    шага состояние должно точно соответствовать уже обработанной истории. После обработки первых k событий
+    state должен точно совпадать с системой после этих же k событий по условию.
+- key: process-event-simulation-edge-case
+  type: edge_case
+  pattern_code: process_event_simulation
+  question: Когда подпаттерн «Process / Event Simulation» нельзя применять напрямую или нужно заменить
+    другой техникой?
+  answer: 'Если прямой процесс делает слишком много шагов и существует математический shortcut/cycle detection.
+    Стандартная сложность: обычно пропорционально числу событий/шагов; heap-симуляция часто O(E log E).'
+- key: direct-construction-formatting-pattern-recognition
+  type: pattern_recognition
+  pattern_code: direct_construction_formatting
+  question: В условии format output; construct string/matrix. Какой подпаттерн следует проверить первым?
+  answer: 'Direct Construction / Formatting. Ответ строится прямо по правилам условия без сложного поиска
+    оптимума. Типичная сложность: обычно O(size of output).'
+- key: direct-construction-formatting-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: direct_construction_formatting
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Direct Construction
+    / Formatting»?
+  answer: Разбиваем спецификацию на независимые правила и строим результат в нужном порядке. Часто полезно
+    сначала вычислить размеры/границы, затем заполнить output. Каждый уже построенный фрагмент соответствует
+    точному правилу формата; не усложняй задачу алгоритмом, которого в ней нет.
+- key: direct-construction-formatting-edge-case
+  type: edge_case
+  pattern_code: direct_construction_formatting
+  question: Когда подпаттерн «Direct Construction / Formatting» нельзя применять напрямую или нужно заменить
+    другой техникой?
+  answer: 'Если за «построить» скрывается поиск существования/минимума или сложные зависимости. Стандартная
+    сложность: обычно O(size of output).'
+- key: cyclic-sort-value-to-index-placement-pattern-recognition
+  type: pattern_recognition
+  pattern_code: cyclic_sort_placement
+  question: В условии числа 1..n или 0..n-1; missing/duplicate number. Какой подпаттерн следует проверить
+    первым?
+  answer: 'Cyclic Sort / Value-to-Index Placement. Если значения лежат в известном диапазоне и каждому
+    значению соответствует «домашний индекс», элементы переставляются на свои места. Типичная сложность:
+    O(n) времени, O(1) памяти.'
+- key: cyclic-sort-value-to-index-placement-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: cyclic_sort_placement
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Cyclic Sort / Value-to-Index
+    Placement»?
+  answer: Пока элемент находится не на своём домашнем индексе, меняй его местами с элементом на этой позиции.
+    Каждый обмен окончательно размещает хотя бы один элемент или обнаруживает конфликт дубликата. Присутствующее
+    значение с известным домашним индексом либо размещено там, либо движется к нему.
+- key: cyclic-sort-value-to-index-placement-edge-case
+  type: edge_case
+  pattern_code: cyclic_sort_placement
+  question: Когда подпаттерн «Cyclic Sort / Value-to-Index Placement» нельзя применять напрямую или нужно
+    заменить другой техникой?
+  answer: 'Если значения произвольны, диапазон огромен или массив нельзя мутировать. Стандартная сложность:
+    O(n) времени, O(1) памяти.'
+- key: sign-marking-index-encoding-pattern-recognition
+  type: pattern_recognition
+  pattern_code: sign_marking_index_encoding
+  question: В условии значения ограничены 1..n; O(1) extra space. Какой подпаттерн следует проверить первым?
+  answer: 'Sign Marking / Index Encoding. Сам массив используется как дополнительная память: знак или
+    значение позиции кодирует факт посещения. Типичная сложность: O(n) времени, O(1) памяти.'
+- key: sign-marking-index-encoding-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: sign_marking_index_encoding
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Sign Marking / Index
+    Encoding»?
+  answer: Значение определяет индекс, отвечающий за факт его появления. Изменение знака в этой позиции
+    помечает значение как уже встреченное, не создавая отдельный visited-массив. Служебная отметка позиции
+    кодирует факт о соответствующем значении и не требует отдельной памяти.
+- key: sign-marking-index-encoding-edge-case
+  type: edge_case
+  pattern_code: sign_marking_index_encoding
+  question: Когда подпаттерн «Sign Marking / Index Encoding» нельзя применять напрямую или нужно заменить
+    другой техникой?
+  answer: 'Если вход read-only, есть нули/произвольные диапазоны без адаптации или знак несёт собственный
+    смысл. Стандартная сложность: O(n) времени, O(1) памяти.'
+- key: digit-arithmetic-base-conversion-pattern-recognition
+  type: pattern_recognition
+  pattern_code: digit_arithmetic_base_conversion
+  question: В условии add/multiply big numbers as strings; base conversion. Какой подпаттерн следует проверить
+    первым?
+  answer: 'Digit Arithmetic / Base Conversion. Работаем с цифрами числа вручную: переносы, разряды, системы
+    счисления. Типичная сложность: обычно O(number of digits).'
+- key: digit-arithmetic-base-conversion-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: digit_arithmetic_base_conversion
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Digit Arithmetic /
+    Base Conversion»?
+  answer: Обрабатывай разряды вместе с переносом между позициями. Для смены основания последовательно
+    накапливай значение либо извлекай остатки делением на основание. После обработки k младших разрядов
+    output уже корректен на этих разрядах, а carry содержит весь перенос в ещё не обработанную часть.
+- key: digit-arithmetic-base-conversion-edge-case
+  type: edge_case
+  pattern_code: digit_arithmetic_base_conversion
+  question: Когда подпаттерн «Digit Arithmetic / Base Conversion» нельзя применять напрямую или нужно
+    заменить другой техникой?
+  answer: 'Если стандартный числовой тип безопасно покрывает диапазон и ручная обработка не нужна. Стандартная
+    сложность: обычно O(number of digits).'
+- key: number-theory-gcd-lcm-divisibility-factorization-pattern-recognition
+  type: pattern_recognition
+  pattern_code: number_theory_gcd_factorization
+  question: В условии общие делители/периоды → GCD; кратность двух величин → LCM. Какой подпаттерн следует
+    проверить первым?
+  answer: 'Number Theory: GCD / LCM / Divisibility / Factorization. Это маленькое семейство техник, а
+    не один алгоритм. Типичная сложность: Euclid O(log min(a,b)); factorization trial division O(√n);
+    sieve O(n log log n).'
+- key: number-theory-gcd-lcm-divisibility-factorization-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: number_theory_gcd_factorization
+  question: 'Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Number Theory: GCD
+    / LCM / Divisibility / Factorization»?'
+  answer: 'Сначала выбери подходящий числовой инструмент: алгоритм Евклида, перебор делителей, sieve или
+    разложение на простые степени. Выбор зависит от того, нужен один запрос или массовая предобработка.
+    Используемое представление числа должно сохранять именно то свойство делимости, которое проверяет
+    задача.'
+- key: number-theory-gcd-lcm-divisibility-factorization-edge-case
+  type: edge_case
+  pattern_code: number_theory_gcd_factorization
+  question: 'Когда подпаттерн «Number Theory: GCD / LCM / Divisibility / Factorization» нельзя применять
+    напрямую или нужно заменить другой техникой?'
+  answer: 'Для очень больших целых trial division до sqrt может быть слишком медленным. Стандартная сложность:
+    Euclid O(log min(a,b)); factorization trial division O(√n); sieve O(n log log n).'
+- key: modular-arithmetic-fast-exponentiation-pattern-recognition
+  type: pattern_recognition
+  pattern_code: modular_arithmetic_fast_pow
+  question: В условии answer modulo M; огромная степень. Какой подпаттерн следует проверить первым?
+  answer: 'Modular Arithmetic / Fast Exponentiation. Вычисления выполняются по модулю, а большие степени
+    — двоичным возведением. Типичная сложность: fast power O(log exponent).'
+- key: modular-arithmetic-fast-exponentiation-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: modular_arithmetic_fast_pow
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Modular Arithmetic
+    / Fast Exponentiation»?
+  answer: После каждой операции сокращай результат по модулю. Для большой степени последовательно рассматривай
+    биты показателя, возводя основание в квадрат и добавляя нужные множители. Промежуточное состояние
+    остаётся эквивалентно исходной степени по выбранному модулю.
+- key: modular-arithmetic-fast-exponentiation-edge-case
+  type: edge_case
+  pattern_code: modular_arithmetic_fast_pow
+  question: Когда подпаттерн «Modular Arithmetic / Fast Exponentiation» нельзя применять напрямую или
+    нужно заменить другой техникой?
+  answer: 'Если требуется точное большое число, modulo намеренно теряет информацию. Стандартная сложность:
+    fast power O(log exponent).'
+- key: combinatorial-counting-inclusionexclusion-pattern-recognition
+  type: pattern_recognition
+  pattern_code: combinatorial_counting
+  question: В условии count without enumeration; combinations/permutations. Какой подпаттерн следует проверить
+    первым?
+  answer: 'Combinatorial Counting / Inclusion–Exclusion. Считаем число объектов формулой, а не перебором.
+    Типичная сложность: зависит от модели; Inclusion–Exclusion по m свойствам часто O(2^m).'
+- key: combinatorial-counting-inclusionexclusion-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: combinatorial_counting
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Combinatorial Counting
+    / Inclusion–Exclusion»?
+  answer: Сложи размеры отдельных множеств, вычти парные пересечения и верни пересечения следующего порядка
+    с чередованием знака. Для делимости пересечения выражай через LCM. Для объекта, принадлежащего k выбранным
+    свойствам, итоговый коэффициент inclusion–exclusion должен стать ровно 1.
+- key: combinatorial-counting-inclusionexclusion-edge-case
+  type: edge_case
+  pattern_code: combinatorial_counting
+  question: Когда подпаттерн «Combinatorial Counting / Inclusion–Exclusion» нельзя применять напрямую
+    или нужно заменить другой техникой?
+  answer: 'Если число свойств велико и перебор всех их подмножеств 2^m слишком дорог. Стандартная сложность:
+    зависит от модели; Inclusion–Exclusion по m свойствам часто O(2^m).'
+- key: probability-expected-value-game-reasoning-pattern-recognition
+  type: pattern_recognition
+  pattern_code: probability_expected_value
+  question: В условии в переходах участвует случайность, математическое ожидание или рациональный противник;
+    нужно определить, кто выбирает следующий ход. Какой подпаттерн следует проверить первым?
+  answer: 'Probability / Expected Value / Game Reasoning. Нужно различить случайный переход, математическое
+    ожидание и оптимальный ход противника. Типичная сложность: обычно O(number of states × transitions),
+    но возможны системы уравнений.'
+- key: probability-expected-value-game-reasoning-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: probability_expected_value
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Probability / Expected
+    Value / Game Reasoning»?
+  answer: 'Сначала определяем, кто выбирает следующий переход: случайность, линейное усреднение случайной
+    величины или рациональный противник. Затем записываем соответствующее уравнение по state. Сначала
+    определи, кто выбирает переход: случайность, усреднение случайной величины или оптимальный противник.'
+- key: probability-expected-value-game-reasoning-edge-case
+  type: edge_case
+  pattern_code: probability_expected_value
+  question: Когда подпаттерн «Probability / Expected Value / Game Reasoning» нельзя применять напрямую
+    или нужно заменить другой техникой?
+  answer: 'Если зависимости настолько велики, что выбранный state не является Markov-like и не суммирует
+    нужную историю. Стандартная сложность: обычно O(number of states × transitions), но возможны системы
+    уравнений.'
+- key: orientation-cross-product-collinearity-pattern-recognition
+  type: pattern_recognition
+  pattern_code: orientation_cross_product
+  question: В условии orientation; convex hull. Какой подпаттерн следует проверить первым?
+  answer: 'Orientation / Cross Product / Collinearity. Знак cross product для трёх точек показывает поворот:
+    влево, вправо или коллинеарно. Типичная сложность: orientation test O(1); полный алгоритм зависит
+    от задачи.'
+- key: orientation-cross-product-collinearity-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: orientation_cross_product
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Orientation / Cross
+    Product / Collinearity»?
+  answer: Построй два вектора из общей точки и вычисли знак их векторного произведения. Знак определяет
+    направление поворота, ноль — коллинеарность. Геометрический вопрос «с какой стороны от направленной
+    прямой лежит C?» превращается в знак одного числа.
+- key: orientation-cross-product-collinearity-edge-case
+  type: edge_case
+  pattern_code: orientation_cross_product
+  question: Когда подпаттерн «Orientation / Cross Product / Collinearity» нельзя применять напрямую или
+    нужно заменить другой техникой?
+  answer: 'Если нужны только расстояния/ближайшие точки без угловой структуры. Стандартная сложность:
+    orientation test O(1); полный алгоритм зависит от задачи.'
+- key: slope-normalization-geometric-hashing-pattern-recognition
+  type: pattern_recognition
+  pattern_code: slope_normalization_geo_hashing
+  question: В условии max points on a line; одинаковое направление. Какой подпаттерн следует проверить
+    первым?
+  answer: 'Slope Normalization / Geometric Hashing. Геометрическое отношение превращаем в канонический
+    hash key. Типичная сложность: обычно O(n²) для всех пар точек + hashing.'
+- key: slope-normalization-geometric-hashing-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: slope_normalization_geo_hashing
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Slope Normalization
+    / Geometric Hashing»?
+  answer: Представляй наклон сокращённой целочисленной парой delta-y и delta-x. Нормализуй общий делитель,
+    знак и специальные вертикальные или горизонтальные случаи. Все геометрически одинаковые направления
+    обязаны иметь один и тот же целочисленный ключ.
+- key: slope-normalization-geometric-hashing-edge-case
+  type: edge_case
+  pattern_code: slope_normalization_geo_hashing
+  question: Когда подпаттерн «Slope Normalization / Geometric Hashing» нельзя применять напрямую или нужно
+    заменить другой техникой?
+  answer: 'Если нужны точные пересечения сегментов или повороты — cross product прямее. Стандартная сложность:
+    обычно O(n²) для всех пар точек + hashing.'
+- key: area-rectangle-overlap-geometry-pattern-recognition
+  type: pattern_recognition
+  pattern_code: area_rectangle_overlap
+  question: В условии rectangle area; overlap/intersection. Какой подпаттерн следует проверить первым?
+  answer: 'Area / Rectangle / Overlap Geometry. Площади axis-aligned фигур сводятся к пересечению диапазонов
+    по каждой оси. Типичная сложность: часто O(1) для двух фигур; для множества прямоугольников зависит
+    от sweep/structure.'
+- key: area-rectangle-overlap-geometry-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: area_rectangle_overlap
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Area / Rectangle /
+    Overlap Geometry»?
+  answer: Найди длину пересечения отдельно по каждой оси, обрезая отрицательные значения до нуля. Площадь
+    пересечения равна произведению этих длин. Сначала найди общий диапазон независимо по x и y; только
+    затем перемножай длины.
+- key: area-rectangle-overlap-geometry-edge-case
+  type: edge_case
+  pattern_code: area_rectangle_overlap
+  question: Когда подпаттерн «Area / Rectangle / Overlap Geometry» нельзя применять напрямую или нужно
+    заменить другой техникой?
+  answer: 'Если фигуры повернуты или имеют произвольные многоугольные границы. Стандартная сложность:
+    часто O(1) для двух фигур; для множества прямоугольников зависит от sweep/structure.'
+- key: geometric-distance-optimization-pattern-recognition
+  type: pattern_recognition
+  pattern_code: geometric_distance_optimization
+  question: В условии minimize total distance. Какой подпаттерн следует проверить первым?
+  answer: 'Geometric Distance / Optimization. Сначала выбираем метрику, затем ищем структуру оптимума.
+    Типичная сложность: зависит от метрики; 1D median после sort O(n log n) или selection O(n) average.'
+- key: geometric-distance-optimization-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: geometric_distance_optimization
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Geometric Distance
+    / Optimization»?
+  answer: 'Сначала зафиксируй точную метрику расстояния. Затем используй её структуру: для Manhattan distance
+    часто помогают медианы и независимость координат, для Euclidean — другие оптимизационные свойства.
+    Оптимизация корректна только для заранее выбранной метрики; смена метрики меняет сам ответ.'
+- key: geometric-distance-optimization-edge-case
+  type: edge_case
+  pattern_code: geometric_distance_optimization
+  question: Когда подпаттерн «Geometric Distance / Optimization» нельзя применять напрямую или нужно заменить
+    другой техникой?
+  answer: 'Если есть препятствия, граф дорог или допустимы только дискретные пути — геометрическая метрика
+    может не совпадать с реальной стоимостью. Стандартная сложность: зависит от метрики; 1D median после
+    sort O(n log n) или selection O(n) average.'
+- key: merge-sort-divide-and-conquer-pattern-recognition
+  type: pattern_recognition
+  pattern_code: merge_sort_divide_conquer
+  question: В условии inversions; count pairs i<j with relation. Какой подпаттерн следует проверить первым?
+  answer: 'Merge-Sort Divide & Conquer. Делим массив пополам, рекурсивно решаем части и используем merge
+    не только для сортировки, но и для подсчёта отношений между половинами. Типичная сложность: обычно
+    O(n log n).'
+- key: merge-sort-divide-and-conquer-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: merge_sort_divide_conquer
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Merge-Sort Divide
+    & Conquer»?
+  answer: После рекурсивной обработки обе половины отсортированы. Во время merge порядок позволяет считать
+    целую группу межполовинных пар одним действием. Отсортированность половин превращает множество межполовинных
+    сравнений в пакетный подсчёт.
+- key: merge-sort-divide-and-conquer-edge-case
+  type: edge_case
+  pattern_code: merge_sort_divide_conquer
+  question: Когда подпаттерн «Merge-Sort Divide & Conquer» нельзя применять напрямую или нужно заменить
+    другой техникой?
+  answer: 'Если отношение между парами не становится монотонным после сортировки половин. Стандартная
+    сложность: обычно O(n log n).'
+- key: quickselect-order-statistics-pattern-recognition
+  type: pattern_recognition
+  pattern_code: quickselect_order_statistics
+  question: В условии kth smallest/largest; median once. Какой подпаттерн следует проверить первым?
+  answer: 'Quickselect / Order Statistics. Находим k-й элемент по порядку, не сортируя всё. Типичная сложность:
+    average O(n), worst O(n²) без специальных pivot guarantees.'
+- key: quickselect-order-statistics-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: quickselect_order_statistics
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Quickselect / Order
+    Statistics»?
+  answer: После partition pivot занимает окончательную позицию. Продолжай только в той части, где находится
+    искомый ранг. После partition pivot уже на своей финальной rank-позиции, поэтому одна сторона навсегда
+    отбрасывается.
+- key: quickselect-order-statistics-edge-case
+  type: edge_case
+  pattern_code: quickselect_order_statistics
+  question: Когда подпаттерн «Quickselect / Order Statistics» нельзя применять напрямую или нужно заменить
+    другой техникой?
+  answer: 'Если нужны многие rank queries или стабильный worst-case без сложной реализации. Стандартная
+    сложность: average O(n), worst O(n²) без специальных pivot guarantees.'
+- key: recursive-partition-divide-and-conquer-search-pattern-recognition
+  type: pattern_recognition
+  pattern_code: recursive_partition_search
+  question: В условии структура естественно раскалывается; подзадачи почти не перекрываются. Какой подпаттерн
+    следует проверить первым?
+  answer: 'Recursive Partition / Divide-and-Conquer Search. Находим разделитель, рекурсивно решаем независимые
+    части и объединяем ответы по явному контракту. Типичная сложность: зависит от balanced split; часто
+    O(n log n), но может деградировать.'
+- key: recursive-partition-divide-and-conquer-search-algorithm-mechanics
+  type: algorithm_mechanics
+  pattern_code: recursive_partition_search
+  question: Какое ключевое состояние или действие нужно поддерживать в подпаттерне «Recursive Partition
+    / Divide-and-Conquer Search»?
+  answer: Определи разделитель, base case, контракт результата подзадачи и способ combine. Рекурсивные
+    части должны быть меньше и вместе покрывать все допустимые решения. Разделение полезно, только если
+    контракт частей действительно уменьшает задачу и все глобальные решения покрываются выбранными split-позициями.
+- key: recursive-partition-divide-and-conquer-search-edge-case
+  type: edge_case
+  pattern_code: recursive_partition_search
+  question: Когда подпаттерн «Recursive Partition / Divide-and-Conquer Search» нельзя применять напрямую
+    или нужно заменить другой техникой?
+  answer: 'Если части перекрываются экспоненциально — memoization/DP лучше. Стандартная сложность: зависит
+    от balanced split; часто O(n log n), но может деградировать.'
