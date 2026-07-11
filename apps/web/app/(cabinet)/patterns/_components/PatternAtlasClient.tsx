@@ -15,6 +15,7 @@ import {
 import { ApiError } from "../../../_api/types";
 import { CabinetPanel } from "../../_components";
 import type { getDictionary } from "../../../_content/i18n";
+import { platformOptions, type PlatformId } from "../../../_profile/platforms";
 
 type AtlasCopy = ReturnType<typeof getDictionary>["cabinet"]["pages"]["atlas"];
 
@@ -27,6 +28,7 @@ type DifficultyCounts = Partial<Record<DifficultyLevel | "unknown", number>>;
 const COMPANY_KEY = "realgo.atlas.company";
 const VIEW_KEY = "realgo.atlas.view";
 const EXPANDED_KEY = "realgo.atlas.expanded";
+const PLATFORM_KEY = "realgo.atlas.platform";
 
 function pluralRu(n: number, forms: readonly string[]): string {
   const mod10 = n % 10;
@@ -132,6 +134,7 @@ export function PatternAtlasClient({ copy }: Readonly<{ copy: AtlasCopy }>) {
   const [reloadVersion, setReloadVersion] = useState(0);
 
   const [company, setCompany] = useState<string>("");
+  const [platform, setPlatform] = useState<PlatformId | "">("");
   const [view, setView] = useState<AtlasView>("tree");
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
@@ -141,6 +144,7 @@ export function PatternAtlasClient({ copy }: Readonly<{ copy: AtlasCopy }>) {
   useEffect(() => {
     const storedCompany = readStored(COMPANY_KEY) ?? "";
     setCompany(storedCompany);
+    setPlatform((readStored(PLATFORM_KEY) as PlatformId | null) ?? "");
     // Readiness имеет смысл только относительно компании: без неё режим
     // заблокирован, поэтому сохранённый выбор восстанавливаем условно.
     setView(storedCompany && readStored(VIEW_KEY) === "readiness" ? "readiness" : "tree");
@@ -198,6 +202,11 @@ export function PatternAtlasClient({ copy }: Readonly<{ copy: AtlasCopy }>) {
       setView("tree");
       writeStored(VIEW_KEY, "tree");
     }
+  }, []);
+
+  const selectPlatform = useCallback((next: PlatformId | "") => {
+    setPlatform(next);
+    writeStored(PLATFORM_KEY, next || null);
   }, []);
 
   const selectView = useCallback((next: AtlasView) => {
@@ -271,6 +280,22 @@ export function PatternAtlasClient({ copy }: Readonly<{ copy: AtlasCopy }>) {
             {companies.map((item) => (
               <option key={item.code} value={item.code}>
                 {item.name}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="atlas-company">
+          <span>{copy.platformLabel}</span>
+          <select
+            aria-label={copy.platformAria}
+            value={platform}
+            onChange={(e) => selectPlatform(e.target.value as PlatformId | "")}
+          >
+            <option value="">{copy.platformNone}</option>
+            {platformOptions.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.label}
               </option>
             ))}
           </select>

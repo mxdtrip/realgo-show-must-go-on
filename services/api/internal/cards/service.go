@@ -35,6 +35,7 @@ type repository interface {
 	List(ctx context.Context, userID int64, params ListParams) ([]CardRecord, error)
 	ListSession(ctx context.Context, userID int64, params SessionParams) ([]CardRecord, error)
 	ListByProblem(ctx context.Context, userID, problemID int64) ([]CardRecord, error)
+	DueSummary(ctx context.Context, userID int64) ([]DueTypeSummary, error)
 	EnsureReviewSchedule(ctx context.Context, userID, cardID int64, reviewedAt time.Time) (int64, error)
 	CountSessionAttempts(ctx context.Context, userID int64, since time.Time) (int, error)
 	Create(ctx context.Context, userID int64, p CreateCardInput) (CardDetail, error)
@@ -115,6 +116,24 @@ func (s *Service) Session(ctx context.Context, userID int64, params SessionParam
 		Scope:            params.Scope,
 		EstimatedMinutes: estimatedMinutes(len(cards)),
 		Cards:            cards,
+	}, nil
+}
+
+func (s *Service) DueSummary(ctx context.Context, userID int64) (DueSummary, error) {
+	byType, err := s.repo.DueSummary(ctx, userID)
+	if err != nil {
+		return DueSummary{}, fmt.Errorf("cards: due summary: %w", err)
+	}
+
+	total := 0
+	for _, t := range byType {
+		total += t.Count
+	}
+
+	return DueSummary{
+		TotalDue:         total,
+		EstimatedMinutes: estimatedMinutes(total),
+		ByType:           byType,
 	}, nil
 }
 

@@ -144,6 +144,50 @@ func TestSessionReturnsPayload(t *testing.T) {
 	}
 }
 
+func TestDueSummaryReturnsPayload(t *testing.T) {
+	repo := &fakeRepository{dueSummary: []DueTypeSummary{
+		{Type: CardTypePatternRecognition, Count: 2, SampleLabels: []string{"Contains Duplicate"}},
+		{Type: CardTypeEdgeCase, Count: 1, SampleLabels: []string{"Two Sum"}},
+	}}
+	h := testHandler(repo, &fakeRater{})
+	req := authenticatedRequest(http.MethodGet, "/me/cards/due-summary", nil, 42)
+	w := httptest.NewRecorder()
+
+	h.DueSummary(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", w.Code, w.Body.String())
+	}
+
+	var body struct {
+		Data DueSummary `json:"data"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &body); err != nil {
+		t.Fatalf("invalid json: %v", err)
+	}
+	if body.Data.TotalDue != 3 {
+		t.Fatalf("totalDue = %d, want 3", body.Data.TotalDue)
+	}
+	if body.Data.EstimatedMinutes != estimatedMinutes(3) {
+		t.Fatalf("estimatedMinutes = %d, want %d", body.Data.EstimatedMinutes, estimatedMinutes(3))
+	}
+	if len(body.Data.ByType) != 2 {
+		t.Fatalf("byType len = %d, want 2", len(body.Data.ByType))
+	}
+}
+
+func TestDueSummaryRequiresAuth(t *testing.T) {
+	h := testHandler(&fakeRepository{}, &fakeRater{})
+	req := httptest.NewRequest(http.MethodGet, "/me/cards/due-summary", nil)
+	w := httptest.NewRecorder()
+
+	h.DueSummary(w, req)
+
+	if w.Code != http.StatusUnauthorized {
+		t.Fatalf("expected 401, got %d", w.Code)
+	}
+}
+
 func TestListCapturesPatternCode(t *testing.T) {
 	repo := &fakeRepository{}
 	h := testHandler(repo, &fakeRater{})
@@ -297,6 +341,7 @@ func authenticatedRequest(method, target string, body *strings.Reader, userID in
 type fakeRepository struct {
 	list          []CardRecord
 	session       []CardRecord
+	dueSummary    []DueTypeSummary
 	createErr     error
 	deleteErr     error
 	listParams    ListParams
@@ -325,6 +370,13 @@ func (f *fakeRepository) ListSession(_ context.Context, _ int64, params SessionP
 
 func (f *fakeRepository) ListByProblem(_ context.Context, _, _ int64) ([]CardRecord, error) {
 	return []CardRecord{}, nil
+}
+
+func (f *fakeRepository) DueSummary(_ context.Context, _ int64) ([]DueTypeSummary, error) {
+	if f.dueSummary == nil {
+		return []DueTypeSummary{}, nil
+	}
+	return f.dueSummary, nil
 }
 
 func (f *fakeRepository) EnsureReviewSchedule(_ context.Context, userID, cardID int64, _ time.Time) (int64, error) {

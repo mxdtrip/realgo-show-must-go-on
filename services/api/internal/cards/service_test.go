@@ -62,6 +62,12 @@ func (m *mockRepository) ListByProblem(ctx context.Context, userID, problemID in
 	return records, args.Error(1)
 }
 
+func (m *mockRepository) DueSummary(ctx context.Context, userID int64) ([]DueTypeSummary, error) {
+	args := m.Called(ctx, userID)
+	items, _ := args.Get(0).([]DueTypeSummary)
+	return items, args.Error(1)
+}
+
 func (m *mockRepository) EnsureReviewSchedule(ctx context.Context, userID, cardID int64, reviewedAt time.Time) (int64, error) {
 	args := m.Called(ctx, userID, cardID, reviewedAt)
 	return args.Get(0).(int64), args.Error(1)

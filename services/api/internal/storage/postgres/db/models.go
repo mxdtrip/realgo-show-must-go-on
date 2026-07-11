@@ -246,6 +246,7 @@ type User struct {
 	NotifyReviewReminder  bool
 	NotifyWeeklyDigest    bool
 	NotifyEmailEnabled    bool
+	Platform              pgtype.Text
 }
 
 type UserPracticePattern struct {

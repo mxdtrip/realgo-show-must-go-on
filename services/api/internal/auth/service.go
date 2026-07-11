@@ -144,6 +144,7 @@ type ProfileUpdate struct {
 	Grade             *string
 	TargetCompany     *string
 	TargetPosition    *string
+	Platform          *string
 	SetOnboardingDone bool
 }
 
@@ -170,6 +171,9 @@ func (s *Service) UpdateProfile(ctx context.Context, userID int64, u ProfileUpda
 	}
 	if u.TargetPosition != nil {
 		params.TargetPosition = pgtype.Text{String: *u.TargetPosition, Valid: true}
+	}
+	if u.Platform != nil {
+		params.Platform = pgtype.Text{String: *u.Platform, Valid: true}
 	}
 
 	user, err := s.queries.UpdateUserProfile(ctx, params)

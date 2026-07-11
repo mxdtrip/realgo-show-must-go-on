@@ -42,6 +42,24 @@ export function getCardSession(params: GetCardSessionParams = {}, signal?: Abort
   return apiFetch<CardSession>(`/me/cards/session?${query}`, { signal });
 }
 
+export type DueTypeSummary = {
+  type: CardType | string;
+  count: number;
+  /** Up to 3 source titles (soonest-due first). */
+  sampleLabels: string[];
+};
+
+export type DueSummary = {
+  totalDue: number;
+  estimatedMinutes: number;
+  byType: DueTypeSummary[];
+};
+
+/** Un-capped due-today breakdown for the /cards launcher (GET /me/cards/due-summary). */
+export function getDueSummary(signal?: AbortSignal) {
+  return apiFetch<DueSummary>("/me/cards/due-summary", { signal });
+}
+
 export type RateCardResult = {
   cardId: number;
   rating: CardRating;

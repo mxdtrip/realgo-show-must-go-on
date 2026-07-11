@@ -226,6 +226,48 @@ ORDER BY
     c.id DESC
 LIMIT sqlc.arg(card_limit)::integer;
 
+-- name: GetDueCardsSummary :many
+-- Full (un-capped) due-today breakdown by type for the /cards launcher's
+-- "Что повторяем сегодня" panel. Deliberately NOT reusing ListCardSession:
+-- that query caps rows at session_limit (how many cards fit in one review
+-- session), which would silently undercount "how many are due today" for
+-- users with a large backlog. Visibility mirrors ListCardSession's due
+-- branch exactly, simplified because a due row already requires an
+-- existing review_schedules row owned by this user — the same condition
+-- ListCardSession's `rs.id IS NOT NULL` visibility branch grants access on.
+WITH due_cards AS (
+    SELECT
+        c.id,
+        c.type,
+        rs.next_review_at,
+        COALESCE(
+            NULLIF(concat_ws(' · ', NULLIF(p.title, ''), NULLIF(COALESCE(cpt.name, rpt.name), '')), ''),
+            NULLIF(cpt.name, ''),
+            NULLIF(c.source, ''),
+            'custom card'
+        )::text AS source_label
+    FROM cards c
+    JOIN LATERAL (
+        SELECT next_review_at
+        FROM review_schedules
+        WHERE user_id = sqlc.arg(user_id)::bigint AND card_id = c.id
+        ORDER BY next_review_at ASC, id ASC
+        LIMIT 1
+    ) rs ON true
+    LEFT JOIN problems p ON p.id = c.problem_id
+    LEFT JOIN patterns cpt ON cpt.id = c.pattern_id
+    LEFT JOIN roadmap_items ri ON ri.problem_id = c.problem_id AND ri.roadmap_code = 'neetcode_150'
+    LEFT JOIN patterns rpt ON rpt.id = ri.pattern_id
+    WHERE rs.next_review_at <= NOW()
+)
+SELECT
+    type,
+    COUNT(*)::int AS count,
+    (ARRAY_AGG(source_label ORDER BY next_review_at ASC))[1:3]::text[] AS sample_labels
+FROM due_cards
+GROUP BY type
+ORDER BY type;
+
 -- name: GetCardReviewSchedule :one
 SELECT id
 FROM review_schedules
