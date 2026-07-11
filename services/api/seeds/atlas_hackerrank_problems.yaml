@@ -1,0 +1,1087 @@
+# Realgo HackerRank interview corpus: официальные Interview Preparation Kits
+# (Classic, 1 Week, 1 Month, 3 Months), snapshot 2026-07-11.
+# Source: realgo_hackerrank_interview_mapping.md (Taxonomy realgo-v2 22x111).
+# Один record на distinct slug; наборы — в collections (memberships).
+# mapping_status: mapped | gap_candidate | non_pattern. Force-mapping запрещён:
+# gap_candidate (HRX-*) и non_pattern сидер НЕ линкует на подпаттерны — они
+# ждут cross-platform review (см. extension registry в исходном аудите).
+# canonical_group связывает semantic duplicates с разными HackerRank slugs.
+code: realgo_hackerrank_corpus
+title: Realgo HackerRank Interview Corpus
+snapshot: "2026-07-11"
+platform: hackerrank
+problems:
+  - slug: "mini-max-sum"
+    title: "Mini-Max Sum"
+    url: "https://www.hackerrank.com/challenges/mini-max-sum/problem"
+    collections: ["1W-D1", "1M-W1", "3M-W1"]
+    mapping_status: gap_candidate
+    extension_id: HRX-01
+    extension_name: "Linear Scan / Running Aggregate / Extremum"
+    confidence: high
+  - slug: "plus-minus"
+    title: "Plus Minus"
+    url: "https://www.hackerrank.com/challenges/plus-minus/problem"
+    collections: ["1W-D1", "1M-W1", "3M-W1"]
+    mapping_status: gap_candidate
+    extension_id: HRX-01
+    extension_name: "Linear Scan / Running Aggregate / Extremum"
+    confidence: high
+  - slug: "time-conversion"
+    title: "Time Conversion"
+    url: "https://www.hackerrank.com/challenges/time-conversion/problem"
+    collections: ["1W-D1", "1M-W1", "3M-W1"]
+    mapping_status: mapped
+    subpattern: finite_state_parser
+    confidence: high
+  - slug: "counting-sort-1"
+    title: "Counting Sort 1"
+    url: "https://www.hackerrank.com/challenges/counting-sort-1/problem"
+    collections: ["1W-D2", "1M-W1", "3M-W2"]
+    mapping_status: mapped
+    subpattern: frequency_counting
+    confidence: high
+  - slug: "diagonal-difference"
+    title: "Diagonal Difference"
+    url: "https://www.hackerrank.com/challenges/diagonal-difference/problem"
+    collections: ["1W-D2", "1M-W1", "3M-W2"]
+    mapping_status: gap_candidate
+    extension_id: HRX-01
+    extension_name: "Linear Scan / Running Aggregate / Extremum"
+    confidence: high
+  - slug: "lonely-integer"
+    title: "Lonely Integer"
+    url: "https://www.hackerrank.com/challenges/lonely-integer/problem"
+    collections: ["1W-D2", "1M-W1", "3M-W2"]
+    mapping_status: mapped
+    subpattern: xor_cancellation
+    confidence: high
+  - slug: "caesar-cipher-1"
+    title: "Caesar Cipher"
+    url: "https://www.hackerrank.com/challenges/caesar-cipher-1/problem"
+    collections: ["1W-D3", "1M-W2", "3M-W4"]
+    mapping_status: mapped
+    subpattern: linear_string_scan_parsing
+    confidence: high
+  - slug: "tower-breakers-1"
+    title: "Tower Breakers"
+    url: "https://www.hackerrank.com/challenges/tower-breakers-1/problem"
+    collections: ["1W-D3", "1M-W2", "3M-W4"]
+    mapping_status: mapped
+    subpattern: probability_expected_value
+    confidence: high
+  - slug: "zig-zag-sequence"
+    title: "Zig Zag Sequence"
+    url: "https://www.hackerrank.com/challenges/zig-zag-sequence/problem"
+    collections: ["1W-D3", "1M-W2", "3M-W3"]
+    mapping_status: mapped
+    subpattern: direct_construction_formatting
+    confidence: medium
+    task_type: debugging_guided
+  - slug: "grid-challenge"
+    title: "Grid Challenge"
+    url: "https://www.hackerrank.com/challenges/grid-challenge/problem"
+    collections: ["1W-D4", "1M-W2", "3M-W5"]
+    mapping_status: mapped
+    subpattern: exchange_argument_ordering
+    confidence: high
+  - slug: "new-year-chaos"
+    title: "New Year Chaos"
+    url: "https://www.hackerrank.com/challenges/new-year-chaos/problem"
+    collections: ["1W-D4", "1M-W3", "3M-W7", "Classic/Arrays"]
+    mapping_status: mapped
+    subpattern: local_choice_invariant
+    confidence: high
+  - slug: "recursive-digit-sum"
+    title: "Recursive Digit Sum"
+    url: "https://www.hackerrank.com/challenges/recursive-digit-sum/problem"
+    collections: ["1W-D4", "1M-W2", "3M-W6", "Classic/Recursion and Backtracking"]
+    mapping_status: mapped
+    subpattern: digit_arithmetic_base_conversion
+    confidence: high
+  - slug: "balanced-brackets"
+    title: "Balanced Brackets"
+    url: "https://www.hackerrank.com/challenges/balanced-brackets/problem"
+    collections: ["1W-D5", "1M-W3", "3M-W8", "Classic/Stacks and Queues"]
+    mapping_status: mapped
+    subpattern: matching_nesting_stack
+    confidence: high
+  - slug: "merge-two-sorted-linked-lists"
+    title: "Merge two sorted linked lists"
+    url: "https://www.hackerrank.com/challenges/merge-two-sorted-linked-lists/problem"
+    collections: ["1W-D5", "1M-W3", "3M-W8"]
+    mapping_status: mapped
+    subpattern: merge_split_reconnect
+    confidence: high
+  - slug: "queue-using-two-stacks"
+    title: "Queue using Two Stacks"
+    url: "https://www.hackerrank.com/challenges/queue-using-two-stacks/problem"
+    collections: ["1W-D5", "1M-W3", "3M-W8"]
+    mapping_status: mapped
+    subpattern: composite_o1_structures
+    confidence: high
+    canonical_group: "queue-using-two-stacks"
+  - slug: "jesse-and-cookies"
+    title: "Jesse and Cookies"
+    url: "https://www.hackerrank.com/challenges/jesse-and-cookies/problem"
+    collections: ["1W-D6", "1M-W4", "3M-W10"]
+    mapping_status: gap_candidate
+    extension_id: HRX-05
+    extension_name: "Priority-Driven Simulation / Repeated Extremum Heap"
+    confidence: high
+  - slug: "lego-blocks"
+    title: "Lego Blocks"
+    url: "https://www.hackerrank.com/challenges/lego-blocks/problem"
+    collections: ["1W-D6", "1M-W4", "3M-W10"]
+    mapping_status: mapped
+    subpattern: dp_counting_ways
+    confidence: high
+  - slug: "simple-text-editor"
+    title: "Simple Text Editor"
+    url: "https://www.hackerrank.com/challenges/simple-text-editor/problem"
+    collections: ["1W-D6", "1M-W3", "3M-W9"]
+    mapping_status: mapped
+    subpattern: iterator_stream_snapshot
+    confidence: high
+  - slug: "no-prefix-set"
+    title: "No Prefix Set"
+    url: "https://www.hackerrank.com/challenges/no-prefix-set/problem"
+    collections: ["1W-D7", "1M-W4", "3M-W12"]
+    mapping_status: mapped
+    subpattern: trie_prefix_search
+    confidence: high
+  - slug: "tree-huffman-decoding"
+    title: "Tree: Huffman Decoding"
+    url: "https://www.hackerrank.com/challenges/tree-huffman-decoding/problem"
+    collections: ["1W-D7", "1M-W4", "3M-W11", "Classic/Trees"]
+    mapping_status: mapped
+    subpattern: tree_construction_serialization
+    confidence: high
+  - slug: "tree-preorder-traversal"
+    title: "Tree: Preorder Traversal"
+    url: "https://www.hackerrank.com/challenges/tree-preorder-traversal/problem"
+    collections: ["1W-D7", "1M-W4", "3M-W11"]
+    mapping_status: gap_candidate
+    extension_id: HRX-04
+    extension_name: "Tree DFS Traversal / Recursive Order"
+    confidence: high
+  - slug: "flipping-bits"
+    title: "Flipping bits"
+    url: "https://www.hackerrank.com/challenges/flipping-bits/problem"
+    collections: ["1M-W1", "3M-W2", "Classic/Miscellaneous"]
+    mapping_status: mapped
+    subpattern: bit_tricks_submask
+    confidence: high
+  - slug: "pangrams"
+    title: "Pangrams"
+    url: "https://www.hackerrank.com/challenges/pangrams/problem"
+    collections: ["1M-W1", "3M-W2"]
+    mapping_status: mapped
+    subpattern: membership_deduplication
+    confidence: high
+  - slug: "two-arrays"
+    title: "Permuting Two Arrays"
+    url: "https://www.hackerrank.com/challenges/two-arrays/problem"
+    collections: ["1M-W1", "3M-W3"]
+    mapping_status: mapped
+    subpattern: greedy_pairing_matching
+    confidence: high
+  - slug: "sparse-arrays"
+    title: "Sparse Arrays"
+    url: "https://www.hackerrank.com/challenges/sparse-arrays/problem"
+    collections: ["1M-W1", "3M-W1"]
+    mapping_status: mapped
+    subpattern: frequency_counting
+    confidence: high
+  - slug: "birthday-chocolate"
+    title: "Subarray Division"
+    url: "https://www.hackerrank.com/challenges/birthday-chocolate/problem"
+    collections: ["1M-W1", "3M-W3"]
+    mapping_status: mapped
+    subpattern: fixed_size_window
+    confidence: high
+  - slug: "strings-xor"
+    title: "XOR Strings"
+    url: "https://www.hackerrank.com/challenges/strings-xor/problem"
+    collections: ["1M-W1", "3M-W3"]
+    mapping_status: mapped
+    subpattern: bit_tricks_submask
+    confidence: high
+    task_type: debugging_guided
+  - slug: "counter-game"
+    title: "Counter game"
+    url: "https://www.hackerrank.com/challenges/counter-game/problem"
+    collections: ["1M-W2", "3M-W6"]
+    mapping_status: mapped
+    subpattern: bit_tricks_submask
+    confidence: high
+  - slug: "drawing-book"
+    title: "Drawing Book"
+    url: "https://www.hackerrank.com/challenges/drawing-book/problem"
+    collections: ["1M-W2", "3M-W3"]
+    mapping_status: mapped
+    subpattern: direct_construction_formatting
+    confidence: high
+  - slug: "dynamic-array"
+    title: "Dynamic Array"
+    url: "https://www.hackerrank.com/challenges/dynamic-array/problem"
+    collections: ["1M-W2", "3M-W5"]
+    mapping_status: mapped
+    subpattern: process_event_simulation
+    confidence: high
+  - slug: "angry-children"
+    title: "Max Min"
+    url: "https://www.hackerrank.com/challenges/angry-children/problem"
+    collections: ["1M-W2", "3M-W5", "Classic/Greedy Algorithms"]
+    mapping_status: mapped
+    subpattern: fixed_size_window
+    confidence: high
+  - slug: "prime-date"
+    title: "Prime Dates"
+    url: "https://www.hackerrank.com/challenges/prime-date/problem"
+    collections: ["1M-W2", "3M-W6"]
+    mapping_status: mapped
+    subpattern: process_event_simulation
+    confidence: medium
+    task_type: debugging_guided
+  - slug: "sock-merchant"
+    title: "Sales by Match"
+    url: "https://www.hackerrank.com/challenges/sock-merchant/problem"
+    collections: ["1M-W2", "3M-W3", "Classic/Warm-up"]
+    mapping_status: mapped
+    subpattern: frequency_counting
+    confidence: high
+  - slug: "balanced-sums"
+    title: "Sherlock and Array"
+    url: "https://www.hackerrank.com/challenges/balanced-sums/problem"
+    collections: ["1M-W2", "3M-W6"]
+    mapping_status: mapped
+    subpattern: prefix_sum_range_query
+    confidence: high
+  - slug: "sum-vs-xor"
+    title: "Sum vs XOR"
+    url: "https://www.hackerrank.com/challenges/sum-vs-xor/problem"
+    collections: ["1M-W2", "3M-W6"]
+    mapping_status: mapped
+    subpattern: bit_tricks_submask
+    confidence: high
+  - slug: "climbing-the-leaderboard"
+    title: "Climbing the Leaderboard"
+    url: "https://www.hackerrank.com/challenges/climbing-the-leaderboard/problem"
+    collections: ["1M-W3", "3M-W7"]
+    mapping_status: mapped
+    subpattern: lower_upper_bound
+    confidence: high
+  - slug: "icecream-parlor"
+    title: "Ice Cream Parlor"
+    url: "https://www.hackerrank.com/challenges/icecream-parlor/problem"
+    collections: ["1M-W3", "3M-W8", "Classic/Search"]
+    mapping_status: mapped
+    subpattern: complement_lookup
+    confidence: high
+  - slug: "insert-a-node-at-a-specific-position-in-a-linked-list"
+    title: "Insert a node at a specific position in a linked list"
+    url: "https://www.hackerrank.com/challenges/insert-a-node-at-a-specific-position-in-a-linked-list/problem"
+    collections: ["1M-W3", "3M-W7", "Classic/Linked Lists"]
+    mapping_status: mapped
+    subpattern: dummy_node_rewiring
+    confidence: high
+  - slug: "reverse-a-doubly-linked-list"
+    title: "Reverse a doubly linked list"
+    url: "https://www.hackerrank.com/challenges/reverse-a-doubly-linked-list/problem"
+    collections: ["1M-W3", "3M-W7", "Classic/Linked Lists"]
+    mapping_status: mapped
+    subpattern: in_place_reversal
+    confidence: high
+  - slug: "reverse-a-linked-list"
+    title: "Reverse a linked list"
+    url: "https://www.hackerrank.com/challenges/reverse-a-linked-list/problem"
+    collections: ["1M-W3", "3M-W7"]
+    mapping_status: mapped
+    subpattern: in_place_reversal
+    confidence: high
+  - slug: "sherlock-and-valid-string"
+    title: "Sherlock and the Valid String"
+    url: "https://www.hackerrank.com/challenges/sherlock-and-valid-string/problem"
+    collections: ["1M-W3", "3M-W7", "Classic/String Manipulation"]
+    mapping_status: mapped
+    subpattern: frequency_of_frequency_buckets
+    confidence: high
+  - slug: "bomber-man"
+    title: "The Bomberman Game"
+    url: "https://www.hackerrank.com/challenges/bomber-man/problem"
+    collections: ["1M-W3", "3M-W7"]
+    mapping_status: mapped
+    subpattern: process_event_simulation
+    confidence: high
+  - slug: "waiter"
+    title: "Waiter"
+    url: "https://www.hackerrank.com/challenges/waiter/problem"
+    collections: ["1M-W3", "3M-W9"]
+    mapping_status: mapped
+    subpattern: process_event_simulation
+    confidence: medium
+  - slug: "crush"
+    title: "Array Manipulation"
+    url: "https://www.hackerrank.com/challenges/crush/problem"
+    collections: ["1M-W4", "3M-W11", "Classic/Arrays"]
+    mapping_status: mapped
+    subpattern: difference_array
+    confidence: high
+  - slug: "binary-search-tree-lowest-common-ancestor"
+    title: "Binary Search Tree : Lowest Common Ancestor"
+    url: "https://www.hackerrank.com/challenges/binary-search-tree-lowest-common-ancestor/problem"
+    collections: ["1M-W4", "3M-W12", "Classic/Trees"]
+    mapping_status: mapped
+    subpattern: bst_ordering_bounds
+    confidence: high
+  - slug: "castle-on-the-grid"
+    title: "Castle on the Grid"
+    url: "https://www.hackerrank.com/challenges/castle-on-the-grid/problem"
+    collections: ["1M-W4", "3M-W12", "Classic/Stacks and Queues"]
+    mapping_status: mapped
+    subpattern: unweighted_shortest_path_bfs
+    confidence: high
+  - slug: "equal-stacks"
+    title: "Equal Stacks"
+    url: "https://www.hackerrank.com/challenges/equal-stacks/problem"
+    collections: ["1M-W4", "3M-W9"]
+    mapping_status: mapped
+    subpattern: same_direction_read_write
+    confidence: medium
+  - slug: "hackerland-radio-transmitters"
+    title: "Hackerland Radio Transmitters"
+    url: "https://www.hackerrank.com/challenges/hackerland-radio-transmitters/problem"
+    collections: ["1M-W4", "3M-W10"]
+    mapping_status: mapped
+    subpattern: greedy_scheduling
+    confidence: high
+  - slug: "richie-rich"
+    title: "Highest Value Palindrome"
+    url: "https://www.hackerrank.com/challenges/richie-rich/problem"
+    collections: ["1M-W4", "3M-W11"]
+    mapping_status: mapped
+    subpattern: converging_validation_palindrome
+    confidence: high
+  - slug: "lilys-homework"
+    title: "Lily's Homework"
+    url: "https://www.hackerrank.com/challenges/lilys-homework/problem"
+    collections: ["1M-W4", "3M-W11"]
+    mapping_status: mapped
+    subpattern: cyclic_sort_placement
+    confidence: high
+  - slug: "qheap1"
+    title: "QHEAP1"
+    url: "https://www.hackerrank.com/challenges/qheap1/problem"
+    collections: ["1M-W4", "3M-W10"]
+    mapping_status: gap_candidate
+    extension_id: HRX-05
+    extension_name: "Priority-Driven Simulation / Repeated Extremum Heap"
+    confidence: high
+  - slug: "queries-with-fixed-length"
+    title: "Queries with Fixed Length"
+    url: "https://www.hackerrank.com/challenges/queries-with-fixed-length/problem"
+    collections: ["1M-W4", "3M-W11"]
+    mapping_status: mapped
+    subpattern: monotonic_deque
+    confidence: high
+  - slug: "roads-and-libraries"
+    title: "Roads and Libraries"
+    url: "https://www.hackerrank.com/challenges/roads-and-libraries/problem"
+    collections: ["1M-W4", "3M-W13", "Classic/Graphs"]
+    mapping_status: mapped
+    subpattern: connected_components_flood_fill
+    confidence: high
+  - slug: "max-subarray"
+    title: "The Maximum Subarray"
+    url: "https://www.hackerrank.com/challenges/max-subarray/problem"
+    collections: ["1M-W4", "3M-W9"]
+    mapping_status: mapped
+    subpattern: dp_take_skip
+    confidence: high
+  - slug: "breaking-best-and-worst-records"
+    title: "Breaking the Records"
+    url: "https://www.hackerrank.com/challenges/breaking-best-and-worst-records/problem"
+    collections: ["3M-W1"]
+    mapping_status: gap_candidate
+    extension_id: HRX-01
+    extension_name: "Linear Scan / Running Aggregate / Extremum"
+    confidence: high
+  - slug: "three-month-preparation-kit-camel-case"
+    title: "Camel Case 4"
+    url: "https://www.hackerrank.com/challenges/three-month-preparation-kit-camel-case/problem"
+    collections: ["3M-W1"]
+    mapping_status: mapped
+    subpattern: finite_state_parser
+    confidence: high
+  - slug: "divisible-sum-pairs"
+    title: "Divisible Sum Pairs"
+    url: "https://www.hackerrank.com/challenges/divisible-sum-pairs/problem"
+    collections: ["3M-W1"]
+    mapping_status: mapped
+    subpattern: frequency_counting
+    confidence: high
+  - slug: "largest-rectangle"
+    title: "Largest Rectangle"
+    url: "https://www.hackerrank.com/challenges/largest-rectangle/problem"
+    collections: ["3M-W10", "Classic/Stacks and Queues"]
+    mapping_status: mapped
+    subpattern: monotonic_stack
+    confidence: high
+  - slug: "three-month-preparation-kit-minimum-operations"
+    title: "Minimum Operations 4"
+    url: "https://www.hackerrank.com/challenges/three-month-preparation-kit-minimum-operations/problem"
+    collections: ["3M-W10"]
+    mapping_status: mapped
+    subpattern: resource_assignment
+    confidence: medium
+    task_type: debugging_guided
+  - slug: "permutation-game"
+    title: "Permutation game"
+    url: "https://www.hackerrank.com/challenges/permutation-game/problem"
+    collections: ["3M-W10"]
+    mapping_status: mapped
+    subpattern: bitmask_state_enumeration
+    confidence: medium
+  - slug: "weighted-uniform-string"
+    title: "Weighted Uniform Strings"
+    url: "https://www.hackerrank.com/challenges/weighted-uniform-string/problem"
+    collections: ["3M-W10"]
+    mapping_status: mapped
+    subpattern: membership_deduplication
+    confidence: high
+  - slug: "common-child"
+    title: "Common Child"
+    url: "https://www.hackerrank.com/challenges/common-child/problem"
+    collections: ["3M-W11", "Classic/String Manipulation"]
+    mapping_status: mapped
+    subpattern: dp_sequence_lis_lcs
+    confidence: high
+  - slug: "tree-postorder-traversal"
+    title: "Tree: Postorder Traversal"
+    url: "https://www.hackerrank.com/challenges/tree-postorder-traversal/problem"
+    collections: ["3M-W11"]
+    mapping_status: gap_candidate
+    extension_id: HRX-04
+    extension_name: "Tree DFS Traversal / Recursive Order"
+    confidence: high
+  - slug: "beadornaments"
+    title: "Bead Ornaments"
+    url: "https://www.hackerrank.com/challenges/beadornaments/problem"
+    collections: ["3M-W12"]
+    mapping_status: mapped
+    subpattern: combinatorial_counting
+    confidence: medium
+  - slug: "floyd-city-of-blinding-lights"
+    title: "Floyd : City of Blinding Lights"
+    url: "https://www.hackerrank.com/challenges/floyd-city-of-blinding-lights/problem"
+    collections: ["3M-W12"]
+    mapping_status: gap_candidate
+    extension_id: HRX-07
+    extension_name: "All-Pairs Shortest Paths / Floyd–Warshall"
+    confidence: high
+  - slug: "merging-communities"
+    title: "Merging Communities"
+    url: "https://www.hackerrank.com/challenges/merging-communities/problem"
+    collections: ["3M-W12"]
+    mapping_status: mapped
+    subpattern: online_connectivity
+    confidence: high
+  - slug: "primsmstsub"
+    title: "Prim's (MST) : Special Subtree"
+    url: "https://www.hackerrank.com/challenges/primsmstsub/problem"
+    collections: ["3M-W12"]
+    mapping_status: gap_candidate
+    extension_id: HRX-06
+    extension_name: "Prim / Cut-Growing MST"
+    confidence: high
+  - slug: "tree-height-of-a-binary-tree"
+    title: "Tree: Height of a Binary Tree"
+    url: "https://www.hackerrank.com/challenges/tree-height-of-a-binary-tree/problem"
+    collections: ["3M-W12", "Classic/Trees"]
+    mapping_status: mapped
+    subpattern: root_to_leaf_path_state
+    confidence: high
+  - slug: "contacts"
+    title: "Contacts"
+    url: "https://www.hackerrank.com/challenges/contacts/problem"
+    collections: ["3M-W13"]
+    mapping_status: mapped
+    subpattern: trie_prefix_search
+    confidence: high
+  - slug: "cube-summation"
+    title: "Cube Summation"
+    url: "https://www.hackerrank.com/challenges/cube-summation/problem"
+    collections: ["3M-W13"]
+    mapping_status: mapped
+    subpattern: fenwick_tree_bit
+    confidence: high
+  - slug: "ctci-find-the-running-median"
+    title: "Find the Running Median"
+    url: "https://www.hackerrank.com/challenges/ctci-find-the-running-median/problem"
+    collections: ["3M-W13"]
+    mapping_status: mapped
+    subpattern: two_heaps_streaming_median
+    confidence: high
+  - slug: "gena"
+    title: "Gena Playing Hanoi"
+    url: "https://www.hackerrank.com/challenges/gena/problem"
+    collections: ["3M-W13"]
+    mapping_status: mapped
+    subpattern: state_space_graph_search
+    confidence: high
+  - slug: "jack-goes-to-rapture"
+    title: "Jack goes to Rapture"
+    url: "https://www.hackerrank.com/challenges/jack-goes-to-rapture/problem"
+    collections: ["3M-W13"]
+    mapping_status: mapped
+    subpattern: dijkstra_nonnegative
+    confidence: high
+  - slug: "journey-to-the-moon"
+    title: "Journey to the Moon"
+    url: "https://www.hackerrank.com/challenges/journey-to-the-moon/problem"
+    collections: ["3M-W13"]
+    mapping_status: mapped
+    subpattern: connected_components_flood_fill
+    confidence: high
+  - slug: "minimum-loss"
+    title: "Minimum Loss"
+    url: "https://www.hackerrank.com/challenges/minimum-loss/problem"
+    collections: ["3M-W13"]
+    mapping_status: mapped
+    subpattern: ordered_set_sorted_map
+    confidence: high
+  - slug: "short-palindrome"
+    title: "Short Palindrome"
+    url: "https://www.hackerrank.com/challenges/short-palindrome/problem"
+    collections: ["3M-W13"]
+    mapping_status: mapped
+    subpattern: dp_counting_ways
+    confidence: high
+  - slug: "counting-valleys"
+    title: "Counting Valleys"
+    url: "https://www.hackerrank.com/challenges/counting-valleys/problem"
+    collections: ["3M-W2", "Classic/Warm-up"]
+    mapping_status: mapped
+    subpattern: process_event_simulation
+    confidence: high
+  - slug: "grading"
+    title: "Grading Students"
+    url: "https://www.hackerrank.com/challenges/grading/problem"
+    collections: ["3M-W2"]
+    mapping_status: mapped
+    subpattern: direct_construction_formatting
+    confidence: high
+  - slug: "mars-exploration"
+    title: "Mars Exploration"
+    url: "https://www.hackerrank.com/challenges/mars-exploration/problem"
+    collections: ["3M-W2"]
+    mapping_status: mapped
+    subpattern: linear_string_scan_parsing
+    confidence: high
+  - slug: "maximum-perimeter-triangle"
+    title: "Maximum Perimeter Triangle"
+    url: "https://www.hackerrank.com/challenges/maximum-perimeter-triangle/problem"
+    collections: ["3M-W3"]
+    mapping_status: mapped
+    subpattern: local_choice_invariant
+    confidence: high
+  - slug: "migratory-birds"
+    title: "Migratory Birds"
+    url: "https://www.hackerrank.com/challenges/migratory-birds/problem"
+    collections: ["3M-W3"]
+    mapping_status: mapped
+    subpattern: frequency_counting
+    confidence: high
+  - slug: "closest-numbers"
+    title: "Closest Numbers"
+    url: "https://www.hackerrank.com/challenges/closest-numbers/problem"
+    collections: ["3M-W4"]
+    mapping_status: gap_candidate
+    extension_id: HRX-03
+    extension_name: "Sort + Adjacent / Rank Scan"
+    confidence: high
+  - slug: "array-left-rotation"
+    title: "Left Rotation"
+    url: "https://www.hackerrank.com/challenges/array-left-rotation/problem"
+    collections: ["3M-W4", "Classic/Arrays"]
+    mapping_status: mapped
+    subpattern: direct_construction_formatting
+    confidence: high
+  - slug: "minimum-absolute-difference-in-an-array"
+    title: "Minimum Absolute Difference in an Array"
+    url: "https://www.hackerrank.com/challenges/minimum-absolute-difference-in-an-array/problem"
+    collections: ["3M-W4", "Classic/Greedy Algorithms"]
+    mapping_status: gap_candidate
+    extension_id: HRX-03
+    extension_name: "Sort + Adjacent / Rank Scan"
+    confidence: high
+  - slug: "kangaroo"
+    title: "Number Line Jumps"
+    url: "https://www.hackerrank.com/challenges/kangaroo/problem"
+    collections: ["3M-W4"]
+    mapping_status: mapped
+    subpattern: number_theory_gcd_factorization
+    confidence: high
+  - slug: "picking-numbers"
+    title: "Picking Numbers"
+    url: "https://www.hackerrank.com/challenges/picking-numbers/problem"
+    collections: ["3M-W4"]
+    mapping_status: mapped
+    subpattern: frequency_counting
+    confidence: high
+  - slug: "separate-the-numbers"
+    title: "Separate the Numbers"
+    url: "https://www.hackerrank.com/challenges/separate-the-numbers/problem"
+    collections: ["3M-W4"]
+    mapping_status: mapped
+    subpattern: digit_arithmetic_base_conversion
+    confidence: high
+  - slug: "missing-numbers"
+    title: "Missing Numbers"
+    url: "https://www.hackerrank.com/challenges/missing-numbers/problem"
+    collections: ["3M-W5"]
+    mapping_status: mapped
+    subpattern: frequency_counting
+    confidence: high
+  - slug: "sansa-and-xor"
+    title: "Sansa and XOR"
+    url: "https://www.hackerrank.com/challenges/sansa-and-xor/problem"
+    collections: ["3M-W5"]
+    mapping_status: mapped
+    subpattern: bit_tricks_submask
+    confidence: high
+  - slug: "three-month-preparation-kit-smart-number"
+    title: "Smart Number 2"
+    url: "https://www.hackerrank.com/challenges/three-month-preparation-kit-smart-number/problem"
+    collections: ["3M-W5"]
+    mapping_status: mapped
+    subpattern: number_theory_gcd_factorization
+    confidence: medium
+    task_type: debugging_guided
+  - slug: "strong-password"
+    title: "Strong Password"
+    url: "https://www.hackerrank.com/challenges/strong-password/problem"
+    collections: ["3M-W5"]
+    mapping_status: mapped
+    subpattern: membership_deduplication
+    confidence: high
+  - slug: "countingsort4"
+    title: "The Full Counting Sort"
+    url: "https://www.hackerrank.com/challenges/countingsort4/problem"
+    collections: ["3M-W5"]
+    mapping_status: gap_candidate
+    extension_id: HRX-02
+    extension_name: "Counting / Bucket / Stable Counting Sort"
+    confidence: high
+  - slug: "magic-square-forming"
+    title: "Forming a Magic Square"
+    url: "https://www.hackerrank.com/challenges/magic-square-forming/problem"
+    collections: ["3M-W6"]
+    mapping_status: mapped
+    subpattern: process_event_simulation
+    confidence: high
+  - slug: "gaming-array"
+    title: "Gaming Array"
+    url: "https://www.hackerrank.com/challenges/gaming-array/problem"
+    collections: ["3M-W6"]
+    mapping_status: mapped
+    subpattern: probability_expected_value
+    confidence: medium
+  - slug: "misere-nim-1"
+    title: "Misère Nim"
+    url: "https://www.hackerrank.com/challenges/misere-nim-1/problem"
+    collections: ["3M-W6"]
+    mapping_status: gap_candidate
+    extension_id: HRX-08
+    extension_name: "Nim / Impartial Game Invariant"
+    confidence: high
+  - slug: "pylons"
+    title: "Goodland Electricity"
+    url: "https://www.hackerrank.com/challenges/pylons/problem"
+    collections: ["3M-W7"]
+    mapping_status: mapped
+    subpattern: greedy_scheduling
+    confidence: high
+  - slug: "detect-whether-a-linked-list-contains-a-cycle"
+    title: "Cycle Detection"
+    url: "https://www.hackerrank.com/challenges/detect-whether-a-linked-list-contains-a-cycle/problem"
+    collections: ["3M-W8"]
+    mapping_status: mapped
+    subpattern: fast_slow_pointers
+    confidence: high
+    canonical_group: "linked-list-cycle-detection"
+  - slug: "insert-a-node-into-a-sorted-doubly-linked-list"
+    title: "Inserting a Node Into a Sorted Doubly Linked List"
+    url: "https://www.hackerrank.com/challenges/insert-a-node-into-a-sorted-doubly-linked-list/problem"
+    collections: ["3M-W8", "Classic/Linked Lists"]
+    mapping_status: mapped
+    subpattern: dummy_node_rewiring
+    confidence: high
+  - slug: "sherlock-and-anagrams"
+    title: "Sherlock and Anagrams"
+    url: "https://www.hackerrank.com/challenges/sherlock-and-anagrams/problem"
+    collections: ["3M-W8", "Classic/Dictionaries and Hashmaps"]
+    mapping_status: mapped
+    subpattern: grouping_canonical_signature
+    confidence: high
+  - slug: "reduced-string"
+    title: "Super Reduced String"
+    url: "https://www.hackerrank.com/challenges/reduced-string/problem"
+    collections: ["3M-W8"]
+    mapping_status: mapped
+    subpattern: matching_nesting_stack
+    confidence: high
+  - slug: "chief-hopper"
+    title: "Chief Hopper"
+    url: "https://www.hackerrank.com/challenges/chief-hopper/problem"
+    collections: ["3M-W9"]
+    mapping_status: mapped
+    subpattern: local_choice_invariant
+    confidence: medium
+  - slug: "stockmax"
+    title: "Stock Maximize"
+    url: "https://www.hackerrank.com/challenges/stockmax/problem"
+    collections: ["3M-W9"]
+    mapping_status: mapped
+    subpattern: local_choice_invariant
+    confidence: high
+  - slug: "coin-change"
+    title: "The Coin Change Problem"
+    url: "https://www.hackerrank.com/challenges/coin-change/problem"
+    collections: ["3M-W9"]
+    mapping_status: mapped
+    subpattern: dp_unbounded_knapsack
+    confidence: high
+  - slug: "two-characters"
+    title: "Two Characters"
+    url: "https://www.hackerrank.com/challenges/two-characters/problem"
+    collections: ["3M-W9"]
+    mapping_status: mapped
+    subpattern: subsets_combinations
+    confidence: medium
+  - slug: "2d-array"
+    title: "2D Array - DS"
+    url: "https://www.hackerrank.com/challenges/2d-array/problem"
+    collections: ["Classic/Arrays"]
+    mapping_status: mapped
+    subpattern: directional_traversal_simulation
+    confidence: high
+  - slug: "minimum-swaps-2"
+    title: "Minimum Swaps 2"
+    url: "https://www.hackerrank.com/challenges/minimum-swaps-2/problem"
+    collections: ["Classic/Arrays"]
+    mapping_status: mapped
+    subpattern: cyclic_sort_placement
+    confidence: high
+  - slug: "count-triplets-1"
+    title: "Count Triplets"
+    url: "https://www.hackerrank.com/challenges/count-triplets-1/problem"
+    collections: ["Classic/Dictionaries and Hashmaps"]
+    mapping_status: mapped
+    subpattern: complement_lookup
+    confidence: high
+  - slug: "frequency-queries"
+    title: "Frequency Queries"
+    url: "https://www.hackerrank.com/challenges/frequency-queries/problem"
+    collections: ["Classic/Dictionaries and Hashmaps"]
+    mapping_status: mapped
+    subpattern: frequency_of_frequency_buckets
+    confidence: high
+  - slug: "ctci-ransom-note"
+    title: "Hash Tables: Ransom Note"
+    url: "https://www.hackerrank.com/challenges/ctci-ransom-note/problem"
+    collections: ["Classic/Dictionaries and Hashmaps"]
+    mapping_status: mapped
+    subpattern: frequency_counting
+    confidence: high
+  - slug: "two-strings"
+    title: "Two Strings"
+    url: "https://www.hackerrank.com/challenges/two-strings/problem"
+    collections: ["Classic/Dictionaries and Hashmaps"]
+    mapping_status: mapped
+    subpattern: membership_deduplication
+    confidence: high
+  - slug: "abbr"
+    title: "Abbreviation"
+    url: "https://www.hackerrank.com/challenges/abbr/problem"
+    collections: ["Classic/Dynamic Programming"]
+    mapping_status: mapped
+    subpattern: dp_sequence_lis_lcs
+    confidence: high
+  - slug: "candies"
+    title: "Candies"
+    url: "https://www.hackerrank.com/challenges/candies/problem"
+    collections: ["Classic/Dynamic Programming"]
+    mapping_status: mapped
+    subpattern: local_choice_invariant
+    confidence: high
+  - slug: "decibinary-numbers"
+    title: "Decibinary Numbers"
+    url: "https://www.hackerrank.com/challenges/decibinary-numbers/problem"
+    collections: ["Classic/Dynamic Programming"]
+    mapping_status: mapped
+    subpattern: dp_digit_positional
+    confidence: high
+  - slug: "max-array-sum"
+    title: "Max Array Sum"
+    url: "https://www.hackerrank.com/challenges/max-array-sum/problem"
+    collections: ["Classic/Dynamic Programming"]
+    mapping_status: mapped
+    subpattern: dp_take_skip
+    confidence: high
+  - slug: "ctci-bfs-shortest-reach"
+    title: "BFS: Shortest Reach in a Graph"
+    url: "https://www.hackerrank.com/challenges/ctci-bfs-shortest-reach/problem"
+    collections: ["Classic/Graphs"]
+    mapping_status: mapped
+    subpattern: unweighted_shortest_path_bfs
+    confidence: high
+  - slug: "connected-cell-in-a-grid"
+    title: "DFS: Connected Cell in a Grid"
+    url: "https://www.hackerrank.com/challenges/connected-cell-in-a-grid/problem"
+    collections: ["Classic/Graphs"]
+    mapping_status: mapped
+    subpattern: connected_components_flood_fill
+    confidence: high
+  - slug: "find-the-nearest-clone"
+    title: "Find the nearest clone"
+    url: "https://www.hackerrank.com/challenges/find-the-nearest-clone/problem"
+    collections: ["Classic/Graphs"]
+    mapping_status: mapped
+    subpattern: multi_source_bfs
+    confidence: high
+  - slug: "matrix"
+    title: "Matrix"
+    url: "https://www.hackerrank.com/challenges/matrix/problem"
+    collections: ["Classic/Graphs"]
+    mapping_status: mapped
+    subpattern: kruskal_connectivity
+    confidence: high
+  - slug: "greedy-florist"
+    title: "Greedy Florist"
+    url: "https://www.hackerrank.com/challenges/greedy-florist/problem"
+    collections: ["Classic/Greedy Algorithms"]
+    mapping_status: mapped
+    subpattern: exchange_argument_ordering
+    confidence: high
+  - slug: "luck-balance"
+    title: "Luck Balance"
+    url: "https://www.hackerrank.com/challenges/luck-balance/problem"
+    collections: ["Classic/Greedy Algorithms"]
+    mapping_status: mapped
+    subpattern: exchange_argument_ordering
+    confidence: high
+  - slug: "reverse-shuffle-merge"
+    title: "Reverse Shuffle Merge"
+    url: "https://www.hackerrank.com/challenges/reverse-shuffle-merge/problem"
+    collections: ["Classic/Greedy Algorithms"]
+    mapping_status: mapped
+    subpattern: monotonic_stack
+    confidence: high
+  - slug: "find-the-merge-point-of-two-joined-linked-lists"
+    title: "Find Merge Point of Two Lists"
+    url: "https://www.hackerrank.com/challenges/find-the-merge-point-of-two-joined-linked-lists/problem"
+    collections: ["Classic/Linked Lists"]
+    mapping_status: mapped
+    subpattern: same_direction_read_write
+    confidence: medium
+  - slug: "ctci-linked-list-cycle"
+    title: "Linked Lists: Detect a Cycle"
+    url: "https://www.hackerrank.com/challenges/ctci-linked-list-cycle/problem"
+    collections: ["Classic/Linked Lists"]
+    mapping_status: mapped
+    subpattern: fast_slow_pointers
+    confidence: high
+    canonical_group: "linked-list-cycle-detection"
+  - slug: "friend-circle-queries"
+    title: "Friend Circle Queries"
+    url: "https://www.hackerrank.com/challenges/friend-circle-queries/problem"
+    collections: ["Classic/Miscellaneous"]
+    mapping_status: mapped
+    subpattern: online_connectivity
+    confidence: high
+  - slug: "maximum-xor"
+    title: "Maximum Xor"
+    url: "https://www.hackerrank.com/challenges/maximum-xor/problem"
+    collections: ["Classic/Miscellaneous"]
+    mapping_status: gap_candidate
+    extension_id: HRX-09
+    extension_name: "Bitwise Trie / XOR Extremum"
+    confidence: high
+  - slug: "ctci-big-o"
+    title: "Time Complexity: Primality"
+    url: "https://www.hackerrank.com/challenges/ctci-big-o/problem"
+    collections: ["Classic/Miscellaneous"]
+    mapping_status: mapped
+    subpattern: number_theory_gcd_factorization
+    confidence: high
+  - slug: "crossword-puzzle"
+    title: "Crossword Puzzle"
+    url: "https://www.hackerrank.com/challenges/crossword-puzzle/problem"
+    collections: ["Classic/Recursion and Backtracking"]
+    mapping_status: mapped
+    subpattern: constraint_placement
+    confidence: high
+  - slug: "ctci-recursive-staircase"
+    title: "Recursion: Davis' Staircase"
+    url: "https://www.hackerrank.com/challenges/ctci-recursive-staircase/problem"
+    collections: ["Classic/Recursion and Backtracking"]
+    mapping_status: mapped
+    subpattern: dp_counting_ways
+    confidence: high
+  - slug: "ctci-fibonacci-numbers"
+    title: "Recursion: Fibonacci Numbers"
+    url: "https://www.hackerrank.com/challenges/ctci-fibonacci-numbers/problem"
+    collections: ["Classic/Recursion and Backtracking"]
+    mapping_status: mapped
+    subpattern: dp_counting_ways
+    confidence: medium
+  - slug: "making-candies"
+    title: "Making Candies"
+    url: "https://www.hackerrank.com/challenges/making-candies/problem"
+    collections: ["Classic/Search"]
+    mapping_status: mapped
+    subpattern: binary_search_on_answer
+    confidence: high
+  - slug: "maximum-subarray-sum"
+    title: "Maximum Subarray Sum"
+    url: "https://www.hackerrank.com/challenges/maximum-subarray-sum/problem"
+    collections: ["Classic/Search"]
+    mapping_status: mapped
+    subpattern: ordered_set_sorted_map
+    confidence: high
+  - slug: "minimum-time-required"
+    title: "Minimum Time Required"
+    url: "https://www.hackerrank.com/challenges/minimum-time-required/problem"
+    collections: ["Classic/Search"]
+    mapping_status: mapped
+    subpattern: binary_search_on_answer
+    confidence: high
+  - slug: "pairs"
+    title: "Pairs"
+    url: "https://www.hackerrank.com/challenges/pairs/problem"
+    collections: ["Classic/Search"]
+    mapping_status: mapped
+    subpattern: complement_lookup
+    confidence: high
+  - slug: "swap-nodes-algo"
+    title: "Swap Nodes [Algo]"
+    url: "https://www.hackerrank.com/challenges/swap-nodes-algo/problem"
+    collections: ["Classic/Search"]
+    mapping_status: gap_candidate
+    extension_id: HRX-04
+    extension_name: "Tree DFS Traversal / Recursive Order"
+    confidence: high
+  - slug: "triple-sum"
+    title: "Triple sum"
+    url: "https://www.hackerrank.com/challenges/triple-sum/problem"
+    collections: ["Classic/Search"]
+    mapping_status: mapped
+    subpattern: sorted_pair_triplet_search
+    confidence: high
+  - slug: "fraudulent-activity-notifications"
+    title: "Fraudulent Activity Notifications"
+    url: "https://www.hackerrank.com/challenges/fraudulent-activity-notifications/problem"
+    collections: ["Classic/Sorting"]
+    mapping_status: gap_candidate
+    extension_id: HRX-10
+    extension_name: "Sliding Median / Dynamic Order Statistics"
+    confidence: high
+  - slug: "mark-and-toys"
+    title: "Mark and Toys"
+    url: "https://www.hackerrank.com/challenges/mark-and-toys/problem"
+    collections: ["Classic/Sorting"]
+    mapping_status: mapped
+    subpattern: exchange_argument_ordering
+    confidence: high
+  - slug: "ctci-merge-sort"
+    title: "Merge Sort: Counting Inversions"
+    url: "https://www.hackerrank.com/challenges/ctci-merge-sort/problem"
+    collections: ["Classic/Sorting"]
+    mapping_status: mapped
+    subpattern: merge_sort_divide_conquer
+    confidence: high
+  - slug: "ctci-bubble-sort"
+    title: "Sorting: Bubble Sort"
+    url: "https://www.hackerrank.com/challenges/ctci-bubble-sort/problem"
+    collections: ["Classic/Sorting"]
+    mapping_status: non_pattern
+    task_type: algorithm_implementation
+  - slug: "ctci-comparator-sorting"
+    title: "Sorting: Comparator"
+    url: "https://www.hackerrank.com/challenges/ctci-comparator-sorting/problem"
+    collections: ["Classic/Sorting"]
+    mapping_status: non_pattern
+    task_type: algorithm_implementation
+  - slug: "min-max-riddle"
+    title: "Min Max Riddle"
+    url: "https://www.hackerrank.com/challenges/min-max-riddle/problem"
+    collections: ["Classic/Stacks and Queues"]
+    mapping_status: mapped
+    subpattern: monotonic_stack
+    confidence: high
+  - slug: "poisonous-plants"
+    title: "Poisonous Plants"
+    url: "https://www.hackerrank.com/challenges/poisonous-plants/problem"
+    collections: ["Classic/Stacks and Queues"]
+    mapping_status: mapped
+    subpattern: monotonic_stack
+    confidence: high
+  - slug: "ctci-queue-using-two-stacks"
+    title: "Queues: A Tale of Two Stacks"
+    url: "https://www.hackerrank.com/challenges/ctci-queue-using-two-stacks/problem"
+    collections: ["Classic/Stacks and Queues"]
+    mapping_status: mapped
+    subpattern: composite_o1_structures
+    confidence: high
+    canonical_group: "queue-using-two-stacks"
+  - slug: "alternating-characters"
+    title: "Alternating Characters"
+    url: "https://www.hackerrank.com/challenges/alternating-characters/problem"
+    collections: ["Classic/String Manipulation"]
+    mapping_status: mapped
+    subpattern: linear_string_scan_parsing
+    confidence: high
+  - slug: "special-palindrome-again"
+    title: "Special String Again"
+    url: "https://www.hackerrank.com/challenges/special-palindrome-again/problem"
+    collections: ["Classic/String Manipulation"]
+    mapping_status: mapped
+    subpattern: combinatorial_counting
+    confidence: medium
+  - slug: "ctci-making-anagrams"
+    title: "Strings: Making Anagrams"
+    url: "https://www.hackerrank.com/challenges/ctci-making-anagrams/problem"
+    collections: ["Classic/String Manipulation"]
+    mapping_status: mapped
+    subpattern: frequency_counting
+    confidence: high
+  - slug: "balanced-forest"
+    title: "Balanced Forest"
+    url: "https://www.hackerrank.com/challenges/balanced-forest/problem"
+    collections: ["Classic/Trees"]
+    mapping_status: mapped
+    subpattern: postorder_subtree_aggregation
+    confidence: high
+  - slug: "ctci-is-binary-search-tree"
+    title: "Trees: Is This a Binary Search Tree?"
+    url: "https://www.hackerrank.com/challenges/ctci-is-binary-search-tree/problem"
+    collections: ["Classic/Trees"]
+    mapping_status: mapped
+    subpattern: bst_ordering_bounds
+    confidence: high
+  - slug: "jumping-on-the-clouds"
+    title: "Jumping on the Clouds"
+    url: "https://www.hackerrank.com/challenges/jumping-on-the-clouds/problem"
+    collections: ["Classic/Warm-up"]
+    mapping_status: mapped
+    subpattern: local_choice_invariant
+    confidence: high
+  - slug: "repeated-string"
+    title: "Repeated String"
+    url: "https://www.hackerrank.com/challenges/repeated-string/problem"
+    collections: ["Classic/Warm-up"]
+    mapping_status: mapped
+    subpattern: frequency_counting
+    confidence: high

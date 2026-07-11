@@ -183,6 +183,7 @@ type PracticeProblem struct {
 	Difficulty   string     `json:"difficulty"`
 	Tier         string     `json:"tier,omitempty"`
 	Status       string     `json:"status"`
+	Platform     string     `json:"platform,omitempty"`
 	Rating       string     `json:"rating,omitempty"`
 	SolvedAt     *time.Time `json:"solved_at,omitempty"`
 	NextReviewAt *time.Time `json:"next_review_at,omitempty"`

@@ -602,16 +602,19 @@ SELECT
     COALESCE(pr.difficulty, '')::text AS difficulty,
     COALESCE(ps.tier, '')::text AS tier,
     COALESCE(upp.status, 'not_started')::text AS status,
+    pl.code AS platform,
     upp.rating,
     upp.solved_at,
     rs.next_review_at
 FROM problem_subpatterns ps
 JOIN problems pr ON pr.id = ps.problem_id
+JOIN platforms pl ON pl.id = pr.platform_id
 LEFT JOIN user_problem_progress upp
     ON upp.problem_id = pr.id AND upp.user_id = $1::bigint
 LEFT JOIN review_schedules rs
     ON rs.problem_id = pr.id AND rs.user_id = $1::bigint
 WHERE ps.subpattern_id = $2::bigint
+    AND ($3::text = '' OR pl.code = $3::text)
 ORDER BY
     CASE ps.tier
         WHEN 'foundational' THEN 0
@@ -626,6 +629,7 @@ ORDER BY
 type ListSubpatternPracticeProblemsParams struct {
 	UserID       int64
 	SubpatternID int64
+	PlatformCode string
 }
 
 type ListSubpatternPracticeProblemsRow struct {
@@ -635,6 +639,7 @@ type ListSubpatternPracticeProblemsRow struct {
 	Difficulty   string
 	Tier         string
 	Status       string
+	Platform     string
 	Rating       pgtype.Text
 	SolvedAt     pgtype.Timestamptz
 	NextReviewAt pgtype.Timestamptz
@@ -642,7 +647,7 @@ type ListSubpatternPracticeProblemsRow struct {
 
 // General practice set of a subpattern with the user's state.
 func (q *Queries) ListSubpatternPracticeProblems(ctx context.Context, arg ListSubpatternPracticeProblemsParams) ([]ListSubpatternPracticeProblemsRow, error) {
-	rows, err := q.db.Query(ctx, listSubpatternPracticeProblems, arg.UserID, arg.SubpatternID)
+	rows, err := q.db.Query(ctx, listSubpatternPracticeProblems, arg.UserID, arg.SubpatternID, arg.PlatformCode)
 	if err != nil {
 		return nil, err
 	}
@@ -657,6 +662,7 @@ func (q *Queries) ListSubpatternPracticeProblems(ctx context.Context, arg ListSu
 			&i.Difficulty,
 			&i.Tier,
 			&i.Status,
+			&i.Platform,
 			&i.Rating,
 			&i.SolvedAt,
 			&i.NextReviewAt,

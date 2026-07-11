@@ -233,16 +233,19 @@ SELECT
     COALESCE(pr.difficulty, '')::text AS difficulty,
     COALESCE(ps.tier, '')::text AS tier,
     COALESCE(upp.status, 'not_started')::text AS status,
+    pl.code AS platform,
     upp.rating,
     upp.solved_at,
     rs.next_review_at
 FROM problem_subpatterns ps
 JOIN problems pr ON pr.id = ps.problem_id
+JOIN platforms pl ON pl.id = pr.platform_id
 LEFT JOIN user_problem_progress upp
     ON upp.problem_id = pr.id AND upp.user_id = sqlc.arg(user_id)::bigint
 LEFT JOIN review_schedules rs
     ON rs.problem_id = pr.id AND rs.user_id = sqlc.arg(user_id)::bigint
 WHERE ps.subpattern_id = sqlc.arg(subpattern_id)::bigint
+    AND (sqlc.arg(platform_code)::text = '' OR pl.code = sqlc.arg(platform_code)::text)
 ORDER BY
     CASE ps.tier
         WHEN 'foundational' THEN 0

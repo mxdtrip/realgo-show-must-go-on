@@ -31,7 +31,7 @@ type repository interface {
 	GetByCode(ctx context.Context, code string) (PatternDetail, error)
 	GetAtlas(ctx context.Context, userID int64, companyCode string) (AtlasResponse, error)
 	ListCompanies(ctx context.Context) ([]AtlasCompany, error)
-	GetAtlasNode(ctx context.Context, userID int64, code string) (NodeDetail, error)
+	GetAtlasNode(ctx context.Context, userID int64, code, platformCode string) (NodeDetail, error)
 }
 
 func NewHandler(repo repository) *Handler {

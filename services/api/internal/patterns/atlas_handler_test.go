@@ -123,6 +123,25 @@ func TestGetAtlasNode_Found(t *testing.T) {
 	}
 }
 
+func TestGetAtlasNode_PlatformFilterPassedThrough(t *testing.T) {
+	var gotPlatform string
+	h := NewHandler(fakeRepository{
+		node:            NodeDetail{Code: "fixed_size_window", Kind: "subpattern"},
+		gotNodePlatform: &gotPlatform,
+	})
+	r := withUser(httptest.NewRequest(http.MethodGet, "/patterns/atlas/fixed_size_window?platform=hackerrank", nil), 1)
+	w := httptest.NewRecorder()
+
+	routePatterns(h).ServeHTTP(w, r)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+	if gotPlatform != "hackerrank" {
+		t.Fatalf("expected platform 'hackerrank' passed to repo, got %q", gotPlatform)
+	}
+}
+
 func TestGetAtlasNode_NotFound(t *testing.T) {
 	h := NewHandler(fakeRepository{nodeErr: ErrPatternNotFound})
 	r := withUser(httptest.NewRequest(http.MethodGet, "/patterns/atlas/unknown", nil), 1)

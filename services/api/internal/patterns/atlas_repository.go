@@ -302,7 +302,8 @@ func (r *pgRepository) ListCompanies(ctx context.Context) ([]AtlasCompany, error
 }
 
 // GetAtlasNode returns the educational detail for any taxonomy node.
-func (r *pgRepository) GetAtlasNode(ctx context.Context, userID int64, code string) (NodeDetail, error) {
+// platformCode ("" = all) narrows the practice problem list to one platform.
+func (r *pgRepository) GetAtlasNode(ctx context.Context, userID int64, code, platformCode string) (NodeDetail, error) {
 	node, err := r.q.GetAtlasNodeByCode(ctx, code)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -335,7 +336,7 @@ func (r *pgRepository) GetAtlasNode(ctx context.Context, userID int64, code stri
 
 	switch node.Kind {
 	case "subpattern":
-		if err := r.fillSubpatternDetail(ctx, userID, node.ID, &detail); err != nil {
+		if err := r.fillSubpatternDetail(ctx, userID, node.ID, platformCode, &detail); err != nil {
 			return NodeDetail{}, err
 		}
 	case "family":
@@ -408,7 +409,7 @@ func (r *pgRepository) fillFamilyDetail(ctx context.Context, familyCode string, 
 	return nil
 }
 
-func (r *pgRepository) fillSubpatternDetail(ctx context.Context, userID, nodeID int64, detail *NodeDetail) error {
+func (r *pgRepository) fillSubpatternDetail(ctx context.Context, userID, nodeID int64, platformCode string, detail *NodeDetail) error {
 	families, err := r.q.ListSubpatternFamilies(ctx, nodeID)
 	if err != nil {
 		return fmt.Errorf("atlas: list subpattern families: %w", err)
@@ -456,6 +457,7 @@ func (r *pgRepository) fillSubpatternDetail(ctx context.Context, userID, nodeID 
 	practice, err := r.q.ListSubpatternPracticeProblems(ctx, db.ListSubpatternPracticeProblemsParams{
 		UserID:       userID,
 		SubpatternID: nodeID,
+		PlatformCode: platformCode,
 	})
 	if err != nil {
 		return fmt.Errorf("atlas: list practice problems: %w", err)
@@ -468,6 +470,7 @@ func (r *pgRepository) fillSubpatternDetail(ctx context.Context, userID, nodeID 
 			Difficulty:   row.Difficulty,
 			Tier:         row.Tier,
 			Status:       row.Status,
+			Platform:     row.Platform,
 			Rating:       row.Rating.String,
 			SolvedAt:     timestamptzPtr(row.SolvedAt),
 			NextReviewAt: timestamptzPtr(row.NextReviewAt),

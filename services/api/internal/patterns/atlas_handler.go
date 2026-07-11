@@ -68,7 +68,8 @@ func (h *Handler) GetAtlasNode(w http.ResponseWriter, r *http.Request) {
 	}
 
 	code := chi.URLParam(r, "code")
-	detail, err := h.repo.GetAtlasNode(r.Context(), userID, code)
+	platformCode := r.URL.Query().Get("platform")
+	detail, err := h.repo.GetAtlasNode(r.Context(), userID, code, platformCode)
 	if err != nil {
 		if errors.Is(err, ErrPatternNotFound) {
 			slog.Warn("patterns: GetAtlasNode failed", slog.Any("err", err), slog.String("code", code))
