@@ -2537,6 +2537,15 @@ a.cabinet-panel__meta:hover {
   margin-bottom: 0;
 }
 
+/* Two short panels stacked inside one grid cell, keeping the standard 16px
+   rhythm (see the settings page: PWA + privacy vs the tall notifications). */
+.cabinet-grid__stack {
+  display: grid;
+  gap: 16px;
+  align-content: start;
+  min-width: 0;
+}
+
 /* ---------- metric cards: value + delta + sparkline ---------- */
 
 .metric-grid {
