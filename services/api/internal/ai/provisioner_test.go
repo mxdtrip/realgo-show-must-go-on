@@ -36,7 +36,7 @@ func (f *fakeProvisionRepo) ProblemInfo(context.Context, int64) (ai.ProblemInfo,
 	return f.info, nil
 }
 
-func (f *fakeProvisionRepo) UpsertGeneratedCards(_ context.Context, _ int64, cards []ai.GeneratedCard, _ string) error {
+func (f *fakeProvisionRepo) UpsertGeneratedCards(_ context.Context, _ int64, _, _ string, cards []ai.GeneratedCard, _ string) error {
 	if f.upsertErr != nil {
 		return f.upsertErr
 	}

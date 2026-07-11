@@ -118,10 +118,10 @@ func (r *pgRepository) ProblemInfo(ctx context.Context, problemID int64) (Proble
 
 // UpsertGeneratedCards idempotently inserts (or refreshes) a full batch of
 // global AI-generated cards in one transaction, relying on
-// cards_ai_global_unique_idx for dedup. The transaction matters: readers
+// cards_source_global_unique_idx for dedup. The transaction matters: readers
 // (GET /me/problems/{id}/cards) must never observe a partial batch as
 // "ready" with fewer than the generated cards.
-func (r *pgRepository) UpsertGeneratedCards(ctx context.Context, problemID int64, cards []GeneratedCard, promptVersion string) (err error) {
+func (r *pgRepository) UpsertGeneratedCards(ctx context.Context, problemID int64, platform, slug string, cards []GeneratedCard, promptVersion string) (err error) {
 	tx, err := r.pool.Begin(ctx)
 	if err != nil {
 		return fmt.Errorf("ai: begin tx: %w", err)
@@ -144,6 +144,7 @@ func (r *pgRepository) UpsertGeneratedCards(ctx context.Context, problemID int64
 			Question:        card.Question,
 			Answer:          card.Answer,
 			AiPromptVersion: pgtype.Text{String: promptVersion, Valid: true},
+			Source:          pgtype.Text{String: fmt.Sprintf("ai:%s:%s:%s", platform, slug, card.Type), Valid: true},
 		}
 		if card.Explanation != "" {
 			params.Explanation = pgtype.Text{String: card.Explanation, Valid: true}
