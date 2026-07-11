@@ -217,8 +217,10 @@ Response: тот же объект `user`, что и в `GET /me`.
 
 ### `GET /companies/search?query=goo&limit=8`
 
-Подсказки компаний для onboarding (autocomplete). Чтение из статичного in-memory
-каталога в `internal/companies` (~25 компаний + алиасы), не из БД.
+Подсказки компаний для onboarding (autocomplete). Двухслойный поиск: curated
+in-memory каталог aliases в `internal/companies` (~25 компаний + алиасы:
+`facebook` → Meta, `gcp` → Google Cloud), затем — при наличии пула БД —
+дополнение из таблицы `companies` (dataset-сид `company-problems`).
 
 Response:
 
@@ -234,24 +236,34 @@ Response:
       "id": "cmp_google_cloud",
       "name": "Google Cloud",
       "source": "manual"
+    },
+    {
+      "id": "two_sigma",
+      "name": "Two Sigma",
+      "source": "dataset"
     }
   ]
 }
 ```
 
-> **Source of truth — три изолированных источника компаний:**
+`source`: `manual` — из in-memory каталога aliases; `dataset` — из таблицы
+`companies` (seed company-problems). Каталог aliases даёт каноничные имена и
+матчинг по алиасам, которые `ILIKE` по таблице обеспечить не может.
+
+> **Source of truth — три источника компаний, частично связанных:**
 >
 > 1. `users.target_company` (`TEXT`) — выбор пользователя из onboarding
 >    (свободный текст). Это единственное persisted-значение профиля.
-> 2. In-memory каталог `/companies/search` — UI-подсказки для автодополнения.
->    `id` отсюда (`cmp_*`) используется backend'ом как `code` при best-effort
->    lookup в `GET /me/roadmap.target.company`.
-> 3. DB-таблица `companies` (миграция `000012`, Pattern Atlas) —
->    relevance-данные «паттерн × компания», отдельная сущность для
->    `GET /me/patterns/atlas/*`. К этому профилю отношения не имеет.
+> 2. `/companies/search` — UI-подсказки: in-memory aliases (`cmp_*`, `manual`) +
+>    таблица `companies` (`dataset`). `id` из этого поиска (`cmp_*`) используется
+>    backend'ом как `code` при best-effort lookup в
+>    `GET /me/roadmap.target.company`.
+> 3. DB-таблица `companies` (миграция `000012`) — единый каталог для автокомплита
+>    (`source: dataset`) **и** relevance-данных «паттерн × компания»
+>    (Pattern Atlas, `GET /me/patterns/atlas/*`).
 >
-> Унификация трёх источников на единой DB-таблице — открытый вопрос
-> (см. «Открытые вопросы для backend»); сейчас они намеренно разделены.
+> Каталог aliases (`manual`) намеренно отдельный от таблицы: он даёт курируемые
+> отображаемые имена и синонимы, а таблица — данные из dataset-сида.
 
 ## Dashboard
 
@@ -731,9 +743,10 @@ Response:
 `target` fields:
 
 - `company` — обогащённый объект целевой компании или `null`, если пользователь её не задавал.
-  - `code` — стабильный идентификатор из in-memory каталога `/companies/search`
-    (напр. `cmp_google`). Backend разрешает хранимое свободное имя в `code`
-    через этот каталог best-effort. `code: null`, когда имя не нашлось в каталоге.
+  - `code` — стабильный идентификатор из curated-каталога aliases
+    `/companies/search` (напр. `cmp_google`; тот же `id`, что в `manual`-результатах
+    поиска). Backend разрешает хранимое свободное имя в `code` через этот каталог
+    best-effort (`companies.Lookup`). `code: null`, когда имя не нашлось в каталоге.
   - `name` — отображаемое имя; совпадает с каноничным именем каталога при
     успешном lookup, иначе — хранимая строка как есть.
   - Источник persisted-значения — `users.target_company` (свободный текст);
