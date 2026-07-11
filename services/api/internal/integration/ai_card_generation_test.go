@@ -3,6 +3,7 @@
 package integration
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -86,6 +87,47 @@ func solveExtensionEvent(t *testing.T, h http.Handler, token, eventID, slug, tit
 			"difficulty": "easy",
 		},
 	})
+}
+
+// viewExtensionEvent records a "problem_viewed" event: unlike
+// solveExtensionEvent, this creates the problem row without marking it
+// solved, so it never triggers CardProvisioner — useful for tests that want
+// to control generation only through the manual POST /me/cards/generate
+// endpoint.
+func viewExtensionEvent(t *testing.T, h http.Handler, token, eventID, slug, title string) map[string]any {
+	t.Helper()
+	return postJSON(t, h, "/api/v1/extension/events", token, map[string]any{
+		"eventId":          eventID,
+		"source":           "leetcode",
+		"event":            "problem_viewed",
+		"occurredAt":       time.Now().Add(-time.Hour).UTC().Format(time.RFC3339),
+		"extensionVersion": "integration",
+		"problem": map[string]any{
+			"externalId": slug,
+			"title":      title,
+			"url":        "https://leetcode.com/problems/" + slug + "/",
+			"difficulty": "easy",
+		},
+	})
+}
+
+// postJSONRaw is like postJSON but returns the raw status code instead of
+// asserting success, for endpoints exercised across multiple status codes
+// (202/200/404/503).
+func postJSONRaw(t *testing.T, h http.Handler, path, token string, payload map[string]any) (map[string]any, int) {
+	t.Helper()
+	b, err := json.Marshal(payload)
+	require.NoError(t, err)
+	req := httptest.NewRequest(http.MethodPost, path, bytes.NewReader(b))
+	req.Header.Set("Content-Type", "application/json")
+	if token != "" {
+		req.Header.Set("Authorization", "Bearer "+token)
+	}
+	w := httptest.NewRecorder()
+	h.ServeHTTP(w, req)
+	var out map[string]any
+	_ = json.Unmarshal(w.Body.Bytes(), &out)
+	return out, w.Code
 }
 
 // pollProblemCards polls GET /me/problems/{id}/cards until status is no
@@ -246,6 +288,7 @@ func TestAICardGeneration_UnknownProblemReportsNone(t *testing.T) {
 		_, _ = pg.Pool.Exec(ctx, "DELETE FROM users WHERE email = $1", email)
 	})
 
+	before := time.Now().Add(-time.Second)
 	token := register(t, h, email)
 	submit := solveExtensionEvent(t, h, token, eventID, slug, "Some Obscure Problem")
 	problemID := int64(submit["data"].(map[string]any)["problemId"].(float64))
@@ -253,6 +296,18 @@ func TestAICardGeneration_UnknownProblemReportsNone(t *testing.T) {
 	status := pollProblemCards(t, h, token, problemID, 10*time.Second)
 	require.Equal(t, "none", status["status"])
 	require.Empty(t, status["cards"].([]any))
+
+	// Guards the ai_request_logs.status CHECK constraint (migration 000018):
+	// a model refusal is classified as status="refused" (provisioner.go
+	// logAndClassify), and LogGenerationRequest swallows its own insert error
+	// as a warning, so a constraint mismatch here would fail silently instead
+	// of failing this test — assert the row actually landed.
+	var refusedCount int
+	require.NoError(t, pg.Pool.QueryRow(ctx, `
+SELECT COUNT(*) FROM ai_request_logs
+WHERE feature = 'card_generation' AND status = 'refused' AND created_at >= $1`, before,
+	).Scan(&refusedCount))
+	require.GreaterOrEqual(t, refusedCount, 1, "a model refusal must still be recorded in ai_request_logs")
 }
 
 func TestAICardGeneration_UnknownProblemID404s(t *testing.T) {
@@ -269,4 +324,139 @@ func TestAICardGeneration_UnknownProblemID404s(t *testing.T) {
 	var body map[string]any
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &body))
 	require.Equal(t, "NOT_FOUND", body["error"].(map[string]any)["code"])
+}
+
+// TestAICardGeneration_ManualGenerateEndpoint exercises POST
+// /me/cards/generate end to end: a "viewed" (not solved) problem has no
+// cards and no generation in flight, so the manual endpoint is the only
+// trigger, letting this test tell "this call started generation" apart from
+// "the solved-ingest path already did".
+func TestAICardGeneration_ManualGenerateEndpoint(t *testing.T) {
+	h, pg, _, fake := newAIHarness(t)
+	ctx := context.Background()
+
+	suffix := time.Now().UTC().Format("20060102150405.000000000")
+	email := "ai-cards-manual-" + suffix + "@example.test"
+	eventID := "ai-cards-manual-event-" + suffix
+	slug := "ai-cards-manual-two-sum-" + suffix
+	t.Cleanup(func() {
+		_, _ = pg.Pool.Exec(ctx, "DELETE FROM extension_events WHERE idempotency_key = $1", eventID)
+		_, _ = pg.Pool.Exec(ctx, "DELETE FROM problems WHERE external_slug = $1", slug)
+		_, _ = pg.Pool.Exec(ctx, "DELETE FROM users WHERE email = $1", email)
+	})
+
+	token := register(t, h, email)
+
+	view := viewExtensionEvent(t, h, token, eventID, slug, "AI Cards Manual Two Sum")
+	problemID := int64(view["data"].(map[string]any)["problemId"].(float64))
+	require.Equal(t, 0, fake.Calls(), "a view event must not trigger generation")
+
+	body, status := postJSONRaw(t, h, "/api/v1/me/cards/generate", token, map[string]any{"problem_id": problemID})
+	require.Equal(t, http.StatusAccepted, status, "body: %+v", body)
+	require.Equal(t, "generating", body["data"].(map[string]any)["status"])
+
+	ready := pollProblemCards(t, h, token, problemID, 10*time.Second)
+	require.Equal(t, "ready", ready["status"])
+	require.Len(t, ready["cards"].([]any), 3)
+	require.Equal(t, 1, fake.Calls())
+
+	// Once ready, calling generate again must report "ready" immediately and
+	// must not call the LLM a second time (Redis cache / Postgres HasReadyCards).
+	body2, status2 := postJSONRaw(t, h, "/api/v1/me/cards/generate", token, map[string]any{"problem_id": problemID})
+	require.Equal(t, http.StatusOK, status2, "body: %+v", body2)
+	require.Equal(t, "ready", body2["data"].(map[string]any)["status"])
+	require.Equal(t, 1, fake.Calls(), "a second generate call for an already-ready problem must not call the LLM again")
+}
+
+func TestAICardGeneration_ManualGenerateEndpoint_UnknownProblemID404s(t *testing.T) {
+	h, _, _, _ := newAIHarness(t)
+	email := "ai-cards-manual-404-" + time.Now().UTC().Format("20060102150405.000000000") + "@example.test"
+	token := register(t, h, email)
+
+	body, status := postJSONRaw(t, h, "/api/v1/me/cards/generate", token, map[string]any{"problem_id": 999999999})
+	require.Equal(t, http.StatusNotFound, status)
+	require.Equal(t, "NOT_FOUND", body["error"].(map[string]any)["code"])
+}
+
+// TestAICardGeneration_PromptVersionBumpRegeneratesInPlace guards the P0
+// concern from PR #215 (and the reason cards.ai_prompt_version exists at
+// all): when the prompt version bumps, CardProvisioner must regenerate the
+// three global cards by UPDATE-in-place (same row ids, same source keys),
+// never delete+insert — review_schedules references cards.id with
+// ON DELETE CASCADE, so a delete+insert regen would silently wipe whichever
+// user's review history pointed at the old rows.
+func TestAICardGeneration_PromptVersionBumpRegeneratesInPlace(t *testing.T) {
+	h, pg, _, fake := newAIHarness(t)
+	ctx := context.Background()
+
+	suffix := time.Now().UTC().Format("20060102150405.000000000")
+	email := "ai-cards-bump-" + suffix + "@example.test"
+	eventID := "ai-cards-bump-event-" + suffix
+	slug := "ai-cards-bump-two-sum-" + suffix
+	t.Cleanup(func() {
+		_, _ = pg.Pool.Exec(ctx, "DELETE FROM extension_events WHERE idempotency_key = $1", eventID)
+		_, _ = pg.Pool.Exec(ctx, "DELETE FROM problems WHERE external_slug = $1", slug)
+		_, _ = pg.Pool.Exec(ctx, "DELETE FROM users WHERE email = $1", email)
+	})
+
+	token := register(t, h, email)
+	submit := solveExtensionEvent(t, h, token, eventID, slug, "AI Cards Bump Two Sum")
+	problemID := int64(submit["data"].(map[string]any)["problemId"].(float64))
+
+	ready := pollProblemCards(t, h, token, problemID, 10*time.Second)
+	require.Equal(t, "ready", ready["status"])
+	v1Cards := ready["cards"].([]any)
+	require.Len(t, v1Cards, 3)
+	v1IDByType := map[string]float64{}
+	for _, raw := range v1Cards {
+		c := raw.(map[string]any)
+		v1IDByType[c["type"].(string)] = c["id"].(float64)
+	}
+	require.Equal(t, 1, fake.Calls())
+
+	// Simulate real user progress on one of the generated cards.
+	var userID int64
+	require.NoError(t, pg.Pool.QueryRow(ctx, "SELECT id FROM users WHERE email = $1", email).Scan(&userID))
+	trackedCardID := int64(v1IDByType["pattern_recognition"])
+	var scheduleID int64
+	require.NoError(t, pg.Pool.QueryRow(ctx, `
+INSERT INTO review_schedules (user_id, card_id, next_review_at, interval_days, ease, stability, difficulty)
+VALUES ($1, $2, now(), 3, 2.6, 1.2, 5.5)
+RETURNING id`, userID, trackedCardID).Scan(&scheduleID))
+
+	// Bump the prompt version and change the canned content, then trigger
+	// regeneration through the manual endpoint.
+	fake.Version = "v2-bumped"
+	fake.Cards = []ai.GeneratedCard{
+		{Type: "pattern_recognition", Question: "v2 pattern question", Answer: "v2 pattern answer"},
+		{Type: "algorithm_mechanics", Question: "v2 mechanics question", Answer: "v2 mechanics answer"},
+		{Type: "edge_case", Question: "v2 edge question", Answer: "v2 edge answer"},
+	}
+
+	body, status := postJSONRaw(t, h, "/api/v1/me/cards/generate", token, map[string]any{"problem_id": problemID})
+	require.Equal(t, http.StatusAccepted, status, "body: %+v", body)
+	require.Equal(t, "generating", body["data"].(map[string]any)["status"])
+
+	require.Eventually(t, func() bool { return fake.Calls() == 2 }, 10*time.Second, 100*time.Millisecond,
+		"a prompt version bump must trigger exactly one regeneration")
+
+	var afterCount int64
+	require.NoError(t, pg.Pool.QueryRow(ctx, `
+SELECT COUNT(*) FROM cards WHERE problem_id = $1 AND user_id IS NULL AND created_by_ai = TRUE`, problemID,
+	).Scan(&afterCount))
+	require.Equal(t, int64(3), afterCount, "regeneration must update in place, not add rows")
+
+	var newQuestion, newVersion string
+	require.NoError(t, pg.Pool.QueryRow(ctx, `
+SELECT question, ai_prompt_version FROM cards WHERE id = $1`, trackedCardID,
+	).Scan(&newQuestion, &newVersion))
+	require.Equal(t, "v2 pattern question", newQuestion, "content must actually update, not silently keep serving v1 forever")
+	require.Equal(t, "v2-bumped", newVersion)
+
+	var scheduleStillExists bool
+	require.NoError(t, pg.Pool.QueryRow(ctx, `
+SELECT EXISTS(SELECT 1 FROM review_schedules WHERE id = $1 AND card_id = $2)`, scheduleID, trackedCardID,
+	).Scan(&scheduleStillExists))
+	require.True(t, scheduleStillExists,
+		"update-in-place must preserve the user's existing review_schedules row; a delete+insert regen would cascade-delete it")
 }

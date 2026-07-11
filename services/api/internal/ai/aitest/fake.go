@@ -6,6 +6,7 @@ package aitest
 import (
 	"context"
 	"sync"
+	"time"
 
 	"github.com/mxdtrip/freeburger/services/api/internal/ai"
 )
@@ -19,7 +20,11 @@ type Fake struct {
 	Err     error
 	Cards   []ai.GeneratedCard
 	Version string
-	calls   int
+	// Delay, if set, makes GenerateCards block for this long (or until ctx is
+	// done) before returning — useful for asserting a caller doesn't wait on
+	// generation (e.g. Provisioner.Ensure only ever kicks it off async).
+	Delay time.Duration
+	calls int
 }
 
 // New builds a Fake with the default three-card canned response.
@@ -27,10 +32,19 @@ func New() *Fake {
 	return &Fake{}
 }
 
-func (f *Fake) GenerateCards(_ context.Context, in ai.GenerateCardsInput) ([]ai.GeneratedCard, error) {
+func (f *Fake) GenerateCards(ctx context.Context, in ai.GenerateCardsInput) ([]ai.GeneratedCard, error) {
 	f.mu.Lock()
 	f.calls++
+	delay := f.Delay
 	f.mu.Unlock()
+
+	if delay > 0 {
+		select {
+		case <-time.After(delay):
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		}
+	}
 
 	if f.Err != nil {
 		return nil, f.Err

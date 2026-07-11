@@ -90,21 +90,29 @@ func (r *pgRepository) LogAssistantHintRequest(ctx context.Context, userID int64
 	return nil
 }
 
-// CountGlobalCards reports how many global (user_id IS NULL) AI-generated
-// cards already exist for a problem. Used by Provisioner to skip generation
-// that already happened.
-func (r *pgRepository) CountGlobalCards(ctx context.Context, problemID int64) (int64, error) {
-	count, err := r.q.CountGlobalAICardsByProblem(ctx, problemID)
+// HasReadyCards reports whether problemID already has global cards ready to
+// serve without new generation: seed content (never stale) or AI-generated
+// cards at the current prompt version. Used by Provisioner to skip
+// generation that isn't needed, and to detect a prompt-version bump that
+// makes previously-generated cards stale.
+func (r *pgRepository) HasReadyCards(ctx context.Context, problemID int64, promptVersion string) (bool, error) {
+	ready, err := r.q.HasReadyCards(ctx, db.HasReadyCardsParams{
+		ProblemID:       problemID,
+		AiPromptVersion: pgtype.Text{String: promptVersion, Valid: true},
+	})
 	if err != nil {
-		return 0, fmt.Errorf("ai: count global ai cards: %w", err)
+		return false, fmt.Errorf("ai: check ready cards: %w", err)
 	}
-	return count, nil
+	return ready, nil
 }
 
 // ProblemInfo fetches the problem context fed into the generation prompt.
 func (r *pgRepository) ProblemInfo(ctx context.Context, problemID int64) (ProblemInfo, error) {
 	row, err := r.q.GetProblemForGeneration(ctx, problemID)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ProblemInfo{}, ErrProblemNotFound
+		}
 		return ProblemInfo{}, fmt.Errorf("ai: get problem for generation: %w", err)
 	}
 	return ProblemInfo{

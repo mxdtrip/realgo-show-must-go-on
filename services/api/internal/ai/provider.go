@@ -14,6 +14,10 @@ var ErrUnknownProblem = errors.New("ai: unknown_problem")
 // the configured quota/rate limit was hit.
 var ErrQuotaExceeded = errors.New("ai: quota_exceeded")
 
+// ErrProblemNotFound is returned when a card-generation request targets a
+// problem_id that doesn't exist in the catalog.
+var ErrProblemNotFound = errors.New("ai: problem not found")
+
 // APIError wraps a non-2xx response from the upstream Gemini API so callers
 // can log the status code and response body separately from the generic
 // error string. This is what tells "GEMINI_API_KEY missing" apart from

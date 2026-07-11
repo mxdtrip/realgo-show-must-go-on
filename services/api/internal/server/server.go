@@ -38,10 +38,14 @@ type Deps struct {
 	Redis    *redis.Storage
 	Auth     *auth.Service
 	// CardProvisioner optionally triggers AI card generation when a user
-	// solves a problem with no existing cards. Nil disables generation
-	// (e.g. no AI provider key configured); wiring lives in cmd/api
-	// (production, via config.AI) or tests (a fake provider).
-	CardProvisioner extension.Provisioner
+	// solves a problem with no existing cards, and backs POST
+	// /me/cards/generate's manual trigger. Nil disables generation (e.g. no
+	// AI provider key configured); wiring lives in cmd/api (production, via
+	// config.AI) or tests (a fake provider). Concrete type (not an
+	// interface): a nil *ai.Provisioner boxed into an interface parameter
+	// would no longer compare equal to nil, so call sites below check this
+	// field directly before handing it to code that takes an interface.
+	CardProvisioner *ai.Provisioner
 	// AssistantProvider optionally serves guided extension hints. Nil keeps the
 	// route mounted but returns 503, so clients can show a friendly disabled
 	// state without learning anything about secrets/config.
@@ -84,7 +88,15 @@ func New(deps Deps) http.Handler {
 	quizRepo := quiz.NewRepository(deps.Postgres.Pool)
 	quizSvc := quiz.NewService(quizRepo, reviewService) // reviewService удовлетворяет quiz.ProblemRater (RateByProblemID)
 	quizHandler := quiz.NewHandler(quizSvc)
-	aiHandler := ai.NewHandler(ai.NewRepository(deps.Postgres.Pool))
+	// deps.CardProvisioner is a concrete *ai.Provisioner; boxing a nil one
+	// straight into the ai.CardGenerator interface parameter would produce a
+	// non-nil interface wrapping a nil pointer, so nil is only ever handed
+	// off explicitly here (see the CardProvisioner field doc).
+	var cardGenerator ai.CardGenerator
+	if deps.CardProvisioner != nil {
+		cardGenerator = deps.CardProvisioner
+	}
+	aiHandler := ai.NewHandler(ai.NewRepository(deps.Postgres.Pool), cardGenerator)
 	assistantHandler := ai.NewAssistantHandler(ai.NewRepository(deps.Postgres.Pool), deps.AssistantProvider)
 
 	// Browser-extension ingest: FSRS scheduler behind the Scheduler interface,
