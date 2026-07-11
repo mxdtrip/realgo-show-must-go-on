@@ -12,7 +12,6 @@ import {
 import { ApiError } from "../../../_api/types";
 import { useToast } from "../../../_toast";
 import { CabinetPanel, ProgressBar, StatusPill } from "../../_components";
-import { CabinetIcon } from "../../_icons";
 
 type LoadState = "loading" | "loaded" | "error";
 
@@ -25,7 +24,6 @@ type PracticeCopy = Readonly<{
   eyebrow: string;
   title: string;
   description: string;
-  summaryUnit: string;
   panelEyebrow: string;
   panelTitle: string;
   filterAll: string;
@@ -38,7 +36,6 @@ type PracticeCopy = Readonly<{
   remove: string;
   removed: string;
   removeFailed: string;
-  startPractice: string;
   empty: string;
   emptyAll: string;
   emptyAllCta: string;
@@ -150,8 +147,6 @@ export function PracticeProgressClient({ copy }: Readonly<{ copy: PracticeCopy }
     [rows, stageFilter],
   );
 
-  const countLabel = loadState === "loading" ? "..." : rows.length;
-
   return (
     <main className="cabinet-page">
       <section className="cabinet-page-head">
@@ -159,17 +154,6 @@ export function PracticeProgressClient({ copy }: Readonly<{ copy: PracticeCopy }
           <span className="cabinet-eyebrow">{copy.eyebrow}</span>
           <h1>{copy.title}</h1>
           <p>{copy.description}</p>
-        </div>
-        <div className="cabinet-page-head__actions">
-          <div>
-            <Link className="cabinet-cta" href="/cards/session?scope=practice">
-              {copy.startPractice}
-              <CabinetIcon name="arrow" />
-            </Link>
-          </div>
-          <span className="cabinet-next-hint">
-            <em>{countLabel}</em> {copy.summaryUnit}
-          </span>
         </div>
       </section>
 

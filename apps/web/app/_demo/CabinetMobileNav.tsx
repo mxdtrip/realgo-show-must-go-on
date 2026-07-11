@@ -16,8 +16,6 @@ type InterviewCopy = {
 type CabinetMobileNavProps = {
   ariaLabel: string;
   brand: string;
-  defaultInterviewDate: string;
-  defaultTimezone: string;
   groups: readonly CabinetNavGroup[];
   interviewCopy: InterviewCopy;
 };
@@ -41,8 +39,6 @@ function focusableElements(root: HTMLElement) {
 export function CabinetMobileNav({
   ariaLabel,
   brand,
-  defaultInterviewDate,
-  defaultTimezone,
   groups,
   interviewCopy,
 }: Readonly<CabinetMobileNavProps>) {
@@ -168,11 +164,7 @@ export function CabinetMobileNav({
                 <Link className="site-brand" href="/dashboard" onClick={closeAfterNavigation}>
                   {brand}
                 </Link>
-                <CabinetInterviewCountdown
-                  copy={interviewCopy}
-                  defaultInterviewDate={defaultInterviewDate}
-                  defaultTimezone={defaultTimezone}
-                />
+                <CabinetInterviewCountdown copy={interviewCopy} />
               </div>
               <button
                 ref={closeButtonRef}

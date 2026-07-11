@@ -403,6 +403,99 @@ const ATLAS_NODES = {
   },
 };
 
+// ---- Dashboard / roadmap / extension fixtures -----------------------------
+const dayKey = (agoDays) => {
+  const d = new Date();
+  d.setDate(d.getDate() - agoDays);
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+};
+
+const DASHBOARD = {
+  nextAction: {
+    type: "problem_review",
+    title: "2 повторений на сегодня",
+    description: "Binary Search · medium",
+    href: "/reviews",
+    dueAt: NOW_ISO,
+  },
+  stats: [
+    { key: "today_queue", label: "today queue", value: 2, displayValue: "2", hint: "1 задач, 1 карточек, 0 паттернов", tone: "accent" },
+    { key: "solved_total", label: "solved", value: 12, displayValue: "12", hint: "решено задач всего", tone: "default" },
+    { key: "streak", label: "streak", value: 4, displayValue: "4", hint: "дней подряд активности", tone: "accent" },
+    { key: "readiness", label: "readiness", value: 61, displayValue: "61%", hint: "оценка готовности", tone: "warning" },
+  ],
+  reviewPreview: [
+    {
+      id: "501",
+      type: "problem_review",
+      title: "Stub Problem: Koko Eating Bananas",
+      meta: "Binary Search · medium",
+      dueAt: NOW_ISO,
+      lastRating: "hard",
+    },
+  ],
+  weakPatterns: [
+    { id: "pat_binary_search", name: "Binary Search", confidence: 40, signal: "3 hard из 4 повторений" },
+  ],
+  activity: {
+    days: [
+      { date: dayKey(3), count: 2 },
+      { date: dayKey(1), count: 5 },
+      { date: dayKey(0), count: 3 },
+    ],
+    activeDays: 3,
+    totalReviews: 10,
+  },
+};
+
+const ROADMAP = {
+  overallProgress: 34,
+  target: { company: null, interviewDate: null },
+  weeks: [
+    {
+      id: "week_01",
+      label: "week 01",
+      title: "Arrays & Hashing",
+      progress: 100,
+      focus: "solve pattern problems and reviews",
+      status: "done",
+      topics: ["arrays_hashing"],
+    },
+    {
+      id: "week_02",
+      label: "week 02",
+      title: "Two Pointers",
+      progress: 40,
+      focus: "solve pattern problems and reviews",
+      status: "active",
+      topics: ["two_pointers"],
+    },
+  ],
+  patterns: [],
+};
+
+const EXTENSION_STATUS = {
+  connected: true,
+  platforms: [{ source: "leetcode", status: "connected", lastSyncAt: PAST_ISO }],
+  recentEvents: [
+    {
+      id: "evt-1",
+      source: "leetcode",
+      event: "problem_solved",
+      title: "Stub Problem: Koko Eating Bananas",
+      occurredAt: NOW_ISO,
+    },
+    {
+      id: "evt-2",
+      source: "leetcode",
+      event: "problem_viewed",
+      title: "Two Sum",
+      occurredAt: PAST_ISO,
+    },
+  ],
+};
+
 const server = createServer((req, res) => {
   // The web app hits this cross-origin (page :3000 -> api :8080) with a JSON
   // content-type, so the browser sends a preflight. No credentials are used
@@ -454,6 +547,25 @@ const server = createServer((req, res) => {
 
     if (req.method === "POST" && path === `${PREFIX}/auth/logout`) {
       return ok(res, { status: "ok" });
+    }
+
+    // ---- Dashboard / roadmap / extension fixtures ----------------------
+    if (req.method === "GET" && path === `${PREFIX}/me/dashboard`) {
+      const bearer = (req.headers.authorization ?? "").replace(/^Bearer\s+/i, "");
+      if (kindOf(bearer) !== "LIVE") return fail(res, 401, "unauthorized", "stub: session invalid");
+      return ok(res, DASHBOARD);
+    }
+
+    if (req.method === "GET" && path === `${PREFIX}/me/roadmap`) {
+      const bearer = (req.headers.authorization ?? "").replace(/^Bearer\s+/i, "");
+      if (kindOf(bearer) !== "LIVE") return fail(res, 401, "unauthorized", "stub: session invalid");
+      return ok(res, ROADMAP);
+    }
+
+    if (req.method === "GET" && path === `${PREFIX}/me/extension/status`) {
+      const bearer = (req.headers.authorization ?? "").replace(/^Bearer\s+/i, "");
+      if (kindOf(bearer) !== "LIVE") return fail(res, 401, "unauthorized", "stub: session invalid");
+      return ok(res, EXTENSION_STATUS);
     }
 
     // ---- Review hub fixtures (/reviews, /problems, /cards deck) --------

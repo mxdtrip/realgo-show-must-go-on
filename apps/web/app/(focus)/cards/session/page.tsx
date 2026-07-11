@@ -1,4 +1,3 @@
-import { cards } from "../../../(cabinet)/_mock";
 import { getDictionary } from "../../../_content/i18n";
 import { CardSessionClient } from "./_components/CardSessionClient";
 
@@ -14,7 +13,7 @@ export default async function CardSessionPage({
       brand={dictionary.cabinet.layout.brand}
       copy={session}
       errorFallback={session.sessionError}
-      mockCards={cards}
+      retryLabel={session.retry}
       scope={scope === "practice" ? "practice" : "due"}
     />
   );

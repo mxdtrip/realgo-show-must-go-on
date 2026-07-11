@@ -163,11 +163,9 @@ function PracticeToggle({
       if (active) {
         await removePracticeSubpattern(code);
         setActive(false);
-        toast.success(copy.removedToast);
       } else {
         await addPracticeSubpattern(code);
         setActive(true);
-        toast.success(copy.addedToast);
       }
     } catch (e: unknown) {
       toast.error(e instanceof ApiError ? e.message : copy.failed);
@@ -252,18 +250,20 @@ function SubpatternProfile({
               {copy.problems.difficultyLabel}: <em>{difficultyLine}</em>
             </p>
           ) : null}
+        </div>
+        <div className="pattern-profile__cta-col">
+          <Link className="pattern-profile__cta" href={`/patterns/${detail.code}/session`}>
+            <span className="pattern-profile__sub-head">
+              <span>{copy.cta.eyebrow}</span>
+              <span className="pattern-profile__sub-arrow" aria-hidden="true">
+                →
+              </span>
+            </span>
+            <span className="pattern-profile__sub-name">{copy.cta.title}</span>
+            <span className="pattern-profile__sub-note">{copy.cta.note}</span>
+          </Link>
           <PracticeToggle code={detail.code} copy={copy.practiceToggle} />
         </div>
-        <Link className="pattern-profile__cta" href={`/patterns/${detail.code}/session`}>
-          <span className="pattern-profile__sub-head">
-            <span>{copy.cta.eyebrow}</span>
-            <span className="pattern-profile__sub-arrow" aria-hidden="true">
-              →
-            </span>
-          </span>
-          <span className="pattern-profile__sub-name">{copy.cta.title}</span>
-          <span className="pattern-profile__sub-note">{copy.cta.note}</span>
-        </Link>
       </header>
 
       {material ? (

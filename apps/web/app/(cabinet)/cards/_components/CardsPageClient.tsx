@@ -1,13 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import { ApiError } from "../../../_api/types";
-import { cardTypeLabel, getCardSession, getCards, type CardListItem } from "../../../_api/cards";
-import { getPractice } from "../../../_api/practice";
+import { cardTypeLabel, getCards, type CardListItem } from "../../../_api/cards";
 import { CabinetPanel, StatusPill } from "../../_components";
-import { CabinetIcon } from "../../_icons";
 
 type Tone = "default" | "accent" | "success" | "warning" | "danger";
 type LoadState = "loading" | "loaded" | "error";
@@ -18,11 +15,7 @@ type CardsPageCopy = Readonly<{
   description: string;
   panelEyebrow: string;
   panelTitle: string;
-  start: string;
   cardUnit: string;
-  dueLabel: string;
-  dueNone: string;
-  estimatedUnit: string;
   searchPlaceholder: string;
   searchAria: string;
   filterAll: string;
@@ -39,15 +32,6 @@ type CardsPageCopy = Readonly<{
   errorTitle: string;
   retry: string;
   loadMore: string;
-  launcher: Readonly<{
-    eyebrow: string;
-    title: string;
-    metaUnits: Readonly<{ subpatterns: string; cards: string; minutes: string }>;
-    emptyTitle: string;
-    emptyMeta: string;
-    start: string;
-    manage: string;
-  }>;
 }>;
 
 const nextReviewFormatter = new Intl.DateTimeFormat("ru-RU", {
@@ -77,47 +61,6 @@ export function CardsPageClient({ copy }: Readonly<{ copy: CardsPageCopy }>) {
   const [query, setQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [revealedId, setRevealedId] = useState<number | null>(null);
-  const [live, setLive] = useState<{ dueCount: number; estimatedMinutes: number } | null>(null);
-  const [practice, setPractice] = useState<{
-    subpatterns: number;
-    cards: number;
-    minutes: number;
-  } | null>(null);
-
-  // Авторитетные цифры «сколько к повторению» — из сессионного эндпоинта,
-  // той же выборки, которую откроет CTA. Ошибка не критична: остаётся
-  // оценка по загруженной колоде.
-  useEffect(() => {
-    const controller = new AbortController();
-    getCardSession({ scope: "due" }, controller.signal)
-      .then((session) => {
-        setLive({ dueCount: session.cards.length, estimatedMinutes: session.estimatedMinutes });
-      })
-      .catch(() => {
-        // Фолбэк: считаем из списка ниже.
-      });
-    return () => controller.abort();
-  }, []);
-
-  // Лаунчер практики: те же цифры, которые увидит /cards/session?scope=practice.
-  useEffect(() => {
-    const controller = new AbortController();
-    Promise.all([
-      getPractice(controller.signal),
-      getCardSession({ scope: "practice" }, controller.signal),
-    ])
-      .then(([practiceSet, session]) => {
-        setPractice({
-          subpatterns: practiceSet.subpatterns.length,
-          cards: session.cards.length,
-          minutes: session.estimatedMinutes,
-        });
-      })
-      .catch(() => {
-        // Лаунчер показывает пустое состояние.
-      });
-    return () => controller.abort();
-  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -155,13 +98,6 @@ export function CardsPageClient({ copy }: Readonly<{ copy: CardsPageCopy }>) {
     }
   };
 
-  const deckDueCount = useMemo(
-    () => cards.filter((card) => card.status === "due" || card.status === "new").length,
-    [cards],
-  );
-  const dueCount = live?.dueCount ?? deckDueCount;
-  const estimatedMinutes = live?.estimatedMinutes ?? Math.ceil(deckDueCount * 0.75);
-
   const visible = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return cards.filter((card) => {
@@ -185,50 +121,7 @@ export function CardsPageClient({ copy }: Readonly<{ copy: CardsPageCopy }>) {
           <h1>{copy.title}</h1>
           <p>{copy.description}</p>
         </div>
-        <div className="cabinet-page-head__actions">
-          <div>
-            <Link className="cabinet-cta" href="/cards/session">
-              {copy.start}
-              <CabinetIcon name="arrow" />
-            </Link>
-          </div>
-          <span className="cabinet-next-hint">
-            {loadState === "loaded" && dueCount === 0 ? (
-              copy.dueNone
-            ) : (
-              <>
-                <em>{loadState === "loading" ? "..." : dueCount}</em> {copy.dueLabel} · ~
-                {estimatedMinutes} {copy.estimatedUnit}
-              </>
-            )}
-          </span>
-        </div>
       </section>
-
-      <aside className="next-up next-up--wide">
-        <div className="next-up__body">
-          <span className="next-up__eyebrow">{copy.launcher.eyebrow}</span>
-          <strong className="next-up__title">
-            {practice && practice.subpatterns > 0 ? copy.launcher.title : copy.launcher.emptyTitle}
-          </strong>
-          <span className="next-up__meta">
-            {practice && practice.subpatterns > 0
-              ? `${practice.subpatterns} ${copy.launcher.metaUnits.subpatterns} · ${practice.cards} ${copy.launcher.metaUnits.cards} · ~${practice.minutes} ${copy.launcher.metaUnits.minutes}`
-              : copy.launcher.emptyMeta}
-          </span>
-        </div>
-        <div className="next-up__actions">
-          {practice && practice.subpatterns > 0 ? (
-            <Link className="cabinet-cta" href="/cards/session?scope=practice">
-              {copy.launcher.start}
-              <CabinetIcon name="arrow" />
-            </Link>
-          ) : null}
-          <Link className="cabinet-ghost-link" href="/problems">
-            {copy.launcher.manage}
-          </Link>
-        </div>
-      </aside>
 
       <div className="cabinet-toolbar">
         <div className="cabinet-search">

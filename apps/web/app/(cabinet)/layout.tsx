@@ -21,7 +21,6 @@ export default function CabinetLayout({
   const dictionary = getDictionary();
   const copy = dictionary.cabinet.layout;
   const shellCopy = dictionary.cabinet.shell;
-  const profileCopy = dictionary.cabinet.pages.settings.profile;
 
   return (
     <CabinetGuard>
@@ -34,11 +33,7 @@ export default function CabinetLayout({
             <Link className="site-brand" href="/dashboard">
               {copy.brand}
             </Link>
-            <CabinetInterviewCountdown
-              copy={copy.profile.interview}
-              defaultInterviewDate={profileCopy.interviewDate}
-              defaultTimezone={profileCopy.timezone}
-            />
+            <CabinetInterviewCountdown copy={copy.profile.interview} />
           </div>
 
           <CabinetNav groups={copy.navGroups} ariaLabel={copy.navAria} />
@@ -51,8 +46,6 @@ export default function CabinetLayout({
             <CabinetMobileNav
               ariaLabel={copy.navAria}
               brand={copy.brand}
-              defaultInterviewDate={profileCopy.interviewDate}
-              defaultTimezone={profileCopy.timezone}
               groups={copy.navGroups}
               interviewCopy={copy.profile.interview}
             />
