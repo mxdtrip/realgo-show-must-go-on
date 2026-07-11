@@ -131,6 +131,31 @@ func (q *Queries) DeleteCard(ctx context.Context, arg DeleteCardParams) (int64, 
 	return result.RowsAffected(), nil
 }
 
+const enqueueCardsForPatternIfAbsent = `-- name: EnqueueCardsForPatternIfAbsent :exec
+INSERT INTO review_schedules (
+    user_id, card_id, next_review_at, interval_days,
+    ease, stability, difficulty, review_count, algorithm, state
+)
+SELECT $1::bigint, c.id, NOW(), 1, 2.5, 1.0, 5.0, 0, 'fsrs', 0
+FROM cards c
+WHERE c.pattern_id = $2::bigint AND c.user_id IS NULL
+ON CONFLICT (user_id, card_id) WHERE card_id IS NOT NULL DO NOTHING
+`
+
+type EnqueueCardsForPatternIfAbsentParams struct {
+	UserID    int64
+	PatternID int64
+}
+
+// Eagerly seeds a review_schedules row (state=new, due now) for every global
+// card of a subpattern the moment it's added to practice, so the deck/due
+// lists reflect practice membership immediately instead of waiting for the
+// lazy schedule row CreateCardReviewSchedule only creates on first Rate().
+func (q *Queries) EnqueueCardsForPatternIfAbsent(ctx context.Context, arg EnqueueCardsForPatternIfAbsentParams) error {
+	_, err := q.db.Exec(ctx, enqueueCardsForPatternIfAbsent, arg.UserID, arg.PatternID)
+	return err
+}
+
 const getAccessibleCard = `-- name: GetAccessibleCard :one
 SELECT c.id
 FROM cards c

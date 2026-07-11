@@ -270,6 +270,20 @@ ON CONFLICT (user_id, card_id) WHERE card_id IS NOT NULL DO UPDATE
 SET updated_at = review_schedules.updated_at
 RETURNING id;
 
+-- name: EnqueueCardsForPatternIfAbsent :exec
+-- Eagerly seeds a review_schedules row (state=new, due now) for every global
+-- card of a subpattern the moment it's added to practice, so the deck/due
+-- lists reflect practice membership immediately instead of waiting for the
+-- lazy schedule row CreateCardReviewSchedule only creates on first Rate().
+INSERT INTO review_schedules (
+    user_id, card_id, next_review_at, interval_days,
+    ease, stability, difficulty, review_count, algorithm, state
+)
+SELECT sqlc.arg(user_id)::bigint, c.id, NOW(), 1, 2.5, 1.0, 5.0, 0, 'fsrs', 0
+FROM cards c
+WHERE c.pattern_id = sqlc.arg(pattern_id)::bigint AND c.user_id IS NULL
+ON CONFLICT (user_id, card_id) WHERE card_id IS NOT NULL DO NOTHING;
+
 -- name: CountCardSessionAttempts :one
 SELECT COUNT(*)::integer
 FROM review_attempts

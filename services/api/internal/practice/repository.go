@@ -22,11 +22,12 @@ type Subpattern struct {
 }
 
 type Repository struct {
-	q *db.Queries
+	pool *pgxpool.Pool
+	q    *db.Queries
 }
 
 func NewRepository(pool *pgxpool.Pool) *Repository {
-	return &Repository{q: db.New(pool)}
+	return &Repository{pool: pool, q: db.New(pool)}
 }
 
 func (r *Repository) List(ctx context.Context, userID int64) ([]Subpattern, error) {
@@ -45,22 +46,51 @@ func (r *Repository) List(ctx context.Context, userID int64) ([]Subpattern, erro
 	return items, nil
 }
 
-// Add включает подпаттерн в практику (идемпотентно). ErrSubpatternNotFound,
-// если такого кода нет или узел не является подпаттерном.
-func (r *Repository) Add(ctx context.Context, userID int64, code string) error {
-	patternID, err := r.q.GetSubpatternIDByCode(ctx, code)
+// Add включает подпаттерн в практику (идемпотентно) и сразу ставит все его
+// карточки в личную очередь повторения пользователя (review_schedules),
+// чтобы практика подпаттерна не ждала первой оценки карточки по одной.
+// ErrSubpatternNotFound, если такого кода нет или узел не является
+// подпаттерном.
+func (r *Repository) Add(ctx context.Context, userID int64, code string) (err error) {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("practice: begin tx: %w", err)
+	}
+	committed := false
+	defer func() {
+		if committed {
+			return
+		}
+		if rollbackErr := tx.Rollback(ctx); rollbackErr != nil {
+			err = errors.Join(err, fmt.Errorf("practice: rollback tx: %w", rollbackErr))
+		}
+	}()
+
+	q := r.q.WithTx(tx)
+	patternID, err := q.GetSubpatternIDByCode(ctx, code)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return ErrSubpatternNotFound
 	}
 	if err != nil {
 		return fmt.Errorf("practice: resolve subpattern: %w", err)
 	}
-	if err := r.q.AddPracticeSubpattern(ctx, db.AddPracticeSubpatternParams{
+	if err := q.AddPracticeSubpattern(ctx, db.AddPracticeSubpatternParams{
 		UserID:    userID,
 		PatternID: patternID,
 	}); err != nil {
 		return fmt.Errorf("practice: add: %w", err)
 	}
+	if err := q.EnqueueCardsForPatternIfAbsent(ctx, db.EnqueueCardsForPatternIfAbsentParams{
+		UserID:    userID,
+		PatternID: patternID,
+	}); err != nil {
+		return fmt.Errorf("practice: enqueue cards: %w", err)
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("practice: commit tx: %w", err)
+	}
+	committed = true
 	return nil
 }
 
