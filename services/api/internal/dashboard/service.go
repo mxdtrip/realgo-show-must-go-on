@@ -12,10 +12,13 @@ import (
 const (
 	reviewPreviewLimit = 5
 	weakPatternsLimit  = 5
+	// activityWindowDays matches the dashboard heatmap: 4 rows × 14 columns.
+	activityWindowDays = 56
 )
 
 type repository interface {
 	GetMetrics(ctx context.Context, userID int64) (Metrics, error)
+	ListActivity(ctx context.Context, userID int64, days int32) ([]ActivityDay, error)
 	ListReviewPreview(ctx context.Context, userID int64, limit int32) ([]ReviewPreview, error)
 	GetNextReview(ctx context.Context, userID int64) (*ReviewPreview, error)
 }
@@ -49,6 +52,11 @@ func (s *Service) Get(ctx context.Context, userID int64) (Response, error) {
 		return Response{}, fmt.Errorf("dashboard: get next review: %w", err)
 	}
 
+	activityDays, err := s.repo.ListActivity(ctx, userID, activityWindowDays)
+	if err != nil {
+		return Response{}, fmt.Errorf("dashboard: list activity: %w", err)
+	}
+
 	weakPatterns := make([]patterns.WeakPattern, 0)
 	if s.weakRepo != nil {
 		weakPatterns, err = s.weakRepo.ListWeak(ctx, userID, weakPatternsLimit)
@@ -63,7 +71,23 @@ func (s *Service) Get(ctx context.Context, userID int64) (Response, error) {
 		Stats:         buildStats(metrics),
 		ReviewPreview: reviewPreview,
 		WeakPatterns:  mapWeakPatterns(weakPatterns),
+		Activity:      buildActivity(activityDays),
 	}, nil
+}
+
+func buildActivity(days []ActivityDay) Activity {
+	total := 0
+	for _, day := range days {
+		total += day.Count
+	}
+	if days == nil {
+		days = []ActivityDay{}
+	}
+	return Activity{
+		Days:         days,
+		ActiveDays:   len(days),
+		TotalReviews: total,
+	}
 }
 
 func buildStats(metrics Metrics) []Stat {

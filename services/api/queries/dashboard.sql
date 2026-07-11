@@ -80,6 +80,34 @@ SELECT
     COALESCE((SELECT readiness FROM progress), 0)::integer AS readiness,
     COALESCE((SELECT current_streak FROM streak), 0)::integer AS current_streak;
 
+-- name: ListDashboardActivity :many
+-- Per-day activity counts for the heatmap: review attempts + problem solves,
+-- bucketed by the user's timezone, newest window of sqlc.arg(days) days.
+WITH settings AS (
+    SELECT COALESCE(NULLIF(u.timezone, ''), 'UTC')::text AS tz
+    FROM users u
+    WHERE u.id = sqlc.arg(user_id)::bigint
+),
+today AS (
+    SELECT (NOW() AT TIME ZONE COALESCE((SELECT tz FROM settings), 'UTC'))::date AS day
+),
+events AS (
+    SELECT (ra.created_at AT TIME ZONE COALESCE((SELECT tz FROM settings), 'UTC'))::date AS activity_day
+    FROM review_attempts ra
+    WHERE ra.user_id = sqlc.arg(user_id)::bigint
+    UNION ALL
+    SELECT (upp.solved_at AT TIME ZONE COALESCE((SELECT tz FROM settings), 'UTC'))::date AS activity_day
+    FROM user_problem_progress upp
+    WHERE upp.user_id = sqlc.arg(user_id)::bigint AND upp.solved_at IS NOT NULL
+)
+SELECT events.activity_day::date AS day, COUNT(*)::integer AS count
+FROM events, today
+WHERE events.activity_day IS NOT NULL
+  AND events.activity_day <= today.day
+  AND events.activity_day > today.day - sqlc.arg(days)::integer
+GROUP BY events.activity_day
+ORDER BY events.activity_day ASC;
+
 -- name: ListDashboardReviewPreview :many
 SELECT
     rs.id,
