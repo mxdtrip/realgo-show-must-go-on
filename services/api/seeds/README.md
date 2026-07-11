@@ -184,9 +184,10 @@ cards:
 `type` должен быть одним из значений контракта Cards:
 `pattern_recognition`, `algorithm_mechanics`, `edge_case`.
 
-Seed идемпотентный: перед вставкой он удаляет только карточки своего source
-`realgo_demo_cards:*`, затем заново вставляет manifest. Если база ещё содержит
-legacy constraint `cards.card_type_target_check` со старыми типами
+Seed идемпотентный: существующие глобальные карточки обновляются на месте по
+стабильному `source`, новые вставляются, а удаляются только карточки, исчезнувшие
+из manifest. Поэтому повторный запуск сохраняет card ID и review history. Если
+база ещё содержит legacy constraint `cards.card_type_target_check` со старыми типами
 `problem|pattern|concept`, загрузчик остановится с понятной ошибкой: этот
 constraint должен быть исправлен миграцией вне seed-скриптов.
 
