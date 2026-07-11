@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { CSSProperties } from "react";
 
 import { getDictionary } from "../_content/i18n";
+import { FlipReviewCard } from "../components/FlipReviewCard";
 import { MemoryExtensionDemo } from "../components/MemoryExtensionDemo";
 import { ScrollReveal } from "../components/ScrollReveal";
 import { ScrollVideoBackground } from "../components/ScrollVideoBackground";
@@ -117,16 +118,17 @@ export default function Home() {
         </div>
         <div className="review-grid">
           {copy.reviewCards.map(([type, front, back], index) => (
-            <article
-              className="review-card"
-              data-reveal="tilt"
-              data-reveal-delay={index * 100}
-              key={type}
-            >
-              <span>{type}</span>
-              <h3>{front}</h3>
-              <p>{back}</p>
-            </article>
+            <div className="review-card" data-reveal="tilt" data-reveal-delay={index * 100} key={type}>
+              <FlipReviewCard
+                type={type}
+                front={front}
+                back={back}
+                flipAria={{
+                  showAnswer: copy.sections.reviews.flipToAnswer,
+                  showQuestion: copy.sections.reviews.flipToQuestion,
+                }}
+              />
+            </div>
           ))}
         </div>
       </section>
