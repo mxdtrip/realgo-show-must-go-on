@@ -83,4 +83,10 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile prod-d
 - [Browser Extension](apps/extension/README.md)
 - [Go API](services/api/README.md)
 
+Продукт: система подготовки к собеседованиям (realgo) — личный кабинет, Pattern Atlas
+(22 семейства / 111 субпаттернов с Company Overlay), карточки повторения с AI-генерацией,
+квизы, AI-подсказки ассистента и браузерное расширение, которое ловит submit на HackerRank и
+кладёт задачу в персональную систему повторений. Полный контракт backend API — в
+[docs/cabinet-api-contract.md](docs/cabinet-api-contract.md).
+
 Правила создания веток, коммитов и pull request описаны в [CONTRIBUTING.md](CONTRIBUTING.md).
