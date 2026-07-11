@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { CSSProperties } from "react";
+import type { CSSProperties, PointerEvent as ReactPointerEvent } from "react";
 import { useRouter } from "next/navigation";
 
 import { updateProfile } from "../../../_api/account";
@@ -9,6 +9,13 @@ import { useAuth } from "../../../_api/AuthProvider";
 import { searchCompanies } from "../../../_api/companies";
 import { ApiError } from "../../../_api/types";
 import { getDictionary, onboardingApiCopy } from "../../../_content/i18n";
+import { platformOptions, type PlatformId } from "../../../_profile/platforms";
+import {
+  generateRoadmap,
+  saveRoadmap,
+  weeksUntil,
+  type RoadmapResult,
+} from "../../../_profile/roadmapGenerator";
 
 const fallbackCompanies = [
   "Amazon",
@@ -23,29 +30,9 @@ const fallbackCompanies = [
   "Yandex",
 ] as const;
 
-// Координаты x/y раскидывают темы по полю: клик «притягивает» тему в центр
-// (CSS-переход --topic-x/y → --topic-center-x/y).
-const algorithmTopics = [
-  { id: "arrays", label: "Arrays & Hashing", x: 8, y: 16 },
-  { id: "two-pointers", label: "Two Pointers", x: 72, y: 12 },
-  { id: "sliding-window", label: "Sliding Window", x: 5, y: 42 },
-  { id: "stack", label: "Stack", x: 78, y: 38 },
-  { id: "binary-search", label: "Binary Search", x: 13, y: 72 },
-  { id: "linked-list", label: "Linked List", x: 70, y: 68 },
-  { id: "trees", label: "Trees", x: 23, y: 9 },
-  { id: "graphs", label: "Graphs", x: 82, y: 82 },
-  { id: "heap", label: "Heap / Priority Queue", x: 2, y: 88 },
-  { id: "backtracking", label: "Backtracking", x: 84, y: 58 },
-  { id: "dp", label: "Dynamic Programming", x: 16, y: 55 },
-  { id: "greedy", label: "Greedy", x: 75, y: 24 },
-  { id: "intervals", label: "Intervals", x: 27, y: 84 },
-  { id: "tries", label: "Tries", x: 63, y: 7 },
-  { id: "bit", label: "Bit Manipulation", x: 88, y: 6 },
-] as const;
+type OnboardingStep = "platform" | "company" | "date" | "roadmap" | "welcome";
 
-type OnboardingStep = "company" | "date" | "topics" | "goal" | "welcome";
-
-const steps: OnboardingStep[] = ["company", "date", "topics", "goal"];
+const steps: OnboardingStep[] = ["platform", "company", "date", "roadmap"];
 const onboardingStorageKey = "realgo:onboarding-profile:v1";
 
 const WHEEL_ITEM_HEIGHT = 44;
@@ -67,21 +54,6 @@ function fullDateLabel(iso: string, locale = "ru-RU") {
   const date = new Date(`${iso}T00:00:00`);
   if (Number.isNaN(date.getTime())) return iso;
   return new Intl.DateTimeFormat(locale, { day: "numeric", month: "long", year: "numeric" }).format(date);
-}
-
-function getCenterPosition(index: number) {
-  const positions = [
-    [50, 47],
-    [37, 42],
-    [63, 42],
-    [42, 57],
-    [58, 57],
-    [50, 32],
-    [50, 66],
-    [31, 54],
-    [69, 54],
-  ];
-  return positions[index % positions.length] ?? [50, 50];
 }
 
 function splitCompanies(value: string) {
@@ -118,6 +90,17 @@ function WheelColumn({
   const listRef = useRef<HTMLDivElement | null>(null);
   const settleTimer = useRef(0);
   const [centered, setCentered] = useState(value);
+  const drag = useRef<{ startY: number; startScrollTop: number; moved: boolean } | null>(null);
+  // dragging — кнопка мыши физически зажата (курсор grabbing, снап выключен);
+  // momentum — инерция докатывает колесо после отпускания (снап выключен,
+  // но курсор уже обычный — рука пользователя ни на чём не «висит»).
+  const [dragging, setDragging] = useState(false);
+  const [momentum, setMomentum] = useState(false);
+  // Последние точки движения (время + Y) — на них считаем скорость в момент
+  // отпускания, чтобы после резкого протягивания колесо докатилось по инерции,
+  // а не встало ровно там, где отпустили палец/кнопку мыши.
+  const velocitySamples = useRef<{ time: number; y: number }[]>([]);
+  const momentumFrame = useRef(0);
 
   useEffect(() => {
     setCentered(value);
@@ -131,7 +114,13 @@ function WheelColumn({
     if (Math.abs(el.scrollTop - target) > 1) el.scrollTo({ top: target });
   }, [value, items]);
 
-  useEffect(() => () => window.clearTimeout(settleTimer.current), []);
+  useEffect(
+    () => () => {
+      window.clearTimeout(settleTimer.current);
+      cancelAnimationFrame(momentumFrame.current);
+    },
+    [],
+  );
 
   const handleScroll = useCallback(() => {
     const el = listRef.current;
@@ -148,10 +137,115 @@ function WheelColumn({
     }, 120);
   }, [items, onChange, value]);
 
+  // Тач/трекпад скроллят колесо нативно, но у мыши нет жеста «свайп» —
+  // без этого перетащить колесо можно только по одному клику на пункт.
+  // Pointer Events покрывают мышь и тач одним кодом; сам скролл (снап,
+  // settle-таймер) остаётся в handleScroll, drag просто двигает scrollTop.
+  const handlePointerDown = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.pointerType === "touch") return; // тач уже скроллится нативно
+    const el = listRef.current;
+    if (!el) return;
+    cancelAnimationFrame(momentumFrame.current);
+    setMomentum(false);
+    drag.current = { startY: event.clientY, startScrollTop: el.scrollTop, moved: false };
+    velocitySamples.current = [{ time: performance.now(), y: event.clientY }];
+    el.setPointerCapture(event.pointerId);
+    setDragging(true);
+  }, []);
+
+  const handlePointerMove = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
+    const el = listRef.current;
+    const state = drag.current;
+    if (!el || !state) return;
+    // pointerup/pointercancel не всегда долетают (отпустили за пределами
+    // окна и т.п.) — buttons===0 значит кнопка уже не зажата, самолечим
+    // застрявший drag, а не тащим колесо от простого движения курсора.
+    if (event.buttons !== 1) {
+      drag.current = null;
+      setDragging(false);
+      return;
+    }
+    const delta = event.clientY - state.startY;
+    if (Math.abs(delta) > 3) state.moved = true;
+    el.scrollTop = state.startScrollTop - delta;
+
+    const now = performance.now();
+    velocitySamples.current.push({ time: now, y: event.clientY });
+    // Скорость нужна только по самому концу протягивания — старые точки
+    // (>100мс) выкидываем, иначе долгое неспешное движение перед резким
+    // финальным броском смажет расчёт инерции.
+    velocitySamples.current = velocitySamples.current.filter((sample) => now - sample.time <= 100);
+  }, []);
+
+  // Инерция после резкого протягивания: докатываем колесо по скорости в
+  // момент отпускания и гасим её экспоненциально, как нативный momentum-скролл.
+  const runMomentum = useCallback(
+    (initialVelocity: number) => {
+      const el = listRef.current;
+      if (!el) return;
+      let velocity = initialVelocity; // px/ms, знак — направление scrollTop
+      let lastTime = performance.now();
+
+      const step = () => {
+        const now = performance.now();
+        const dt = now - lastTime;
+        lastTime = now;
+
+        const maxScroll = el.scrollHeight - el.clientHeight;
+        el.scrollTop = Math.max(0, Math.min(maxScroll, el.scrollTop + velocity * dt));
+        velocity *= Math.pow(0.995, dt);
+
+        const atBound = el.scrollTop <= 0 || el.scrollTop >= maxScroll;
+        if (Math.abs(velocity) < 0.02 || atBound) {
+          setMomentum(false);
+          return;
+        }
+        momentumFrame.current = requestAnimationFrame(step);
+      };
+
+      setMomentum(true);
+      momentumFrame.current = requestAnimationFrame(step);
+    },
+    [],
+  );
+
+  const endDrag = useCallback(
+    (event: ReactPointerEvent<HTMLDivElement>) => {
+      if (!drag.current) return;
+      listRef.current?.releasePointerCapture(event.pointerId);
+      drag.current = null;
+      setDragging(false);
+
+      const samples = velocitySamples.current;
+      const first = samples[0];
+      const last = samples[samples.length - 1];
+      const dt = last && first ? last.time - first.time : 0;
+      if (last && first && dt > 0) {
+        const velocity = -(last.y - first.y) / dt; // знак: см. scrollTop = startScrollTop - delta
+        if (Math.abs(velocity) > 0.05) runMomentum(velocity);
+      }
+    },
+    [runMomentum],
+  );
+
   return (
     <div className="onboarding-wheel" role="listbox" aria-label={ariaLabel}>
       <div className="onboarding-wheel__band" aria-hidden="true" />
-      <div className="onboarding-wheel__list" ref={listRef} onScroll={handleScroll}>
+      <div
+        className={[
+          "onboarding-wheel__list",
+          dragging ? "is-dragging" : "",
+          !dragging && momentum ? "is-momentum" : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+        ref={listRef}
+        onScroll={handleScroll}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={endDrag}
+        onPointerCancel={endDrag}
+      >
         {items.map((item) => (
           <button
             key={item.key}
@@ -159,7 +253,10 @@ function WheelColumn({
             role="option"
             aria-selected={item.key === value}
             className={item.key === centered ? "is-active" : undefined}
-            onClick={() => onChange(item.key)}
+            onClick={() => {
+              if (drag.current?.moved) return;
+              onChange(item.key);
+            }}
           >
             {item.label}
           </button>
@@ -175,14 +272,11 @@ export default function OnboardingProfilePage() {
   const dictionary = getDictionary();
   const copy = dictionary.onboarding.profile;
 
+  const [selectedPlatform, setSelectedPlatform] = useState<PlatformId | "">("");
   const [companySuggestions, setCompanySuggestions] = useState<string[]>([...fallbackCompanies]);
   const [companyInput, setCompanyInput] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
-  const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
-  const [prepGoal, setPrepGoal] = useState("");
-  const [grade, setGrade] = useState("");
-  const [referralSource, setReferralSource] = useState("");
-  const [step, setStep] = useState<OnboardingStep>("company");
+  const [step, setStep] = useState<OnboardingStep>("platform");
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
 
@@ -201,10 +295,10 @@ export default function OnboardingProfilePage() {
   const currentStepIndex = Math.max(0, steps.indexOf(step));
   const selectedCompanies = useMemo(() => splitCompanies(companyInput), [companyInput]);
   const currentStepHasValue =
+    (step === "platform" && selectedPlatform.length > 0) ||
     (step === "company" && selectedCompanies.length > 0) ||
     (step === "date" && selectedDate.length > 0) ||
-    (step === "topics" && selectedTopics.length > 0) ||
-    step === "goal";
+    step === "roadmap";
 
   const today = useMemo(() => new Date(), []);
   const selected = useMemo(
@@ -302,69 +396,98 @@ export default function OnboardingProfilePage() {
     };
   }, [companyInput]);
 
-  const toggleTopic = useCallback((topicId: string) => {
-    setSelectedTopics((current) =>
-      current.includes(topicId) ? current.filter((item) => item !== topicId) : [...current, topicId],
-    );
-  }, []);
-
-  const saveProfile = useCallback(
-    async (topics = selectedTopics, referral = referralSource) => {
-      setSaving(true);
-      setSaveError("");
-      try {
-        const timezone =
-          Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
-        await updateProfile({
-          target_company: selectedCompanies[0] ?? "",
-          interview_date: selectedDate ? `${selectedDate}T09:00:00Z` : undefined,
-          prep_goal: prepGoal.trim() || undefined,
-          grade: grade || undefined,
-          timezone,
-          onboarding_completed: true,
-        });
-        // Topics and referral have no backend field — keep them in localStorage.
-        window.localStorage.setItem(
-          onboardingStorageKey,
-          JSON.stringify({ topics, referral: referral || null, savedAt: new Date().toISOString() }),
-        );
-        setStep("welcome");
-      } catch (e) {
-        setSaveError(e instanceof ApiError ? e.message : onboardingApiCopy.saveFailed);
-      } finally {
-        setSaving(false);
-      }
-    },
-    [grade, prepGoal, referralSource, selectedCompanies, selectedDate, selectedTopics],
+  const [roadmapResult, setRoadmapResult] = useState<RoadmapResult>({ source: "none", weeks: [] });
+  const [roadmapLoadState, setRoadmapLoadState] = useState<"idle" | "loading" | "loaded" | "error">(
+    "idle",
   );
+  const previewWeeks = roadmapResult.weeks;
+  const previewTopicsCount = previewWeeks.reduce((sum, week) => sum + week.items.length, 0);
+  // Горизонт больше не выбирается вручную — считаем недели прямо из даты
+  // интервью, которую пользователь уже указал на предыдущем шаге.
+  const weeksCount = weeksUntil(selectedDate || null);
+
+  // Роадмап тянет реальные релевантные компании субпаттерны из атласа,
+  // поэтому пересчитываем при входе на шаг и при смене входных данных.
+  useEffect(() => {
+    if (step !== "roadmap") return;
+    const controller = new AbortController();
+    setRoadmapLoadState("loading");
+    generateRoadmap({ weeksCount, targetCompany: selectedCompanies[0] ?? "" }, controller.signal)
+      .then((result) => {
+        setRoadmapResult(result);
+        setRoadmapLoadState("loaded");
+      })
+      .catch((e: unknown) => {
+        if (controller.signal.aborted) return;
+        setRoadmapLoadState("error");
+      });
+    return () => controller.abort();
+  }, [step, weeksCount, selectedCompanies]);
+
+  const saveProfile = useCallback(async () => {
+    setSaving(true);
+    setSaveError("");
+    try {
+      const timezone =
+        Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+      await updateProfile({
+        target_company: selectedCompanies[0] ?? "",
+        interview_date: selectedDate ? `${selectedDate}T09:00:00Z` : undefined,
+        platform: selectedPlatform || undefined,
+        timezone,
+        onboarding_completed: true,
+      });
+      window.localStorage.setItem(
+        onboardingStorageKey,
+        JSON.stringify({
+          platform: selectedPlatform || null,
+          savedAt: new Date().toISOString(),
+        }),
+      );
+      // Save the personalized roadmap to localStorage for the /roadmap page.
+      const config = { weeksCount, targetCompany: selectedCompanies[0] ?? "" };
+      const result = await generateRoadmap(config);
+      saveRoadmap(config, result);
+      setStep("welcome");
+    } catch (e) {
+      setSaveError(e instanceof ApiError ? e.message : onboardingApiCopy.saveFailed);
+    } finally {
+      setSaving(false);
+    }
+  }, [selectedCompanies, selectedDate, selectedPlatform, weeksCount]);
 
   const goNext = useCallback(() => {
+    if (step === "platform") {
+      setStep("company");
+      return;
+    }
+
     if (step === "company") {
       setStep("date");
       return;
     }
 
     if (step === "date") {
-      setStep("topics");
+      setStep("roadmap");
       return;
     }
 
-    if (step === "topics") {
-      setStep("goal");
-      return;
-    }
-
-    // step === "goal" → save and transition to welcome on success.
+    // step === "roadmap" → save and transition to welcome on success.
     void saveProfile();
   }, [saveProfile, step]);
 
   const goBack = useCallback(() => {
+    if (step === "company") setStep("platform");
     if (step === "date") setStep("company");
-    if (step === "topics") setStep("date");
-    if (step === "goal") setStep("topics");
+    if (step === "roadmap") setStep("date");
   }, [step]);
 
   const skipCurrent = useCallback(() => {
+    if (step === "platform") {
+      setSelectedPlatform("");
+      setStep("company");
+    }
+
     if (step === "company") {
       setCompanyInput("");
       setStep("date");
@@ -372,19 +495,11 @@ export default function OnboardingProfilePage() {
 
     if (step === "date") {
       setSelectedDate("");
-      setStep("topics");
+      setStep("roadmap");
     }
 
-    if (step === "topics") {
-      setSelectedTopics([]);
-      setStep("goal");
-    }
-
-    if (step === "goal") {
-      setPrepGoal("");
-      setGrade("");
-      setReferralSource("");
-      void saveProfile([], "");
+    if (step === "roadmap") {
+      void saveProfile();
     }
   }, [saveProfile, step]);
 
@@ -395,9 +510,7 @@ export default function OnboardingProfilePage() {
 
   if (step === "welcome") {
     const summary = copy.welcome.summary;
-    const topicLabels = algorithmTopics
-      .filter((topic) => selectedTopics.includes(topic.id))
-      .map((topic) => topic.label);
+    const platformLabel = platformOptions.find((item) => item.id === selectedPlatform)?.label;
 
     return (
       <main className="onboarding-page">
@@ -416,6 +529,10 @@ export default function OnboardingProfilePage() {
             <p>{copy.welcome.description}</p>
             <dl className="onboarding-summary">
               <div>
+                <dt>{summary.platform}</dt>
+                <dd>{platformLabel ?? summary.empty}</dd>
+              </div>
+              <div>
                 <dt>{summary.companies}</dt>
                 <dd>{selectedCompanies.length > 0 ? selectedCompanies.join(", ") : summary.empty}</dd>
               </div>
@@ -424,16 +541,12 @@ export default function OnboardingProfilePage() {
                 <dd>{selectedDate ? fullDateLabel(selectedDate) : summary.empty}</dd>
               </div>
               <div>
-                <dt>{onboardingApiCopy.summaryGoal}</dt>
-                <dd>{prepGoal.trim() || summary.empty}</dd>
-              </div>
-              <div>
-                <dt>{onboardingApiCopy.summaryGrade}</dt>
-                <dd>{grade || summary.empty}</dd>
-              </div>
-              <div>
-                <dt>{summary.topics}</dt>
-                <dd>{topicLabels.length > 0 ? topicLabels.join(", ") : summary.empty}</dd>
+                <dt>{summary.roadmap}</dt>
+                <dd>
+                  {previewWeeks.length > 0
+                    ? `${previewWeeks.length} ${copy.roadmap.previewWeeksUnit}`
+                    : summary.empty}
+                </dd>
               </div>
             </dl>
             <button className="onboarding-primary" type="button" onClick={() => router.push("/dashboard")}>
@@ -472,18 +585,30 @@ export default function OnboardingProfilePage() {
         <div className="onboarding-body" key={step}>
           <aside className="onboarding-copy">
             <span className="onboarding-eyebrow">{stepTag}</span>
-            {step === "goal" ? (
-              <>
-                <h2>{onboardingApiCopy.goal.title}</h2>
-                <p>{onboardingApiCopy.goal.description}</p>
-              </>
-            ) : (
-              <>
-                <h2>{copy[step].title}</h2>
-                <p>{copy[step].description}</p>
-              </>
-            )}
+            <h2>{copy[step].title}</h2>
+            <p>{copy[step].description}</p>
           </aside>
+
+          {step === "platform" ? (
+            <div className="onboarding-main">
+              <div className="onboarding-platform-field" role="radiogroup" aria-label={copy.platform.fieldLabel}>
+                {platformOptions.map((platform) => (
+                  <button
+                    aria-pressed={selectedPlatform === platform.id}
+                    className={selectedPlatform === platform.id ? "selected" : ""}
+                    key={platform.id}
+                    role="radio"
+                    aria-checked={selectedPlatform === platform.id}
+                    style={{ "--platform-color": platform.color } as CSSProperties}
+                    type="button"
+                    onClick={() => setSelectedPlatform(platform.id)}
+                  >
+                    {platform.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
 
           {step === "company" ? (
             <div className="onboarding-main">
@@ -525,6 +650,7 @@ export default function OnboardingProfilePage() {
                   ))}
                 </div>
               ) : null}
+              <p className="onboarding-hint">{copy.company.skipHint}</p>
             </div>
           ) : null}
 
@@ -550,80 +676,51 @@ export default function OnboardingProfilePage() {
             </div>
           ) : null}
 
-          {step === "topics" ? (
+          {step === "roadmap" ? (
             <div className="onboarding-main">
-              <div className="onboarding-topic-field" role="group" aria-label={copy.topics.fieldLabel}>
-                <div className="onboarding-topic-center" aria-hidden="true">
-                  <span>{selectedTopics.length > 0 ? copy.topics.selected : copy.topics.empty}</span>
-                </div>
-                {algorithmTopics.map((topic) => {
-                  const selectedIndex = selectedTopics.indexOf(topic.id);
-                  const isSelected = selectedIndex >= 0;
-                  const [centerX, centerY] = isSelected ? getCenterPosition(selectedIndex) : [50, 50];
-
-                  return (
-                    <button
-                      aria-pressed={isSelected}
-                      className={isSelected ? "selected" : ""}
-                      key={topic.id}
-                      style={
-                        {
-                          "--topic-x": `${topic.x}%`,
-                          "--topic-y": `${topic.y}%`,
-                          "--topic-center-x": `${centerX}%`,
-                          "--topic-center-y": `${centerY}%`,
-                        } as CSSProperties
-                      }
-                      type="button"
-                      onClick={() => toggleTopic(topic.id)}
-                    >
-                      {topic.label}
-                    </button>
-                  );
-                })}
-              </div>
-              <p className="onboarding-topics-count">
-                {copy.topics.selectedCount}: <em>{String(selectedTopics.length).padStart(2, "0")}</em> /{" "}
-                {String(algorithmTopics.length).padStart(2, "0")}
+              <p className="onboarding-wheels-result">
+                {copy.roadmap.horizonLabel}: <em>{weeksCount} {copy.roadmap.previewWeeksUnit}</em>
               </p>
+              {roadmapLoadState === "loading" ? (
+                <p className="onboarding-hint">{copy.roadmap.previewLoading}</p>
+              ) : roadmapResult.source === "none" ? (
+                <div className="onboarding-roadmap-empty">
+                  <strong>{copy.roadmap.noPoolTitle}</strong>
+                  <p>{copy.roadmap.noPoolDescription}</p>
+                </div>
+              ) : (
+                <div className="onboarding-roadmap-preview" aria-label={copy.roadmap.previewLabel}>
+                  <div className="onboarding-roadmap-preview__head">
+                    <span className="onboarding-roadmap-preview__count">
+                      <em>{previewWeeks.length}</em> {copy.roadmap.previewWeeksUnit}
+                    </span>
+                    <span className="onboarding-roadmap-preview__count">
+                      <em>{previewTopicsCount}</em> {copy.roadmap.previewTopicsUnit}
+                    </span>
+                  </div>
+                  <ol className="onboarding-roadmap-preview__list">
+                    {previewWeeks.slice(0, 8).map((week, index) => (
+                      <li key={week.id}>
+                        <span className="onboarding-roadmap-preview__num">
+                          {String(index + 1).padStart(2, "0")}
+                        </span>
+                        <div>
+                          <strong>{week.title}</strong>
+                          <span>{week.focus}</span>
+                        </div>
+                      </li>
+                    ))}
+                    {previewWeeks.length > 8 ? (
+                      <li className="onboarding-roadmap-preview__more">
+                        +{previewWeeks.length - 8} {copy.roadmap.previewWeeksUnit}
+                      </li>
+                    ) : null}
+                  </ol>
+                </div>
+              )}
             </div>
           ) : null}
 
-          {step === "goal" ? (
-            <div className="onboarding-main">
-              <label className="onboarding-input">
-                {onboardingApiCopy.goal.prepGoalLabel}
-                <textarea
-                  placeholder={onboardingApiCopy.goal.prepGoalPlaceholder}
-                  rows={3}
-                  value={prepGoal}
-                  onChange={(event) => setPrepGoal(event.target.value)}
-                />
-              </label>
-              <label className="onboarding-input">
-                {onboardingApiCopy.goal.gradeLabel}
-                <select value={grade} onChange={(event) => setGrade(event.target.value)}>
-                  <option value="">—</option>
-                  {onboardingApiCopy.goal.grades.map((item) => (
-                    <option key={item} value={item}>
-                      {item}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="onboarding-input">
-                {onboardingApiCopy.goal.referralLabel}
-                <select value={referralSource} onChange={(event) => setReferralSource(event.target.value)}>
-                  <option value="">—</option>
-                  {onboardingApiCopy.goal.referralOptions.map((item) => (
-                    <option key={item} value={item}>
-                      {item}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-          ) : null}
         </div>
 
         {saveError ? (
@@ -634,7 +731,7 @@ export default function OnboardingProfilePage() {
 
         <footer className="onboarding-actions">
           <div>
-            {step !== "company" ? (
+            {step !== "platform" ? (
               <button className="onboarding-ghost" type="button" onClick={goBack} disabled={saving}>
                 {copy.back}
               </button>

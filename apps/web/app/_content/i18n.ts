@@ -247,6 +247,13 @@ const ru = {
       back: "Назад",
       next: "Далее",
       skip: "Пропустить",
+      platform: {
+        title: "На какой площадке готовишься?",
+        description:
+          "Выбери основную площадку с задачами — так карточки и прогресс будут ближе к тому, где ты реально решаешь.",
+        fieldLabel: "Выбор площадки для подготовки",
+        comingSoon: "скоро",
+      },
       company: {
         title: "В какие компании хочешь устроиться?",
         description:
@@ -255,6 +262,7 @@ const ru = {
         placeholder: "Например, Google, Amazon, Yandex…",
         selectedLabel: "Выбранные компании",
         suggestionsLabel: "Подсказки компаний из GitHub-репозитория",
+        skipHint: "Если рынок IT для тебя и без того прост и понятен — пропусти этот шаг.",
       },
       date: {
         title: "Дата интервью",
@@ -265,14 +273,18 @@ const ru = {
         monthAria: "Месяц интервью",
         resultLabel: "интервью",
       },
-      topics: {
-        title: "Темы для повторения",
+      roadmap: {
+        title: "Твой план подготовки",
         description:
-          "Нажимай на темы по краям — выбранные притягиваются в центр и собирают твой фокус подготовки. Набор можно поменять в любой момент.",
-        fieldLabel: "Выбор алгоритмических тем для повторения",
-        selectedCount: "выбрано",
-        empty: "Выбранные темы появятся здесь",
-        selected: "Фокус подготовки",
+          "Горизонт считаем из даты собеседования, которую ты указал на предыдущем шаге. ReAlgo разложит реально релевантные компании темы по неделям — чем меньше времени осталось, тем плотнее план.",
+        horizonLabel: "горизонт до собеседования",
+        previewLabel: "предпросмотр плана",
+        previewWeeksUnit: "недель",
+        previewTopicsUnit: "тем",
+        previewLoading: "Считаем план по твоим данным…",
+        noPoolTitle: "Пока не из чего строить план",
+        noPoolDescription:
+          "Без компании roadmap строить не из чего. Можно вернуться к этому позже — в атласе паттернов или на странице roadmap, когда выберешь компанию.",
       },
       welcome: {
         eyebrow: "setup complete",
@@ -281,9 +293,10 @@ const ru = {
           "Мы сохранили стартовые настройки локально. Теперь можно перейти в кабинет и начать повторение без лишнего шума.",
         action: "Перейти в Dashboard",
         summary: {
+          platform: "площадка",
           companies: "компании",
           date: "интервью",
-          topics: "темы",
+          roadmap: "план",
           empty: "—",
         },
       },
@@ -605,6 +618,16 @@ const ru = {
         loading: "Загружаем роадмап…",
         errorTitle: "Не удалось загрузить роадмап",
         retry: "повторить",
+        personalizedTitle: "Твой персональный roadmap",
+        personalizedDescription:
+          "План построен под выбранный горизонт и темы. Неделя закрывает конкретные подпаттерны — подпаттерн считается закрытым, когда все карточки внутри него отмечены very easy.",
+        personalizedPanelTitle: "personal preparation track",
+        personalizedHintCompany: "фокус",
+        personalizedHintWeeks: "недель в плане",
+        emptyStateTitle: "Roadmap ещё не построен",
+        emptyStateDescription:
+          "Пройди онбординг, чтобы выбрать горизонт подготовки и темы — ReAlgo соберёт персональный план по неделям.",
+        emptyStateAction: "построить roadmap",
       },
       patterns: {
         eyebrow: "/patterns",
@@ -664,6 +687,9 @@ const ru = {
         companySearchAria: "Поиск компании",
         companyPickerEmpty: "Компании не найдены",
         close: "закрыть",
+        platformLabel: "площадка",
+        platformNone: "— все площадки —",
+        platformAria: "Площадка подготовки",
         demoBadge: "demo data",
         demoNote: "Демо-данные для примера — не реальная статистика интервью.",
         familiesTitle: "Pattern Families",
@@ -994,6 +1020,8 @@ const ru = {
           timezonePlaceholder: "Например, Europe/Moscow",
           interviewDateLabel: "interview date",
           interviewDate: "2026-07-20",
+          platformLabel: "площадка",
+          platformPlaceholder: "—",
           planLabel: "plan",
           plan: "Free mock",
           save: "save changes",
@@ -1076,27 +1104,7 @@ export const accountSecurityCopy = {
 
 // ===== #62 onboarding API wiring =====
 export const onboardingApiCopy = {
-  goal: {
-    title: "Цель подготовки",
-    description:
-      "Расскажи, к чему готовишься. Это поможет подобрать план повторения и карточки под твою цель.",
-    prepGoalLabel: "цель",
-    prepGoalPlaceholder: "Например: пройти интервью в Google через 2 месяца",
-    gradeLabel: "уровень",
-    grades: ["junior", "middle", "senior", "staff", "principal"],
-    referralLabel: "Откуда узнали про нас?",
-    referralOptions: [
-      "Telegram",
-      "YouTube",
-      "статья или блог",
-      "друзья или коллеги",
-      "поиск",
-      "другое",
-    ],
-  },
   saving: "Сохраняем…",
   saveFailed: "Не удалось сохранить профиль. Попробуйте ещё раз.",
   companiesSearchFailed: "Не удалось загрузить подсказки компаний.",
-  summaryGoal: "цель",
-  summaryGrade: "уровень",
 } as const;

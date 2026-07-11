@@ -6,39 +6,41 @@ import { useEffect, useState } from "react";
 import { CabinetPanel } from "../_components";
 import { CabinetIcon } from "../_icons";
 import { getDictionary } from "../../_content/i18n";
-import { getCardSession } from "../../_api/cards";
+import { getDueSummary, type DueSummary } from "../../_api/cards";
 import { cardRecords } from "./_mock";
-
-type LiveStats = {
-  dueCount: number;
-  estimatedMinutes: number;
-};
 
 export default function CardsPage() {
   const copy = getDictionary().cabinet;
   const page = copy.pages.cards;
   const overview = page.overview;
 
-  // Live numbers from GET /me/cards/session; null keeps the mock demo values
+  // Live numbers from GET /me/cards/due-summary (un-capped, unlike the
+  // review-session endpoint); null keeps the mock demo values
   // (unauthenticated visitors, stopped backend).
-  const [live, setLive] = useState<LiveStats | null>(null);
+  const [live, setLive] = useState<DueSummary | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
-    getCardSession({ scope: "due" }, controller.signal)
-      .then((session) => {
-        setLive({ dueCount: session.cards.length, estimatedMinutes: session.estimatedMinutes });
-      })
+    getDueSummary(controller.signal)
+      .then(setLive)
       .catch(() => {
         // Demo fallback: keep the mock counts.
       });
     return () => controller.abort();
   }, []);
 
-  const dueCount = live?.dueCount ?? cardRecords.length;
+  const dueCount = live?.totalDue ?? cardRecords.length;
   const estimatedTime = live ? `~${live.estimatedMinutes} ${overview.minuteUnit}` : overview.estimatedTime;
 
   const mix = overview.types.map(([key, label]) => {
+    if (live) {
+      const entry = live.byType.find((item) => item.type === key);
+      const count = entry?.count ?? 0;
+      const shown = entry?.sampleLabels.map((source) => source.split(" · ")[0]) ?? [];
+      const hidden = count - shown.length;
+      const sources = hidden > 0 ? [...shown, `+${hidden}`].join(", ") : shown.join(", ");
+      return { label, count, sources };
+    }
     const items = cardRecords.filter((card) => card.type === key);
     return {
       label,

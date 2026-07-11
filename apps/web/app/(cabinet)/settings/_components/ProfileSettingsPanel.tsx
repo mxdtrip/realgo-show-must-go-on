@@ -11,6 +11,7 @@ import {
   writeProfileSettings,
   type ProfileSettings,
 } from "../../../_profile/profileSettings";
+import { platformOptions, type PlatformId } from "../../../_profile/platforms";
 import { useToast } from "../../../_toast";
 import { useAuth } from "../../../_api/AuthProvider";
 import { StatusPill } from "../../_components";
@@ -36,6 +37,8 @@ type ProfileSettingsPanelProps = {
     emailLabel: string;
     interviewDate: string;
     interviewDateLabel: string;
+    platformLabel: string;
+    platformPlaceholder: string;
     plan: string;
     planLabel: string;
     quickSetup: string;
@@ -67,8 +70,9 @@ export function ProfileSettingsPanel({ copy }: Readonly<ProfileSettingsPanelProp
     () => ({
       timezone: user?.timezone || copy.timezone,
       interviewDate: inputDateFromISO(user?.interview_date, copy.interviewDate),
+      platform: (user?.profile?.platform ?? "") as PlatformId | "",
     }),
-    [copy.interviewDate, copy.timezone, user?.interview_date, user?.timezone],
+    [copy.interviewDate, copy.timezone, user?.interview_date, user?.timezone, user?.profile?.platform],
   );
   const [profile, setProfile] = useState<ProfileSettings>(defaults);
   const [didSave, setDidSave] = useState(false);
@@ -86,15 +90,17 @@ export function ProfileSettingsPanel({ copy }: Readonly<ProfileSettingsPanelProp
   const save = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    const nextProfile = {
+    const nextProfile: ProfileSettings = {
       timezone: String(formData.get("timezone") ?? "").trim(),
       interviewDate: String(formData.get("interviewDate") ?? ""),
+      platform: (String(formData.get("platform") ?? "") as PlatformId | ""),
     };
     setSaving(true);
     try {
       await updateProfile({
         timezone: nextProfile.timezone,
         interview_date: rfc3339FromInputDate(nextProfile.interviewDate),
+        platform: nextProfile.platform || undefined,
       });
       writeProfileSettings(nextProfile);
       setProfile(nextProfile);
@@ -136,6 +142,21 @@ export function ProfileSettingsPanel({ copy }: Readonly<ProfileSettingsPanelProp
           value={profile.interviewDate}
           onChange={(event) => update({ interviewDate: event.target.value })}
         />
+      </label>
+      <label className="settings-profile-field">
+        <span>{copy.platformLabel}</span>
+        <select
+          name="platform"
+          value={profile.platform}
+          onChange={(event) => update({ platform: event.target.value as PlatformId | "" })}
+        >
+          <option value="">{copy.platformPlaceholder}</option>
+          {platformOptions.map((platform) => (
+            <option key={platform.id} value={platform.id}>
+              {platform.label}
+            </option>
+          ))}
+        </select>
       </label>
       <div>
         <span>{copy.planLabel}</span>

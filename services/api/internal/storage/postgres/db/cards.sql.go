@@ -270,6 +270,75 @@ func (q *Queries) GetCardReviewSchedule(ctx context.Context, arg GetCardReviewSc
 	return id, err
 }
 
+const getDueCardsSummary = `-- name: GetDueCardsSummary :many
+WITH due_cards AS (
+    SELECT
+        c.id,
+        c.type,
+        rs.next_review_at,
+        COALESCE(
+            NULLIF(concat_ws(' · ', NULLIF(p.title, ''), NULLIF(COALESCE(cpt.name, rpt.name), '')), ''),
+            NULLIF(cpt.name, ''),
+            NULLIF(c.source, ''),
+            'custom card'
+        )::text AS source_label
+    FROM cards c
+    JOIN LATERAL (
+        SELECT next_review_at
+        FROM review_schedules
+        WHERE user_id = $1::bigint AND card_id = c.id
+        ORDER BY next_review_at ASC, id ASC
+        LIMIT 1
+    ) rs ON true
+    LEFT JOIN problems p ON p.id = c.problem_id
+    LEFT JOIN patterns cpt ON cpt.id = c.pattern_id
+    LEFT JOIN roadmap_items ri ON ri.problem_id = c.problem_id AND ri.roadmap_code = 'neetcode_150'
+    LEFT JOIN patterns rpt ON rpt.id = ri.pattern_id
+    WHERE rs.next_review_at <= NOW()
+)
+SELECT
+    type,
+    COUNT(*)::int AS count,
+    (ARRAY_AGG(source_label ORDER BY next_review_at ASC))[1:3]::text[] AS sample_labels
+FROM due_cards
+GROUP BY type
+ORDER BY type
+`
+
+type GetDueCardsSummaryRow struct {
+	Type         string
+	Count        int32
+	SampleLabels []string
+}
+
+// Full (un-capped) due-today breakdown by type for the /cards launcher's
+// "Что повторяем сегодня" panel. Deliberately NOT reusing ListCardSession:
+// that query caps rows at session_limit (how many cards fit in one review
+// session), which would silently undercount "how many are due today" for
+// users with a large backlog. Visibility mirrors ListCardSession's due
+// branch exactly, simplified because a due row already requires an
+// existing review_schedules row owned by this user — the same condition
+// ListCardSession's `rs.id IS NOT NULL` visibility branch grants access on.
+func (q *Queries) GetDueCardsSummary(ctx context.Context, userID int64) ([]GetDueCardsSummaryRow, error) {
+	rows, err := q.db.Query(ctx, getDueCardsSummary, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetDueCardsSummaryRow
+	for rows.Next() {
+		var i GetDueCardsSummaryRow
+		if err := rows.Scan(&i.Type, &i.Count, &i.SampleLabels); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const hasReadyCards = `-- name: HasReadyCards :one
 SELECT EXISTS (
     SELECT 1 FROM cards

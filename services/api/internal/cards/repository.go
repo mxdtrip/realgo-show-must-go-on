@@ -77,6 +77,23 @@ func (r *pgRepository) ListSession(ctx context.Context, userID int64, params Ses
 	return items, nil
 }
 
+func (r *pgRepository) DueSummary(ctx context.Context, userID int64) ([]DueTypeSummary, error) {
+	rows, err := r.q.GetDueCardsSummary(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("cards: due summary: %w", err)
+	}
+
+	items := make([]DueTypeSummary, 0, len(rows))
+	for _, row := range rows {
+		items = append(items, DueTypeSummary{
+			Type:         row.Type,
+			Count:        int(row.Count),
+			SampleLabels: row.SampleLabels,
+		})
+	}
+	return items, nil
+}
+
 func (r *pgRepository) EnsureReviewSchedule(ctx context.Context, userID, cardID int64, reviewedAt time.Time) (scheduleID int64, err error) {
 	tx, err := r.pool.Begin(ctx)
 	if err != nil {

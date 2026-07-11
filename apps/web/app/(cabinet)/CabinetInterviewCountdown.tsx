@@ -79,10 +79,13 @@ export function CabinetInterviewCountdown({ copy }: Readonly<CabinetInterviewCou
   const [profile, setProfile] = useState<ProfileSettings>({
     timezone: userTimezone,
     interviewDate: userInterviewDate,
+    platform: "",
   });
 
   const refreshProfile = useCallback(() => {
-    setProfile(readProfileSettings({ timezone: userTimezone, interviewDate: userInterviewDate }));
+    setProfile(
+      readProfileSettings({ timezone: userTimezone, interviewDate: userInterviewDate, platform: "" }),
+    );
   }, [userInterviewDate, userTimezone]);
 
   useEffect(() => {

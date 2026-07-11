@@ -43,6 +43,7 @@ export type AuthUser = {
     grade?: string | null;
     target_company?: string | null;
     target_position?: string | null;
+    platform?: string | null;
   };
   notification_settings?: {
     review_reminder: boolean;

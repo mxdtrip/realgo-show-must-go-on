@@ -13,6 +13,7 @@ export type ProfileUpdate = {
   grade?: string;
   target_company?: string;
   target_position?: string;
+  platform?: string;
   onboarding_completed?: boolean;
 };
 

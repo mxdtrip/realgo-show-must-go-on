@@ -119,6 +119,24 @@ type ReviewState struct {
 	NextReviewAt *time.Time `json:"nextReviewAt"`
 }
 
+// DueSummary is the un-capped due-today breakdown used by the /cards
+// launcher's "Что повторяем сегодня" panel, distinct from Session (which
+// caps at session_limit — one review session's worth, not "how many are
+// due today").
+type DueSummary struct {
+	TotalDue         int              `json:"totalDue"`
+	EstimatedMinutes int              `json:"estimatedMinutes"`
+	ByType           []DueTypeSummary `json:"byType"`
+}
+
+type DueTypeSummary struct {
+	Type  string `json:"type"`
+	Count int    `json:"count"`
+	// SampleLabels holds up to 3 source titles (soonest-due first) so the UI
+	// can show what's due without fetching every card's full content.
+	SampleLabels []string `json:"sampleLabels"`
+}
+
 type RateRequest struct {
 	SessionID  string `json:"sessionId"`
 	Rating     string `json:"rating"`

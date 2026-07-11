@@ -33,6 +33,7 @@ var (
 type service interface {
 	List(ctx context.Context, userID int64, params ListParams) ([]Card, *string, error)
 	Session(ctx context.Context, userID int64, params SessionParams) (Session, error)
+	DueSummary(ctx context.Context, userID int64) (DueSummary, error)
 	Rate(ctx context.Context, userID, cardID int64, req RateRequest) (RateResult, error)
 	Create(ctx context.Context, userID int64, p CreateCardInput) (CardDetail, error)
 	GetByID(ctx context.Context, userID, cardID int64) (CardDetail, error)
@@ -52,6 +53,7 @@ func RegisterRoutes(r chi.Router, h *Handler) {
 	r.Get("/", h.List)
 	r.Post("/", h.Create)
 	r.Get("/session", h.Session)
+	r.Get("/due-summary", h.DueSummary)
 	r.Get("/{cardId}", h.Get)
 	r.Patch("/{cardId}", h.Update)
 	r.Delete("/{cardId}", h.Delete)
@@ -106,6 +108,24 @@ func (h *Handler) Session(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response.JSON(w, http.StatusOK, session)
+}
+
+func (h *Handler) DueSummary(w http.ResponseWriter, r *http.Request) {
+	userID, ok := auth.UserIDFromContext(r.Context())
+	if !ok {
+		slog.Warn("cards: DueSummary failed")
+		response.Fail(w, http.StatusUnauthorized, "UNAUTHORIZED", "user not authenticated")
+		return
+	}
+
+	summary, err := h.svc.DueSummary(r.Context(), userID)
+	if err != nil {
+		slog.Error("cards: DueSummary failed", slog.Any("err", err), slog.Int64("user_id", userID))
+		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", "could not load due summary")
+		return
+	}
+
+	response.JSON(w, http.StatusOK, summary)
 }
 
 func (h *Handler) Rate(w http.ResponseWriter, r *http.Request) {

@@ -2116,6 +2116,45 @@ h3 {
   color: var(--text);
 }
 
+.cabinet-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  border: 1px solid var(--accent-line);
+  border-radius: 10px;
+  padding: 12px 16px;
+  background: var(--accent-soft);
+}
+
+.cabinet-banner span {
+  font-size: 13px;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+
+.cabinet-banner a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--accent-line);
+  border-radius: 8px;
+  padding: 7px 12px;
+  background: rgba(13, 17, 23, 0.6);
+  color: var(--accent-bright);
+  font-family: var(--font-stack-mono);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: border-color 0.16s ease, color 0.16s ease;
+}
+
+.cabinet-banner a:hover {
+  border-color: var(--accent-bright);
+  color: var(--text);
+}
+
 /* neutral secondary button (disable sync, export, etc.) */
 .btn-ghost {
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -3852,7 +3891,8 @@ a.roadmap-step__practice-card:hover {
   color: var(--text);
 }
 
-.settings-profile-field input {
+.settings-profile-field input,
+.settings-profile-field select {
   min-width: min(230px, 100%);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 8px;
@@ -3864,7 +3904,8 @@ a.roadmap-step__practice-card:hover {
   font-size: 12.5px;
 }
 
-.settings-profile-field input:focus {
+.settings-profile-field input:focus,
+.settings-profile-field select:focus {
   border-color: var(--accent-line);
   outline: 0;
   box-shadow: 0 0 0 3px rgba(47, 129, 247, 0.12);
@@ -5034,6 +5075,13 @@ a.roadmap-step__practice-card:hover {
   gap: 8px;
 }
 
+.onboarding-hint {
+  margin: 10px 0 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-faint);
+}
+
 .company-suggestions button,
 .selected-companies button {
   min-height: 32px;
@@ -5070,6 +5118,50 @@ a.roadmap-step__practice-card:hover {
 
 .selected-companies button:hover {
   border-color: var(--accent-bright);
+  color: var(--text);
+}
+
+/* ---------- step 00: platform ---------- */
+
+.onboarding-platform-field {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.onboarding-platform-field button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 64px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0 16px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-dim);
+  font-family: var(--font-stack-mono);
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  text-align: center;
+  transition:
+    border-color 0.16s ease,
+    background 0.16s ease,
+    color 0.16s ease;
+}
+
+/* --platform-color задаётся инлайном (см. platforms.ts) — свой акцент
+   бренда площадки на hover, а не общий accent, чтобы кнопки было легче
+   различить визуально до того, как прочитаешь подпись. */
+.onboarding-platform-field button:hover {
+  border-color: var(--platform-color);
+  background: color-mix(in srgb, var(--platform-color) 14%, transparent);
+  color: var(--text);
+}
+
+.onboarding-platform-field button.selected {
+  border-color: var(--platform-color);
+  background: color-mix(in srgb, var(--platform-color) 22%, transparent);
   color: var(--text);
 }
 
@@ -5111,8 +5203,22 @@ a.roadmap-step__practice-card:hover {
   padding: calc(var(--wheel-item) * 2) 0;
   scroll-snap-type: y mandatory;
   scrollbar-width: none;
+  cursor: grab;
   -webkit-mask-image: linear-gradient(to bottom, transparent, #000 22%, #000 78%, transparent);
   mask-image: linear-gradient(to bottom, transparent, #000 22%, #000 78%, transparent);
+}
+
+.onboarding-wheel__list.is-dragging {
+  cursor: grabbing;
+  scroll-snap-type: none;
+  user-select: none;
+}
+
+/* Инерция после резкого протягивания: снап всё ещё выключен, пока колесо
+   докатывается сам по себе, но курсор уже не "grabbing" — рука пользователя
+   ни на чём не «висит», кнопка мыши физически отпущена. */
+.onboarding-wheel__list.is-momentum {
+  scroll-snap-type: none;
 }
 
 .onboarding-wheel__list::-webkit-scrollbar {
@@ -5162,79 +5268,45 @@ a.roadmap-step__practice-card:hover {
 
 /* ---------- step 03: topics field ---------- */
 
-.onboarding-topic-field {
-  position: relative;
-  height: clamp(300px, 42dvh, 400px);
+/* ---------- step: roadmap preview ---------- */
+
+.onboarding-roadmap-preview {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.02);
   overflow: hidden;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background:
-    radial-gradient(circle at 50% 50%, var(--accent-soft), transparent 34%),
-    rgba(255, 255, 255, 0.02);
 }
 
-.onboarding-topic-center {
-  position: absolute;
-  inset: 26% 22%;
-  display: grid;
-  place-items: center;
+.onboarding-roadmap-empty {
+  padding: 16px;
   border: 1px dashed var(--border-strong);
-  border-radius: 12px;
-  background: rgba(1, 4, 9, 0.35);
-  pointer-events: none;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.02);
 }
 
-.onboarding-topic-center span {
-  max-width: 18ch;
-  color: var(--text-faint);
-  font-family: var(--font-stack-mono);
-  font-size: 11px;
-  letter-spacing: 0.06em;
-  line-height: 1.45;
-  text-align: center;
-  text-transform: uppercase;
-}
-
-.onboarding-topic-field button {
-  position: absolute;
-  left: var(--topic-x);
-  top: var(--topic-y);
-  z-index: 2;
-  min-height: 34px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 7px 11px;
-  background: rgba(13, 17, 23, 0.82);
-  color: var(--text-dim);
-  font-family: var(--font-stack-mono);
-  font-size: 11px;
-  white-space: nowrap;
-  transform: translate(-50%, -50%);
-  transition:
-    left 0.5s cubic-bezier(0.2, 0.72, 0.22, 1),
-    top 0.5s cubic-bezier(0.2, 0.72, 0.22, 1),
-    border-color 0.16s ease,
-    background 0.16s ease,
-    color 0.16s ease,
-    transform 0.5s cubic-bezier(0.2, 0.72, 0.22, 1);
-}
-
-.onboarding-topic-field button:hover {
-  border-color: var(--border-strong);
+.onboarding-roadmap-empty strong {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
   color: var(--text);
 }
 
-.onboarding-topic-field button.selected {
-  left: var(--topic-center-x);
-  top: var(--topic-center-y);
-  border-color: var(--accent-line);
-  background: var(--accent-soft);
-  color: var(--accent-bright);
-  transform: translate(-50%, -50%) scale(1.04);
+.onboarding-roadmap-empty p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-dim);
 }
 
-.onboarding-topics-count {
-  margin: 0;
+.onboarding-roadmap-preview__head {
+  display: flex;
+  gap: 16px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(1, 4, 9, 0.3);
+}
+
+.onboarding-roadmap-preview__count {
   font-family: var(--font-stack-mono);
   font-size: 11px;
   letter-spacing: 0.06em;
@@ -5243,9 +5315,63 @@ a.roadmap-step__practice-card:hover {
   font-variant-numeric: tabular-nums;
 }
 
-.onboarding-topics-count em {
+.onboarding-roadmap-preview__count em {
   font-style: normal;
   color: var(--accent-bright);
+  font-weight: 600;
+}
+
+.onboarding-roadmap-preview__list {
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+  max-height: 280px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+.onboarding-roadmap-preview__list li {
+  display: flex;
+  gap: 10px;
+  padding: 7px 14px;
+  border-bottom: 1px solid rgba(48, 54, 61, 0.4);
+}
+
+.onboarding-roadmap-preview__list li:last-child {
+  border-bottom: 0;
+}
+
+.onboarding-roadmap-preview__num {
+  flex-shrink: 0;
+  font-family: var(--font-stack-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+  padding-top: 2px;
+}
+
+.onboarding-roadmap-preview__list strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.3;
+}
+
+.onboarding-roadmap-preview__list span {
+  font-size: 11.5px;
+  color: var(--text-faint);
+  line-height: 1.4;
+}
+
+.onboarding-roadmap-preview__more {
+  justify-content: center;
+  font-family: var(--font-stack-mono);
+  font-size: 11px;
+  color: var(--text-faint);
+  padding: 8px 14px;
 }
 
 /* ---------- actions ---------- */
@@ -5813,21 +5939,13 @@ a.roadmap-step__practice-card:hover {
     width: 100%;
   }
 
-  .onboarding-topic-field {
-    height: 420px;
-  }
-
-  .onboarding-topic-center {
-    inset: 32% 10%;
-  }
-
-  .onboarding-topic-field button {
-    max-width: min(210px, 46vw);
-    white-space: normal;
-  }
-
   .onboarding-wheels {
     max-width: none;
+  }
+
+  .cabinet-banner {
+    flex-direction: column;
+    align-items: stretch;
   }
 }
 
@@ -5851,7 +5969,6 @@ a.roadmap-step__practice-card:hover {
   .onboarding-window,
   .onboarding-body,
   .onboarding-welcome,
-  .onboarding-topic-field button,
   .focus-rating__button {
     animation: none;
     transition: none;

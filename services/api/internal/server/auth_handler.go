@@ -38,6 +38,7 @@ type profileResponse struct {
 	Grade          *string  `json:"grade"`
 	TargetCompany  *string  `json:"target_company"`
 	TargetPosition *string  `json:"target_position"`
+	Platform       *string  `json:"platform"`
 	TargetTopics   []string `json:"target_topics"`
 }
 
@@ -95,6 +96,9 @@ func newUserResponse(u db.User) userResponse {
 	}
 	if u.TargetPosition.Valid {
 		resp.Profile.TargetPosition = &u.TargetPosition.String
+	}
+	if u.Platform.Valid {
+		resp.Profile.Platform = &u.Platform.String
 	}
 	resp.Profile.TargetTopics = u.TargetTopics
 	if resp.Profile.TargetTopics == nil {
@@ -250,12 +254,21 @@ type patchProfileRequest struct {
 	Grade               *string   `json:"grade"`
 	TargetCompany       *string   `json:"target_company"`
 	TargetPosition      *string   `json:"target_position"`
+	Platform            *string   `json:"platform"`
 	TargetTopics        *[]string `json:"target_topics"`
 	OnboardingCompleted *bool     `json:"onboarding_completed"`
 }
 
 var validGrades = map[string]bool{
 	"junior": true, "middle": true, "senior": true, "staff": true, "principal": true,
+}
+
+// validPlatforms mirrors the CHECK constraint on users.platform (migration
+// 000016) and the placeholder list the web onboarding/settings selector
+// offers: LeetCode is fully wired, GeeksforGeeks integration is in progress,
+// HackerRank/Codeforces are reserved for later.
+var validPlatforms = map[string]bool{
+	"leetcode": true, "geeksforgeeks": true, "hackerrank": true, "codeforces": true,
 }
 
 // validTimezone accepts IANA zone names (e.g. "Europe/Moscow", "UTC"). The
@@ -315,6 +328,11 @@ func (h *authHandler) patchProfile(w http.ResponseWriter, r *http.Request) {
 		response.Fail(w, http.StatusBadRequest, "validation_error", "timezone must be a valid IANA time zone, e.g. Europe/Moscow")
 		return
 	}
+	if req.Platform != nil && *req.Platform != "" && !validPlatforms[*req.Platform] {
+		slog.Warn("auth: PatchProfile failed", slog.Int64("user_id", userID), slog.String("field", "platform"))
+		response.FailWithDetails(w, http.StatusBadRequest, "validation_error", "platform must be one of: leetcode, geeksforgeeks, hackerrank, codeforces", "platform")
+		return
+	}
 
 	upd := auth.ProfileUpdate{
 		Timezone:       req.Timezone,
@@ -322,6 +340,7 @@ func (h *authHandler) patchProfile(w http.ResponseWriter, r *http.Request) {
 		Grade:          req.Grade,
 		TargetCompany:  req.TargetCompany,
 		TargetPosition: req.TargetPosition,
+		Platform:       req.Platform,
 	}
 	if req.TargetTopics != nil {
 		normalised := normaliseTopics(*req.TargetTopics)
