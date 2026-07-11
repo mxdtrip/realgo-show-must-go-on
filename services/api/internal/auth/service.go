@@ -145,6 +145,7 @@ type ProfileUpdate struct {
 	TargetCompany     *string
 	TargetPosition    *string
 	Platform          *string
+	TargetTopics      *[]string
 	SetOnboardingDone bool
 }
 
@@ -174,6 +175,9 @@ func (s *Service) UpdateProfile(ctx context.Context, userID int64, u ProfileUpda
 	}
 	if u.Platform != nil {
 		params.Platform = pgtype.Text{String: *u.Platform, Valid: true}
+	}
+	if u.TargetTopics != nil {
+		params.TargetTopics = *u.TargetTopics
 	}
 
 	user, err := s.queries.UpdateUserProfile(ctx, params)

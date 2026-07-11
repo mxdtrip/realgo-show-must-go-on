@@ -115,6 +115,28 @@ func searchCatalog(query string, limit int) []Company {
 	return results
 }
 
+// Lookup resolves a free-text company name (as stored in users.target_company)
+// to a catalog entry by exact, case-insensitive match against the name or any
+// alias. Returns ok=false when the name is absent from the catalog, in which
+// case callers fall back to {code: null, name: <string>}.
+func Lookup(name string) (Company, bool) {
+	name = strings.ToLower(strings.TrimSpace(name))
+	if name == "" {
+		return Company{}, false
+	}
+	for _, entry := range catalog {
+		if strings.ToLower(entry.Name) == name {
+			return entry.Company, true
+		}
+		for _, alias := range entry.aliases {
+			if strings.ToLower(alias) == name {
+				return entry.Company, true
+			}
+		}
+	}
+	return Company{}, false
+}
+
 func matches(entry companyEntry, query string) bool {
 	if strings.Contains(strings.ToLower(entry.Name), query) {
 		return true

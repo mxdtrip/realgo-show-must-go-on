@@ -28,6 +28,7 @@ SET
   target_company          = COALESCE(sqlc.narg('target_company'), target_company),
   target_position         = COALESCE(sqlc.narg('target_position'), target_position),
   platform                = COALESCE(sqlc.narg('platform'), platform),
+  target_topics           = COALESCE(sqlc.narg('target_topics'), target_topics),
   onboarding_completed_at = CASE
     WHEN sqlc.arg('set_onboarding_completed')::bool THEN COALESCE(onboarding_completed_at, NOW())
     ELSE onboarding_completed_at

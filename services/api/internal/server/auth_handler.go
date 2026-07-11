@@ -7,6 +7,7 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/mxdtrip/freeburger/services/api/internal/auth"
@@ -33,11 +34,12 @@ type refreshRequest struct {
 }
 
 type profileResponse struct {
-	PrepGoal       *string `json:"prep_goal"`
-	Grade          *string `json:"grade"`
-	TargetCompany  *string `json:"target_company"`
-	TargetPosition *string `json:"target_position"`
-	Platform       *string `json:"platform"`
+	PrepGoal       *string  `json:"prep_goal"`
+	Grade          *string  `json:"grade"`
+	TargetCompany  *string  `json:"target_company"`
+	TargetPosition *string  `json:"target_position"`
+	Platform       *string  `json:"platform"`
+	TargetTopics   []string `json:"target_topics"`
 }
 
 type notificationSettingsResponse struct {
@@ -97,6 +99,10 @@ func newUserResponse(u db.User) userResponse {
 	}
 	if u.Platform.Valid {
 		resp.Profile.Platform = &u.Platform.String
+	}
+	resp.Profile.TargetTopics = u.TargetTopics
+	if resp.Profile.TargetTopics == nil {
+		resp.Profile.TargetTopics = []string{} // serialise as [] not null
 	}
 	return resp
 }
@@ -242,14 +248,15 @@ func decodeJSON(w http.ResponseWriter, r *http.Request, dst any) bool {
 }
 
 type patchProfileRequest struct {
-	Timezone            *string `json:"timezone"`
-	InterviewDate       *string `json:"interview_date"`
-	PrepGoal            *string `json:"prep_goal"`
-	Grade               *string `json:"grade"`
-	TargetCompany       *string `json:"target_company"`
-	TargetPosition      *string `json:"target_position"`
-	Platform            *string `json:"platform"`
-	OnboardingCompleted *bool   `json:"onboarding_completed"`
+	Timezone            *string   `json:"timezone"`
+	InterviewDate       *string   `json:"interview_date"`
+	PrepGoal            *string   `json:"prep_goal"`
+	Grade               *string   `json:"grade"`
+	TargetCompany       *string   `json:"target_company"`
+	TargetPosition      *string   `json:"target_position"`
+	Platform            *string   `json:"platform"`
+	TargetTopics        *[]string `json:"target_topics"`
+	OnboardingCompleted *bool     `json:"onboarding_completed"`
 }
 
 var validGrades = map[string]bool{
@@ -275,6 +282,21 @@ func validTimezone(tz string) bool {
 	}
 	_, err := time.LoadLocation(tz)
 	return err == nil
+}
+
+// normaliseTopics lowercases topic codes and converts dashes to underscores,
+// so "two-pointers" from the web onboarding becomes the canonical "two_pointers"
+// used across roadmap weeks and Pattern Atlas. Empty entries are dropped.
+func normaliseTopics(in []string) []string {
+	out := make([]string, 0, len(in))
+	for _, t := range in {
+		t = strings.ToLower(strings.TrimSpace(t))
+		t = strings.ReplaceAll(t, "-", "_")
+		if t != "" {
+			out = append(out, t)
+		}
+	}
+	return out
 }
 
 // patchProfile handles PATCH /me/profile — a partial update of the onboarding
@@ -319,6 +341,10 @@ func (h *authHandler) patchProfile(w http.ResponseWriter, r *http.Request) {
 		TargetCompany:  req.TargetCompany,
 		TargetPosition: req.TargetPosition,
 		Platform:       req.Platform,
+	}
+	if req.TargetTopics != nil {
+		normalised := normaliseTopics(*req.TargetTopics)
+		upd.TargetTopics = &normalised
 	}
 	if req.InterviewDate != nil {
 		t, err := time.Parse(time.RFC3339, *req.InterviewDate)
