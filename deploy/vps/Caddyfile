@@ -1,0 +1,8 @@
+# VPS edge: terminate TLS for realgo.dev and hand everything to the home stack
+# through the frp tunnel (frps:8080 -> home caddy:80, which splits /api vs web).
+# realgo.dev must be a DNS-only (grey-cloud) A record pointing at this VPS so
+# Caddy can obtain a Let's Encrypt cert directly.
+{$REALGO_SITE_ADDRESS:realgo.dev} {
+	encode zstd gzip
+	reverse_proxy frps:8080
+}

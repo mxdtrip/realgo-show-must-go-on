@@ -1,0 +1,31 @@
+env: local
+
+http_server:
+  address: localhost:8080
+  timeout: 4s
+  idle_timeout: 30s
+
+database:
+  host: localhost
+  port: 5432
+  user: postgres
+  password: your_password_here
+  dbname: freeburger
+  sslmode: disable
+  max_conns: 10
+  min_conns: 2
+  max_conn_lifetime: 1h
+  max_conn_idle_time: 30m
+
+redis:
+  host: localhost
+  port: "6379"
+  password: ""
+  db: 0
+
+ai:
+  # Empty key = AI card generation disabled. Personal free keys:
+  # https://aistudio.google.com/apikey (never commit real keys).
+  api_key: ""
+  model: gemini-2.5-flash
+  base_url: https://generativelanguage.googleapis.com/v1beta/openai/

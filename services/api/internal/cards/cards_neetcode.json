@@ -1,0 +1,3602 @@
+[
+  {
+    "id": "neetcode-duplicate-integer-pattern-recognition",
+    "url": "https://neetcode.io/problems/duplicate-integer/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_duplicate_integer",
+      "label": "Duplicate Integer · Hash Set"
+    },
+    "front": "В задаче нужно определить, есть ли в массиве хотя бы одно повторяющееся число. Какой паттерн выбрать?",
+    "back": "Hash Set. Time Complexity: O(n), Space Complexity: O(n). Паттерн подходит, потому что нужно быстро проверять, встречался ли элемент раньше.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T00:00:00.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T00:00:00.000Z"
+  },
+  {
+    "id": "neetcode-duplicate-integer-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/duplicate-integer/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_duplicate_integer",
+      "label": "Duplicate Integer · Hash Set"
+    },
+    "front": "Что нужно сделать с текущим числом при проходе по массиву, если оно ещё не встречалось?",
+    "back": "Добавить число в Hash Set. Если число уже есть в set, сразу вернуть true.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T00:00:00.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T00:00:00.000Z"
+  },
+  {
+    "id": "neetcode-duplicate-integer-edge-case",
+    "url": "https://neetcode.io/problems/duplicate-integer/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_duplicate_integer",
+      "label": "Duplicate Integer · Hash Set"
+    },
+    "front": "Что вернуть для массива без повторов, например [1, 2, 3, 4]?",
+    "back": "Вернуть false, потому что ни одно число не встретилось повторно. Time Complexity остаётся O(n), Space Complexity остаётся O(n).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T00:00:00.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T00:00:00.000Z"
+  },
+  {
+    "id": "neetcode-is-anagram-pattern-recognition",
+    "url": "https://neetcode.io/problems/is-anagram/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_is_anagram",
+      "label": "Is Anagram · Hash Map"
+    },
+    "front": "Нужно проверить, можно ли получить одну строку перестановкой символов другой. Какой паттерн выбрать?",
+    "back": "Hash Map. Time Complexity: O(n), Space Complexity: O(1). Паттерн подходит, потому что нужно сравнить частоты символов в двух строках.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:20:30.836Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:20:30.836Z"
+  },
+  {
+    "id": "neetcode-is-anagram-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/is-anagram/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_is_anagram",
+      "label": "Is Anagram · Hash Map"
+    },
+    "front": "Как меняются счётчики символов при сравнении двух строк одинаковой длины?",
+    "back": "Для символа из первой строки счётчик увеличивается. Для символа из второй строки счётчик уменьшается. В конце все счётчики должны быть равны нулю.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:20:30.836Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:20:30.836Z"
+  },
+  {
+    "id": "neetcode-is-anagram-edge-case",
+    "url": "https://neetcode.io/problems/is-anagram/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_is_anagram",
+      "label": "Is Anagram · Hash Map"
+    },
+    "front": "Что вернуть, если длины строк разные, например s = \"abc\", t = \"ab\"?",
+    "back": "Вернуть false, потому что строки разной длины не могут быть anagram. Time Complexity остаётся O(n), Space Complexity остаётся O(1).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:20:30.836Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:20:30.836Z"
+  },
+  {
+    "id": "neetcode-two-integer-sum-pattern-recognition",
+    "url": "https://neetcode.io/problems/two-integer-sum/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_two_integer_sum",
+      "label": "Two Integer Sum · Hash Map"
+    },
+    "front": "Нужно найти два индекса чисел, сумма которых равна target. Какой паттерн выбрать?",
+    "back": "Hash Map. Time Complexity: O(n), Space Complexity: O(n). Паттерн подходит, потому что для каждого числа нужно быстро проверить, встречался ли его complement.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:20:56.460Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:20:56.460Z"
+  },
+  {
+    "id": "neetcode-two-integer-sum-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/two-integer-sum/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_two_integer_sum",
+      "label": "Two Integer Sum · Hash Map"
+    },
+    "front": "Что нужно проверить для текущего числа перед добавлением его индекса в Hash Map?",
+    "back": "Нужно вычислить complement как target минус текущее число. Если complement уже есть в Hash Map, вернуть его индекс и текущий индекс.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:20:56.460Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:20:56.460Z"
+  },
+  {
+    "id": "neetcode-two-integer-sum-edge-case",
+    "url": "https://neetcode.io/problems/two-integer-sum/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_two_integer_sum",
+      "label": "Two Integer Sum · Hash Map"
+    },
+    "front": "Как обработать случай, где решение использует два одинаковых значения, например [3, 3] и target = 6?",
+    "back": "Первую 3 нужно сохранить в Hash Map, а на второй 3 найти complement. Нельзя использовать один и тот же индекс дважды. Time Complexity остаётся O(n), Space Complexity остаётся O(n).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:20:56.460Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:20:56.460Z"
+  },
+  {
+    "id": "neetcode-anagram-groups-pattern-recognition",
+    "url": "https://neetcode.io/problems/anagram-groups/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_anagram_groups",
+      "label": "Anagram Groups · Hash Map"
+    },
+    "front": "Нужно сгруппировать строки, которые являются anagrams друг друга. Какой паттерн выбрать?",
+    "back": "Hash Map. Time Complexity: O(m * n), Space Complexity: O(m * n). Паттерн подходит, потому что строки с одинаковыми частотами символов можно складывать в одну группу по общему ключу.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:21:28.625Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:21:28.625Z"
+  },
+  {
+    "id": "neetcode-anagram-groups-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/anagram-groups/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_anagram_groups",
+      "label": "Anagram Groups · Hash Map"
+    },
+    "front": "Что нужно сделать с текущей строкой после построения её частотного ключа?",
+    "back": "Добавить строку в список по этому ключу в Hash Map. Если такого ключа ещё нет, сначала создать для него новую группу.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:21:28.625Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:21:28.625Z"
+  },
+  {
+    "id": "neetcode-anagram-groups-edge-case",
+    "url": "https://neetcode.io/problems/anagram-groups/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_anagram_groups",
+      "label": "Anagram Groups · Hash Map"
+    },
+    "front": "Как обработать вход с пустой строкой, например [\"\"]?",
+    "back": "Вернуть одну группу с пустой строкой: [[\"\"]]. У пустой строки тоже есть валидный частотный ключ. Time Complexity остаётся O(m * n), Space Complexity остаётся O(m * n).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:21:28.625Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:21:28.625Z"
+  },
+  {
+    "id": "neetcode-top-k-elements-in-list-pattern-recognition",
+    "url": "https://neetcode.io/problems/top-k-elements-in-list/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_top_k_elements_in_list",
+      "label": "Top K Elements in List · Bucket Sort"
+    },
+    "front": "Нужно вернуть k элементов, которые встречаются в массиве чаще всего. Какой паттерн выбрать?",
+    "back": "Hash Map + Bucket Sort. Time Complexity: O(n), Space Complexity: O(n). Паттерн подходит, потому что частоты ограничены размером массива и их можно разложить по buckets.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:22:06.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:22:06.000Z"
+  },
+  {
+    "id": "neetcode-top-k-elements-in-list-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/top-k-elements-in-list/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_top_k_elements_in_list",
+      "label": "Top K Elements in List · Bucket Sort"
+    },
+    "front": "Что нужно сделать после подсчёта частоты каждого числа?",
+    "back": "Положить каждое число в bucket с индексом, равным его частоте. Затем идти по buckets от большей частоты к меньшей, пока не набрано k элементов.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:22:06.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:22:06.000Z"
+  },
+  {
+    "id": "neetcode-top-k-elements-in-list-edge-case",
+    "url": "https://neetcode.io/problems/top-k-elements-in-list/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_top_k_elements_in_list",
+      "label": "Top K Elements in List · Bucket Sort"
+    },
+    "front": "Как обработать массив, где все элементы встречаются по одному разу, например nums = [1, 2, 3], k = 2?",
+    "back": "Вернуть любые два элемента из массива, потому что у всех одинаковая частота. Time Complexity остаётся O(n), Space Complexity остаётся O(n).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:22:06.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:22:06.000Z"
+  },
+  {
+    "id": "neetcode-string-encode-and-decode-pattern-recognition",
+    "url": "https://neetcode.io/problems/string-encode-and-decode/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_string_encode_and_decode",
+      "label": "String Encode and Decode · Encoding"
+    },
+    "front": "Нужно преобразовать список строк в одну строку и затем восстановить исходный список. Какой паттерн выбрать?",
+    "back": "Encoding with Length Prefix. Time Complexity: O(n), Space Complexity: O(n). Паттерн подходит, потому что длина перед каждой строкой позволяет однозначно отделять строки друг от друга.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:22:30.794Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:22:30.794Z"
+  },
+  {
+    "id": "neetcode-string-encode-and-decode-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/string-encode-and-decode/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_string_encode_and_decode",
+      "label": "String Encode and Decode · Encoding"
+    },
+    "front": "Как декодер понимает, где заканчивается текущая строка?",
+    "back": "Сначала он читает число до разделителя как длину строки. Затем берёт ровно столько символов после разделителя и сдвигает индекс к началу следующего блока.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:22:30.794Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:22:30.794Z"
+  },
+  {
+    "id": "neetcode-string-encode-and-decode-edge-case",
+    "url": "https://neetcode.io/problems/string-encode-and-decode/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_string_encode_and_decode",
+      "label": "String Encode and Decode · Encoding"
+    },
+    "front": "Как обработать строку, которая сама содержит разделитель, например \"a#b\"?",
+    "back": "Она корректно восстановится, потому что декодер ориентируется на length prefix, а не на символы внутри строки. Time Complexity остаётся O(n), Space Complexity остаётся O(n).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:22:30.794Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:22:30.794Z"
+  },
+  {
+    "id": "neetcode-products-of-array-discluding-self-pattern-recognition",
+    "url": "https://neetcode.io/problems/products-of-array-discluding-self/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_products_of_array_discluding_self",
+      "label": "Products of Array Except Self · Prefix/Suffix Products"
+    },
+    "front": "Нужно для каждого индекса получить произведение всех чисел массива, кроме текущего, без деления. Какой паттерн выбрать?",
+    "back": "Prefix/Suffix Products. Time Complexity: O(n), Space Complexity: O(1) без учёта выходного массива. Паттерн подходит, потому что ответ для индекса собирается из произведения слева и произведения справа.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:23:01.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:23:01.000Z"
+  },
+  {
+    "id": "neetcode-products-of-array-discluding-self-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/products-of-array-discluding-self/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_products_of_array_discluding_self",
+      "label": "Products of Array Except Self · Prefix/Suffix Products"
+    },
+    "front": "Что происходит с текущим ответом во втором проходе справа налево?",
+    "back": "Текущий ответ умножается на postfix — произведение элементов справа. После этого postfix обновляется умножением на текущий элемент.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:23:01.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:23:01.000Z"
+  },
+  {
+    "id": "neetcode-products-of-array-discluding-self-edge-case",
+    "url": "https://neetcode.io/problems/products-of-array-discluding-self/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_products_of_array_discluding_self",
+      "label": "Products of Array Except Self · Prefix/Suffix Products"
+    },
+    "front": "Что вернуть для nums = [1, 2, 0, 4]?",
+    "back": "Вернуть [0, 0, 8, 0]. Только позиция нуля получает произведение остальных чисел, остальные позиции включают ноль. Time Complexity остаётся O(n), Space Complexity остаётся O(1) без учёта выходного массива.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:23:01.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:23:01.000Z"
+  },
+  {
+    "id": "neetcode-longest-consecutive-sequence-pattern-recognition",
+    "url": "https://neetcode.io/problems/longest-consecutive-sequence/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_longest_consecutive_sequence",
+      "label": "Longest Consecutive Sequence · Hash Set"
+    },
+    "front": "Нужно найти длину самой длинной последовательности подряд идущих чисел в неотсортированном массиве. Какой паттерн выбрать?",
+    "back": "Hash Set. Time Complexity: O(n), Space Complexity: O(n). Паттерн подходит, потому что можно быстро проверять наличие следующего числа в последовательности.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:23:47.068Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:23:47.068Z"
+  },
+  {
+    "id": "neetcode-longest-consecutive-sequence-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/longest-consecutive-sequence/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_longest_consecutive_sequence",
+      "label": "Longest Consecutive Sequence · Hash Set"
+    },
+    "front": "Когда нужно начинать подсчёт длины последовательности от текущего числа?",
+    "back": "Только если числа current - 1 нет в Hash Set. Это означает, что current является началом новой последовательности.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:23:47.068Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:23:47.068Z"
+  },
+  {
+    "id": "neetcode-longest-consecutive-sequence-edge-case",
+    "url": "https://neetcode.io/problems/longest-consecutive-sequence/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_longest_consecutive_sequence",
+      "label": "Longest Consecutive Sequence · Hash Set"
+    },
+    "front": "Что вернуть для пустого массива nums = []?",
+    "back": "Вернуть 0, потому что последовательностей нет. Time Complexity остаётся O(n), Space Complexity остаётся O(n).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:23:47.068Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:23:47.068Z"
+  },
+  {
+    "id": "neetcode-is-palindrome-pattern-recognition",
+    "url": "https://neetcode.io/problems/is-palindrome/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_is_palindrome",
+      "label": "Valid Palindrome · Two Pointers"
+    },
+    "front": "Нужно проверить, является ли строка palindrome, игнорируя регистр и неалфавитно-цифровые символы. Какой паттерн выбрать?",
+    "back": "Two Pointers. Time Complexity: O(n), Space Complexity: O(1). Паттерн подходит, потому что нужно сравнивать символы с двух концов строки.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:24:14.132Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:24:14.132Z"
+  },
+  {
+    "id": "neetcode-is-palindrome-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/is-palindrome/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_is_palindrome",
+      "label": "Valid Palindrome · Two Pointers"
+    },
+    "front": "Что делать с указателями, если один из текущих символов не является alphanumeric?",
+    "back": "Пропустить этот символ и сдвинуть соответствующий указатель внутрь строки. Сравнение выполняется только для alphanumeric символов.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:24:14.132Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:24:14.132Z"
+  },
+  {
+    "id": "neetcode-is-palindrome-edge-case",
+    "url": "https://neetcode.io/problems/is-palindrome/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_is_palindrome",
+      "label": "Valid Palindrome · Two Pointers"
+    },
+    "front": "Что вернуть для строки, состоящей только из пробелов и знаков пунктуации?",
+    "back": "Вернуть true, потому что после фильтрации не остаётся символов для конфликта. Time Complexity остаётся O(n), Space Complexity остаётся O(1).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:24:14.132Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:24:14.132Z"
+  },
+  {
+    "id": "neetcode-three-integer-sum-pattern-recognition",
+    "url": "https://neetcode.io/problems/three-integer-sum/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_three_integer_sum",
+      "label": "Three Integer Sum · Two Pointers"
+    },
+    "front": "Нужно найти все уникальные тройки чисел, сумма которых равна нулю. Какой паттерн выбрать?",
+    "back": "Sorting + Two Pointers. Time Complexity: O(n²), Space Complexity: O(1) без учёта результата. Паттерн подходит, потому что после фиксации одного числа оставшуюся пару можно искать двумя указателями.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:24:39.465Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:24:39.465Z"
+  },
+  {
+    "id": "neetcode-three-integer-sum-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/three-integer-sum/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_three_integer_sum",
+      "label": "Three Integer Sum · Two Pointers"
+    },
+    "front": "Как двигать left и right после фиксации первого числа и подсчёта суммы тройки?",
+    "back": "Если сумма меньше нуля, сдвинуть left вправо. Если сумма больше нуля, сдвинуть right влево. Если сумма равна нулю, сохранить тройку и пропустить дубликаты.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:24:39.465Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:24:39.465Z"
+  },
+  {
+    "id": "neetcode-three-integer-sum-edge-case",
+    "url": "https://neetcode.io/problems/three-integer-sum/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_three_integer_sum",
+      "label": "Three Integer Sum · Two Pointers"
+    },
+    "front": "Как обработать вход с одинаковыми числами, например nums = [0, 0, 0, 0]?",
+    "back": "Вернуть только одну тройку [[0, 0, 0]]. Дубликаты нужно пропускать, чтобы не добавить одинаковый ответ несколько раз. Time Complexity остаётся O(n²), Space Complexity остаётся O(1) без учёта результата.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:24:39.465Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:24:39.465Z"
+  },
+  {
+    "id": "neetcode-max-water-container-pattern-recognition",
+    "url": "https://neetcode.io/problems/max-water-container/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_max_water_container",
+      "label": "Max Water Container · Two Pointers"
+    },
+    "front": "Нужно найти две линии, которые вместе с осью образуют контейнер с максимальной площадью. Какой паттерн выбрать?",
+    "back": "Two Pointers. Time Complexity: O(n), Space Complexity: O(1). Паттерн подходит, потому что площадь зависит от ширины и меньшей высоты, а указатели можно сужать с двух концов.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:25:03.580Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:25:03.580Z"
+  },
+  {
+    "id": "neetcode-max-water-container-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/max-water-container/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_max_water_container",
+      "label": "Max Water Container · Two Pointers"
+    },
+    "front": "Какой указатель нужно сдвигать после подсчёта площади между left и right?",
+    "back": "Сдвигать указатель с меньшей высотой внутрь. Только так есть шанс найти большую минимальную высоту при меньшей ширине.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:25:03.580Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:25:03.580Z"
+  },
+  {
+    "id": "neetcode-max-water-container-edge-case",
+    "url": "https://neetcode.io/problems/max-water-container/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_max_water_container",
+      "label": "Max Water Container · Two Pointers"
+    },
+    "front": "Что вернуть для минимального входа height = [1, 1]?",
+    "back": "Вернуть 1, потому что ширина равна 1 и минимальная высота равна 1. Time Complexity остаётся O(n), Space Complexity остаётся O(1).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:25:03.580Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:25:03.580Z"
+  },
+  {
+    "id": "neetcode-buy-and-sell-crypto-pattern-recognition",
+    "url": "https://neetcode.io/problems/buy-and-sell-crypto/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_buy_and_sell_crypto",
+      "label": "Buy and Sell Crypto · Sliding Window"
+    },
+    "front": "Нужно выбрать один день покупки и один будущий день продажи, чтобы получить максимальную прибыль. Какой паттерн выбрать?",
+    "back": "Sliding Window. Time Complexity: O(n), Space Complexity: O(1). Паттерн подходит, потому что нужно хранить минимальную цену покупки слева и проверять прибыль на текущем дне продажи.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:25:29.871Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:25:29.871Z"
+  },
+  {
+    "id": "neetcode-buy-and-sell-crypto-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/buy-and-sell-crypto/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_buy_and_sell_crypto",
+      "label": "Buy and Sell Crypto · Sliding Window"
+    },
+    "front": "Что нужно обновлять при проходе по ценам, чтобы найти максимальную прибыль?",
+    "back": "Нужно обновлять минимальную цену покупки, если текущая цена ниже неё. Иначе проверить прибыль как текущая цена минус минимальная цена покупки.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:25:29.871Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:25:29.871Z"
+  },
+  {
+    "id": "neetcode-buy-and-sell-crypto-edge-case",
+    "url": "https://neetcode.io/problems/buy-and-sell-crypto/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_buy_and_sell_crypto",
+      "label": "Buy and Sell Crypto · Sliding Window"
+    },
+    "front": "Что вернуть, если цены только падают, например prices = [7, 6, 4, 3, 1]?",
+    "back": "Вернуть 0, потому что выгодной сделки нет. Можно не совершать покупку и продажу. Time Complexity остаётся O(n), Space Complexity остаётся O(1).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:25:29.871Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:25:29.871Z"
+  },
+  {
+    "id": "neetcode-longest-substring-without-duplicates-pattern-recognition",
+    "url": "https://neetcode.io/problems/longest-substring-without-duplicates/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_longest_substring_without_duplicates",
+      "label": "Longest Substring Without Duplicates · Sliding Window"
+    },
+    "front": "Нужно найти длину самой длинной подстроки без повторяющихся символов. Какой паттерн выбрать?",
+    "back": "Sliding Window. Time Complexity: O(n), Space Complexity: O(n). Паттерн подходит, потому что нужно поддерживать текущее окно только с уникальными символами.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:25:55.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:25:55.000Z"
+  },
+  {
+    "id": "neetcode-longest-substring-without-duplicates-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/longest-substring-without-duplicates/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_longest_substring_without_duplicates",
+      "label": "Longest Substring Without Duplicates · Sliding Window"
+    },
+    "front": "Что делать, если правый указатель встретил символ, который уже есть в текущем окне?",
+    "back": "Сдвигать левый указатель вправо и удалять символы из Hash Set, пока дубликат не исчезнет. После этого добавить текущий символ и обновить максимум длины.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:25:55.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:25:55.000Z"
+  },
+  {
+    "id": "neetcode-longest-substring-without-duplicates-edge-case",
+    "url": "https://neetcode.io/problems/longest-substring-without-duplicates/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_longest_substring_without_duplicates",
+      "label": "Longest Substring Without Duplicates · Sliding Window"
+    },
+    "front": "Что вернуть для строки, где все символы одинаковые, например s = \"aaaa\"?",
+    "back": "Вернуть 1, потому что любая подстрока без повторов может содержать только один символ. Time Complexity остаётся O(n), Space Complexity остаётся O(n).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:25:55.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:25:55.000Z"
+  },
+  {
+    "id": "neetcode-longest-repeating-substring-with-replacement-pattern-recognition",
+    "url": "https://neetcode.io/problems/longest-repeating-substring-with-replacement/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_longest_repeating_substring_with_replacement",
+      "label": "Longest Repeating Substring With Replacement · Sliding Window"
+    },
+    "front": "Нужно найти самую длинную подстроку, которую можно сделать состоящей из одного символа, заменив не больше k символов. Какой паттерн выбрать?",
+    "back": "Sliding Window. Time Complexity: O(n), Space Complexity: O(1). Паттерн подходит, потому что нужно поддерживать окно, где число замен не превышает k.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:26:13.730Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:26:13.730Z"
+  },
+  {
+    "id": "neetcode-longest-repeating-substring-with-replacement-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/longest-repeating-substring-with-replacement/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_longest_repeating_substring_with_replacement",
+      "label": "Longest Repeating Substring With Replacement · Sliding Window"
+    },
+    "front": "Когда нужно сдвигать левую границу окна при проходе по строке?",
+    "back": "Когда длина окна минус частота самого частого символа становится больше k. Тогда окно требует слишком много замен, поэтому левый символ убирается из счётчика.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:26:13.730Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:26:13.730Z"
+  },
+  {
+    "id": "neetcode-longest-repeating-substring-with-replacement-edge-case",
+    "url": "https://neetcode.io/problems/longest-repeating-substring-with-replacement/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_longest_repeating_substring_with_replacement",
+      "label": "Longest Repeating Substring With Replacement · Sliding Window"
+    },
+    "front": "Что вернуть для s = \"ABAB\" и k = 2?",
+    "back": "Вернуть 4, потому что всю строку можно сделать одинаковой двумя заменами. Time Complexity остаётся O(n), Space Complexity остаётся O(1).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:26:13.730Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:26:13.730Z"
+  },
+  {
+    "id": "neetcode-minimum-window-with-characters-pattern-recognition",
+    "url": "https://neetcode.io/problems/minimum-window-with-characters/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_minimum_window_with_characters",
+      "label": "Minimum Window With Characters · Sliding Window"
+    },
+    "front": "Нужно найти минимальную подстроку, которая содержит все символы другой строки с учётом кратности. Какой паттерн выбрать?",
+    "back": "Sliding Window + Hash Map. Time Complexity: O(n + m), Space Complexity: O(m). Паттерн подходит, потому что нужно расширять окно до валидного состояния и сжимать его до минимума.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:26:47.489Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:26:47.489Z"
+  },
+  {
+    "id": "neetcode-minimum-window-with-characters-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/minimum-window-with-characters/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_minimum_window_with_characters",
+      "label": "Minimum Window With Characters · Sliding Window"
+    },
+    "front": "Когда нужно пытаться сжимать левую границу окна?",
+    "back": "Когда окно уже содержит все нужные символы в нужном количестве. Пока оно валидно, нужно обновлять лучший ответ и двигать left вправо.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:26:47.489Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:26:47.489Z"
+  },
+  {
+    "id": "neetcode-minimum-window-with-characters-edge-case",
+    "url": "https://neetcode.io/problems/minimum-window-with-characters/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_minimum_window_with_characters",
+      "label": "Minimum Window With Characters · Sliding Window"
+    },
+    "front": "Что вернуть, если нужного символа нет в исходной строке, например s = \"abc\", t = \"d\"?",
+    "back": "Вернуть пустую строку, потому что валидное окно невозможно. Time Complexity остаётся O(n + m), Space Complexity остаётся O(m).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:26:47.489Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:26:47.489Z"
+  },
+  {
+    "id": "neetcode-validate-parentheses-pattern-recognition",
+    "url": "https://neetcode.io/problems/validate-parentheses/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_validate_parentheses",
+      "label": "Validate Parentheses · Stack"
+    },
+    "front": "Нужно проверить, что все скобки закрываются в правильном порядке. Какой паттерн выбрать?",
+    "back": "Stack. Time Complexity: O(n), Space Complexity: O(n). Паттерн подходит, потому что последняя открытая скобка должна закрываться первой.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:27:16.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:27:16.000Z"
+  },
+  {
+    "id": "neetcode-validate-parentheses-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/validate-parentheses/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_validate_parentheses",
+      "label": "Validate Parentheses · Stack"
+    },
+    "front": "Что нужно сделать, когда текущий символ является закрывающей скобкой?",
+    "back": "Проверить, что Stack не пустой и верхняя открытая скобка соответствует текущей закрывающей. Если соответствует, удалить верхний элемент; иначе вернуть false.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:27:16.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:27:16.000Z"
+  },
+  {
+    "id": "neetcode-validate-parentheses-edge-case",
+    "url": "https://neetcode.io/problems/validate-parentheses/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_validate_parentheses",
+      "label": "Validate Parentheses · Stack"
+    },
+    "front": "Что вернуть для строки, которая начинается с закрывающей скобки, например \")(\"?",
+    "back": "Вернуть false, потому что закрывающей скобке нечего сопоставить в Stack. Time Complexity остаётся O(n), Space Complexity остаётся O(n).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:27:16.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:27:16.000Z"
+  },
+  {
+    "id": "neetcode-find-minimum-in-rotated-sorted-array-pattern-recognition",
+    "url": "https://neetcode.io/problems/find-minimum-in-rotated-sorted-array/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_find_minimum_in_rotated_sorted_array",
+      "label": "Find Minimum in Rotated Sorted Array · Binary Search"
+    },
+    "front": "Нужно найти минимальный элемент в отсортированном массиве, который был повернут. Какой паттерн выбрать?",
+    "back": "Binary Search. Time Complexity: O(log n), Space Complexity: O(1). Паттерн подходит, потому что одна из половин массива всегда остаётся отсортированной и можно отбросить лишнюю часть.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:27:41.427Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:27:41.427Z"
+  },
+  {
+    "id": "neetcode-find-minimum-in-rotated-sorted-array-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/find-minimum-in-rotated-sorted-array/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_find_minimum_in_rotated_sorted_array",
+      "label": "Find Minimum in Rotated Sorted Array · Binary Search"
+    },
+    "front": "Как выбрать половину поиска после вычисления mid?",
+    "back": "Сравнить nums[mid] с nums[right]. Если nums[mid] больше nums[right], минимум справа от mid; иначе минимум находится в левой части включая mid.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:27:41.427Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:27:41.427Z"
+  },
+  {
+    "id": "neetcode-find-minimum-in-rotated-sorted-array-edge-case",
+    "url": "https://neetcode.io/problems/find-minimum-in-rotated-sorted-array/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_find_minimum_in_rotated_sorted_array",
+      "label": "Find Minimum in Rotated Sorted Array · Binary Search"
+    },
+    "front": "Что вернуть для массива, который не был фактически повернут, например nums = [1, 2, 3, 4]?",
+    "back": "Вернуть 1, потому что первый элемент уже является минимумом. Time Complexity остаётся O(log n), Space Complexity остаётся O(1).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:27:41.427Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:27:41.427Z"
+  },
+  {
+    "id": "neetcode-find-target-in-rotated-sorted-array-pattern-recognition",
+    "url": "https://neetcode.io/problems/find-target-in-rotated-sorted-array/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_find_target_in_rotated_sorted_array",
+      "label": "Find Target in Rotated Sorted Array · Binary Search"
+    },
+    "front": "Нужно найти индекс target в отсортированном массиве, который был повернут. Какой паттерн выбрать?",
+    "back": "Binary Search. Time Complexity: O(log n), Space Complexity: O(1). Паттерн подходит, потому что на каждом шаге можно определить отсортированную половину и отбросить другую.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:28:09.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:28:09.000Z"
+  },
+  {
+    "id": "neetcode-find-target-in-rotated-sorted-array-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/find-target-in-rotated-sorted-array/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_find_target_in_rotated_sorted_array",
+      "label": "Find Target in Rotated Sorted Array · Binary Search"
+    },
+    "front": "Как решить, какую половину массива отбросить после вычисления mid?",
+    "back": "Сначала определить, какая половина отсортирована. Если target попадает в диапазон этой половины, искать в ней; иначе отбросить её и искать в другой.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:28:09.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:28:09.000Z"
+  },
+  {
+    "id": "neetcode-find-target-in-rotated-sorted-array-edge-case",
+    "url": "https://neetcode.io/problems/find-target-in-rotated-sorted-array/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_find_target_in_rotated_sorted_array",
+      "label": "Find Target in Rotated Sorted Array · Binary Search"
+    },
+    "front": "Что вернуть, если target отсутствует, например nums = [4, 5, 6, 7, 0, 1, 2], target = 3?",
+    "back": "Вернуть -1, потому что target не найден после завершения Binary Search. Time Complexity остаётся O(log n), Space Complexity остаётся O(1).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:28:09.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:28:09.000Z"
+  },
+  {
+    "id": "neetcode-reverse-a-linked-list-pattern-recognition",
+    "url": "https://neetcode.io/problems/reverse-a-linked-list/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_reverse_a_linked_list",
+      "label": "Reverse a Linked List · Linked List"
+    },
+    "front": "Нужно развернуть односвязный список и вернуть новую голову. Какой паттерн выбрать?",
+    "back": "Linked List Pointer Reversal. Time Complexity: O(n), Space Complexity: O(1). Паттерн подходит, потому что нужно последовательно менять направление ссылок next.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:28:26.512Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:28:26.512Z"
+  },
+  {
+    "id": "neetcode-reverse-a-linked-list-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/reverse-a-linked-list/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_reverse_a_linked_list",
+      "label": "Reverse a Linked List · Linked List"
+    },
+    "front": "Какие ссылки нужно обновить для текущего узла при развороте списка?",
+    "back": "Сначала сохранить следующий узел. Затем направить current.next на previous и сдвинуть previous и current вперёд.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:28:26.512Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:28:26.512Z"
+  },
+  {
+    "id": "neetcode-reverse-a-linked-list-edge-case",
+    "url": "https://neetcode.io/problems/reverse-a-linked-list/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_reverse_a_linked_list",
+      "label": "Reverse a Linked List · Linked List"
+    },
+    "front": "Что вернуть для пустого списка head = null?",
+    "back": "Вернуть null, потому что разворачивать нечего. Time Complexity остаётся O(n), Space Complexity остаётся O(1).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:28:26.512Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:28:26.512Z"
+  },
+  {
+    "id": "neetcode-merge-two-sorted-linked-lists-pattern-recognition",
+    "url": "https://neetcode.io/problems/merge-two-sorted-linked-lists/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_merge_two_sorted_linked_lists",
+      "label": "Merge Two Sorted Linked Lists · Linked List"
+    },
+    "front": "Нужно объединить два отсортированных linked lists в один отсортированный список. Какой паттерн выбрать?",
+    "back": "Linked List Merge. Time Complexity: O(n + m), Space Complexity: O(1). Паттерн подходит, потому что нужно последовательно выбирать меньший текущий узел из двух списков.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:28:47.351Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:28:47.351Z"
+  },
+  {
+    "id": "neetcode-merge-two-sorted-linked-lists-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/merge-two-sorted-linked-lists/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_merge_two_sorted_linked_lists",
+      "label": "Merge Two Sorted Linked Lists · Linked List"
+    },
+    "front": "Что делать с tail при сравнении текущих узлов двух списков?",
+    "back": "Присоединить к tail узел с меньшим значением. Затем сдвинуть tail и указатель того списка, из которого взяли узел.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:28:47.351Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:28:47.351Z"
+  },
+  {
+    "id": "neetcode-merge-two-sorted-linked-lists-edge-case",
+    "url": "https://neetcode.io/problems/merge-two-sorted-linked-lists/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_merge_two_sorted_linked_lists",
+      "label": "Merge Two Sorted Linked Lists · Linked List"
+    },
+    "front": "Что вернуть, если один из списков пустой, например list1 = null?",
+    "back": "Вернуть второй список, потому что он уже отсортирован и его не нужно менять. Time Complexity остаётся O(n + m), Space Complexity остаётся O(1).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:28:47.351Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:28:47.351Z"
+  },
+  {
+    "id": "neetcode-linked-list-cycle-detection-pattern-recognition",
+    "url": "https://neetcode.io/problems/linked-list-cycle-detection/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_linked_list_cycle_detection",
+      "label": "Linked List Cycle Detection · Fast and Slow Pointers"
+    },
+    "front": "Нужно определить, есть ли цикл в linked list. Какой паттерн выбрать?",
+    "back": "Fast and Slow Pointers. Time Complexity: O(n), Space Complexity: O(1). Паттерн подходит, потому что при наличии цикла быстрый указатель догонит медленный.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:29:10.424Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:29:10.424Z"
+  },
+  {
+    "id": "neetcode-linked-list-cycle-detection-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/linked-list-cycle-detection/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_linked_list_cycle_detection",
+      "label": "Linked List Cycle Detection · Fast and Slow Pointers"
+    },
+    "front": "Как двигать slow и fast при проверке linked list на цикл?",
+    "back": "Slow сдвигается на один узел, а fast — на два узла. Если slow и fast встретились, в списке есть цикл.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:29:10.424Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:29:10.424Z"
+  },
+  {
+    "id": "neetcode-linked-list-cycle-detection-edge-case",
+    "url": "https://neetcode.io/problems/linked-list-cycle-detection/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_linked_list_cycle_detection",
+      "label": "Linked List Cycle Detection · Fast and Slow Pointers"
+    },
+    "front": "Что вернуть для пустого списка head = null?",
+    "back": "Вернуть false, потому что в пустом списке не может быть цикла. Time Complexity остаётся O(n), Space Complexity остаётся O(1).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:29:10.424Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:29:10.424Z"
+  },
+  {
+    "id": "neetcode-reorder-linked-list-pattern-recognition",
+    "url": "https://neetcode.io/problems/reorder-linked-list/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_reorder_linked_list",
+      "label": "Reorder Linked List · Fast and Slow Pointers"
+    },
+    "front": "Нужно переставить linked list в порядке: первый, последний, второй, предпоследний. Какой паттерн выбрать?",
+    "back": "Fast and Slow Pointers + Reverse + Merge. Time Complexity: O(n), Space Complexity: O(1). Паттерн подходит, потому что нужно найти середину, развернуть вторую половину и слить половины по очереди.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:29:32.828Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:29:32.828Z"
+  },
+  {
+    "id": "neetcode-reorder-linked-list-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/reorder-linked-list/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_reorder_linked_list",
+      "label": "Reorder Linked List · Fast and Slow Pointers"
+    },
+    "front": "Какие основные изменения ссылок нужны после нахождения середины списка?",
+    "back": "Развернуть вторую половину списка. Затем по очереди соединять узлы из первой и развернутой второй половины.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:29:32.828Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:29:32.828Z"
+  },
+  {
+    "id": "neetcode-reorder-linked-list-edge-case",
+    "url": "https://neetcode.io/problems/reorder-linked-list/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_reorder_linked_list",
+      "label": "Reorder Linked List · Fast and Slow Pointers"
+    },
+    "front": "Как обработать список из одного узла, например head = [1]?",
+    "back": "Оставить список без изменений: [1]. Переставлять нечего, потому что нет второй половины для merge. Time Complexity остаётся O(n), Space Complexity остаётся O(1).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:29:32.828Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:29:32.828Z"
+  },
+  {
+    "id": "neetcode-remove-node-from-end-of-linked-list-pattern-recognition",
+    "url": "https://neetcode.io/problems/remove-node-from-end-of-linked-list/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_remove_node_from_end_of_linked_list",
+      "label": "Remove Node From End of Linked List · Two Pointers"
+    },
+    "front": "Нужно удалить n-й узел с конца linked list за один проход. Какой паттерн выбрать?",
+    "back": "Two Pointers. Time Complexity: O(n), Space Complexity: O(1). Паттерн подходит, потому что расстояние между fast и slow позволяет найти узел перед удаляемым.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:29:58.804Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:29:58.804Z"
+  },
+  {
+    "id": "neetcode-remove-node-from-end-of-linked-list-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/remove-node-from-end-of-linked-list/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_remove_node_from_end_of_linked_list",
+      "label": "Remove Node From End of Linked List · Two Pointers"
+    },
+    "front": "Как выставить fast и slow, чтобы удалить n-й узел с конца?",
+    "back": "Сначала сдвинуть fast на n шагов вперёд. Затем двигать fast и slow вместе, пока fast не дойдёт до конца. Slow будет указывать на узел перед удаляемым.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:29:58.804Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:29:58.804Z"
+  },
+  {
+    "id": "neetcode-remove-node-from-end-of-linked-list-edge-case",
+    "url": "https://neetcode.io/problems/remove-node-from-end-of-linked-list/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_remove_node_from_end_of_linked_list",
+      "label": "Remove Node From End of Linked List · Two Pointers"
+    },
+    "front": "Как обработать удаление головы списка, например head = [1, 2] и n = 2?",
+    "back": "Вернуть список без головы: [2]. Удобно использовать dummy node, чтобы одинаково удалять голову и обычный узел. Time Complexity остаётся O(n), Space Complexity остаётся O(1).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:29:58.804Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:29:58.804Z"
+  },
+  {
+    "id": "neetcode-merge-k-sorted-linked-lists-pattern-recognition",
+    "url": "https://neetcode.io/problems/merge-k-sorted-linked-lists/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_merge_k_sorted_linked_lists",
+      "label": "Merge K Sorted Linked Lists · Heap"
+    },
+    "front": "Нужно объединить k отсортированных linked lists в один отсортированный список. Какой паттерн выбрать?",
+    "back": "Min Heap. Time Complexity: O(n log k), Space Complexity: O(k). Паттерн подходит, потому что нужно каждый раз быстро выбирать минимальный текущий узел среди k списков.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:30:26.958Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:30:26.958Z"
+  },
+  {
+    "id": "neetcode-merge-k-sorted-linked-lists-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/merge-k-sorted-linked-lists/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_merge_k_sorted_linked_lists",
+      "label": "Merge K Sorted Linked Lists · Heap"
+    },
+    "front": "Что делать после извлечения минимального узла из Min Heap?",
+    "back": "Присоединить этот узел к tail итогового списка. Если у извлечённого узла есть next, добавить next в Min Heap.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:30:26.958Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:30:26.958Z"
+  },
+  {
+    "id": "neetcode-merge-k-sorted-linked-lists-edge-case",
+    "url": "https://neetcode.io/problems/merge-k-sorted-linked-lists/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_merge_k_sorted_linked_lists",
+      "label": "Merge K Sorted Linked Lists · Heap"
+    },
+    "front": "Что вернуть, если список списков пустой или все linked lists равны null?",
+    "back": "Вернуть null, потому что нет узлов для объединения. Time Complexity остаётся O(n log k), Space Complexity остаётся O(k).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:30:26.958Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:30:26.958Z"
+  },
+  {
+    "id": "neetcode-invert-a-binary-tree-pattern-recognition",
+    "url": "https://neetcode.io/problems/invert-a-binary-tree/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_invert_a_binary_tree",
+      "label": "Invert a Binary Tree · DFS"
+    },
+    "front": "Нужно зеркально поменять местами левое и правое поддерево у каждого узла binary tree. Какой паттерн выбрать?",
+    "back": "DFS. Time Complexity: O(n), Space Complexity: O(h). Паттерн подходит, потому что нужно посетить каждый узел и поменять его дочерние ссылки.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:30:50.873Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:30:50.873Z"
+  },
+  {
+    "id": "neetcode-invert-a-binary-tree-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/invert-a-binary-tree/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_invert_a_binary_tree",
+      "label": "Invert a Binary Tree · DFS"
+    },
+    "front": "Что нужно сделать с текущим узлом при инверсии binary tree?",
+    "back": "Поменять местами его left и right. Затем рекурсивно выполнить то же действие для обоих поддеревьев.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:30:50.873Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:30:50.873Z"
+  },
+  {
+    "id": "neetcode-invert-a-binary-tree-edge-case",
+    "url": "https://neetcode.io/problems/invert-a-binary-tree/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_invert_a_binary_tree",
+      "label": "Invert a Binary Tree · DFS"
+    },
+    "front": "Что вернуть для пустого дерева root = null?",
+    "back": "Вернуть null, потому что узлов для инверсии нет. Time Complexity остаётся O(n), Space Complexity остаётся O(h).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:30:50.873Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:30:50.873Z"
+  },
+  {
+    "id": "neetcode-depth-of-binary-tree-pattern-recognition",
+    "url": "https://neetcode.io/problems/depth-of-binary-tree/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_depth_of_binary_tree",
+      "label": "Depth of Binary Tree · DFS"
+    },
+    "front": "Нужно найти максимальную глубину binary tree. Какой паттерн выбрать?",
+    "back": "DFS. Time Complexity: O(n), Space Complexity: O(h). Паттерн подходит, потому что глубина узла зависит от максимальной глубины его левого и правого поддерева.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:31:15.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:31:15.000Z"
+  },
+  {
+    "id": "neetcode-depth-of-binary-tree-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/depth-of-binary-tree/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_depth_of_binary_tree",
+      "label": "Depth of Binary Tree · DFS"
+    },
+    "front": "Как вычислить глубину текущего узла через его поддеревья?",
+    "back": "Нужно рекурсивно получить глубину левого и правого поддерева. Ответ для текущего узла — максимум из них плюс один.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:31:15.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:31:15.000Z"
+  },
+  {
+    "id": "neetcode-depth-of-binary-tree-edge-case",
+    "url": "https://neetcode.io/problems/depth-of-binary-tree/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_depth_of_binary_tree",
+      "label": "Depth of Binary Tree · DFS"
+    },
+    "front": "Что вернуть для пустого дерева root = null?",
+    "back": "Вернуть 0, потому что в дереве нет ни одного уровня. Time Complexity остаётся O(n), Space Complexity остаётся O(h).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:31:15.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:31:15.000Z"
+  },
+  {
+    "id": "neetcode-same-binary-tree-pattern-recognition",
+    "url": "https://neetcode.io/problems/same-binary-tree/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_same_binary_tree",
+      "label": "Same Binary Tree · DFS"
+    },
+    "front": "Нужно проверить, одинаковы ли два binary trees по структуре и значениям узлов. Какой паттерн выбрать?",
+    "back": "DFS. Time Complexity: O(n), Space Complexity: O(h). Паттерн подходит, потому что нужно синхронно сравнить пары узлов в обоих деревьях.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:31:39.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:31:39.000Z"
+  },
+  {
+    "id": "neetcode-same-binary-tree-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/same-binary-tree/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_same_binary_tree",
+      "label": "Same Binary Tree · DFS"
+    },
+    "front": "Что нужно проверить для каждой пары текущих узлов из двух деревьев?",
+    "back": "Если оба узла null, эта пара совпадает. Если один узел null или значения разные, вернуть false. Иначе рекурсивно сравнить левые и правые поддеревья.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:31:39.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:31:39.000Z"
+  },
+  {
+    "id": "neetcode-same-binary-tree-edge-case",
+    "url": "https://neetcode.io/problems/same-binary-tree/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_same_binary_tree",
+      "label": "Same Binary Tree · DFS"
+    },
+    "front": "Что вернуть, если оба дерева пустые: p = null и q = null?",
+    "back": "Вернуть true, потому что их структура и значения полностью совпадают. Time Complexity остаётся O(n), Space Complexity остаётся O(h).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:31:39.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:31:39.000Z"
+  },
+  {
+    "id": "neetcode-subtree-of-a-binary-tree-pattern-recognition",
+    "url": "https://neetcode.io/problems/subtree-of-a-binary-tree/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_subtree_of_a_binary_tree",
+      "label": "Subtree of a Binary Tree · DFS"
+    },
+    "front": "Нужно проверить, является ли одно binary tree поддеревом другого. Какой паттерн выбрать?",
+    "back": "DFS. Time Complexity: O(n * m), Space Complexity: O(h). Паттерн подходит, потому что нужно обходить узлы основного дерева и запускать сравнение деревьев от возможного корня.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:32:05.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:32:05.000Z"
+  },
+  {
+    "id": "neetcode-subtree-of-a-binary-tree-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/subtree-of-a-binary-tree/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_subtree_of_a_binary_tree",
+      "label": "Subtree of a Binary Tree · DFS"
+    },
+    "front": "Что нужно делать с каждым узлом основного дерева при поиске subtree?",
+    "back": "Проверить, совпадает ли дерево от текущего узла с subRoot. Если не совпадает, рекурсивно искать subtree в левом и правом поддереве.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:32:05.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:32:05.000Z"
+  },
+  {
+    "id": "neetcode-subtree-of-a-binary-tree-edge-case",
+    "url": "https://neetcode.io/problems/subtree-of-a-binary-tree/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_subtree_of_a_binary_tree",
+      "label": "Subtree of a Binary Tree · DFS"
+    },
+    "front": "Что вернуть, если основное дерево пустое, а subRoot не пустой?",
+    "back": "Вернуть false, потому что в пустом дереве нет узлов, от которых могло бы начаться совпадение. Time Complexity остаётся O(n * m), Space Complexity остаётся O(h).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:32:05.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:32:05.000Z"
+  },
+  {
+    "id": "neetcode-lowest-common-ancestor-in-binary-search-tree-pattern-recognition",
+    "url": "https://neetcode.io/problems/lowest-common-ancestor-in-binary-search-tree/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_lowest_common_ancestor_in_binary_search_tree",
+      "label": "Lowest Common Ancestor in Binary Search Tree · BST"
+    },
+    "front": "Нужно найти ближайшего общего предка двух узлов в binary search tree. Какой паттерн выбрать?",
+    "back": "BST Traversal. Time Complexity: O(h), Space Complexity: O(1). Паттерн подходит, потому что порядок BST позволяет идти только в ту сторону, где могут находиться оба узла.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:32:31.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:32:31.000Z"
+  },
+  {
+    "id": "neetcode-lowest-common-ancestor-in-binary-search-tree-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/lowest-common-ancestor-in-binary-search-tree/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_lowest_common_ancestor_in_binary_search_tree",
+      "label": "Lowest Common Ancestor in Binary Search Tree · BST"
+    },
+    "front": "Как выбрать направление движения от текущего узла при поиске LCA в BST?",
+    "back": "Если оба значения меньше текущего, идти влево. Если оба значения больше текущего, идти вправо. Иначе текущий узел является LCA.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:32:31.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:32:31.000Z"
+  },
+  {
+    "id": "neetcode-lowest-common-ancestor-in-binary-search-tree-edge-case",
+    "url": "https://neetcode.io/problems/lowest-common-ancestor-in-binary-search-tree/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_lowest_common_ancestor_in_binary_search_tree",
+      "label": "Lowest Common Ancestor in Binary Search Tree · BST"
+    },
+    "front": "Что вернуть, если один из узлов является предком другого?",
+    "back": "Вернуть этот узел-предок, потому что он уже является ближайшим общим предком. Time Complexity остаётся O(h), Space Complexity остаётся O(1).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:32:31.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:32:31.000Z"
+  },
+  {
+    "id": "neetcode-level-order-traversal-of-binary-tree-pattern-recognition",
+    "url": "https://neetcode.io/problems/level-order-traversal-of-binary-tree/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_level_order_traversal_of_binary_tree",
+      "label": "Level Order Traversal of Binary Tree · BFS"
+    },
+    "front": "Нужно вернуть значения binary tree по уровням сверху вниз. Какой паттерн выбрать?",
+    "back": "BFS with Queue. Time Complexity: O(n), Space Complexity: O(n). Паттерн подходит, потому что очередь обрабатывает узлы в порядке их уровня.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:33:00.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:33:00.000Z"
+  },
+  {
+    "id": "neetcode-level-order-traversal-of-binary-tree-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/level-order-traversal-of-binary-tree/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_level_order_traversal_of_binary_tree",
+      "label": "Level Order Traversal of Binary Tree · BFS"
+    },
+    "front": "Как отделять один уровень дерева от следующего при BFS?",
+    "back": "Перед обработкой уровня нужно запомнить текущий размер Queue. Затем обработать ровно столько узлов и добавить их детей в Queue для следующего уровня.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:33:00.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:33:00.000Z"
+  },
+  {
+    "id": "neetcode-level-order-traversal-of-binary-tree-edge-case",
+    "url": "https://neetcode.io/problems/level-order-traversal-of-binary-tree/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_level_order_traversal_of_binary_tree",
+      "label": "Level Order Traversal of Binary Tree · BFS"
+    },
+    "front": "Что вернуть для пустого дерева root = null?",
+    "back": "Вернуть пустой массив [], потому что уровней нет. Time Complexity остаётся O(n), Space Complexity остаётся O(n).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:33:00.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:33:00.000Z"
+  },
+  {
+    "id": "neetcode-valid-binary-search-tree-pattern-recognition",
+    "url": "https://neetcode.io/problems/valid-binary-search-tree/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_valid_binary_search_tree",
+      "label": "Valid Binary Search Tree · DFS"
+    },
+    "front": "Нужно проверить, что binary tree соблюдает правила BST для всех узлов. Какой паттерн выбрать?",
+    "back": "DFS with Bounds. Time Complexity: O(n), Space Complexity: O(h). Паттерн подходит, потому что для каждого узла нужно проверять допустимый диапазон значений.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:33:14.960Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:33:14.960Z"
+  },
+  {
+    "id": "neetcode-valid-binary-search-tree-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/valid-binary-search-tree/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_valid_binary_search_tree",
+      "label": "Valid Binary Search Tree · DFS"
+    },
+    "front": "Какие границы нужно передавать при переходе в левое и правое поддерево?",
+    "back": "В левое поддерево передаётся верхняя граница, равная значению текущего узла. В правое поддерево передаётся нижняя граница, равная значению текущего узла.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:33:14.960Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:33:14.960Z"
+  },
+  {
+    "id": "neetcode-valid-binary-search-tree-edge-case",
+    "url": "https://neetcode.io/problems/valid-binary-search-tree/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_valid_binary_search_tree",
+      "label": "Valid Binary Search Tree · DFS"
+    },
+    "front": "Что вернуть, если в правом поддереве есть узел меньше корня?",
+    "back": "Вернуть false, даже если этот узел больше своего непосредственного родителя. Он нарушает глобальную нижнюю границу от корня. Time Complexity остаётся O(n), Space Complexity остаётся O(h).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:33:14.960Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:33:14.960Z"
+  },
+  {
+    "id": "neetcode-kth-smallest-integer-in-bst-pattern-recognition",
+    "url": "https://neetcode.io/problems/kth-smallest-integer-in-bst/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_kth_smallest_integer_in_bst",
+      "label": "Kth Smallest Integer in BST · Inorder Traversal"
+    },
+    "front": "Нужно найти k-й наименьший элемент в binary search tree. Какой паттерн выбрать?",
+    "back": "Inorder Traversal. Time Complexity: O(h + k), Space Complexity: O(h). Паттерн подходит, потому что inorder-обход BST посещает значения в отсортированном порядке.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:34:00.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:34:00.000Z"
+  },
+  {
+    "id": "neetcode-kth-smallest-integer-in-bst-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/kth-smallest-integer-in-bst/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_kth_smallest_integer_in_bst",
+      "label": "Kth Smallest Integer in BST · Inorder Traversal"
+    },
+    "front": "Когда нужно уменьшать k при inorder-обходе BST?",
+    "back": "Уменьшать k нужно при посещении узла после обработки его левого поддерева. Когда k становится равным 0, текущий узел является ответом.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:34:00.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:34:00.000Z"
+  },
+  {
+    "id": "neetcode-kth-smallest-integer-in-bst-edge-case",
+    "url": "https://neetcode.io/problems/kth-smallest-integer-in-bst/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_kth_smallest_integer_in_bst",
+      "label": "Kth Smallest Integer in BST · Inorder Traversal"
+    },
+    "front": "Что вернуть, если k = 1?",
+    "back": "Вернуть минимальный элемент BST, то есть самый левый достижимый узел. Time Complexity остаётся O(h + k), Space Complexity остаётся O(h).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:34:00.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:34:00.000Z"
+  },
+  {
+    "id": "neetcode-binary-tree-from-preorder-and-inorder-traversal-pattern-recognition",
+    "url": "https://neetcode.io/problems/binary-tree-from-preorder-and-inorder-traversal/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_binary_tree_from_preorder_and_inorder_traversal",
+      "label": "Binary Tree From Preorder and Inorder Traversal · DFS"
+    },
+    "front": "Нужно восстановить binary tree по preorder и inorder обходам без повторяющихся значений. Какой паттерн выбрать?",
+    "back": "DFS + Hash Map. Time Complexity: O(n), Space Complexity: O(n). Паттерн подходит, потому что preorder даёт корень поддерева, а inorder позволяет быстро разделить левое и правое поддерево.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:34:08.224Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:34:08.224Z"
+  },
+  {
+    "id": "neetcode-binary-tree-from-preorder-and-inorder-traversal-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/binary-tree-from-preorder-and-inorder-traversal/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_binary_tree_from_preorder_and_inorder_traversal",
+      "label": "Binary Tree From Preorder and Inorder Traversal · DFS"
+    },
+    "front": "Как определить корень текущего поддерева и его границы в inorder?",
+    "back": "Текущий элемент preorder становится корнем. Его индекс в inorder делит текущий диапазон на левое и правое поддерево.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:34:08.224Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:34:08.224Z"
+  },
+  {
+    "id": "neetcode-binary-tree-from-preorder-and-inorder-traversal-edge-case",
+    "url": "https://neetcode.io/problems/binary-tree-from-preorder-and-inorder-traversal/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_binary_tree_from_preorder_and_inorder_traversal",
+      "label": "Binary Tree From Preorder and Inorder Traversal · DFS"
+    },
+    "front": "Что вернуть для пустого диапазона inorder при рекурсивном построении дерева?",
+    "back": "Вернуть null, потому что в этом диапазоне нет узлов для поддерева. Time Complexity остаётся O(n), Space Complexity остаётся O(n).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:34:08.224Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:34:08.224Z"
+  },
+  {
+    "id": "neetcode-binary-tree-maximum-path-sum-pattern-recognition",
+    "url": "https://neetcode.io/problems/binary-tree-maximum-path-sum/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_binary_tree_maximum_path_sum",
+      "label": "Binary Tree Maximum Path Sum · DFS"
+    },
+    "front": "Нужно найти максимальную сумму пути в binary tree, где путь может проходить через любой узел. Какой паттерн выбрать?",
+    "back": "DFS Postorder. Time Complexity: O(n), Space Complexity: O(h). Паттерн подходит, потому что для каждого узла нужно знать лучший вклад от левого и правого поддерева.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:34:32.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:34:32.000Z"
+  },
+  {
+    "id": "neetcode-binary-tree-maximum-path-sum-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/binary-tree-maximum-path-sum/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_binary_tree_maximum_path_sum",
+      "label": "Binary Tree Maximum Path Sum · DFS"
+    },
+    "front": "Что нужно вычислить для текущего узла при DFS Postorder?",
+    "back": "Нужно обновить глобальный максимум как сумму текущего узла и положительных вкладов двух поддеревьев. Родителю возвращается только один лучший путь: текущий узел плюс лучший вклад слева или справа.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:34:32.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:34:32.000Z"
+  },
+  {
+    "id": "neetcode-binary-tree-maximum-path-sum-edge-case",
+    "url": "https://neetcode.io/problems/binary-tree-maximum-path-sum/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_binary_tree_maximum_path_sum",
+      "label": "Binary Tree Maximum Path Sum · DFS"
+    },
+    "front": "Что вернуть, если все значения в дереве отрицательные?",
+    "back": "Вернуть наибольшее отдельное значение узла, а не 0. Отрицательные вклады поддеревьев не добавляются к пути. Time Complexity остаётся O(n), Space Complexity остаётся O(h).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:34:32.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:34:32.000Z"
+  },
+  {
+    "id": "neetcode-serialize-and-deserialize-binary-tree-pattern-recognition",
+    "url": "https://neetcode.io/problems/serialize-and-deserialize-binary-tree/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_serialize_and_deserialize_binary_tree",
+      "label": "Serialize and Deserialize Binary Tree · DFS"
+    },
+    "front": "Нужно преобразовать binary tree в строку и затем восстановить то же дерево. Какой паттерн выбрать?",
+    "back": "DFS Preorder Serialization. Time Complexity: O(n), Space Complexity: O(n). Паттерн подходит, потому что preorder вместе с null-маркерами однозначно сохраняет структуру дерева.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:35:36.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:35:36.000Z"
+  },
+  {
+    "id": "neetcode-serialize-and-deserialize-binary-tree-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/serialize-and-deserialize-binary-tree/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_serialize_and_deserialize_binary_tree",
+      "label": "Serialize and Deserialize Binary Tree · DFS"
+    },
+    "front": "Что должен делать deserializer при чтении очередного значения preorder-последовательности?",
+    "back": "Если значение является null-маркером, вернуть null. Иначе создать узел, затем рекурсивно восстановить его left и right.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:35:36.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:35:36.000Z"
+  },
+  {
+    "id": "neetcode-serialize-and-deserialize-binary-tree-edge-case",
+    "url": "https://neetcode.io/problems/serialize-and-deserialize-binary-tree/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_serialize_and_deserialize_binary_tree",
+      "label": "Serialize and Deserialize Binary Tree · DFS"
+    },
+    "front": "Как обработать пустое дерево root = null?",
+    "back": "Сериализовать как один null-маркер и при десериализации вернуть null. Time Complexity остаётся O(n), Space Complexity остаётся O(n).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:35:36.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:35:36.000Z"
+  },
+  {
+    "id": "neetcode-find-median-in-a-data-stream-pattern-recognition",
+    "url": "https://neetcode.io/problems/find-median-in-a-data-stream/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_find_median_in_a_data_stream",
+      "label": "Find Median in a Data Stream · Two Heaps"
+    },
+    "front": "Нужно поддерживать поток чисел и быстро возвращать текущую median. Какой паттерн выбрать?",
+    "back": "Two Heaps. Time Complexity: O(log n) для добавления и O(1) для median, Space Complexity: O(n). Паттерн подходит, потому что две кучи хранят меньшую и большую половины чисел.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:36:13.452Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:36:13.452Z"
+  },
+  {
+    "id": "neetcode-find-median-in-a-data-stream-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/find-median-in-a-data-stream/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_find_median_in_a_data_stream",
+      "label": "Find Median in a Data Stream · Two Heaps"
+    },
+    "front": "Что нужно поддерживать между max heap меньшей половины и min heap большей половины?",
+    "back": "Размеры heaps должны отличаться не больше чем на один. Все элементы max heap должны быть меньше или равны элементам min heap.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:36:13.452Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:36:13.452Z"
+  },
+  {
+    "id": "neetcode-find-median-in-a-data-stream-edge-case",
+    "url": "https://neetcode.io/problems/find-median-in-a-data-stream/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_find_median_in_a_data_stream",
+      "label": "Find Median in a Data Stream · Two Heaps"
+    },
+    "front": "Как вернуть median, если количество добавленных чисел чётное?",
+    "back": "Вернуть среднее значение вершин двух heaps. Левая вершина даёт максимум меньшей половины, правая — минимум большей половины. Time Complexity остаётся O(1) для median, Space Complexity остаётся O(n).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:36:13.452Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:36:13.452Z"
+  },
+  {
+    "id": "neetcode-combination-target-sum-pattern-recognition",
+    "url": "https://neetcode.io/problems/combination-target-sum/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_combination_target_sum",
+      "label": "Combination Target Sum · Backtracking"
+    },
+    "front": "Нужно найти все уникальные комбинации чисел, которые дают target, при этом число можно использовать несколько раз. Какой паттерн выбрать?",
+    "back": "Backtracking. Time Complexity: O(2^t), Space Complexity: O(t). Паттерн подходит, потому что нужно перебрать решения через выбор числа, повторное использование и откат состояния.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:36:47.372Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:36:47.372Z"
+  },
+  {
+    "id": "neetcode-combination-target-sum-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/combination-target-sum/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_combination_target_sum",
+      "label": "Combination Target Sum · Backtracking"
+    },
+    "front": "Как избежать дубликатов комбинаций при DFS-переборе?",
+    "back": "Передавать индекс текущей позиции и не возвращаться к меньшим индексам. Для повторного использования числа рекурсивный вызов остаётся на том же индексе.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:36:47.372Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:36:47.372Z"
+  },
+  {
+    "id": "neetcode-combination-target-sum-edge-case",
+    "url": "https://neetcode.io/problems/combination-target-sum/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_combination_target_sum",
+      "label": "Combination Target Sum · Backtracking"
+    },
+    "front": "Что делать, если текущая сумма стала больше target?",
+    "back": "Остановить эту ветку поиска, потому что положительные числа только увеличат сумму. Другие ветки продолжают проверяться. Time Complexity остаётся O(2^t), Space Complexity остаётся O(t).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:36:47.372Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:36:47.372Z"
+  },
+  {
+    "id": "neetcode-search-for-word-pattern-recognition",
+    "url": "https://neetcode.io/problems/search-for-word/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_search_for_word",
+      "label": "Search for Word · Backtracking"
+    },
+    "front": "Нужно проверить, можно ли составить слово в grid, двигаясь по соседним клеткам и не используя клетку повторно. Какой паттерн выбрать?",
+    "back": "Backtracking DFS. Time Complexity: O(m * n * 4^w), Space Complexity: O(w). Паттерн подходит, потому что нужно пробовать пути по grid и откатывать посещённые клетки.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:37:12.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:37:12.000Z"
+  },
+  {
+    "id": "neetcode-search-for-word-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/search-for-word/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_search_for_word",
+      "label": "Search for Word · Backtracking"
+    },
+    "front": "Что нужно сделать с клеткой grid перед рекурсивным поиском следующей буквы?",
+    "back": "Пометить клетку как посещённую, чтобы не использовать её повторно в текущем пути. После проверки соседей нужно снять отметку посещения.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:37:12.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:37:12.000Z"
+  },
+  {
+    "id": "neetcode-search-for-word-edge-case",
+    "url": "https://neetcode.io/problems/search-for-word/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_search_for_word",
+      "label": "Search for Word · Backtracking"
+    },
+    "front": "Что вернуть, если нужная буква есть в соседней клетке, но она уже использована в текущем пути?",
+    "back": "Эту клетку нельзя использовать повторно, поэтому такая ветка возвращает false. Нужно проверить другие возможные пути. Time Complexity остаётся O(m * n * 4^w), Space Complexity остаётся O(w).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:37:12.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:37:12.000Z"
+  },
+  {
+    "id": "neetcode-implement-prefix-tree-pattern-recognition",
+    "url": "https://neetcode.io/problems/implement-prefix-tree/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_implement_prefix_tree",
+      "label": "Implement Prefix Tree · Trie"
+    },
+    "front": "Нужно реализовать структуру для вставки слов, поиска слова и проверки prefix. Какой паттерн выбрать?",
+    "back": "Trie. Time Complexity: O(n) для insert/search/startsWith, Space Complexity: O(t). Паттерн подходит, потому что символы слов хранятся как путь по дереву префиксов.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:37:42.486Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:37:42.486Z"
+  },
+  {
+    "id": "neetcode-implement-prefix-tree-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/implement-prefix-tree/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_implement_prefix_tree",
+      "label": "Implement Prefix Tree · Trie"
+    },
+    "front": "Что нужно делать при вставке очередного символа слова в Trie?",
+    "back": "Проверить, есть ли child для этого символа. Если child нет, создать новый Trie node. Затем перейти в этот child.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:37:42.486Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:37:42.486Z"
+  },
+  {
+    "id": "neetcode-implement-prefix-tree-edge-case",
+    "url": "https://neetcode.io/problems/implement-prefix-tree/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_implement_prefix_tree",
+      "label": "Implement Prefix Tree · Trie"
+    },
+    "front": "Почему search(\"app\") может вернуть false, даже если startsWith(\"app\") возвращает true?",
+    "back": "Путь prefix существует, но узел может не быть помечен как конец слова. Search требует end marker, а startsWith — только наличие пути. Time Complexity остаётся O(n), Space Complexity остаётся O(t).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:37:42.486Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:37:42.486Z"
+  },
+  {
+    "id": "neetcode-design-word-search-data-structure-pattern-recognition",
+    "url": "https://neetcode.io/problems/design-word-search-data-structure/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_design_word_search_data_structure",
+      "label": "Design Word Search Data Structure · Trie"
+    },
+    "front": "Нужно реализовать структуру для добавления слов и поиска с wildcard-символом, который может совпасть с любой буквой. Какой паттерн выбрать?",
+    "back": "Trie + DFS. Time Complexity: O(n) для addWord и O(26^n) в худшем случае для search, Space Complexity: O(t). Паттерн подходит, потому что обычные буквы идут по Trie, а wildcard требует перебора возможных children.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:38:09.855Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:38:09.855Z"
+  },
+  {
+    "id": "neetcode-design-word-search-data-structure-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/design-word-search-data-structure/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_design_word_search_data_structure",
+      "label": "Design Word Search Data Structure · Trie"
+    },
+    "front": "Что должен делать search, когда встречает wildcard-символ вместо обычной буквы?",
+    "back": "Запустить DFS по всем существующим children текущего Trie node. Если хотя бы одна ветка успешно совпала с оставшейся частью слова, вернуть true.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:38:09.855Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:38:09.855Z"
+  },
+  {
+    "id": "neetcode-design-word-search-data-structure-edge-case",
+    "url": "https://neetcode.io/problems/design-word-search-data-structure/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_design_word_search_data_structure",
+      "label": "Design Word Search Data Structure · Trie"
+    },
+    "front": "Что вернуть при поиске шаблона короче добавленного слова, например добавлено \"bad\", а search(\"ba\")?",
+    "back": "Вернуть false, потому что нужно совпадение всего слова, а не только prefix. Последний узел должен иметь end marker. Time Complexity остаётся O(26^n) в худшем случае для search, Space Complexity остаётся O(t).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:38:09.855Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:38:09.855Z"
+  },
+  {
+    "id": "neetcode-search-for-word-ii-pattern-recognition",
+    "url": "https://neetcode.io/problems/search-for-word-ii/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_search_for_word_ii",
+      "label": "Search for Word II · Trie"
+    },
+    "front": "Нужно найти все слова из списка, которые можно составить в grid, двигаясь по соседним клеткам. Какой паттерн выбрать?",
+    "back": "Trie + Backtracking DFS. Time Complexity: O(m * n * 4^w), Space Complexity: O(t). Паттерн подходит, потому что Trie быстро отсекает пути, которые не являются prefix ни одного слова.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:38:42.464Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:38:42.464Z"
+  },
+  {
+    "id": "neetcode-search-for-word-ii-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/search-for-word-ii/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_search_for_word_ii",
+      "label": "Search for Word II · Trie"
+    },
+    "front": "Когда DFS по grid должен остановить текущую ветку поиска?",
+    "back": "Когда клетка уже посещена или её символа нет среди children текущего Trie node. В этом случае текущий путь не может стать ни одним словом из списка.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:38:42.464Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:38:42.464Z"
+  },
+  {
+    "id": "neetcode-search-for-word-ii-edge-case",
+    "url": "https://neetcode.io/problems/search-for-word-ii/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_search_for_word_ii",
+      "label": "Search for Word II · Trie"
+    },
+    "front": "Как избежать повторного добавления одного и того же найденного слова?",
+    "back": "После нахождения слова нужно убрать его end marker или сохранить найденные слова в set. Это не меняет асимптотику: Time Complexity остаётся O(m * n * 4^w), Space Complexity остаётся O(t).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:38:42.464Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:38:42.464Z"
+  },
+  {
+    "id": "neetcode-count-number-of-islands-pattern-recognition",
+    "url": "https://neetcode.io/problems/count-number-of-islands/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_count_number_of_islands",
+      "label": "Count Number of Islands · DFS"
+    },
+    "front": "Нужно посчитать количество отдельных островов в grid из земли и воды. Какой паттерн выбрать?",
+    "back": "DFS/BFS Flood Fill. Time Complexity: O(m * n), Space Complexity: O(m * n). Паттерн подходит, потому что нужно обходить все связанные клетки земли и помечать их как посещённые.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:39:11.998Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:39:11.998Z"
+  },
+  {
+    "id": "neetcode-count-number-of-islands-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/count-number-of-islands/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_count_number_of_islands",
+      "label": "Count Number of Islands · DFS"
+    },
+    "front": "Что нужно сделать, когда при проходе по grid найдена непосещённая клетка земли?",
+    "back": "Увеличить счётчик островов на один. Затем запустить DFS/BFS, чтобы пометить всю связанную с ней землю как посещённую.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:39:11.998Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:39:11.998Z"
+  },
+  {
+    "id": "neetcode-count-number-of-islands-edge-case",
+    "url": "https://neetcode.io/problems/count-number-of-islands/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_count_number_of_islands",
+      "label": "Count Number of Islands · DFS"
+    },
+    "front": "Что вернуть для grid, где все клетки являются водой?",
+    "back": "Вернуть 0, потому что нет ни одной стартовой клетки земли для острова. Time Complexity остаётся O(m * n), Space Complexity остаётся O(m * n).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:39:11.998Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:39:11.998Z"
+  },
+  {
+    "id": "neetcode-clone-graph-pattern-recognition",
+    "url": "https://neetcode.io/problems/clone-graph/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_clone_graph",
+      "label": "Clone Graph · DFS"
+    },
+    "front": "Нужно создать глубокую копию связного graph, сохранив все узлы и связи между ними. Какой паттерн выбрать?",
+    "back": "DFS/BFS + Hash Map. Time Complexity: O(V + E), Space Complexity: O(V). Паттерн подходит, потому что нужно обходить graph и хранить соответствие original node → cloned node.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:39:39.970Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:39:39.970Z"
+  },
+  {
+    "id": "neetcode-clone-graph-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/clone-graph/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_clone_graph",
+      "label": "Clone Graph · DFS"
+    },
+    "front": "Что нужно сделать при первом посещении узла graph во время клонирования?",
+    "back": "Создать clone node и сразу сохранить его в Hash Map. Затем рекурсивно клонировать соседей и добавлять их clones в список neighbors.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:39:39.970Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:39:39.970Z"
+  },
+  {
+    "id": "neetcode-clone-graph-edge-case",
+    "url": "https://neetcode.io/problems/clone-graph/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_clone_graph",
+      "label": "Clone Graph · DFS"
+    },
+    "front": "Что вернуть, если входной node равен null?",
+    "back": "Вернуть null, потому что graph для копирования отсутствует. Time Complexity остаётся O(V + E), Space Complexity остаётся O(V).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:39:39.970Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:39:39.970Z"
+  },
+  {
+    "id": "neetcode-pacific-atlantic-water-flow-pattern-recognition",
+    "url": "https://neetcode.io/problems/pacific-atlantic-water-flow/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_pacific_atlantic_water_flow",
+      "label": "Pacific Atlantic Water Flow · DFS"
+    },
+    "front": "Нужно найти клетки grid, из которых вода может дойти и до Pacific, и до Atlantic. Какой паттерн выбрать?",
+    "back": "Multi-source DFS/BFS. Time Complexity: O(m * n), Space Complexity: O(m * n). Паттерн подходит, потому что удобнее идти от океанов обратно к клеткам с большей или равной высотой.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:40:08.898Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:40:08.898Z"
+  },
+  {
+    "id": "neetcode-pacific-atlantic-water-flow-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/pacific-atlantic-water-flow/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_pacific_atlantic_water_flow",
+      "label": "Pacific Atlantic Water Flow · DFS"
+    },
+    "front": "В каком направлении нужно двигаться при DFS/BFS от границ океана?",
+    "back": "Из текущей клетки можно идти только в соседнюю клетку с высотой больше или равной текущей. Это reverse flow: так находятся клетки, из которых вода могла бы стекать к этому океану.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:40:08.898Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:40:08.898Z"
+  },
+  {
+    "id": "neetcode-pacific-atlantic-water-flow-edge-case",
+    "url": "https://neetcode.io/problems/pacific-atlantic-water-flow/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_pacific_atlantic_water_flow",
+      "label": "Pacific Atlantic Water Flow · DFS"
+    },
+    "front": "Что вернуть для grid из одной клетки?",
+    "back": "Вернуть эту единственную клетку, потому что она касается границ обоих океанов. Time Complexity остаётся O(m * n), Space Complexity остаётся O(m * n).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:40:08.898Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:40:08.898Z"
+  },
+  {
+    "id": "neetcode-course-schedule-pattern-recognition",
+    "url": "https://neetcode.io/problems/course-schedule/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_course_schedule",
+      "label": "Course Schedule · Topological Sort"
+    },
+    "front": "Нужно определить, можно ли пройти все курсы при наличии prerequisites между ними. Какой паттерн выбрать?",
+    "back": "Topological Sort / DFS Cycle Detection. Time Complexity: O(V + E), Space Complexity: O(V + E). Паттерн подходит, потому что невозможность пройти все курсы означает цикл в directed graph.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:40:34.820Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:40:34.820Z"
+  },
+  {
+    "id": "neetcode-course-schedule-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/course-schedule/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_course_schedule",
+      "label": "Course Schedule · Topological Sort"
+    },
+    "front": "Что означает повторная встреча курса в текущем DFS-path?",
+    "back": "Это означает цикл в prerequisites. Нужно сразу вернуть false, потому что курс зависит сам от себя через цепочку зависимостей.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:40:34.820Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:40:34.820Z"
+  },
+  {
+    "id": "neetcode-course-schedule-edge-case",
+    "url": "https://neetcode.io/problems/course-schedule/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_course_schedule",
+      "label": "Course Schedule · Topological Sort"
+    },
+    "front": "Что вернуть, если есть самозависимость курса, например prerequisite [0, 0]?",
+    "back": "Вернуть false, потому что это цикл длины один. Такой курс невозможно завершить. Time Complexity остаётся O(V + E), Space Complexity остаётся O(V + E).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:40:34.820Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:40:34.820Z"
+  },
+  {
+    "id": "neetcode-valid-tree-pattern-recognition",
+    "url": "https://neetcode.io/problems/valid-tree/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_valid_tree",
+      "label": "Valid Tree · DFS"
+    },
+    "front": "Нужно проверить, образуют ли n узлов и список edges одно корректное tree. Какой паттерн выбрать?",
+    "back": "DFS Graph Traversal. Time Complexity: O(V + E), Space Complexity: O(V + E). Паттерн подходит, потому что tree должен быть связным graph без циклов.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:41:02.448Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:41:02.448Z"
+  },
+  {
+    "id": "neetcode-valid-tree-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/valid-tree/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_valid_tree",
+      "label": "Valid Tree · DFS"
+    },
+    "front": "Как DFS должен отличать цикл от обратного ребра к родителю?",
+    "back": "При обходе соседей нужно пропускать parent текущего узла. Если другой сосед уже посещён, найден цикл и graph не является tree.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:41:02.448Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:41:02.448Z"
+  },
+  {
+    "id": "neetcode-valid-tree-edge-case",
+    "url": "https://neetcode.io/problems/valid-tree/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_valid_tree",
+      "label": "Valid Tree · DFS"
+    },
+    "front": "Что вернуть, если graph не содержит циклов, но состоит из нескольких компонент?",
+    "back": "Вернуть false, потому что tree должен быть связным. После DFS все n узлов должны быть посещены. Time Complexity остаётся O(V + E), Space Complexity остаётся O(V + E).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:41:02.448Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:41:02.448Z"
+  },
+  {
+    "id": "neetcode-count-connected-components-pattern-recognition",
+    "url": "https://neetcode.io/problems/count-connected-components/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_count_connected_components",
+      "label": "Count Connected Components · DFS"
+    },
+    "front": "Нужно посчитать количество отдельных connected components в undirected graph. Какой паттерн выбрать?",
+    "back": "DFS/BFS Graph Traversal. Time Complexity: O(V + E), Space Complexity: O(V + E). Паттерн подходит, потому что каждый запуск обхода из непосещённого узла находит одну новую компоненту.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:41:31.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:41:31.000Z"
+  },
+  {
+    "id": "neetcode-count-connected-components-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/count-connected-components/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_count_connected_components",
+      "label": "Count Connected Components · DFS"
+    },
+    "front": "Что нужно сделать, когда при проходе по узлам найден непосещённый узел?",
+    "back": "Увеличить счётчик components на один. Затем запустить DFS/BFS, чтобы пометить все узлы этой компоненты как посещённые.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:41:31.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:41:31.000Z"
+  },
+  {
+    "id": "neetcode-count-connected-components-edge-case",
+    "url": "https://neetcode.io/problems/count-connected-components/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_count_connected_components",
+      "label": "Count Connected Components · DFS"
+    },
+    "front": "Что вернуть, если есть изолированные узлы и edges пустой, например n = 3, edges = []?",
+    "back": "Вернуть 3, потому что каждый узел является отдельной component. Time Complexity остаётся O(V + E), Space Complexity остаётся O(V + E).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:41:31.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:41:31.000Z"
+  },
+  {
+    "id": "neetcode-foreign-dictionary-pattern-recognition",
+    "url": "https://neetcode.io/problems/foreign-dictionary/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_foreign_dictionary",
+      "label": "Foreign Dictionary · Topological Sort"
+    },
+    "front": "Нужно восстановить порядок букв неизвестного алфавита по отсортированному списку слов. Какой паттерн выбрать?",
+    "back": "Topological Sort. Time Complexity: O(N + E), Space Complexity: O(C + E). Паттерн подходит, потому что отношения между буквами образуют directed graph, где порядок букв — это topological order.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:42:00.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:42:00.000Z"
+  },
+  {
+    "id": "neetcode-foreign-dictionary-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/foreign-dictionary/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_foreign_dictionary",
+      "label": "Foreign Dictionary · Topological Sort"
+    },
+    "front": "Как построить ребро между буквами при сравнении двух соседних слов?",
+    "back": "Нужно найти первую позицию, где буквы отличаются. Из буквы первого слова добавить directed edge в букву второго слова и остановить сравнение этой пары.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:42:00.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:42:00.000Z"
+  },
+  {
+    "id": "neetcode-foreign-dictionary-edge-case",
+    "url": "https://neetcode.io/problems/foreign-dictionary/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_foreign_dictionary",
+      "label": "Foreign Dictionary · Topological Sort"
+    },
+    "front": "Что вернуть, если более длинное слово стоит перед своим prefix, например [\"abc\", \"ab\"]?",
+    "back": "Вернуть пустую строку, потому что такой порядок слов невозможен для валидного словаря. Time Complexity остаётся O(N + E), Space Complexity остаётся O(C + E).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:42:00.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:42:00.000Z"
+  },
+  {
+    "id": "neetcode-climbing-stairs-pattern-recognition",
+    "url": "https://neetcode.io/problems/climbing-stairs/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_climbing_stairs",
+      "label": "Climbing Stairs · Dynamic Programming"
+    },
+    "front": "Нужно посчитать, сколькими способами можно подняться на n ступенек, делая шаг на 1 или 2. Какой паттерн выбрать?",
+    "back": "Dynamic Programming. Time Complexity: O(n), Space Complexity: O(1). Паттерн подходит, потому что число способов для текущей ступеньки зависит от двух предыдущих состояний.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:43:17.973Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:43:17.973Z"
+  },
+  {
+    "id": "neetcode-climbing-stairs-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/climbing-stairs/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_climbing_stairs",
+      "label": "Climbing Stairs · Dynamic Programming"
+    },
+    "front": "Как обновлять DP-состояние при переходе к следующей ступеньке?",
+    "back": "Текущее количество способов равно сумме двух предыдущих. Затем нужно сдвинуть два сохранённых состояния вперёд.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:43:17.973Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:43:17.973Z"
+  },
+  {
+    "id": "neetcode-climbing-stairs-edge-case",
+    "url": "https://neetcode.io/problems/climbing-stairs/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_climbing_stairs",
+      "label": "Climbing Stairs · Dynamic Programming"
+    },
+    "front": "Что вернуть для n = 1?",
+    "back": "Вернуть 1, потому что есть только один способ: сделать один шаг. Time Complexity остаётся O(n), Space Complexity остаётся O(1).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:43:17.973Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:43:17.973Z"
+  },
+  {
+    "id": "neetcode-house-robber-pattern-recognition",
+    "url": "https://neetcode.io/problems/house-robber/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_house_robber",
+      "label": "House Robber · Dynamic Programming"
+    },
+    "front": "Нужно получить максимальную сумму из массива домов, не выбирая два соседних дома. Какой паттерн выбрать?",
+    "back": "Dynamic Programming. Time Complexity: O(n), Space Complexity: O(1). Паттерн подходит, потому что для каждого дома нужно выбрать максимум между ограбить его или пропустить.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:43:46.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:43:46.000Z"
+  },
+  {
+    "id": "neetcode-house-robber-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/house-robber/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_house_robber",
+      "label": "House Robber · Dynamic Programming"
+    },
+    "front": "Как обновлять два DP-состояния при проходе по домам?",
+    "back": "Новый максимум равен max(предыдущий максимум, максимум два дома назад плюс текущий дом). После этого два сохранённых состояния сдвигаются вперёд.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:43:46.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:43:46.000Z"
+  },
+  {
+    "id": "neetcode-house-robber-edge-case",
+    "url": "https://neetcode.io/problems/house-robber/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_house_robber",
+      "label": "House Robber · Dynamic Programming"
+    },
+    "front": "Что вернуть для одного дома, например nums = [5]?",
+    "back": "Вернуть 5, потому что нет соседнего дома, создающего конфликт. Time Complexity остаётся O(n), Space Complexity остаётся O(1).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:43:46.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:43:46.000Z"
+  },
+  {
+    "id": "neetcode-house-robber-ii-pattern-recognition",
+    "url": "https://neetcode.io/problems/house-robber-ii/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_house_robber_ii",
+      "label": "House Robber II · Dynamic Programming"
+    },
+    "front": "Нужно получить максимальную сумму из домов, расположенных по кругу, не выбирая соседние дома. Какой паттерн выбрать?",
+    "back": "Dynamic Programming. Time Complexity: O(n), Space Complexity: O(1). Паттерн подходит, потому что круговой конфликт решается двумя линейными DP-запусками: без первого дома и без последнего.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:44:15.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:44:15.000Z"
+  },
+  {
+    "id": "neetcode-house-robber-ii-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/house-robber-ii/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_house_robber_ii",
+      "label": "House Robber II · Dynamic Programming"
+    },
+    "front": "Как убрать круговой конфликт между первым и последним домом?",
+    "back": "Посчитать максимум для диапазона без первого дома. Затем посчитать максимум для диапазона без последнего дома. Ответом будет максимум из этих двух результатов.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:44:15.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:44:15.000Z"
+  },
+  {
+    "id": "neetcode-house-robber-ii-edge-case",
+    "url": "https://neetcode.io/problems/house-robber-ii/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_house_robber_ii",
+      "label": "House Robber II · Dynamic Programming"
+    },
+    "front": "Что вернуть для одного дома, например nums = [7]?",
+    "back": "Вернуть 7, потому что нет соседнего дома и круговой конфликт не возникает. Time Complexity остаётся O(n), Space Complexity остаётся O(1).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:44:15.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:44:15.000Z"
+  },
+  {
+    "id": "neetcode-longest-palindromic-substring-pattern-recognition",
+    "url": "https://neetcode.io/problems/longest-palindromic-substring/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_longest_palindromic_substring",
+      "label": "Longest Palindromic Substring · Expand Around Center"
+    },
+    "front": "Нужно найти самую длинную substring, которая читается одинаково слева направо и справа налево. Какой паттерн выбрать?",
+    "back": "Expand Around Center. Time Complexity: O(n²), Space Complexity: O(1). Паттерн подходит, потому что palindrome можно расширять от центра в обе стороны.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:44:45.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:44:45.000Z"
+  },
+  {
+    "id": "neetcode-longest-palindromic-substring-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/longest-palindromic-substring/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_longest_palindromic_substring",
+      "label": "Longest Palindromic Substring · Expand Around Center"
+    },
+    "front": "Какие центры нужно проверять для каждой позиции строки?",
+    "back": "Нужно проверять центр в одном символе и центр между двумя символами. Это покрывает palindrome нечётной и чётной длины.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:44:45.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:44:45.000Z"
+  },
+  {
+    "id": "neetcode-longest-palindromic-substring-edge-case",
+    "url": "https://neetcode.io/problems/longest-palindromic-substring/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_longest_palindromic_substring",
+      "label": "Longest Palindromic Substring · Expand Around Center"
+    },
+    "front": "Что вернуть для строки с чётным palindrome, например s = \"cbbd\"?",
+    "back": "Вернуть \"bb\", потому что самый длинный palindrome находится между двумя одинаковыми символами. Time Complexity остаётся O(n²), Space Complexity остаётся O(1).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:44:45.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:44:45.000Z"
+  },
+  {
+    "id": "neetcode-palindromic-substrings-pattern-recognition",
+    "url": "https://neetcode.io/problems/palindromic-substrings/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_palindromic_substrings",
+      "label": "Palindromic Substrings · Expand Around Center"
+    },
+    "front": "Нужно посчитать количество substrings, которые читаются одинаково слева направо и справа налево. Какой паттерн выбрать?",
+    "back": "Expand Around Center. Time Complexity: O(n²), Space Complexity: O(1). Паттерн подходит, потому что каждый palindrome можно найти расширением от центра.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:45:10.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:45:10.000Z"
+  },
+  {
+    "id": "neetcode-palindromic-substrings-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/palindromic-substrings/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_palindromic_substrings",
+      "label": "Palindromic Substrings · Expand Around Center"
+    },
+    "front": "Что нужно делать при расширении от центра, пока символы слева и справа совпадают?",
+    "back": "Увеличивать счётчик palindromic substrings на один. Затем сдвигать левую границу влево, а правую границу вправо.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:45:10.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:45:10.000Z"
+  },
+  {
+    "id": "neetcode-palindromic-substrings-edge-case",
+    "url": "https://neetcode.io/problems/palindromic-substrings/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_palindromic_substrings",
+      "label": "Palindromic Substrings · Expand Around Center"
+    },
+    "front": "Что вернуть для строки s = \"aaa\"?",
+    "back": "Вернуть 6: три одиночных символа, две подстроки \"aa\" и одна \"aaa\". Time Complexity остаётся O(n²), Space Complexity остаётся O(1).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:45:10.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:45:10.000Z"
+  },
+  {
+    "id": "neetcode-decode-ways-pattern-recognition",
+    "url": "https://neetcode.io/problems/decode-ways/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_decode_ways",
+      "label": "Decode Ways · Dynamic Programming"
+    },
+    "front": "Нужно посчитать, сколькими способами строку цифр можно декодировать в буквы. Какой паттерн выбрать?",
+    "back": "Dynamic Programming. Time Complexity: O(n), Space Complexity: O(1). Паттерн подходит, потому что количество способов для позиции зависит от валидности одного и двух последних символов.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:46:46.982Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:46:46.982Z"
+  },
+  {
+    "id": "neetcode-decode-ways-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/decode-ways/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_decode_ways",
+      "label": "Decode Ways · Dynamic Programming"
+    },
+    "front": "Когда текущая позиция получает способы из одного символа и из двух символов?",
+    "back": "Если текущий символ не равен \"0\", добавить способы предыдущей позиции. Если последние две цифры образуют число от 10 до 26, добавить способы позиции перед ними.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:46:46.982Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:46:46.982Z"
+  },
+  {
+    "id": "neetcode-decode-ways-edge-case",
+    "url": "https://neetcode.io/problems/decode-ways/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_decode_ways",
+      "label": "Decode Ways · Dynamic Programming"
+    },
+    "front": "Что вернуть для строки, которая начинается с нуля, например s = \"06\"?",
+    "back": "Вернуть 0, потому что \"0\" не может быть декодирован отдельно, а \"06\" не является валидным кодом. Time Complexity остаётся O(n), Space Complexity остаётся O(1).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:46:46.982Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:46:46.982Z"
+  },
+  {
+    "id": "neetcode-coin-change-pattern-recognition",
+    "url": "https://neetcode.io/problems/coin-change/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_coin_change",
+      "label": "Coin Change · Dynamic Programming"
+    },
+    "front": "Нужно найти минимальное количество монет, чтобы собрать заданную сумму, если каждую монету можно использовать много раз. Какой паттерн выбрать?",
+    "back": "Dynamic Programming. Time Complexity: O(amount * n), Space Complexity: O(amount). Паттерн подходит, потому что минимальный ответ для суммы строится из уже посчитанных меньших сумм.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:47:20.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:47:20.000Z"
+  },
+  {
+    "id": "neetcode-coin-change-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/coin-change/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_coin_change",
+      "label": "Coin Change · Dynamic Programming"
+    },
+    "front": "Как обновлять DP-состояние для текущей суммы при переборе монет?",
+    "back": "Если coin не больше текущей суммы, проверить вариант dp[sum - coin] плюс одна монета. Затем сохранить минимальное значение для dp[sum].",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:47:20.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:47:20.000Z"
+  },
+  {
+    "id": "neetcode-coin-change-edge-case",
+    "url": "https://neetcode.io/problems/coin-change/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_coin_change",
+      "label": "Coin Change · Dynamic Programming"
+    },
+    "front": "Что вернуть, если сумму невозможно собрать, например coins = [2], amount = 3?",
+    "back": "Вернуть -1, потому что DP-состояние для amount останется недостижимым. Time Complexity остаётся O(amount * n), Space Complexity остаётся O(amount).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:47:20.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:47:20.000Z"
+  },
+  {
+    "id": "neetcode-maximum-product-subarray-pattern-recognition",
+    "url": "https://neetcode.io/problems/maximum-product-subarray/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_maximum_product_subarray",
+      "label": "Maximum Product Subarray · Dynamic Programming"
+    },
+    "front": "Нужно найти максимальное произведение непрерывного subarray. Какой паттерн выбрать?",
+    "back": "Dynamic Programming. Time Complexity: O(n), Space Complexity: O(1). Паттерн подходит, потому что отрицательное число может поменять местами текущий максимум и минимум произведения.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:47:49.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:47:49.000Z"
+  },
+  {
+    "id": "neetcode-maximum-product-subarray-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/maximum-product-subarray/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_maximum_product_subarray",
+      "label": "Maximum Product Subarray · Dynamic Programming"
+    },
+    "front": "Какие два состояния нужно обновлять для каждого числа в Maximum Product Subarray?",
+    "back": "Нужно хранить текущий max product и текущий min product. Для нового числа пересчитать оба состояния, потому что отрицательное значение может превратить минимум в максимум.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:47:49.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:47:49.000Z"
+  },
+  {
+    "id": "neetcode-maximum-product-subarray-edge-case",
+    "url": "https://neetcode.io/problems/maximum-product-subarray/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_maximum_product_subarray",
+      "label": "Maximum Product Subarray · Dynamic Programming"
+    },
+    "front": "Как обработать ноль в массиве, например nums = [-2, 0, -1]?",
+    "back": "Ноль разрывает текущее произведение, поэтому лучший ответ здесь равен 0. После нуля subarray можно начинать заново. Time Complexity остаётся O(n), Space Complexity остаётся O(1).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:47:49.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:47:49.000Z"
+  },
+  {
+    "id": "neetcode-word-break-pattern-recognition",
+    "url": "https://neetcode.io/problems/word-break/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_word_break",
+      "label": "Word Break · Dynamic Programming"
+    },
+    "front": "Нужно проверить, можно ли разбить строку на слова из dictionary. Какой паттерн выбрать?",
+    "back": "Dynamic Programming. Time Complexity: O(n * m * k), Space Complexity: O(n). Паттерн подходит, потому что валидность суффикса строки зависит от уже посчитанных DP-состояний.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:48:18.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:48:18.000Z"
+  },
+  {
+    "id": "neetcode-word-break-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/word-break/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_word_break",
+      "label": "Word Break · Dynamic Programming"
+    },
+    "front": "Когда DP-состояние для позиции i можно сделать true?",
+    "back": "Если от позиции i начинается слово из dictionary и DP после этого слова уже true. Тогда суффикс s[i:] можно разбить на валидные слова.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:48:18.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:48:18.000Z"
+  },
+  {
+    "id": "neetcode-word-break-edge-case",
+    "url": "https://neetcode.io/problems/word-break/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_word_break",
+      "label": "Word Break · Dynamic Programming"
+    },
+    "front": "Что вернуть, если есть подходящие prefix-слова, но остаток строки нельзя разбить?",
+    "back": "Вернуть false, потому что вся строка должна быть покрыта словами из dictionary. Частичное совпадение prefix не делает разбиение валидным. Time Complexity остаётся O(n * m * k), Space Complexity остаётся O(n).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:48:18.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:48:18.000Z"
+  },
+  {
+    "id": "neetcode-longest-increasing-subsequence-pattern-recognition",
+    "url": "https://neetcode.io/problems/longest-increasing-subsequence/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_longest_increasing_subsequence",
+      "label": "Longest Increasing Subsequence · Dynamic Programming"
+    },
+    "front": "Нужно найти длину самой длинной строго возрастающей subsequence в массиве. Какой паттерн выбрать?",
+    "back": "Dynamic Programming. Time Complexity: O(n²), Space Complexity: O(n). Паттерн подходит, потому что лучший ответ для позиции зависит от следующих чисел, которые могут продолжить возрастающую последовательность.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:49:28.845Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:49:28.845Z"
+  },
+  {
+    "id": "neetcode-longest-increasing-subsequence-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/longest-increasing-subsequence/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_longest_increasing_subsequence",
+      "label": "Longest Increasing Subsequence · Dynamic Programming"
+    },
+    "front": "Когда DP-состояние текущей позиции можно улучшить через другую позицию справа?",
+    "back": "Когда число справа больше текущего числа. Тогда текущая позиция может начать subsequence, продолженную через эту правую позицию.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:49:28.845Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:49:28.845Z"
+  },
+  {
+    "id": "neetcode-longest-increasing-subsequence-edge-case",
+    "url": "https://neetcode.io/problems/longest-increasing-subsequence/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_longest_increasing_subsequence",
+      "label": "Longest Increasing Subsequence · Dynamic Programming"
+    },
+    "front": "Что вернуть для полностью убывающего массива, например nums = [5, 4, 3, 2, 1]?",
+    "back": "Вернуть 1, потому что любая одна позиция сама образует increasing subsequence. Time Complexity остаётся O(n²), Space Complexity остаётся O(n).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:49:28.845Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:49:28.845Z"
+  },
+  {
+    "id": "neetcode-count-paths-pattern-recognition",
+    "url": "https://neetcode.io/problems/count-paths/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_count_paths",
+      "label": "Count Paths · Dynamic Programming"
+    },
+    "front": "Нужно посчитать количество путей в grid от верхнего левого угла до нижнего правого, двигаясь только вправо или вниз. Какой паттерн выбрать?",
+    "back": "Dynamic Programming. Time Complexity: O(m * n), Space Complexity: O(n). Паттерн подходит, потому что число путей в клетку зависит от соседних DP-состояний справа и снизу.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:50:00.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:50:00.000Z"
+  },
+  {
+    "id": "neetcode-count-paths-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/count-paths/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_count_paths",
+      "label": "Count Paths · Dynamic Programming"
+    },
+    "front": "Как обновлять DP-состояние для текущей клетки при подсчёте путей?",
+    "back": "Количество путей для клетки равно сумме путей из клетки справа и клетки снизу. В 1D DP текущее значение обновляется через уже сохранённое значение снизу и значение справа.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:50:00.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:50:00.000Z"
+  },
+  {
+    "id": "neetcode-count-paths-edge-case",
+    "url": "https://neetcode.io/problems/count-paths/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_count_paths",
+      "label": "Count Paths · Dynamic Programming"
+    },
+    "front": "Что вернуть для grid с одной строкой или одним столбцом?",
+    "back": "Вернуть 1, потому что существует только один возможный путь до конца. Time Complexity остаётся O(m * n), Space Complexity остаётся O(n).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:50:00.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:50:00.000Z"
+  },
+  {
+    "id": "neetcode-longest-common-subsequence-pattern-recognition",
+    "url": "https://neetcode.io/problems/longest-common-subsequence/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_longest_common_subsequence",
+      "label": "Longest Common Subsequence · Dynamic Programming"
+    },
+    "front": "Нужно найти длину самой длинной subsequence, общей для двух строк. Какой паттерн выбрать?",
+    "back": "Dynamic Programming. Time Complexity: O(m * n), Space Complexity: O(m * n). Паттерн подходит, потому что ответ для пары позиций зависит от уже посчитанных суффиксов обеих строк.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:51:56.240Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:51:56.240Z"
+  },
+  {
+    "id": "neetcode-longest-common-subsequence-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/longest-common-subsequence/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_longest_common_subsequence",
+      "label": "Longest Common Subsequence · Dynamic Programming"
+    },
+    "front": "Как обновлять DP-состояние, если текущие символы двух строк совпадают?",
+    "back": "Добавить один к ответу для следующих позиций обеих строк. Если символы не совпадают, взять лучший вариант после сдвига только в одной из строк.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:51:56.240Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:51:56.240Z"
+  },
+  {
+    "id": "neetcode-longest-common-subsequence-edge-case",
+    "url": "https://neetcode.io/problems/longest-common-subsequence/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_longest_common_subsequence",
+      "label": "Longest Common Subsequence · Dynamic Programming"
+    },
+    "front": "Что вернуть, если у строк нет общих символов, например text1 = \"abc\", text2 = \"def\"?",
+    "back": "Вернуть 0, потому что нельзя составить ни одной общей непустой subsequence. Time Complexity остаётся O(m * n), Space Complexity остаётся O(m * n).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:51:56.240Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:51:56.240Z"
+  },
+  {
+    "id": "neetcode-maximum-subarray-pattern-recognition",
+    "url": "https://neetcode.io/problems/maximum-subarray/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_maximum_subarray",
+      "label": "Maximum Subarray · Kadane's Algorithm"
+    },
+    "front": "Нужно найти максимальную сумму непрерывного subarray. Какой паттерн выбрать?",
+    "back": "Kadane's Algorithm. Time Complexity: O(n), Space Complexity: O(1). Паттерн подходит, потому что на каждом шаге нужно решить: продолжать текущий subarray или начать новый.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:52:24.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:52:24.000Z"
+  },
+  {
+    "id": "neetcode-maximum-subarray-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/maximum-subarray/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_maximum_subarray",
+      "label": "Maximum Subarray · Kadane's Algorithm"
+    },
+    "front": "Как обновлять текущую сумму при проходе по массиву?",
+    "back": "Текущая сумма становится максимумом между текущим числом и продолжением прошлого subarray. После этого нужно обновить глобальный максимум.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:52:24.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:52:24.000Z"
+  },
+  {
+    "id": "neetcode-maximum-subarray-edge-case",
+    "url": "https://neetcode.io/problems/maximum-subarray/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_maximum_subarray",
+      "label": "Maximum Subarray · Kadane's Algorithm"
+    },
+    "front": "Что вернуть, если все числа отрицательные, например nums = [-3, -2, -5]?",
+    "back": "Вернуть -2, потому что subarray должен быть непустым. Нельзя заменить ответ на 0. Time Complexity остаётся O(n), Space Complexity остаётся O(1).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:52:24.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:52:24.000Z"
+  },
+  {
+    "id": "neetcode-jump-game-pattern-recognition",
+    "url": "https://neetcode.io/problems/jump-game/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_jump_game",
+      "label": "Jump Game · Greedy"
+    },
+    "front": "Нужно определить, можно ли добраться до последнего индекса, если каждое число задаёт максимальную длину прыжка. Какой паттерн выбрать?",
+    "back": "Greedy. Time Complexity: O(n), Space Complexity: O(1). Паттерн подходит, потому что достаточно поддерживать самый дальний достижимый индекс.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:54:04.109Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:54:04.109Z"
+  },
+  {
+    "id": "neetcode-jump-game-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/jump-game/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_jump_game",
+      "label": "Jump Game · Greedy"
+    },
+    "front": "Что нужно обновлять при проходе по индексам в Jump Game?",
+    "back": "Нужно обновлять farthest как максимум между текущим farthest и i + nums[i]. Если текущий индекс больше farthest, до него нельзя добраться.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:54:04.109Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:54:04.109Z"
+  },
+  {
+    "id": "neetcode-jump-game-edge-case",
+    "url": "https://neetcode.io/problems/jump-game/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_jump_game",
+      "label": "Jump Game · Greedy"
+    },
+    "front": "Что вернуть для nums = [3, 2, 1, 0, 4]?",
+    "back": "Вернуть false, потому что индекс с нулём блокирует путь к последнему элементу. Time Complexity остаётся O(n), Space Complexity остаётся O(1).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:54:04.109Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:54:04.109Z"
+  },
+  {
+    "id": "neetcode-insert-new-interval-pattern-recognition",
+    "url": "https://neetcode.io/problems/insert-new-interval/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_insert_new_interval",
+      "label": "Insert New Interval · Intervals"
+    },
+    "front": "Нужно вставить новый interval в отсортированный список intervals и объединить пересечения. Какой паттерн выбрать?",
+    "back": "Intervals Merge. Time Complexity: O(n), Space Complexity: O(n). Паттерн подходит, потому что интервалы уже отсортированы и их можно обработать одним проходом.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:54:51.605Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:54:51.605Z"
+  },
+  {
+    "id": "neetcode-insert-new-interval-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/insert-new-interval/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_insert_new_interval",
+      "label": "Insert New Interval · Intervals"
+    },
+    "front": "Что делать, когда текущий interval пересекается с newInterval?",
+    "back": "Обновить newInterval, взяв минимальное начало и максимальный конец. Затем продолжать объединять его со следующими пересекающимися intervals.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:54:51.605Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:54:51.605Z"
+  },
+  {
+    "id": "neetcode-insert-new-interval-edge-case",
+    "url": "https://neetcode.io/problems/insert-new-interval/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_insert_new_interval",
+      "label": "Insert New Interval · Intervals"
+    },
+    "front": "Как обработать newInterval, который не пересекается ни с одним interval и должен быть вставлен в середину?",
+    "back": "Добавить все intervals до него, затем сам newInterval, затем оставшиеся intervals. Объединение не требуется. Time Complexity остаётся O(n), Space Complexity остаётся O(n).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:54:51.605Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:54:51.605Z"
+  },
+  {
+    "id": "neetcode-merge-intervals-pattern-recognition",
+    "url": "https://neetcode.io/problems/merge-intervals/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_merge_intervals",
+      "label": "Merge Intervals · Intervals"
+    },
+    "front": "Нужно объединить все пересекающиеся intervals и вернуть список непересекающихся intervals. Какой паттерн выбрать?",
+    "back": "Intervals Merge. Time Complexity: O(n log n), Space Complexity: O(n). Паттерн подходит, потому что после сортировки по началу можно одним проходом объединять пересечения.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:55:22.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:55:22.000Z"
+  },
+  {
+    "id": "neetcode-merge-intervals-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/merge-intervals/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_merge_intervals",
+      "label": "Merge Intervals · Intervals"
+    },
+    "front": "Что делать, если текущий interval пересекается с последним interval в результате?",
+    "back": "Обновить конец последнего interval как максимум из двух концов. Если пересечения нет, добавить текущий interval в результат.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:55:22.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:55:22.000Z"
+  },
+  {
+    "id": "neetcode-merge-intervals-edge-case",
+    "url": "https://neetcode.io/problems/merge-intervals/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_merge_intervals",
+      "label": "Merge Intervals · Intervals"
+    },
+    "front": "Как обработать intervals, которые касаются границей, например [1, 4] и [4, 5]?",
+    "back": "Объединить их в [1, 5], потому что начало второго interval не больше конца первого. Time Complexity остаётся O(n log n), Space Complexity остаётся O(n).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:55:22.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:55:22.000Z"
+  },
+  {
+    "id": "neetcode-non-overlapping-intervals-pattern-recognition",
+    "url": "https://neetcode.io/problems/non-overlapping-intervals/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_non_overlapping_intervals",
+      "label": "Non-overlapping Intervals · Greedy"
+    },
+    "front": "Нужно удалить минимальное количество intervals, чтобы оставшиеся не пересекались. Какой паттерн выбрать?",
+    "back": "Greedy + Intervals. Time Complexity: O(n log n), Space Complexity: O(1) без учёта сортировки. Паттерн подходит, потому что при пересечении выгодно оставить interval с меньшим концом.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:55:36.799Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:55:36.799Z"
+  },
+  {
+    "id": "neetcode-non-overlapping-intervals-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/non-overlapping-intervals/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_non_overlapping_intervals",
+      "label": "Non-overlapping Intervals · Greedy"
+    },
+    "front": "Что делать, если текущий interval пересекается с предыдущим выбранным interval?",
+    "back": "Увеличить счётчик удалений на один. Затем сохранить меньший end из двух пересекающихся intervals, чтобы оставить больше места для следующих.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:55:36.799Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:55:36.799Z"
+  },
+  {
+    "id": "neetcode-non-overlapping-intervals-edge-case",
+    "url": "https://neetcode.io/problems/non-overlapping-intervals/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_non_overlapping_intervals",
+      "label": "Non-overlapping Intervals · Greedy"
+    },
+    "front": "Считаются ли intervals [1, 2] и [2, 3] пересекающимися?",
+    "back": "Нет, потому что конец первого равен началу второго, и их можно оставить оба. Time Complexity остаётся O(n log n), Space Complexity остаётся O(1) без учёта сортировки.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:55:36.799Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:55:36.799Z"
+  },
+  {
+    "id": "neetcode-meeting-schedule-pattern-recognition",
+    "url": "https://neetcode.io/problems/meeting-schedule/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_meeting_schedule",
+      "label": "Meeting Schedule · Intervals"
+    },
+    "front": "Нужно определить, может ли человек посетить все meetings без пересечений по времени. Какой паттерн выбрать?",
+    "back": "Intervals Sorting. Time Complexity: O(n log n), Space Complexity: O(1) без учёта сортировки. Паттерн подходит, потому что после сортировки достаточно сравнивать соседние meetings.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:56:07.119Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:56:07.119Z"
+  },
+  {
+    "id": "neetcode-meeting-schedule-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/meeting-schedule/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_meeting_schedule",
+      "label": "Meeting Schedule · Intervals"
+    },
+    "front": "Что нужно проверять после сортировки meetings по времени начала?",
+    "back": "Нужно сравнивать начало текущего meeting с концом предыдущего. Если текущее начало меньше предыдущего конца, meetings пересекаются и нужно вернуть false.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:56:07.119Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:56:07.119Z"
+  },
+  {
+    "id": "neetcode-meeting-schedule-edge-case",
+    "url": "https://neetcode.io/problems/meeting-schedule/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_meeting_schedule",
+      "label": "Meeting Schedule · Intervals"
+    },
+    "front": "Считаются ли meetings [10, 20] и [20, 30] пересекающимися?",
+    "back": "Нет, потому что первый meeting заканчивается ровно тогда, когда начинается второй. Их можно посетить оба. Time Complexity остаётся O(n log n), Space Complexity остаётся O(1) без учёта сортировки.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:56:07.119Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:56:07.119Z"
+  },
+  {
+    "id": "neetcode-meeting-schedule-ii-pattern-recognition",
+    "url": "https://neetcode.io/problems/meeting-schedule-ii/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_meeting_schedule_ii",
+      "label": "Meeting Schedule II · Min Heap"
+    },
+    "front": "Нужно найти минимальное количество rooms, чтобы провести все meetings без конфликтов. Какой паттерн выбрать?",
+    "back": "Intervals + Min Heap. Time Complexity: O(n log n), Space Complexity: O(n). Паттерн подходит, потому что нужно быстро знать meeting с самым ранним временем окончания.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:56:36.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:56:36.000Z"
+  },
+  {
+    "id": "neetcode-meeting-schedule-ii-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/meeting-schedule-ii/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_meeting_schedule_ii",
+      "label": "Meeting Schedule II · Min Heap"
+    },
+    "front": "Что делать с Min Heap перед добавлением очередного meeting после сортировки по start time?",
+    "back": "Удалить из heap все meetings, которые уже закончились к текущему start time. Затем добавить end time текущего meeting и обновить максимум активных rooms.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:56:36.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:56:36.000Z"
+  },
+  {
+    "id": "neetcode-meeting-schedule-ii-edge-case",
+    "url": "https://neetcode.io/problems/meeting-schedule-ii/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_meeting_schedule_ii",
+      "label": "Meeting Schedule II · Min Heap"
+    },
+    "front": "Нужно ли выделять новую room для meetings [10, 20] и [20, 30]?",
+    "back": "Нет, можно переиспользовать ту же room, потому что первый meeting заканчивается ровно к началу второго. Time Complexity остаётся O(n log n), Space Complexity остаётся O(n).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:56:36.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:56:36.000Z"
+  },
+  {
+    "id": "neetcode-rotate-matrix-pattern-recognition",
+    "url": "https://neetcode.io/problems/rotate-matrix/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_rotate_matrix",
+      "label": "Rotate Matrix · Matrix"
+    },
+    "front": "Нужно повернуть квадратную matrix на 90 градусов по часовой стрелке in-place. Какой паттерн выбрать?",
+    "back": "Layer-by-layer Matrix Rotation. Time Complexity: O(n²), Space Complexity: O(1). Паттерн подходит, потому что элементы можно менять циклически по четырём сторонам каждого слоя.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:57:05.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:57:05.000Z"
+  },
+  {
+    "id": "neetcode-rotate-matrix-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/rotate-matrix/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_rotate_matrix",
+      "label": "Rotate Matrix · Matrix"
+    },
+    "front": "Что нужно делать с элементами при обходе одного слоя matrix?",
+    "back": "Нужно циклически поменять местами четыре соответствующих элемента: top, left, bottom и right. После обработки позиции перейти к следующему offset внутри слоя.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:57:05.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:57:05.000Z"
+  },
+  {
+    "id": "neetcode-rotate-matrix-edge-case",
+    "url": "https://neetcode.io/problems/rotate-matrix/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_rotate_matrix",
+      "label": "Rotate Matrix · Matrix"
+    },
+    "front": "Что сделать с matrix размером 1x1?",
+    "back": "Оставить matrix без изменений, потому что единственный элемент остаётся на месте после поворота. Time Complexity остаётся O(n²), Space Complexity остаётся O(1).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:57:05.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:57:05.000Z"
+  },
+  {
+    "id": "neetcode-spiral-matrix-pattern-recognition",
+    "url": "https://neetcode.io/problems/spiral-matrix/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_spiral_matrix",
+      "label": "Spiral Matrix · Matrix"
+    },
+    "front": "Нужно вернуть все элементы matrix в spiral order. Какой паттерн выбрать?",
+    "back": "Matrix Boundary Traversal. Time Complexity: O(m * n), Space Complexity: O(1) без учёта результата. Паттерн подходит, потому что можно постепенно сужать границы обхода.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:57:32.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:57:32.000Z"
+  },
+  {
+    "id": "neetcode-spiral-matrix-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/spiral-matrix/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_spiral_matrix",
+      "label": "Spiral Matrix · Matrix"
+    },
+    "front": "Какие границы нужно обновлять после обхода очередного слоя matrix?",
+    "back": "После верхней строки увеличить top. После правого столбца уменьшить right. После нижней строки уменьшить bottom, а после левого столбца увеличить left.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:57:32.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:57:32.000Z"
+  },
+  {
+    "id": "neetcode-spiral-matrix-edge-case",
+    "url": "https://neetcode.io/problems/spiral-matrix/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_spiral_matrix",
+      "label": "Spiral Matrix · Matrix"
+    },
+    "front": "Как избежать повторного добавления элементов для matrix с одной строкой или одним столбцом?",
+    "back": "Перед обходом нижней строки проверить, что top <= bottom. Перед обходом левого столбца проверить, что left <= right. Time Complexity остаётся O(m * n), Space Complexity остаётся O(1) без учёта результата.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:57:32.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:57:32.000Z"
+  },
+  {
+    "id": "neetcode-set-zeroes-in-matrix-pattern-recognition",
+    "url": "https://neetcode.io/problems/set-zeroes-in-matrix/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_set_zeroes_in_matrix",
+      "label": "Set Zeroes in Matrix · Matrix"
+    },
+    "front": "Нужно изменить matrix in-place: если клетка равна 0, занулить всю её строку и столбец. Какой паттерн выбрать?",
+    "back": "In-place Matrix Marking. Time Complexity: O(m * n), Space Complexity: O(1). Паттерн подходит, потому что первую строку и первый столбец можно использовать как маркеры зануления.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:58:00.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:58:00.000Z"
+  },
+  {
+    "id": "neetcode-set-zeroes-in-matrix-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/set-zeroes-in-matrix/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_set_zeroes_in_matrix",
+      "label": "Set Zeroes in Matrix · Matrix"
+    },
+    "front": "Что нужно сделать при первом проходе, если внутри matrix найдена клетка со значением 0?",
+    "back": "Пометить её строку и столбец через первую клетку этой строки и первый элемент этого столбца. Для первой строки и первого столбца нужно хранить отдельные флаги.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:58:00.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:58:00.000Z"
+  },
+  {
+    "id": "neetcode-set-zeroes-in-matrix-edge-case",
+    "url": "https://neetcode.io/problems/set-zeroes-in-matrix/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_set_zeroes_in_matrix",
+      "label": "Set Zeroes in Matrix · Matrix"
+    },
+    "front": "Как обработать zero, который изначально находится в первой строке или первом столбце?",
+    "back": "Нужно заранее сохранить отдельный флаг для первой строки или первого столбца. Иначе маркеры могут потерять информацию об исходном zero. Time Complexity остаётся O(m * n), Space Complexity остаётся O(1).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:58:00.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:58:00.000Z"
+  },
+  {
+    "id": "neetcode-number-of-one-bits-pattern-recognition",
+    "url": "https://neetcode.io/problems/number-of-one-bits/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_number_of_one_bits",
+      "label": "Number of One Bits · Bit Manipulation"
+    },
+    "front": "Нужно посчитать, сколько единичных битов содержится в целом числе. Какой паттерн выбрать?",
+    "back": "Bit Manipulation. Time Complexity: O(1) для 32-bit input, Space Complexity: O(1). Паттерн подходит, потому что число можно проверять по битам без дополнительных структур данных.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:58:24.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:58:24.000Z"
+  },
+  {
+    "id": "neetcode-number-of-one-bits-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/number-of-one-bits/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_number_of_one_bits",
+      "label": "Number of One Bits · Bit Manipulation"
+    },
+    "front": "Что нужно делать с числом на каждом шаге подсчёта единичных битов?",
+    "back": "Проверить младший бит и увеличить счётчик, если он равен 1. Затем сдвинуть число вправо, чтобы перейти к следующему биту.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:58:24.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:58:24.000Z"
+  },
+  {
+    "id": "neetcode-number-of-one-bits-edge-case",
+    "url": "https://neetcode.io/problems/number-of-one-bits/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_number_of_one_bits",
+      "label": "Number of One Bits · Bit Manipulation"
+    },
+    "front": "Что вернуть для n = 0?",
+    "back": "Вернуть 0, потому что в числе нет единичных битов. Time Complexity остаётся O(1), Space Complexity остаётся O(1).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:58:24.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:58:24.000Z"
+  },
+  {
+    "id": "neetcode-counting-bits-pattern-recognition",
+    "url": "https://neetcode.io/problems/counting-bits/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_counting_bits",
+      "label": "Counting Bits · Dynamic Programming"
+    },
+    "front": "Нужно вернуть массив, где для каждого числа от 0 до n указано количество единичных битов. Какой паттерн выбрать?",
+    "back": "Dynamic Programming + Bit Manipulation. Time Complexity: O(n), Space Complexity: O(n). Паттерн подходит, потому что ответ для числа можно получить из уже посчитанного меньшего числа.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:59:00.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:59:00.000Z"
+  },
+  {
+    "id": "neetcode-counting-bits-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/counting-bits/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_counting_bits",
+      "label": "Counting Bits · Dynamic Programming"
+    },
+    "front": "Как вычислить количество единичных битов для текущего числа через уже посчитанное DP-состояние?",
+    "back": "Использовать значение для числа, сдвинутого вправо на один бит. Затем добавить 1, если младший бит текущего числа равен 1.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:59:00.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:59:00.000Z"
+  },
+  {
+    "id": "neetcode-counting-bits-edge-case",
+    "url": "https://neetcode.io/problems/counting-bits/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_counting_bits",
+      "label": "Counting Bits · Dynamic Programming"
+    },
+    "front": "Что вернуть для n = 0?",
+    "back": "Вернуть [0], потому что число 0 не содержит единичных битов. Time Complexity остаётся O(n), Space Complexity остаётся O(n).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:59:00.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:59:00.000Z"
+  },
+  {
+    "id": "neetcode-reverse-bits-pattern-recognition",
+    "url": "https://neetcode.io/problems/reverse-bits/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_reverse_bits",
+      "label": "Reverse Bits · Bit Manipulation"
+    },
+    "front": "Нужно развернуть порядок битов 32-bit unsigned integer. Какой паттерн выбрать?",
+    "back": "Bit Manipulation. Time Complexity: O(1), Space Complexity: O(1). Паттерн подходит, потому что нужно последовательно читать младшие биты и собирать результат сдвигами.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:58:44.818Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:58:44.818Z"
+  },
+  {
+    "id": "neetcode-reverse-bits-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/reverse-bits/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_reverse_bits",
+      "label": "Reverse Bits · Bit Manipulation"
+    },
+    "front": "Как обновлять результат на каждом шаге разворота битов?",
+    "back": "Сдвинуть результат влево на один бит и добавить младший бит текущего числа. Затем сдвинуть исходное число вправо, чтобы перейти к следующему биту.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:58:44.818Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:58:44.818Z"
+  },
+  {
+    "id": "neetcode-reverse-bits-edge-case",
+    "url": "https://neetcode.io/problems/reverse-bits/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_reverse_bits",
+      "label": "Reverse Bits · Bit Manipulation"
+    },
+    "front": "Что вернуть для n = 1 при развороте именно 32 битов?",
+    "back": "Вернуть 2147483648, потому что единственная единица переходит из младшего бита в старший. Time Complexity остаётся O(1), Space Complexity остаётся O(1).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:58:44.818Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:58:44.818Z"
+  },
+  {
+    "id": "neetcode-missing-number-pattern-recognition",
+    "url": "https://neetcode.io/problems/missing-number/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_missing_number",
+      "label": "Missing Number · Bit Manipulation"
+    },
+    "front": "Нужно найти единственное пропущенное число в диапазоне от 0 до n. Какой паттерн выбрать?",
+    "back": "Bit Manipulation. Time Complexity: O(n), Space Complexity: O(1). Паттерн подходит, потому что XOR одинаковых чисел зануляется и оставляет только пропущенное значение.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:59:07.923Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:59:07.923Z"
+  },
+  {
+    "id": "neetcode-missing-number-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/missing-number/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_missing_number",
+      "label": "Missing Number · Bit Manipulation"
+    },
+    "front": "Как обновлять XOR-состояние при проходе по массиву?",
+    "back": "Нужно XOR-ить текущий индекс и текущее число из массива. Также нужно учесть число n, потому что оно не является индексом массива.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:59:07.923Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:59:07.923Z"
+  },
+  {
+    "id": "neetcode-missing-number-edge-case",
+    "url": "https://neetcode.io/problems/missing-number/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_missing_number",
+      "label": "Missing Number · Bit Manipulation"
+    },
+    "front": "Что вернуть, если пропущено число n, например nums = [0, 1, 2]?",
+    "back": "Вернуть 3, потому что диапазон для массива длины 3 — от 0 до 3. Time Complexity остаётся O(n), Space Complexity остаётся O(1).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T16:59:07.923Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T16:59:07.923Z"
+  },
+  {
+    "id": "neetcode-sum-of-two-integers-pattern-recognition",
+    "url": "https://neetcode.io/problems/sum-of-two-integers/",
+    "type": "pattern_recognition",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_sum_of_two_integers",
+      "label": "Sum of Two Integers · Bit Manipulation"
+    },
+    "front": "Нужно найти сумму двух integers без операторов сложения и вычитания. Какой паттерн выбрать?",
+    "back": "Bit Manipulation. Time Complexity: O(1), Space Complexity: O(1). Паттерн подходит, потому что сложение можно разложить на сумму без переносов и переносы.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T17:00:00.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T17:00:00.000Z"
+  },
+  {
+    "id": "neetcode-sum-of-two-integers-algorithm-mechanics",
+    "url": "https://neetcode.io/problems/sum-of-two-integers/",
+    "type": "algorithm_mechanics",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_sum_of_two_integers",
+      "label": "Sum of Two Integers · Bit Manipulation"
+    },
+    "front": "Как обновлять промежуточную сумму и перенос при сложении через биты?",
+    "back": "XOR даёт сумму без переносов. AND двух чисел со сдвигом влево даёт переносы для следующей итерации. Повторять, пока перенос не исчезнет.",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T17:00:00.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T17:00:00.000Z"
+  },
+  {
+    "id": "neetcode-sum-of-two-integers-edge-case",
+    "url": "https://neetcode.io/problems/sum-of-two-integers/",
+    "type": "edge_case",
+    "source": {
+      "entityType": "problem",
+      "entityId": "prb_mock_neetcode_sum_of_two_integers",
+      "label": "Sum of Two Integers · Bit Manipulation"
+    },
+    "front": "Как обработать отрицательные числа, например a = -1 и b = 1?",
+    "back": "Вернуть 0. Для отрицательных значений нужно учитывать 32-bit two's complement. Time Complexity остаётся O(1), Space Complexity остаётся O(1).",
+    "status": "due",
+    "nextReviewAt": "2026-07-02T17:00:00.000Z",
+    "lastRating": "normal",
+    "createdAt": "2026-07-02T17:00:00.000Z"
+  }
+]

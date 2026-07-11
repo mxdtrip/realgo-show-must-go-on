@@ -1,0 +1,160 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main, dev]
+
+jobs:
+  api:
+    name: Go API
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: freeburger
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d freeburger"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    defaults:
+      run:
+        working-directory: services/api
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: services/api/go.mod
+          cache-dependency-path: services/api/go.sum
+      
+      - name: Verify dependencies
+        run: go mod verify
+
+      - name: Generate sqlc
+        run: go tool sqlc generate
+
+      - name: Check generated files
+        run: git diff --exit-code
+
+      - name: Check gofmt
+        run: test -z "$(gofmt -l .)"
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v9
+        with:
+          version: v2.12
+          working-directory: services/api
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Test
+        run: go test ./...
+
+      - name: Apply migrations for integration tests
+        run: |
+          docker run --rm --network host \
+            -v "$PWD/migrations:/migrations:ro" \
+            migrate/migrate:v4.18.1 \
+            -path=/migrations \
+            -database=postgres://postgres:postgres@localhost:5432/freeburger?sslmode=disable \
+            up
+
+      - name: Integration test
+        env:
+          DB_PASSWORD: postgres
+          AUTH_JWT_SECRET: ci-secret-with-more-than-32-random-looking-characters
+        run: go test -count=1 -tags=integration ./internal/integration
+
+      - name: Build
+        run: go build -o /tmp/freeburger-api ./cmd/api
+
+      - name: Check migrations
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/freeburger?sslmode=disable
+        run: ./scripts/check-migrations.sh
+
+      - name: Check Docker Compose config
+        working-directory: .
+        env:
+          AUTH_JWT_SECRET: ci-secret-with-more-than-32-random-looking-characters
+        run: docker compose config --quiet
+
+  web:
+    name: Web
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+
+  extension:
+    name: Extension
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/extension
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/extension/package-lock.json
+
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run build
+
+  web-e2e:
+    name: Web e2e
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+
+      - run: npm ci
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      # Boots the zero-dep auth stub + a production build of the web app
+      # (see playwright.config.mjs) and drives the auth flow end to end.
+      - name: Run e2e
+        run: npm run e2e

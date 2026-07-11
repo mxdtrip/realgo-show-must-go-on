@@ -1,0 +1,827 @@
+code: neetcode_150
+title: NeetCode 150
+source_url: https://neetcode.io/practice/practice/neetcode150
+captured_at: 2026-06-28
+sections:
+  - pattern:
+      code: arrays_hashing
+      name: Arrays & Hashing
+    problems:
+      - slug: contains-duplicate
+        external_id: "217"
+        title: Contains Duplicate
+        difficulty: easy
+        url: https://leetcode.com/problems/contains-duplicate/
+      - slug: valid-anagram
+        external_id: "242"
+        title: Valid Anagram
+        difficulty: easy
+        url: https://leetcode.com/problems/valid-anagram/
+      - slug: two-sum
+        external_id: "1"
+        title: Two Sum
+        difficulty: easy
+        url: https://leetcode.com/problems/two-sum/
+      - slug: group-anagrams
+        external_id: "49"
+        title: Group Anagrams
+        difficulty: medium
+        url: https://leetcode.com/problems/group-anagrams/
+      - slug: top-k-frequent-elements
+        external_id: "347"
+        title: Top K Frequent Elements
+        difficulty: medium
+        url: https://leetcode.com/problems/top-k-frequent-elements/
+      - slug: encode-and-decode-strings
+        external_id: "271"
+        title: Encode and Decode Strings
+        difficulty: medium
+        url: https://leetcode.com/problems/encode-and-decode-strings/
+      - slug: product-of-array-except-self
+        external_id: "238"
+        title: Product of Array Except Self
+        difficulty: medium
+        url: https://leetcode.com/problems/product-of-array-except-self/
+      - slug: valid-sudoku
+        external_id: "36"
+        title: Valid Sudoku
+        difficulty: medium
+        url: https://leetcode.com/problems/valid-sudoku/
+      - slug: longest-consecutive-sequence
+        external_id: "128"
+        title: Longest Consecutive Sequence
+        difficulty: medium
+        url: https://leetcode.com/problems/longest-consecutive-sequence/
+  - pattern:
+      code: two_pointers
+      name: Two Pointers
+    problems:
+      - slug: valid-palindrome
+        external_id: "125"
+        title: Valid Palindrome
+        difficulty: easy
+        url: https://leetcode.com/problems/valid-palindrome/
+      - slug: two-sum-ii-input-array-is-sorted
+        external_id: "167"
+        title: Two Sum II Input Array Is Sorted
+        difficulty: medium
+        url: https://leetcode.com/problems/two-sum-ii-input-array-is-sorted/
+      - slug: 3sum
+        external_id: "15"
+        title: 3Sum
+        difficulty: medium
+        url: https://leetcode.com/problems/3sum/
+      - slug: container-with-most-water
+        external_id: "11"
+        title: Container With Most Water
+        difficulty: medium
+        url: https://leetcode.com/problems/container-with-most-water/
+      - slug: trapping-rain-water
+        external_id: "42"
+        title: Trapping Rain Water
+        difficulty: hard
+        url: https://leetcode.com/problems/trapping-rain-water/
+  - pattern:
+      code: sliding_window
+      name: Sliding Window
+    problems:
+      - slug: best-time-to-buy-and-sell-stock
+        external_id: "121"
+        title: Best Time to Buy And Sell Stock
+        difficulty: easy
+        url: https://leetcode.com/problems/best-time-to-buy-and-sell-stock/
+      - slug: longest-substring-without-repeating-characters
+        external_id: "3"
+        title: Longest Substring Without Repeating Characters
+        difficulty: medium
+        url: https://leetcode.com/problems/longest-substring-without-repeating-characters/
+      - slug: longest-repeating-character-replacement
+        external_id: "424"
+        title: Longest Repeating Character Replacement
+        difficulty: medium
+        url: https://leetcode.com/problems/longest-repeating-character-replacement/
+      - slug: permutation-in-string
+        external_id: "567"
+        title: Permutation In String
+        difficulty: medium
+        url: https://leetcode.com/problems/permutation-in-string/
+      - slug: minimum-window-substring
+        external_id: "76"
+        title: Minimum Window Substring
+        difficulty: hard
+        url: https://leetcode.com/problems/minimum-window-substring/
+      - slug: sliding-window-maximum
+        external_id: "239"
+        title: Sliding Window Maximum
+        difficulty: hard
+        url: https://leetcode.com/problems/sliding-window-maximum/
+  - pattern:
+      code: stack
+      name: Stack
+    problems:
+      - slug: valid-parentheses
+        external_id: "20"
+        title: Valid Parentheses
+        difficulty: easy
+        url: https://leetcode.com/problems/valid-parentheses/
+      - slug: min-stack
+        external_id: "155"
+        title: Min Stack
+        difficulty: medium
+        url: https://leetcode.com/problems/min-stack/
+      - slug: evaluate-reverse-polish-notation
+        external_id: "150"
+        title: Evaluate Reverse Polish Notation
+        difficulty: medium
+        url: https://leetcode.com/problems/evaluate-reverse-polish-notation/
+      - slug: daily-temperatures
+        external_id: "739"
+        title: Daily Temperatures
+        difficulty: medium
+        url: https://leetcode.com/problems/daily-temperatures/
+      - slug: car-fleet
+        external_id: "853"
+        title: Car Fleet
+        difficulty: medium
+        url: https://leetcode.com/problems/car-fleet/
+      - slug: largest-rectangle-in-histogram
+        external_id: "84"
+        title: Largest Rectangle In Histogram
+        difficulty: hard
+        url: https://leetcode.com/problems/largest-rectangle-in-histogram/
+  - pattern:
+      code: binary_search
+      name: Binary Search
+    problems:
+      - slug: binary-search
+        external_id: "704"
+        title: Binary Search
+        difficulty: easy
+        url: https://leetcode.com/problems/binary-search/
+      - slug: search-a-2d-matrix
+        external_id: "74"
+        title: Search a 2D Matrix
+        difficulty: medium
+        url: https://leetcode.com/problems/search-a-2d-matrix/
+      - slug: koko-eating-bananas
+        external_id: "875"
+        title: Koko Eating Bananas
+        difficulty: medium
+        url: https://leetcode.com/problems/koko-eating-bananas/
+      - slug: find-minimum-in-rotated-sorted-array
+        external_id: "153"
+        title: Find Minimum In Rotated Sorted Array
+        difficulty: medium
+        url: https://leetcode.com/problems/find-minimum-in-rotated-sorted-array/
+      - slug: search-in-rotated-sorted-array
+        external_id: "33"
+        title: Search In Rotated Sorted Array
+        difficulty: medium
+        url: https://leetcode.com/problems/search-in-rotated-sorted-array/
+      - slug: time-based-key-value-store
+        external_id: "981"
+        title: Time Based Key Value Store
+        difficulty: medium
+        url: https://leetcode.com/problems/time-based-key-value-store/
+      - slug: median-of-two-sorted-arrays
+        external_id: "4"
+        title: Median of Two Sorted Arrays
+        difficulty: hard
+        url: https://leetcode.com/problems/median-of-two-sorted-arrays/
+  - pattern:
+      code: linked_list
+      name: Linked List
+    problems:
+      - slug: reverse-linked-list
+        external_id: "206"
+        title: Reverse Linked List
+        difficulty: easy
+        url: https://leetcode.com/problems/reverse-linked-list/
+      - slug: merge-two-sorted-lists
+        external_id: "21"
+        title: Merge Two Sorted Lists
+        difficulty: easy
+        url: https://leetcode.com/problems/merge-two-sorted-lists/
+      - slug: linked-list-cycle
+        external_id: "141"
+        title: Linked List Cycle
+        difficulty: easy
+        url: https://leetcode.com/problems/linked-list-cycle/
+      - slug: reorder-list
+        external_id: "143"
+        title: Reorder List
+        difficulty: medium
+        url: https://leetcode.com/problems/reorder-list/
+      - slug: remove-nth-node-from-end-of-list
+        external_id: "19"
+        title: Remove Nth Node From End of List
+        difficulty: medium
+        url: https://leetcode.com/problems/remove-nth-node-from-end-of-list/
+      - slug: copy-list-with-random-pointer
+        external_id: "138"
+        title: Copy List With Random Pointer
+        difficulty: medium
+        url: https://leetcode.com/problems/copy-list-with-random-pointer/
+      - slug: add-two-numbers
+        external_id: "2"
+        title: Add Two Numbers
+        difficulty: medium
+        url: https://leetcode.com/problems/add-two-numbers/
+      - slug: find-the-duplicate-number
+        external_id: "287"
+        title: Find The Duplicate Number
+        difficulty: medium
+        url: https://leetcode.com/problems/find-the-duplicate-number/
+      - slug: lru-cache
+        external_id: "146"
+        title: LRU Cache
+        difficulty: medium
+        url: https://leetcode.com/problems/lru-cache/
+      - slug: merge-k-sorted-lists
+        external_id: "23"
+        title: Merge K Sorted Lists
+        difficulty: hard
+        url: https://leetcode.com/problems/merge-k-sorted-lists/
+      - slug: reverse-nodes-in-k-group
+        external_id: "25"
+        title: Reverse Nodes In K Group
+        difficulty: hard
+        url: https://leetcode.com/problems/reverse-nodes-in-k-group/
+  - pattern:
+      code: trees
+      name: Trees
+    problems:
+      - slug: invert-binary-tree
+        external_id: "226"
+        title: Invert Binary Tree
+        difficulty: easy
+        url: https://leetcode.com/problems/invert-binary-tree/
+      - slug: maximum-depth-of-binary-tree
+        external_id: "104"
+        title: Maximum Depth of Binary Tree
+        difficulty: easy
+        url: https://leetcode.com/problems/maximum-depth-of-binary-tree/
+      - slug: diameter-of-binary-tree
+        external_id: "543"
+        title: Diameter of Binary Tree
+        difficulty: easy
+        url: https://leetcode.com/problems/diameter-of-binary-tree/
+      - slug: balanced-binary-tree
+        external_id: "110"
+        title: Balanced Binary Tree
+        difficulty: easy
+        url: https://leetcode.com/problems/balanced-binary-tree/
+      - slug: same-tree
+        external_id: "100"
+        title: Same Tree
+        difficulty: easy
+        url: https://leetcode.com/problems/same-tree/
+      - slug: subtree-of-another-tree
+        external_id: "572"
+        title: Subtree of Another Tree
+        difficulty: easy
+        url: https://leetcode.com/problems/subtree-of-another-tree/
+      - slug: lowest-common-ancestor-of-a-binary-search-tree
+        external_id: "235"
+        title: Lowest Common Ancestor of a Binary Search Tree
+        difficulty: medium
+        url: https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-search-tree/
+      - slug: binary-tree-level-order-traversal
+        external_id: "102"
+        title: Binary Tree Level Order Traversal
+        difficulty: medium
+        url: https://leetcode.com/problems/binary-tree-level-order-traversal/
+      - slug: binary-tree-right-side-view
+        external_id: "199"
+        title: Binary Tree Right Side View
+        difficulty: medium
+        url: https://leetcode.com/problems/binary-tree-right-side-view/
+      - slug: count-good-nodes-in-binary-tree
+        external_id: "1448"
+        title: Count Good Nodes In Binary Tree
+        difficulty: medium
+        url: https://leetcode.com/problems/count-good-nodes-in-binary-tree/
+      - slug: validate-binary-search-tree
+        external_id: "98"
+        title: Validate Binary Search Tree
+        difficulty: medium
+        url: https://leetcode.com/problems/validate-binary-search-tree/
+      - slug: kth-smallest-element-in-a-bst
+        external_id: "230"
+        title: Kth Smallest Element In a Bst
+        difficulty: medium
+        url: https://leetcode.com/problems/kth-smallest-element-in-a-bst/
+      - slug: construct-binary-tree-from-preorder-and-inorder-traversal
+        external_id: "105"
+        title: Construct Binary Tree From Preorder And Inorder Traversal
+        difficulty: medium
+        url: https://leetcode.com/problems/construct-binary-tree-from-preorder-and-inorder-traversal/
+      - slug: binary-tree-maximum-path-sum
+        external_id: "124"
+        title: Binary Tree Maximum Path Sum
+        difficulty: hard
+        url: https://leetcode.com/problems/binary-tree-maximum-path-sum/
+      - slug: serialize-and-deserialize-binary-tree
+        external_id: "297"
+        title: Serialize And Deserialize Binary Tree
+        difficulty: hard
+        url: https://leetcode.com/problems/serialize-and-deserialize-binary-tree/
+  - pattern:
+      code: heap
+      name: Heap / Priority Queue
+    problems:
+      - slug: kth-largest-element-in-a-stream
+        external_id: "703"
+        title: Kth Largest Element In a Stream
+        difficulty: easy
+        url: https://leetcode.com/problems/kth-largest-element-in-a-stream/
+      - slug: last-stone-weight
+        external_id: "1046"
+        title: Last Stone Weight
+        difficulty: easy
+        url: https://leetcode.com/problems/last-stone-weight/
+      - slug: k-closest-points-to-origin
+        external_id: "973"
+        title: K Closest Points to Origin
+        difficulty: medium
+        url: https://leetcode.com/problems/k-closest-points-to-origin/
+      - slug: kth-largest-element-in-an-array
+        external_id: "215"
+        title: Kth Largest Element In An Array
+        difficulty: medium
+        url: https://leetcode.com/problems/kth-largest-element-in-an-array/
+      - slug: task-scheduler
+        external_id: "621"
+        title: Task Scheduler
+        difficulty: medium
+        url: https://leetcode.com/problems/task-scheduler/
+      - slug: design-twitter
+        external_id: "355"
+        title: Design Twitter
+        difficulty: medium
+        url: https://leetcode.com/problems/design-twitter/
+      - slug: find-median-from-data-stream
+        external_id: "295"
+        title: Find Median From Data Stream
+        difficulty: hard
+        url: https://leetcode.com/problems/find-median-from-data-stream/
+  - pattern:
+      code: backtracking
+      name: Backtracking
+    problems:
+      - slug: subsets
+        external_id: "78"
+        title: Subsets
+        difficulty: medium
+        url: https://leetcode.com/problems/subsets/
+      - slug: combination-sum
+        external_id: "39"
+        title: Combination Sum
+        difficulty: medium
+        url: https://leetcode.com/problems/combination-sum/
+      - slug: combination-sum-ii
+        external_id: "40"
+        title: Combination Sum II
+        difficulty: medium
+        url: https://leetcode.com/problems/combination-sum-ii/
+      - slug: permutations
+        external_id: "46"
+        title: Permutations
+        difficulty: medium
+        url: https://leetcode.com/problems/permutations/
+      - slug: subsets-ii
+        external_id: "90"
+        title: Subsets II
+        difficulty: medium
+        url: https://leetcode.com/problems/subsets-ii/
+      - slug: generate-parentheses
+        external_id: "22"
+        title: Generate Parentheses
+        difficulty: medium
+        url: https://leetcode.com/problems/generate-parentheses/
+      - slug: word-search
+        external_id: "79"
+        title: Word Search
+        difficulty: medium
+        url: https://leetcode.com/problems/word-search/
+      - slug: palindrome-partitioning
+        external_id: "131"
+        title: Palindrome Partitioning
+        difficulty: medium
+        url: https://leetcode.com/problems/palindrome-partitioning/
+      - slug: letter-combinations-of-a-phone-number
+        external_id: "17"
+        title: Letter Combinations of a Phone Number
+        difficulty: medium
+        url: https://leetcode.com/problems/letter-combinations-of-a-phone-number/
+      - slug: n-queens
+        external_id: "51"
+        title: N Queens
+        difficulty: hard
+        url: https://leetcode.com/problems/n-queens/
+  - pattern:
+      code: tries
+      name: Tries
+    problems:
+      - slug: implement-trie-prefix-tree
+        external_id: "208"
+        title: Implement Trie Prefix Tree
+        difficulty: medium
+        url: https://leetcode.com/problems/implement-trie-prefix-tree/
+      - slug: design-add-and-search-words-data-structure
+        external_id: "211"
+        title: Design Add And Search Words Data Structure
+        difficulty: medium
+        url: https://leetcode.com/problems/design-add-and-search-words-data-structure/
+      - slug: word-search-ii
+        external_id: "212"
+        title: Word Search II
+        difficulty: hard
+        url: https://leetcode.com/problems/word-search-ii/
+  - pattern:
+      code: graphs
+      name: Graphs
+    problems:
+      - slug: number-of-islands
+        external_id: "200"
+        title: Number of Islands
+        difficulty: medium
+        url: https://leetcode.com/problems/number-of-islands/
+      - slug: max-area-of-island
+        external_id: "695"
+        title: Max Area of Island
+        difficulty: medium
+        url: https://leetcode.com/problems/max-area-of-island/
+      - slug: clone-graph
+        external_id: "133"
+        title: Clone Graph
+        difficulty: medium
+        url: https://leetcode.com/problems/clone-graph/
+      - slug: walls-and-gates
+        external_id: "286"
+        title: Walls And Gates
+        difficulty: medium
+        url: https://leetcode.com/problems/walls-and-gates/
+      - slug: rotting-oranges
+        external_id: "994"
+        title: Rotting Oranges
+        difficulty: medium
+        url: https://leetcode.com/problems/rotting-oranges/
+      - slug: pacific-atlantic-water-flow
+        external_id: "417"
+        title: Pacific Atlantic Water Flow
+        difficulty: medium
+        url: https://leetcode.com/problems/pacific-atlantic-water-flow/
+      - slug: surrounded-regions
+        external_id: "130"
+        title: Surrounded Regions
+        difficulty: medium
+        url: https://leetcode.com/problems/surrounded-regions/
+      - slug: course-schedule
+        external_id: "207"
+        title: Course Schedule
+        difficulty: medium
+        url: https://leetcode.com/problems/course-schedule/
+      - slug: course-schedule-ii
+        external_id: "210"
+        title: Course Schedule II
+        difficulty: medium
+        url: https://leetcode.com/problems/course-schedule-ii/
+      - slug: graph-valid-tree
+        external_id: "261"
+        title: Graph Valid Tree
+        difficulty: medium
+        url: https://leetcode.com/problems/graph-valid-tree/
+      - slug: number-of-connected-components-in-an-undirected-graph
+        external_id: "323"
+        title: Number of Connected Components In An Undirected Graph
+        difficulty: medium
+        url: https://leetcode.com/problems/number-of-connected-components-in-an-undirected-graph/
+      - slug: redundant-connection
+        external_id: "684"
+        title: Redundant Connection
+        difficulty: medium
+        url: https://leetcode.com/problems/redundant-connection/
+      - slug: word-ladder
+        external_id: "127"
+        title: Word Ladder
+        difficulty: hard
+        url: https://leetcode.com/problems/word-ladder/
+  - pattern:
+      code: advanced_graphs
+      name: Advanced Graphs
+    problems:
+      - slug: network-delay-time
+        external_id: "743"
+        title: Network Delay Time
+        difficulty: medium
+        url: https://leetcode.com/problems/network-delay-time/
+      - slug: reconstruct-itinerary
+        external_id: "332"
+        title: Reconstruct Itinerary
+        difficulty: hard
+        url: https://leetcode.com/problems/reconstruct-itinerary/
+      - slug: min-cost-to-connect-all-points
+        external_id: "1584"
+        title: Min Cost to Connect All Points
+        difficulty: medium
+        url: https://leetcode.com/problems/min-cost-to-connect-all-points/
+      - slug: swim-in-rising-water
+        external_id: "778"
+        title: Swim In Rising Water
+        difficulty: hard
+        url: https://leetcode.com/problems/swim-in-rising-water/
+      - slug: alien-dictionary
+        external_id: "269"
+        title: Alien Dictionary
+        difficulty: hard
+        url: https://leetcode.com/problems/alien-dictionary/
+      - slug: cheapest-flights-within-k-stops
+        external_id: "787"
+        title: Cheapest Flights Within K Stops
+        difficulty: medium
+        url: https://leetcode.com/problems/cheapest-flights-within-k-stops/
+  - pattern:
+      code: dynamic_programming_1d
+      name: 1-D Dynamic Programming
+    problems:
+      - slug: climbing-stairs
+        external_id: "70"
+        title: Climbing Stairs
+        difficulty: easy
+        url: https://leetcode.com/problems/climbing-stairs/
+      - slug: min-cost-climbing-stairs
+        external_id: "746"
+        title: Min Cost Climbing Stairs
+        difficulty: easy
+        url: https://leetcode.com/problems/min-cost-climbing-stairs/
+      - slug: house-robber
+        external_id: "198"
+        title: House Robber
+        difficulty: medium
+        url: https://leetcode.com/problems/house-robber/
+      - slug: house-robber-ii
+        external_id: "213"
+        title: House Robber II
+        difficulty: medium
+        url: https://leetcode.com/problems/house-robber-ii/
+      - slug: longest-palindromic-substring
+        external_id: "5"
+        title: Longest Palindromic Substring
+        difficulty: medium
+        url: https://leetcode.com/problems/longest-palindromic-substring/
+      - slug: palindromic-substrings
+        external_id: "647"
+        title: Palindromic Substrings
+        difficulty: medium
+        url: https://leetcode.com/problems/palindromic-substrings/
+      - slug: decode-ways
+        external_id: "91"
+        title: Decode Ways
+        difficulty: medium
+        url: https://leetcode.com/problems/decode-ways/
+      - slug: coin-change
+        external_id: "322"
+        title: Coin Change
+        difficulty: medium
+        url: https://leetcode.com/problems/coin-change/
+      - slug: maximum-product-subarray
+        external_id: "152"
+        title: Maximum Product Subarray
+        difficulty: medium
+        url: https://leetcode.com/problems/maximum-product-subarray/
+      - slug: word-break
+        external_id: "139"
+        title: Word Break
+        difficulty: medium
+        url: https://leetcode.com/problems/word-break/
+      - slug: longest-increasing-subsequence
+        external_id: "300"
+        title: Longest Increasing Subsequence
+        difficulty: medium
+        url: https://leetcode.com/problems/longest-increasing-subsequence/
+      - slug: partition-equal-subset-sum
+        external_id: "416"
+        title: Partition Equal Subset Sum
+        difficulty: medium
+        url: https://leetcode.com/problems/partition-equal-subset-sum/
+  - pattern:
+      code: dynamic_programming_2d
+      name: 2-D Dynamic Programming
+    problems:
+      - slug: unique-paths
+        external_id: "62"
+        title: Unique Paths
+        difficulty: medium
+        url: https://leetcode.com/problems/unique-paths/
+      - slug: longest-common-subsequence
+        external_id: "1143"
+        title: Longest Common Subsequence
+        difficulty: medium
+        url: https://leetcode.com/problems/longest-common-subsequence/
+      - slug: best-time-to-buy-and-sell-stock-with-cooldown
+        external_id: "309"
+        title: Best Time to Buy And Sell Stock With Cooldown
+        difficulty: medium
+        url: https://leetcode.com/problems/best-time-to-buy-and-sell-stock-with-cooldown/
+      - slug: coin-change-ii
+        external_id: "518"
+        title: Coin Change II
+        difficulty: medium
+        url: https://leetcode.com/problems/coin-change-ii/
+      - slug: target-sum
+        external_id: "494"
+        title: Target Sum
+        difficulty: medium
+        url: https://leetcode.com/problems/target-sum/
+      - slug: interleaving-string
+        external_id: "97"
+        title: Interleaving String
+        difficulty: medium
+        url: https://leetcode.com/problems/interleaving-string/
+      - slug: longest-increasing-path-in-a-matrix
+        external_id: "329"
+        title: Longest Increasing Path In a Matrix
+        difficulty: hard
+        url: https://leetcode.com/problems/longest-increasing-path-in-a-matrix/
+      - slug: distinct-subsequences
+        external_id: "115"
+        title: Distinct Subsequences
+        difficulty: hard
+        url: https://leetcode.com/problems/distinct-subsequences/
+      - slug: edit-distance
+        external_id: "72"
+        title: Edit Distance
+        difficulty: medium
+        url: https://leetcode.com/problems/edit-distance/
+      - slug: burst-balloons
+        external_id: "312"
+        title: Burst Balloons
+        difficulty: hard
+        url: https://leetcode.com/problems/burst-balloons/
+      - slug: regular-expression-matching
+        external_id: "10"
+        title: Regular Expression Matching
+        difficulty: hard
+        url: https://leetcode.com/problems/regular-expression-matching/
+  - pattern:
+      code: greedy
+      name: Greedy
+    problems:
+      - slug: maximum-subarray
+        external_id: "53"
+        title: Maximum Subarray
+        difficulty: medium
+        url: https://leetcode.com/problems/maximum-subarray/
+      - slug: jump-game
+        external_id: "55"
+        title: Jump Game
+        difficulty: medium
+        url: https://leetcode.com/problems/jump-game/
+      - slug: jump-game-ii
+        external_id: "45"
+        title: Jump Game II
+        difficulty: medium
+        url: https://leetcode.com/problems/jump-game-ii/
+      - slug: gas-station
+        external_id: "134"
+        title: Gas Station
+        difficulty: medium
+        url: https://leetcode.com/problems/gas-station/
+      - slug: hand-of-straights
+        external_id: "846"
+        title: Hand of Straights
+        difficulty: medium
+        url: https://leetcode.com/problems/hand-of-straights/
+      - slug: merge-triplets-to-form-target-triplet
+        external_id: "1899"
+        title: Merge Triplets to Form Target Triplet
+        difficulty: medium
+        url: https://leetcode.com/problems/merge-triplets-to-form-target-triplet/
+      - slug: partition-labels
+        external_id: "763"
+        title: Partition Labels
+        difficulty: medium
+        url: https://leetcode.com/problems/partition-labels/
+      - slug: valid-parenthesis-string
+        external_id: "678"
+        title: Valid Parenthesis String
+        difficulty: medium
+        url: https://leetcode.com/problems/valid-parenthesis-string/
+  - pattern:
+      code: intervals
+      name: Intervals
+    problems:
+      - slug: insert-interval
+        external_id: "57"
+        title: Insert Interval
+        difficulty: medium
+        url: https://leetcode.com/problems/insert-interval/
+      - slug: merge-intervals
+        external_id: "56"
+        title: Merge Intervals
+        difficulty: medium
+        url: https://leetcode.com/problems/merge-intervals/
+      - slug: non-overlapping-intervals
+        external_id: "435"
+        title: Non Overlapping Intervals
+        difficulty: medium
+        url: https://leetcode.com/problems/non-overlapping-intervals/
+      - slug: meeting-rooms
+        external_id: "252"
+        title: Meeting Rooms
+        difficulty: easy
+        url: https://leetcode.com/problems/meeting-rooms/
+      - slug: meeting-rooms-ii
+        external_id: "253"
+        title: Meeting Rooms II
+        difficulty: medium
+        url: https://leetcode.com/problems/meeting-rooms-ii/
+      - slug: minimum-interval-to-include-each-query
+        external_id: "1851"
+        title: Minimum Interval to Include Each Query
+        difficulty: hard
+        url: https://leetcode.com/problems/minimum-interval-to-include-each-query/
+  - pattern:
+      code: math_geometry
+      name: Math & Geometry
+    problems:
+      - slug: rotate-image
+        external_id: "48"
+        title: Rotate Image
+        difficulty: medium
+        url: https://leetcode.com/problems/rotate-image/
+      - slug: spiral-matrix
+        external_id: "54"
+        title: Spiral Matrix
+        difficulty: medium
+        url: https://leetcode.com/problems/spiral-matrix/
+      - slug: set-matrix-zeroes
+        external_id: "73"
+        title: Set Matrix Zeroes
+        difficulty: medium
+        url: https://leetcode.com/problems/set-matrix-zeroes/
+      - slug: happy-number
+        external_id: "202"
+        title: Happy Number
+        difficulty: easy
+        url: https://leetcode.com/problems/happy-number/
+      - slug: plus-one
+        external_id: "66"
+        title: Plus One
+        difficulty: easy
+        url: https://leetcode.com/problems/plus-one/
+      - slug: powx-n
+        external_id: "50"
+        title: Pow(x, n)
+        difficulty: medium
+        url: https://leetcode.com/problems/powx-n/
+      - slug: multiply-strings
+        external_id: "43"
+        title: Multiply Strings
+        difficulty: medium
+        url: https://leetcode.com/problems/multiply-strings/
+      - slug: detect-squares
+        external_id: "2013"
+        title: Detect Squares
+        difficulty: medium
+        url: https://leetcode.com/problems/detect-squares/
+  - pattern:
+      code: bit_manipulation
+      name: Bit Manipulation
+    problems:
+      - slug: single-number
+        external_id: "136"
+        title: Single Number
+        difficulty: easy
+        url: https://leetcode.com/problems/single-number/
+      - slug: number-of-1-bits
+        external_id: "191"
+        title: Number of 1 Bits
+        difficulty: easy
+        url: https://leetcode.com/problems/number-of-1-bits/
+      - slug: counting-bits
+        external_id: "338"
+        title: Counting Bits
+        difficulty: easy
+        url: https://leetcode.com/problems/counting-bits/
+      - slug: reverse-bits
+        external_id: "190"
+        title: Reverse Bits
+        difficulty: easy
+        url: https://leetcode.com/problems/reverse-bits/
+      - slug: missing-number
+        external_id: "268"
+        title: Missing Number
+        difficulty: easy
+        url: https://leetcode.com/problems/missing-number/
+      - slug: sum-of-two-integers
+        external_id: "371"
+        title: Sum of Two Integers
+        difficulty: medium
+        url: https://leetcode.com/problems/sum-of-two-integers/
+      - slug: reverse-integer
+        external_id: "7"
+        title: Reverse Integer
+        difficulty: medium
+        url: https://leetcode.com/problems/reverse-integer/

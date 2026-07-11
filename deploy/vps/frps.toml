@@ -1,0 +1,18 @@
+# frp server (VPS side). Home's frpc dials in here over the control port and
+# registers the realgo-web proxy; frps binds it on the internal docker network as
+# frps:8080 (not published), which caddy reverse-proxies.
+bindPort = 7000
+
+auth.method = "token"
+auth.token = "{{ .Envs.FRP_TOKEN }}"
+
+# Accept the TLS the client enables; don't force it on the control channel.
+transport.tls.force = false
+
+# Restrict which remotePorts a proxy may claim to the ones we actually publish
+# (8080 for realgo-web, 2222 for homeserver-ssh) so a leaked token can't bind
+# arbitrary ports on the VPS.
+allowPorts = [
+  { start = 8080, end = 8080 },
+  { start = 2222, end = 2222 },
+]

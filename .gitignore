@@ -1,12 +1,14 @@
 # Environment and local secrets
 .env
 .env.*
+config.yaml
 !.env.example
 !**/.env.example
 *.local
 *.pem
 *.key
 *.p12
+AGENTS.md
 
 # Dependencies and package-manager caches
 node_modules/
@@ -26,6 +28,12 @@ build/
 *.tsbuildinfo
 next-env.d.ts
 coverage/
+
+# Playwright e2e artifacts (the specs in apps/web/e2e are committed; output is not)
+test-results/
+playwright-report/
+.playwright/
+blob-report/
 
 # Go build and test artifacts
 bin/
@@ -68,3 +76,15 @@ Thumbs.db
 tmp/
 temp/
 .tmp/
+
+# Python
+__pycache__/
+
+.serena/*
+
+# Nested clone kept as a scratch worktree inside this checkout; it has its own
+# .git and must never be committed into this repo as an embedded repository.
+/freeburger/
+
+# AI
+CLAUDE.md
