@@ -358,6 +358,62 @@ func TestContractReviewQueueShouldNotDoubleNestData(t *testing.T) {
 	require.IsType(t, []any{}, resp.body["data"])
 }
 
+// TestContractRoadmapTargetAfterOnboarding verifies that target_company and
+// target_topics persisted via PATCH /me/profile are reflected back by
+// GET /me/roadmap.target: company is enriched to {code, name} via the
+// autocomplete catalog and topics are normalised from dashes to underscores.
+func TestContractRoadmapTargetAfterOnboarding(t *testing.T) {
+	h := newContractHarness(t)
+	email := uniqueEmail("roadmap-target")
+	t.Cleanup(func() { h.cleanupUser(email) })
+	tokens := h.register(t, email, "Password123!")
+	t.Cleanup(func() { h.deleteRefreshTokens(tokens.refresh) })
+
+	patch := h.request(t, http.MethodPatch, "/api/v1/me/profile", tokens.access, map[string]any{
+		"target_company":      "Google",
+		"target_topics":       []string{"two-pointers", "arrays"},
+		"interview_date":      "2026-07-21T09:00:00Z",
+		"onboarding_completed": true,
+	})
+	requireSuccessEnvelope(t, patch, http.StatusOK)
+
+	roadmap := h.request(t, http.MethodGet, "/api/v1/me/roadmap", tokens.access, nil)
+	data := requireSuccessEnvelope(t, roadmap, http.StatusOK)
+	target := objectField(t, data, "target")
+
+	company := objectField(t, target, "company")
+	require.Equal(t, "cmp_google", stringField(t, company, "code"), "company.code from /companies/search catalog")
+	require.Equal(t, "Google", stringField(t, company, "name"))
+
+	topics, ok := target["topics"].([]any)
+	require.True(t, ok, "expected target.topics array, got %T", target["topics"])
+	require.Equal(t, []any{"two_pointers", "arrays"}, topics, "topics must be normalised to snake_case")
+
+	date, ok := target["interviewDate"].(string)
+	require.True(t, ok, "expected target.interviewDate string, got %T", target["interviewDate"])
+	require.Contains(t, date, "2026-07-21")
+}
+
+// TestContractRoadmapTargetEmptyForFreshUser verifies that a freshly registered
+// user (no onboarding yet) gets target.company == null and target.topics == []
+// rather than null/missing, so the frontend never has to guard against null.
+func TestContractRoadmapTargetEmptyForFreshUser(t *testing.T) {
+	h := newContractHarness(t)
+	email := uniqueEmail("roadmap-empty")
+	t.Cleanup(func() { h.cleanupUser(email) })
+	tokens := h.register(t, email, "Password123!")
+	t.Cleanup(func() { h.deleteRefreshTokens(tokens.refresh) })
+
+	roadmap := h.request(t, http.MethodGet, "/api/v1/me/roadmap", tokens.access, nil)
+	data := requireSuccessEnvelope(t, roadmap, http.StatusOK)
+	target := objectField(t, data, "target")
+
+	require.Nil(t, target["company"], "target.company must be null for a fresh user")
+	topics, ok := target["topics"].([]any)
+	require.True(t, ok, "target.topics must be an empty array, got %T", target["topics"])
+	require.Empty(t, topics, "target.topics must be empty for a fresh user")
+}
+
 func newContractHarness(t *testing.T) *contractHarness {
 	t.Helper()
 

@@ -24,10 +24,10 @@ func TestGet_Unauthenticated(t *testing.T) {
 }
 
 func TestGet_ResponseShape(t *testing.T) {
-	company := "Google"
+	code := "cmp_google"
 	h := NewHandler(fakeRepository{data: Response{
 		OverallProgress: 50,
-		Target:          Target{Company: &company},
+		Target:          Target{Company: &Company{Code: &code, Name: "Google"}},
 		Weeks:           []Week{{ID: "week_01", Status: "active"}},
 		Patterns:        []Pattern{{Code: "arrays_hashing", Problems: []Problem{{ID: 1, Status: "reviewing"}}}},
 	}})
@@ -48,6 +48,65 @@ func TestGet_ResponseShape(t *testing.T) {
 	}
 	if body.Data.OverallProgress != 50 || len(body.Data.Patterns) != 1 {
 		t.Fatalf("unexpected data: %+v", body.Data)
+	}
+	if body.Data.Target.Company == nil || body.Data.Target.Company.Name != "Google" {
+		t.Fatalf("unexpected target.company: %+v", body.Data.Target.Company)
+	}
+}
+
+func TestGet_ResponseShape_EmptyCompanySerialisesAsNull(t *testing.T) {
+	h := NewHandler(fakeRepository{data: Response{
+		Target: Target{Company: nil},
+	}})
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/me/roadmap", nil)
+	req = req.WithContext(auth.ContextWithUserID(req.Context(), 10))
+	w := httptest.NewRecorder()
+
+	h.Get(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d", w.Code, http.StatusOK)
+	}
+	var raw struct {
+		Data struct {
+			Target struct {
+				Company any `json:"company"`
+			} `json:"target"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &raw); err != nil {
+		t.Fatalf("invalid json: %v", err)
+	}
+	if raw.Data.Target.Company != nil {
+		t.Fatalf("target.company = %v, want null when no company stored", raw.Data.Target.Company)
+	}
+}
+
+func TestGet_ResponseShape_TopicsSerialiseAsArray(t *testing.T) {
+	h := NewHandler(fakeRepository{data: Response{
+		Target: Target{Topics: []string{"arrays", "two_pointers"}},
+	}})
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/me/roadmap", nil)
+	req = req.WithContext(auth.ContextWithUserID(req.Context(), 10))
+	w := httptest.NewRecorder()
+
+	h.Get(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d", w.Code, http.StatusOK)
+	}
+	var raw struct {
+		Data struct {
+			Target struct {
+				Topics []string `json:"topics"`
+			} `json:"target"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &raw); err != nil {
+		t.Fatalf("invalid json: %v", err)
+	}
+	if len(raw.Data.Target.Topics) != 2 || raw.Data.Target.Topics[0] != "arrays" {
+		t.Fatalf("target.topics = %v, want [arrays two_pointers]", raw.Data.Target.Topics)
 	}
 }
 

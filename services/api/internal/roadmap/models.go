@@ -10,8 +10,18 @@ type Response struct {
 }
 
 type Target struct {
-	Company       *string `json:"company"`
-	InterviewDate *string `json:"interviewDate"`
+	Company       *Company `json:"company"`        // null when user has no target_company
+	InterviewDate *string  `json:"interviewDate"`
+	Topics        []string `json:"topics"`         // snake_case topic codes, [] when none
+}
+
+// Company is the enriched target-company object exposed by the roadmap. The
+// stored value is free-text (users.target_company); Code is populated by a
+// best-effort lookup against the autocomplete catalog and is null when the
+// name does not match any catalog entry.
+type Company struct {
+	Code *string `json:"code"`
+	Name string  `json:"name"`
 }
 
 type Week struct {
