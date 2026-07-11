@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import type { CSSProperties } from "react";
 
 import { getDictionary } from "../_content/i18n";
 import { MemoryExtensionDemo } from "../components/MemoryExtensionDemo";
@@ -76,11 +77,26 @@ export default function Home() {
               <span>{copy.sections.roadmap.head}</span>
               <strong>{copy.sections.roadmap.readiness}</strong>
             </div>
-            {copy.roadmapWeeks.map(([week, topics, focus]) => (
-              <article className="roadmap-row" key={week}>
-                <span>{week}</span>
-                <strong>{topics}</strong>
-                <p>{focus}</p>
+            {copy.roadmapWeeks.map((week, index) => (
+              <article
+                className="roadmap-row"
+                key={week.label}
+                style={{ "--week-index": index, "--progress": `${week.progress}%` } as CSSProperties}
+              >
+                <div className="roadmap-row__meta">
+                  <span>{week.label}</span>
+                  <span className={`roadmap-row__state roadmap-row__state--${week.tone}`}>
+                    {week.state}
+                  </span>
+                </div>
+                <strong>{week.title}</strong>
+                <p>{week.focus}</p>
+                <div className="roadmap-progress" aria-hidden="true">
+                  <span className="roadmap-progress__track">
+                    <i className="roadmap-progress__fill" />
+                  </span>
+                  <em className="roadmap-progress__value">{week.progress}%</em>
+                </div>
               </article>
             ))}
           </div>

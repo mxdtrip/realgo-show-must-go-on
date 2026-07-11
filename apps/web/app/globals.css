@@ -933,6 +933,81 @@ h3 {
   color: var(--text-dim);
 }
 
+.roadmap-row__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.roadmap-row__state {
+  font-family: var(--font-stack-mono);
+}
+
+.roadmap-row__state--done {
+  color: var(--success-bright);
+}
+
+.roadmap-row__state--active {
+  color: var(--text-faint);
+}
+
+/* Прогресс недели. Заполнение оживает через ScrollReveal: контейнер
+   .roadmap-demo несёт data-reveal, и когда он получает .is-revealed,
+   полосы по очереди едут к своим --progress (сдвиг задаёт --week-index).
+   Без JS / с reduced-motion (нет .reveal-ready) видно конечное состояние. */
+.roadmap-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.roadmap-progress__track {
+  flex: 1;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.roadmap-progress__fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  width: var(--progress);
+  background: linear-gradient(90deg, rgba(56, 139, 253, 0.75), var(--accent-bright));
+}
+
+.roadmap-progress__value {
+  min-width: 4ch;
+  font-family: var(--font-stack-mono);
+  font-style: normal;
+  font-size: 11px;
+  text-align: right;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.reveal-ready .roadmap-demo:not(.is-revealed) .roadmap-progress__fill {
+  width: 0;
+}
+
+.reveal-ready .roadmap-demo:not(.is-revealed) .roadmap-progress__value {
+  opacity: 0;
+}
+
+/* transition живёт только в revealed-состоянии: скрытие сбрасывает полосы
+   мгновенно, и при возврате секции в кадр заполнение проигрывается заново. */
+.reveal-ready .roadmap-demo.is-revealed .roadmap-progress__fill {
+  transition: width 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: calc(var(--week-index, 0) * 0.45s + 0.4s);
+}
+
+.reveal-ready .roadmap-demo.is-revealed .roadmap-progress__value {
+  transition: opacity 0.45s ease;
+  transition-delay: calc(var(--week-index, 0) * 0.45s + 0.65s);
+}
+
 /* ============================================================
    REVIEW + PRICING CARDS
    ============================================================ */
