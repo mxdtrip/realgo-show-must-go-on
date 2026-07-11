@@ -10,6 +10,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/mxdtrip/freeburger/services/api/internal/companies"
 	"github.com/mxdtrip/freeburger/services/api/internal/storage/postgres/db"
 )
 
@@ -85,10 +86,30 @@ func (r *pgRepository) target(ctx context.Context, userID int64) (Target, error)
 }
 
 func targetFromRow(row db.GetRoadmapUserTargetRow) Target {
-	return Target{
-		Company:       textPtr(row.TargetCompany),
-		InterviewDate: datePtr(row.InterviewDate),
+	var company *Company
+	if name := textPtr(row.TargetCompany); name != nil {
+		company = buildCompany(*name)
 	}
+	topics := row.TargetTopics
+	if topics == nil {
+		topics = []string{}
+	}
+	return Target{
+		Company:       company,
+		InterviewDate: datePtr(row.InterviewDate),
+		Topics:        topics,
+	}
+}
+
+// buildCompany enriches a free-text target company with a catalog code when
+// the name matches the autocomplete catalog; otherwise it returns the name
+// as-is with a null code.
+func buildCompany(name string) *Company {
+	if found, ok := companies.Lookup(name); ok {
+		code := found.ID
+		return &Company{Code: &code, Name: found.Name}
+	}
+	return &Company{Code: nil, Name: name}
 }
 
 func buildResponse(target Target, items []roadmapItem) Response {

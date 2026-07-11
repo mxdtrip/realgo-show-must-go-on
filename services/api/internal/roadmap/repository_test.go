@@ -14,13 +14,62 @@ func TestTargetFromRow_IncludesCompanyAndInterviewDate(t *testing.T) {
 	target := targetFromRow(db.GetRoadmapUserTargetRow{
 		TargetCompany: pgtype.Text{String: "Google", Valid: true},
 		InterviewDate: pgtype.Timestamptz{Time: interviewAt, Valid: true},
+		TargetTopics:  []string{"arrays"},
 	})
 
-	if target.Company == nil || *target.Company != "Google" {
-		t.Fatalf("company = %v, want Google", target.Company)
+	if target.Company == nil {
+		t.Fatal("company must not be nil for a stored name")
+	}
+	if target.Company.Code == nil || *target.Company.Code != "cmp_google" {
+		t.Fatalf("company.code = %v, want cmp_google", target.Company.Code)
+	}
+	if target.Company.Name != "Google" {
+		t.Fatalf("company.name = %q, want Google", target.Company.Name)
 	}
 	if target.InterviewDate == nil || *target.InterviewDate != "2026-07-21" {
 		t.Fatalf("interviewDate = %v, want 2026-07-21", target.InterviewDate)
+	}
+	if len(target.Topics) != 1 || target.Topics[0] != "arrays" {
+		t.Fatalf("topics = %v, want [arrays]", target.Topics)
+	}
+}
+
+func TestTargetFromRow_UnknownCompanyHasNullCode(t *testing.T) {
+	target := targetFromRow(db.GetRoadmapUserTargetRow{
+		TargetCompany: pgtype.Text{String: "Acme", Valid: true},
+	})
+
+	if target.Company == nil {
+		t.Fatal("company must not be nil when a name is stored")
+	}
+	if target.Company.Code != nil {
+		t.Fatalf("company.code = %v, want nil for unknown company", target.Company.Code)
+	}
+	if target.Company.Name != "Acme" {
+		t.Fatalf("company.name = %q, want Acme", target.Company.Name)
+	}
+}
+
+func TestTargetFromRow_EmptyCompanyIsNull(t *testing.T) {
+	target := targetFromRow(db.GetRoadmapUserTargetRow{
+		TargetCompany: pgtype.Text{Valid: false},
+	})
+
+	if target.Company != nil {
+		t.Fatalf("company = %v, want nil when no target_company is stored", target.Company)
+	}
+}
+
+func TestTargetFromRow_EmptyTopicsDefaultsToEmptySlice(t *testing.T) {
+	target := targetFromRow(db.GetRoadmapUserTargetRow{
+		TargetTopics: nil,
+	})
+
+	if target.Topics == nil {
+		t.Fatal("topics must be an empty slice, not nil, to serialise as [] in JSON")
+	}
+	if len(target.Topics) != 0 {
+		t.Fatalf("topics = %v, want []", target.Topics)
 	}
 }
 

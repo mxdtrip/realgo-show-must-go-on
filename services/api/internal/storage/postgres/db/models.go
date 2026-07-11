@@ -246,6 +246,7 @@ type User struct {
 	NotifyReviewReminder  bool
 	NotifyWeeklyDigest    bool
 	NotifyEmailEnabled    bool
+	TargetTopics          []string
 }
 
 type UserPracticePattern struct {

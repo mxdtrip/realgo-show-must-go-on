@@ -12,7 +12,7 @@ import (
 )
 
 const getRoadmapUserTarget = `-- name: GetRoadmapUserTarget :one
-SELECT target_company, interview_date
+SELECT target_company, interview_date, target_topics
 FROM users
 WHERE id = $1
 `
@@ -20,12 +20,13 @@ WHERE id = $1
 type GetRoadmapUserTargetRow struct {
 	TargetCompany pgtype.Text
 	InterviewDate pgtype.Timestamptz
+	TargetTopics  []string
 }
 
 func (q *Queries) GetRoadmapUserTarget(ctx context.Context, id int64) (GetRoadmapUserTargetRow, error) {
 	row := q.db.QueryRow(ctx, getRoadmapUserTarget, id)
 	var i GetRoadmapUserTargetRow
-	err := row.Scan(&i.TargetCompany, &i.InterviewDate)
+	err := row.Scan(&i.TargetCompany, &i.InterviewDate, &i.TargetTopics)
 	return i, err
 }
 
