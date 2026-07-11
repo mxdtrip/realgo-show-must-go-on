@@ -943,7 +943,10 @@ h3 {
   gap: 18px;
 }
 
-.review-card,
+.review-card {
+  position: relative;
+}
+
 .price-card {
   position: relative;
   border-radius: 14px;
@@ -954,13 +957,11 @@ h3 {
     background 0.2s ease;
 }
 
-.review-card:hover,
 .price-card:hover {
   background: var(--panel-strong);
   transform: translateY(-3px);
 }
 
-.review-card span,
 .price-card span {
   display: inline-block;
   font-size: 11px;
@@ -970,7 +971,109 @@ h3 {
   margin-bottom: 16px;
 }
 
-.review-card h3 {
+/* Тот же 3D-переворот, что и в реальном плеере карточек (.focus-card):
+   perspective на внешнем блоке, rotateY на кнопке, backface-visibility
+   hidden на гранях. Уменьшенная версия под размер сетки на лендинге. */
+.review-flip {
+  position: relative;
+  height: 210px;
+  perspective: 1400px;
+}
+
+.review-flip__card {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  transform-style: preserve-3d;
+  transition: transform 0.68s cubic-bezier(0.2, 0.72, 0.22, 1);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.review-flip__card:focus-visible {
+  outline: 2px solid var(--accent-line);
+  outline-offset: 4px;
+  border-radius: 14px;
+}
+
+.review-flip__card--back {
+  transform: rotateY(180deg);
+}
+
+.review-flip__inner {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+}
+
+/* Без overflow:hidden: Firefox игнорирует backface-visibility на элементах,
+   которые сами себя клипают (bugzilla #1201471) — обе грани становятся
+   видны в момент переворота. Та же причина, что и у .focus-card__face. */
+.review-flip__face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  border-radius: 14px;
+  padding: 26px;
+  background: var(--panel);
+  transition:
+    background 0.28s ease,
+    visibility 0s linear 0.34s;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.review-flip__card:hover .review-flip__face {
+  background: var(--panel-strong);
+}
+
+.review-flip__face[aria-hidden="true"] {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* Контент проступает сквозь переворот вместо резкой смены видимости —
+   тот же приём, что и .focus-card__face > *. */
+.review-flip__face > * {
+  opacity: 1;
+  transition: opacity 0.3s ease 0.34s;
+}
+
+.review-flip__face[aria-hidden="true"] > * {
+  opacity: 0;
+  transition: opacity 0.22s ease;
+}
+
+.review-flip__face--back {
+  transform: rotateY(180deg);
+  border: 1px solid rgba(63, 185, 80, 0.32);
+  background: rgba(13, 22, 18, 0.94);
+}
+
+.review-flip__face span {
+  display: inline-block;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 16px;
+}
+
+.review-flip__face--back span {
+  color: var(--success-fg, var(--accent));
+}
+
+.review-flip__face h3 {
   font-family: var(--font-stack-mono);
   font-size: 17px;
   line-height: 1.35;
@@ -978,9 +1081,10 @@ h3 {
   letter-spacing: 0;
 }
 
-.review-card p {
-  margin: 14px 0 0;
+.review-flip__face p {
+  margin: 0;
   font-size: 14px;
+  line-height: 1.5;
   color: var(--text-dim);
 }
 
