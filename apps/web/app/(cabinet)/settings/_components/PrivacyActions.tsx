@@ -2,62 +2,89 @@
 
 import { useState } from "react";
 
-import { deleteAccount, requestDataExport } from "../../../_api/account";
+import { deleteAccount } from "../../../_api/account";
 import { ApiError } from "../../../_api/types";
 import { useToast } from "../../../_toast";
 
 type PrivacyActionsProps = {
   copy: {
-    exportProgress: string;
-    exportRequested: string;
+    deleteTitle: string;
+    deleteDescription: string;
     deleteAccount: string;
     deleteConfirm: string;
     deletePasswordPrompt: string;
+    deleteCancel: string;
+    deleteForever: string;
     deleteDone: string;
     actionFailed: string;
   };
 };
 
+/**
+ * Account deletion request (the legally required "erase me and my data"
+ * control). Deliberately the only action here: data export was dropped, and
+ * the old window.confirm/window.prompt flow is replaced by an inline
+ * confirmation with an explicit password field.
+ */
 export function PrivacyActions({ copy }: Readonly<PrivacyActionsProps>) {
   const toast = useToast();
-  const [busy, setBusy] = useState<"export" | "delete" | null>(null);
+  const [confirming, setConfirming] = useState(false);
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
 
-  const runExport = async () => {
-    setBusy("export");
-    try {
-      const result = await requestDataExport();
-      toast.info(result.message || copy.exportRequested);
-    } catch (e) {
-      toast.error(e instanceof ApiError ? e.message : copy.actionFailed);
-    } finally {
-      setBusy(null);
-    }
+  const cancel = () => {
+    setConfirming(false);
+    setPassword("");
   };
 
-  const runDelete = async () => {
-    if (!window.confirm(copy.deleteConfirm)) return;
-    const password = window.prompt(copy.deletePasswordPrompt);
-    if (!password) return;
+  const runDelete = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!password || busy) return;
 
-    setBusy("delete");
+    setBusy(true);
     try {
       await deleteAccount(password);
       toast.success(copy.deleteDone);
       window.location.assign("/");
     } catch (e) {
       toast.error(e instanceof ApiError ? e.message : copy.actionFailed);
-      setBusy(null);
+      setBusy(false);
     }
   };
 
   return (
-    <div className="privacy-actions">
-      <button disabled={busy !== null} type="button" onClick={runExport}>
-        {busy === "export" ? "..." : copy.exportProgress}
-      </button>
-      <button disabled={busy !== null} type="button" onClick={runDelete}>
-        {busy === "delete" ? "..." : copy.deleteAccount}
-      </button>
+    <div className={`danger-zone ${confirming ? "danger-zone--confirming" : ""}`}>
+      <div className="danger-zone__info">
+        <strong>{copy.deleteTitle}</strong>
+        <p>{confirming ? copy.deleteConfirm : copy.deleteDescription}</p>
+      </div>
+
+      {confirming ? (
+        <form className="danger-zone__confirm" onSubmit={runDelete}>
+          <input
+            aria-label={copy.deletePasswordPrompt}
+            autoFocus
+            autoComplete="current-password"
+            disabled={busy}
+            placeholder={copy.deletePasswordPrompt}
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+          />
+          <div>
+            <button className="danger-zone__cancel" disabled={busy} type="button" onClick={cancel}>
+              {copy.deleteCancel}
+            </button>
+            <button className="danger-zone__btn" disabled={busy || password.length === 0} type="submit">
+              {busy ? "..." : copy.deleteForever}
+            </button>
+          </div>
+        </form>
+      ) : (
+        <button className="danger-zone__btn" type="button" onClick={() => setConfirming(true)}>
+          {copy.deleteAccount}
+        </button>
+      )}
     </div>
   );
 }
