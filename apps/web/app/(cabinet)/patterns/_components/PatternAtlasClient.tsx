@@ -60,21 +60,33 @@ function familyStats(subs: readonly AtlasSubpattern[]) {
   };
 }
 
+// Все три уровня отдаются всегда: сетка .atlas-difficulty-badges держит
+// фиксированные колонки easy/medium/hard, а нулевые уровни гасятся классом
+// is-zero (visibility: hidden), чтобы колонки не съезжали между строками.
+// Пустой список — только когда размеченных задач нет вовсе.
 function difficultyBreakdown(counts: DifficultyCounts | undefined): DifficultyBreakdown[] {
   if (!counts) return [];
-  return (["easy", "medium", "hard"] as const)
-    .filter((level) => (counts[level] ?? 0) > 0)
-    .map((level) => ({ level, count: counts[level] ?? 0 }));
+  const levels = (["easy", "medium", "hard"] as const).map((level) => ({
+    level,
+    count: counts[level] ?? 0,
+  }));
+  return levels.some((item) => item.count > 0) ? levels : [];
 }
 
 function DifficultyBadges({ levels }: Readonly<{ levels: readonly DifficultyBreakdown[] }>) {
   return (
     <span
       className="atlas-difficulty-badges"
-      aria-label={levels.map((item) => `${item.level} ${item.count}`).join(", ")}
+      aria-label={levels
+        .filter((item) => item.count > 0)
+        .map((item) => `${item.level} ${item.count}`)
+        .join(", ")}
     >
       {levels.map(({ level, count }) => (
-        <span className={`atlas-difficulty-badge atlas-difficulty-badge--${level}`} key={level}>
+        <span
+          className={`atlas-difficulty-badge atlas-difficulty-badge--${level}${count === 0 ? " is-zero" : ""}`}
+          key={level}
+        >
           <span>{level}</span>
           {" "}
           <span className="atlas-difficulty-badge__count">{count}</span>
