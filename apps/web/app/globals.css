@@ -4458,25 +4458,6 @@ a.roadmap-step__practice-card:hover {
   }
 }
 
-.focus-card--advancing {
-  pointer-events: none;
-  animation: focus-card-advance 0.42s cubic-bezier(0.64, 0.02, 0.4, 1) both;
-}
-
-@keyframes focus-card-advance {
-  from {
-    opacity: 1;
-    filter: blur(0);
-    transform: translate3d(0, 0, 0) rotateY(180deg) rotateZ(0) scale(1);
-  }
-
-  to {
-    opacity: 0;
-    filter: blur(2px);
-    transform: translate3d(66vw, -10px, 120px) rotateY(180deg) rotateZ(8deg) scale(0.92);
-  }
-}
-
 .focus-card__inner {
   position: absolute;
   inset: 0;
