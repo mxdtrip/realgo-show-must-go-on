@@ -32,16 +32,21 @@ export default function SettingsPage() {
           <SecurityPanel />
         </CabinetPanel>
 
-        <CabinetPanel eyebrow={page.installEyebrow} title={page.installTitle}>
-          <InstallAppPanel copy={page.install} />
-        </CabinetPanel>
+        {/* PWA + privacy share one grid cell: both are short, and pairing the
+            short install panel with the tall notifications one left a large
+            hole under it (grid rows are as tall as their tallest panel). */}
+        <div className="cabinet-grid__stack">
+          <CabinetPanel eyebrow={page.installEyebrow} title={page.installTitle}>
+            <InstallAppPanel copy={page.install} />
+          </CabinetPanel>
+
+          <CabinetPanel eyebrow={page.privacyEyebrow} title={page.privacyTitle} padded>
+            <PrivacyActions copy={page} />
+          </CabinetPanel>
+        </div>
 
         <CabinetPanel eyebrow={page.notificationsEyebrow} title={page.notificationsTitle}>
           <NotificationSettingsPanel copy={page.notifications} />
-        </CabinetPanel>
-
-        <CabinetPanel eyebrow={page.privacyEyebrow} title={page.privacyTitle} padded>
-          <PrivacyActions copy={page} />
         </CabinetPanel>
       </div>
     </main>
