@@ -91,7 +91,7 @@ SELECT
     COALESCE(p.external_id, p.external_slug)::text AS external_id,
     p.title,
     p.url,
-    CASE WHEN pl.code IN ('leetcode','neetcode','codeforces') THEN pl.code ELSE 'custom' END AS platform,
+    CASE WHEN pl.code IN ('leetcode','hackerrank','codeforces') THEN pl.code ELSE 'custom' END AS platform,
     COALESCE(p.difficulty, 'unknown')::text AS difficulty,
     pt.code                                AS pattern_id,
     pt.name                                AS pattern_name,
@@ -189,7 +189,7 @@ WITH scoped_problems AS (
         p.title,
         p.url,
         CASE
-            WHEN pl.code IN ('leetcode', 'neetcode', 'codeforces') THEN pl.code
+            WHEN pl.code IN ('leetcode', 'hackerrank', 'codeforces') THEN pl.code
             ELSE 'custom'
         END AS platform,
         CASE

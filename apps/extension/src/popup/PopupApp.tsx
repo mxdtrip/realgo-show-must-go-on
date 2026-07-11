@@ -141,7 +141,7 @@ export function PopupApp({
             <IconExternal />
           </div>
           <p className="realgo-state__text">
-            Откройте задачу на NeetCode и отправьте решение — realgo подхватит её
+            Откройте задачу на HackerRank и отправьте решение — realgo подхватит её
             автоматически.
           </p>
           <button type="button" className="realgo-link" onClick={handleReport}>
@@ -513,8 +513,8 @@ function platformTagClass(platform: string): string {
   switch (platform.toLowerCase()) {
     case "leetcode":
       return "realgo-tag--leetcode";
-    case "neetcode":
-      return "realgo-tag--neetcode";
+    case "hackerrank":
+      return "realgo-tag--hackerrank";
     default:
       return "";
   }

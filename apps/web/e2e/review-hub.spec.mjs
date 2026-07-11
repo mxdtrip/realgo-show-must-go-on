@@ -36,7 +36,6 @@ test.describe("/reviews — журнал решённых задач", () => {
     await expect(kokoRow.getByText("2", { exact: true })).toBeVisible();
     // Self-rating from the extension popup.
     await expect(kokoRow.locator(".review-badge--warning")).toHaveText("hard");
-    await expect(kokoRow.getByText("пора повторить")).toBeVisible();
 
     // Pattern cell deep-links into the Atlas node.
     await expect(page.getByRole("link", { name: "Binary Search on Answer" })).toHaveAttribute(
@@ -92,11 +91,11 @@ test.describe("/problems — практика подпаттернов", () => {
   });
 });
 
-test.describe("/cards — лаунчер практики над колодой", () => {
+test.describe("/dashboard — лаунчер практики", () => {
   test("launcher shows live practice numbers and starts scope=practice", async ({ page }) => {
-    await openAuthed(page, "/cards");
+    await openAuthed(page, "/dashboard");
 
-    const launcher = page.locator(".next-up--wide");
+    const launcher = page.locator(".next-up");
     await expect(launcher.getByText("Практика по активным подпаттернам")).toBeVisible();
     // 3 practice subpatterns · 2 session cards · ~3 min from the stub.
     await expect(launcher.locator(".next-up__meta")).toContainText("3");
@@ -105,12 +104,15 @@ test.describe("/cards — лаунчер практики над колодой"
       "href",
       "/cards/session?scope=practice",
     );
-    await expect(launcher.getByRole("link", { name: /мой набор/ })).toHaveAttribute(
-      "href",
-      "/problems",
-    );
+  });
+});
 
-    // The deck browser below still works.
+test.describe("/cards — колода без лаунчера", () => {
+  test("deck browser works; the practice launcher moved to the dashboard", async ({ page }) => {
+    await openAuthed(page, "/cards");
+
+    await expect(page.getByText("Практика по активным подпаттернам")).toHaveCount(0);
+
     const front = page.getByText("STUB DECK: which approach fits a sorted array?");
     await expect(front).toBeVisible();
     await page.getByRole("button", { name: "показать ответ" }).first().click();

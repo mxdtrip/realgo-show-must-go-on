@@ -239,7 +239,7 @@ export const ASSISTANT_CSS = `
   color: #ffa116;
   background: rgba(255, 161, 22, 0.12);
 }
-.realgo-agent-tag--neetcode {
+.realgo-agent-tag--hackerrank {
   border-color: rgba(56, 189, 178, 0.4);
   color: #38bdb2;
   background: rgba(56, 189, 178, 0.12);

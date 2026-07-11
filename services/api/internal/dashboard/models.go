@@ -24,6 +24,21 @@ type Response struct {
 	Stats         []Stat              `json:"stats"`
 	ReviewPreview []ReviewPreviewItem `json:"reviewPreview"`
 	WeakPatterns  []WeakPattern       `json:"weakPatterns"`
+	Activity      Activity            `json:"activity"`
+}
+
+// Activity feeds the dashboard heatmap: per-day counts over the last
+// activityWindowDays days (user timezone), oldest first. Days with no
+// activity are omitted from Days.
+type Activity struct {
+	Days         []ActivityDay `json:"days"`
+	ActiveDays   int           `json:"activeDays"`
+	TotalReviews int           `json:"totalReviews"`
+}
+
+type ActivityDay struct {
+	Date  string `json:"date"` // YYYY-MM-DD in the user's timezone
+	Count int    `json:"count"`
 }
 
 type NextAction struct {

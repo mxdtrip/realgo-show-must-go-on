@@ -37,6 +37,25 @@ func (r *pgRepository) GetMetrics(ctx context.Context, userID int64) (Metrics, e
 	}, nil
 }
 
+func (r *pgRepository) ListActivity(ctx context.Context, userID int64, days int32) ([]ActivityDay, error) {
+	rows, err := r.q.ListDashboardActivity(ctx, db.ListDashboardActivityParams{UserID: userID, Days: days})
+	if err != nil {
+		return nil, fmt.Errorf("dashboard: query activity: %w", err)
+	}
+
+	items := make([]ActivityDay, 0, len(rows))
+	for _, row := range rows {
+		if !row.Day.Valid {
+			continue
+		}
+		items = append(items, ActivityDay{
+			Date:  row.Day.Time.Format("2006-01-02"),
+			Count: int(row.Count),
+		})
+	}
+	return items, nil
+}
+
 func (r *pgRepository) ListReviewPreview(ctx context.Context, userID int64, limit int32) ([]ReviewPreview, error) {
 	rows, err := r.q.ListDashboardReviewPreview(ctx, db.ListDashboardReviewPreviewParams{UserID: userID, Limit: limit})
 	if err != nil {

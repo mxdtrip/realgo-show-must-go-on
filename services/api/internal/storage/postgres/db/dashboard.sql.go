@@ -180,6 +180,65 @@ func (q *Queries) GetDashboardNextReview(ctx context.Context, userID int64) (Get
 	return i, err
 }
 
+const listDashboardActivity = `-- name: ListDashboardActivity :many
+WITH settings AS (
+    SELECT COALESCE(NULLIF(u.timezone, ''), 'UTC')::text AS tz
+    FROM users u
+    WHERE u.id = $2::bigint
+),
+today AS (
+    SELECT (NOW() AT TIME ZONE COALESCE((SELECT tz FROM settings), 'UTC'))::date AS day
+),
+events AS (
+    SELECT (ra.created_at AT TIME ZONE COALESCE((SELECT tz FROM settings), 'UTC'))::date AS activity_day
+    FROM review_attempts ra
+    WHERE ra.user_id = $2::bigint
+    UNION ALL
+    SELECT (upp.solved_at AT TIME ZONE COALESCE((SELECT tz FROM settings), 'UTC'))::date AS activity_day
+    FROM user_problem_progress upp
+    WHERE upp.user_id = $2::bigint AND upp.solved_at IS NOT NULL
+)
+SELECT events.activity_day::date AS day, COUNT(*)::integer AS count
+FROM events, today
+WHERE events.activity_day IS NOT NULL
+  AND events.activity_day <= today.day
+  AND events.activity_day > today.day - $1::integer
+GROUP BY events.activity_day
+ORDER BY events.activity_day ASC
+`
+
+type ListDashboardActivityParams struct {
+	Days   int32
+	UserID int64
+}
+
+type ListDashboardActivityRow struct {
+	Day   pgtype.Date
+	Count int32
+}
+
+// Per-day activity counts for the heatmap: review attempts + problem solves,
+// bucketed by the user's timezone, newest window of sqlc.arg(days) days.
+func (q *Queries) ListDashboardActivity(ctx context.Context, arg ListDashboardActivityParams) ([]ListDashboardActivityRow, error) {
+	rows, err := q.db.Query(ctx, listDashboardActivity, arg.Days, arg.UserID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListDashboardActivityRow
+	for rows.Next() {
+		var i ListDashboardActivityRow
+		if err := rows.Scan(&i.Day, &i.Count); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listDashboardReviewPreview = `-- name: ListDashboardReviewPreview :many
 SELECT
     rs.id,

@@ -136,7 +136,7 @@ test.describe("subpattern detail", () => {
     // Hero CTA invites to practice cards for this subpattern.
     const cta = page.locator('a.pattern-profile__cta[href="/patterns/binary_search_on_answer/session"]');
     await expect(cta).toBeVisible();
-    await expect(cta).toContainText("Порешать карточки");
+    await expect(cta).toContainText("Карточки для тренировки");
 
     // Catalog-wide difficulty distribution of the practice set in the hero.
     await expect(page.locator(".pattern-profile__mastery", { hasText: "difficulty" })).toContainText(

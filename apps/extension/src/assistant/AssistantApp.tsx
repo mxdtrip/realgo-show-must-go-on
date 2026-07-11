@@ -388,8 +388,8 @@ function platformTagClass(tag: string, platform: string): string {
   switch (platform.toLowerCase()) {
     case "leetcode":
       return "realgo-agent-tag--leetcode";
-    case "neetcode":
-      return "realgo-agent-tag--neetcode";
+    case "hackerrank":
+      return "realgo-agent-tag--hackerrank";
     default:
       return "";
   }

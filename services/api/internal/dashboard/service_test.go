@@ -41,6 +41,38 @@ func TestServiceGet_EmptyUser(t *testing.T) {
 	if len(got.WeakPatterns) != 0 {
 		t.Fatalf("WeakPatterns len = %d, want 0", len(got.WeakPatterns))
 	}
+	if got.Activity.Days == nil {
+		t.Fatal("Activity.Days must be an empty array, not null")
+	}
+	if got.Activity.ActiveDays != 0 || got.Activity.TotalReviews != 0 {
+		t.Fatalf("Activity = %+v, want zeroes", got.Activity)
+	}
+}
+
+func TestServiceGet_ActivityAggregates(t *testing.T) {
+	repo := fakeRepository{
+		activity: []ActivityDay{
+			{Date: "2026-07-08", Count: 3},
+			{Date: "2026-07-09", Count: 1},
+			{Date: "2026-07-10", Count: 6},
+		},
+	}
+	svc := NewService(repo, fakeWeakRepository{})
+
+	got, err := svc.Get(context.Background(), 42)
+	if err != nil {
+		t.Fatalf("Get returned error: %v", err)
+	}
+
+	if got.Activity.ActiveDays != 3 {
+		t.Fatalf("ActiveDays = %d, want 3", got.Activity.ActiveDays)
+	}
+	if got.Activity.TotalReviews != 10 {
+		t.Fatalf("TotalReviews = %d, want 10", got.Activity.TotalReviews)
+	}
+	if len(got.Activity.Days) != 3 || got.Activity.Days[2].Date != "2026-07-10" {
+		t.Fatalf("Days = %+v", got.Activity.Days)
+	}
 }
 
 func TestServiceGet_UserWithData(t *testing.T) {
@@ -155,12 +187,20 @@ func assertStat(t *testing.T, stat Stat, key string, value int, displayValue str
 
 type fakeRepository struct {
 	metrics    Metrics
+	activity   []ActivityDay
 	reviews    []ReviewPreview
 	nextReview *ReviewPreview
 }
 
 func (f fakeRepository) GetMetrics(context.Context, int64) (Metrics, error) {
 	return f.metrics, nil
+}
+
+func (f fakeRepository) ListActivity(context.Context, int64, int32) ([]ActivityDay, error) {
+	if f.activity == nil {
+		return []ActivityDay{}, nil
+	}
+	return f.activity, nil
 }
 
 func (f fakeRepository) ListReviewPreview(context.Context, int64, int32) ([]ReviewPreview, error) {

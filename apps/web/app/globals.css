@@ -1935,8 +1935,7 @@ h3 {
 }
 
 /* neutral secondary button (disable sync, export, etc.) */
-.btn-ghost,
-.privacy-actions button {
+.btn-ghost {
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 8px;
   padding: 9px 13px;
@@ -1951,8 +1950,7 @@ h3 {
     border-color 0.16s ease;
 }
 
-.btn-ghost:hover,
-.privacy-actions button:hover {
+.btn-ghost:hover {
   border-color: var(--line-strong);
   background: rgba(255, 255, 255, 0.07);
   color: var(--text);
@@ -2218,7 +2216,7 @@ a.cabinet-panel__meta:hover {
 
 .heatmap-layout {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) 380px;
+  grid-template-columns: auto minmax(0, 1fr) 460px;
   gap: 0 clamp(20px, 3vw, 40px);
   align-items: center;
 }
@@ -2228,8 +2226,8 @@ a.cabinet-panel__meta:hover {
   gap: 16px;
   align-content: center;
   justify-items: start;
-  justify-self: end;
-  padding: 14px 16px 14px 0;
+  justify-self: start;
+  padding: 14px 16px 14px 8px;
 }
 
 .heatmap-stats > div {
@@ -2260,7 +2258,7 @@ a.cabinet-panel__meta:hover {
   justify-content: center;
   gap: 14px;
   min-width: 264px;
-  justify-self: end;
+  justify-self: stretch;
   margin: 14px 16px 14px 0;
   padding: 18px;
   border: 1px solid rgba(56, 139, 253, 0.26);
@@ -2303,24 +2301,6 @@ a.cabinet-panel__meta:hover {
   display: flex;
   align-items: center;
   gap: 14px;
-}
-
-/* Полноширинный вариант next-up: лаунчер практики на /cards. */
-.next-up--wide {
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  gap: 22px;
-  min-width: 0;
-  margin: 0;
-  justify-self: stretch;
-}
-
-@media (max-width: 860px) {
-  .next-up--wide {
-    flex-direction: column;
-    align-items: flex-start;
-  }
 }
 
 .heatmap {
@@ -3948,23 +3928,96 @@ a.roadmap-step__practice-card:hover {
   line-height: 1.55;
 }
 
-.privacy-actions {
+/* ---------- danger zone ---------- */
+
+.danger-zone {
   display: flex;
-  gap: 10px;
-  padding: 0 16px 14px;
-  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 18px;
+  border: 1px solid rgba(248, 81, 73, 0.3);
+  border-radius: 12px;
+  background: rgba(248, 81, 73, 0.04);
+  align-self: stretch;
 }
 
-.privacy-actions button:last-child {
-  border-color: rgba(248, 81, 73, 0.38);
+.danger-zone__info {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.danger-zone__info strong {
+  font-family: var(--font-stack-mono);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--danger-bright, #ff7b72);
+  text-transform: lowercase;
+}
+
+.danger-zone__info p {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.danger-zone__btn {
+  flex-shrink: 0;
+  border: 1px solid rgba(248, 81, 73, 0.38);
+  border-radius: 8px;
+  padding: 9px 14px;
   background: rgba(248, 81, 73, 0.08);
-  color: var(--danger-bright);
+  color: var(--danger-bright, #f85149);
+  font-family: var(--font-stack-mono);
+  font-size: 12px;
+  font-weight: 600;
+  transition:
+    background 0.16s ease,
+    color 0.16s ease,
+    border-color 0.16s ease;
 }
 
-.privacy-actions button:last-child:hover {
+.danger-zone__btn:not(:disabled):hover {
   border-color: rgba(248, 81, 73, 0.6);
   background: rgba(248, 81, 73, 0.16);
   color: #ffa198;
+}
+
+.danger-zone__btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
+}
+
+/* ---------- settings responsive ---------- */
+
+@media (max-width: 640px) {
+  .danger-zone {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .danger-zone__btn {
+    width: 100%;
+    text-align: center;
+  }
+
+  .appearance-field {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .appearance-segments {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .appearance-segment {
+    flex: 1;
+    justify-content: center;
+  }
 }
 
 /* distraction-free card session */
@@ -4383,8 +4436,8 @@ a.roadmap-step__practice-card:hover {
 .focus-card__content h1 {
   max-width: 20ch;
   margin: 0 auto;
-  font-size: clamp(30px, min(5vw, 6vh), 62px);
-  line-height: 1.08;
+  font-size: clamp(24px, min(4vw, 5vh), 52px);
+  line-height: 1.12;
   font-weight: 600;
   text-align: center;
   text-wrap: balance;
@@ -4395,8 +4448,9 @@ a.roadmap-step__practice-card:hover {
 }
 
 .focus-card--answer .focus-card__content h1 {
-  max-width: 26ch;
-  font-size: clamp(25px, min(4vw, 5vh), 48px);
+  max-width: 30ch;
+  font-size: clamp(17px, min(2.6vw, 3.4vh), 32px);
+  line-height: 1.2;
 }
 
 .focus-reveal {
@@ -4526,6 +4580,7 @@ a.roadmap-step__practice-card:hover {
 
 .focus-complete {
   width: min(100%, 720px);
+  grid-row: 1 / -1;
   align-self: center;
   justify-self: center;
   display: grid;
@@ -5500,11 +5555,16 @@ a.roadmap-step__practice-card:hover {
     text-align: left;
   }
 
-  .focus-card__content h1,
+  .focus-card__content h1 {
+    max-width: 100%;
+    font-size: clamp(21px, 7vw, 32px);
+    line-height: 1.12;
+  }
+
   .focus-card--answer .focus-card__content h1 {
     max-width: 100%;
-    font-size: clamp(25px, 8vw, 36px);
-    line-height: 1.12;
+    font-size: clamp(16px, 5vw, 24px);
+    line-height: 1.2;
   }
 
   .focus-reveal {
@@ -7727,10 +7787,12 @@ a.roadmap-step__practice-card:hover {
   font-style: normal;
 }
 
+/* Три фиксированные колонки easy/medium/hard — не подписаны как таблица,
+   но каждый уровень всегда встаёт в одну и ту же позицию между строками. */
 .atlas-difficulty-badges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
+  display: grid;
+  grid-template-columns: repeat(3, 12ch);
+  column-gap: 4px;
 }
 
 .atlas-difficulty-badge {
@@ -7743,6 +7805,10 @@ a.roadmap-step__practice-card:hover {
   line-height: 1;
   letter-spacing: 0.02em;
   text-transform: lowercase;
+}
+
+.atlas-difficulty-badge.is-zero {
+  visibility: hidden;
 }
 
 .atlas-difficulty-badge__count {
@@ -7763,11 +7829,7 @@ a.roadmap-step__practice-card:hover {
 }
 
 .atlas-sub__difficulty .atlas-difficulty-badges {
-  gap: 4px;
-}
-
-.atlas-sub__difficulty .atlas-difficulty-badge {
-  font-size: 9.5px;
+  column-gap: 3px;
 }
 
 .atlas-family__tasks,
@@ -7813,15 +7875,24 @@ a.roadmap-step__practice-card:hover {
   margin: 0;
 }
 
+/* Грид с фиксированными колонками. 459px под название подобраны так,
+   чтобы колонка сложности встала ровно под колонку сложности семейства
+   в Pattern Families (тот же паттерн, что и .atlas-family). Остальные
+   поля — фиксированной ширины и рендерятся всегда (пустая ячейка вместо
+   пропущенного элемента), иначе «решено» / due / релевантность сдвигают
+   всё, что идёт после них. */
 .atlas-sub__link {
-  display: flex;
+  display: grid;
+  grid-template-columns: 459px max-content 112px 8ch 8ch 64px;
   align-items: center;
-  gap: 10px;
+  column-gap: 14px;
   padding: 7px 8px;
   border-radius: 6px;
-  color: var(--text);
+  color: var(--text-faint);
   text-decoration: none;
   transition: background 0.14s ease;
+  font-family: var(--font-stack-mono);
+  font-size: 11px;
 }
 
 .atlas-sub__link:hover {
@@ -7833,20 +7904,27 @@ a.roadmap-step__practice-card:hover {
   outline-offset: -2px;
 }
 
-.atlas-sub__name {
-  font-size: 13.5px;
+.atlas-sub__label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   min-width: 0;
 }
 
-.atlas-sub__state {
+.atlas-sub__name {
+  font-family: var(--font-stack-sans);
+  font-size: 13.5px;
+  color: var(--text);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.atlas-sub__mastery {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  margin-left: auto;
-  font-family: var(--font-stack-mono);
-  font-size: 11px;
-  color: var(--text-faint);
-  flex-shrink: 0;
+  gap: 6px;
 }
 
 /* mastery: status is text + dot, never colour alone */
@@ -7911,6 +7989,11 @@ a.roadmap-step__practice-card:hover {
 .atlas-due {
   font-style: normal;
   color: var(--warning);
+}
+
+.atlas-sub__relevance-slot {
+  display: flex;
+  align-items: center;
 }
 
 .atlas-relevance {
@@ -8294,13 +8377,13 @@ a.roadmap-step__practice-card:hover {
   }
 
   .atlas-sub__link {
+    display: flex;
     flex-wrap: wrap;
     row-gap: 4px;
   }
 
-  .atlas-sub__state {
-    margin-left: 17px;
-    flex-wrap: wrap;
+  .atlas-sub__label {
+    width: 100%;
   }
 
   .atlas-subs {
@@ -8582,7 +8665,10 @@ a.roadmap-step__practice-card:hover {
   max-width: 76ch;
 }
 
-.pattern-profile__cta {
+.pattern-profile__cta-col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   flex-shrink: 0;
   width: min(300px, 34%);
   margin-top: 4px;
@@ -8632,7 +8718,7 @@ a.roadmap-step__practice-card:hover {
     flex-direction: column;
   }
 
-  .pattern-profile__cta {
+  .pattern-profile__cta-col {
     width: 100%;
   }
 }
@@ -8811,10 +8897,6 @@ a.roadmap-step__practice-card:hover {
 .problem-cell__pattern:hover {
   color: var(--accent-bright);
   border-bottom-color: rgba(88, 166, 255, 0.5);
-}
-
-.problem-next--due {
-  color: var(--warning-bright);
 }
 
 .data-table-more {
@@ -9032,9 +9114,9 @@ a.roadmap-step__practice-card:hover {
 .practice-toggle {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 7px;
-  width: fit-content;
-  margin-top: 10px;
+  width: 100%;
   border: 1px solid var(--line);
   border-radius: 7px;
   padding: 7px 12px;

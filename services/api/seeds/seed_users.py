@@ -65,6 +65,10 @@ USERS = [
             ("two-sum-complement", "hard", -1, 1, 2.3, 1.4, 6.0, 1, 1),
             ("valid-palindrome-two-pointers", "normal", 22, 3, 2.6, 3.0, 4.0, 2, 2),
         ],
+        # Backdated review_attempts spread over the dashboard heatmap window:
+        # ~65% of days active, 1-8 attempts each, unbroken tail into today so
+        # the streak stat stays alive after every reseed.
+        "activity_history": {"days": 60, "streak_tail": 6},
     },
     {
         "email": "pro@example.test",
@@ -395,6 +399,48 @@ def insert_review_attempt(
     )
 
 
+def seed_activity_history(cur, user_id, config, problems, progress):
+    """Deterministic day-by-day activity for the dashboard heatmap.
+
+    seed_progress already produces ~1 attempt per problem inside the last
+    week; this adds the long tail: extra review_attempts across the whole
+    heatmap window so active days, per-day intensity and the streak look
+    like a живой account rather than a burst.
+    """
+    if not config:
+        return
+
+    import random
+
+    rng = random.Random(20260710)
+    days = config.get("days", 60)
+    streak_tail = config.get("streak_tail", 6)
+    slugs = [entry[0] for entry in progress if entry[1] in ("solved", "reviewing")]
+    ids = [problems[slug] for slug in slugs if slug in problems]
+    if not ids:
+        return
+
+    ratings = ("easy", "normal", "hard")
+    for age in range(days):
+        # The most recent streak_tail days are always active; older days
+        # come and go so the heatmap shows realistic gaps.
+        if age >= streak_tail and rng.random() > 0.65:
+            continue
+        for attempt in range(rng.randint(1, 8)):
+            rating = ratings[(age + attempt) % len(ratings)]
+            insert_review_attempt(
+                cur,
+                user_id,
+                "problem_id",
+                ids[(age + attempt) % len(ids)],
+                rating,
+                "problem",
+                rng.randint(60, 300),
+                rating != "hard",
+                age,
+            )
+
+
 def seed_pattern_reviews(cur, user_id, reviews, patterns, schedule_columns):
     for index, (
         pattern_code,
@@ -564,6 +610,9 @@ def main():
                 attempt_columns = table_columns(cur, "review_attempts")
                 for user_id, user in users:
                     seed_progress(cur, user_id, user["progress"], problems, schedule_columns)
+                    seed_activity_history(
+                        cur, user_id, user.get("activity_history"), problems, user["progress"]
+                    )
                     seed_pattern_reviews(
                         cur,
                         user_id,

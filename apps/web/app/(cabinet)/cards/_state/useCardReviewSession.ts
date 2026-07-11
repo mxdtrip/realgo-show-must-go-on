@@ -10,7 +10,7 @@ export type ReviewCard = {
   source: string;
   front: string;
   back: string;
-  /** Marks AI-generated cards; absent on mock/legacy data means false. */
+  /** Marks AI-generated cards; absent means false. */
   createdByAi?: boolean;
 };
 
@@ -92,9 +92,9 @@ function readStoredSession(cards: readonly ReviewCard[]): StoredSession {
         )
       : [];
 
-    // Nothing stored matches the current card set (e.g. the mock demo session
-    // was persisted and the api session has different ids) — start fresh
-    // instead of instantly showing a "completed" empty queue.
+    // Nothing stored matches the current card set (an older session with
+    // different card ids was persisted) — start fresh instead of instantly
+    // showing a "completed" empty queue.
     if (sessionCardIds.length === 0) return fallback;
 
     return { queue, history, sessionCardIds };

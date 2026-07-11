@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 // Focus card review session (/cards/session): api-backed session with rating
-// persistence, and the mock demo fallback for unauthenticated visitors.
+// persistence; unauthenticated visitors are redirected to /login.
 // Backed by the CARD_SESSION fixtures in auth-stub.mjs.
 
 const AKEY = "realgo:auth:access:v1";
@@ -55,25 +55,11 @@ test.describe("card review session (api)", () => {
   });
 });
 
-test.describe("card review session (demo fallback)", () => {
-  test("falls back to the mock session without auth and stays local", async ({ page }) => {
-    const rateCalls = [];
-    page.on("request", (request) => {
-      if (request.method() === "POST" && request.url().includes("/rate")) rateCalls.push(request.url());
-    });
-
+test.describe("card review session (unauthenticated)", () => {
+  test("redirects anonymous visitors to /login instead of a demo deck", async ({ page }) => {
     await openSession(page);
 
-    // Mock card set from the content module, not the api fixtures.
-    await expect(
-      page.getByText("Дан отсортированный массив и target. Какой подход выбрать?"),
-    ).toBeVisible();
+    await page.waitForURL("**/login");
     await expect(page.getByText("STUB FRONT: which approach fits a sorted array?")).toHaveCount(0);
-
-    // Rating advances the local queue without any persistence call.
-    await page.getByRole("button", { name: "Show answer" }).click();
-    await page.getByRole("button", { name: /Easy/ }).click();
-    await expect(page.getByText("Дан отсортированный массив и target. Какой подход выбрать?")).toHaveCount(0);
-    expect(rateCalls).toHaveLength(0);
   });
 });

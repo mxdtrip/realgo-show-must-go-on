@@ -27,8 +27,6 @@ type ReviewsJournalCopy = Readonly<{
   errorTitle: string;
   retry: string;
   loadMore: string;
-  dueNow: string;
-  noReview: string;
   noValue: string;
   hintsNone: string;
   columns: Readonly<{
@@ -38,19 +36,11 @@ type ReviewsJournalCopy = Readonly<{
     status: string;
     hints: string;
     rating: string;
-    next: string;
   }>;
   statuses: readonly (readonly [string, string, string])[];
   difficulty: Readonly<Record<string, string>>;
   ratings: Readonly<Record<string, string>>;
 }>;
-
-const nextReviewFormatter = new Intl.DateTimeFormat("ru-RU", {
-  day: "2-digit",
-  month: "short",
-  hour: "2-digit",
-  minute: "2-digit",
-});
 
 const difficultyTone: Record<string, string> = {
   easy: "easy",
@@ -64,14 +54,6 @@ const ratingTone: Record<string, string> = {
   normal: "accent",
   easy: "success",
 };
-
-function formatNextReview(value: string | null, copy: ReviewsJournalCopy) {
-  if (!value) return { label: copy.noReview, due: false };
-  const next = new Date(value);
-  if (Number.isNaN(next.getTime())) return { label: copy.noReview, due: false };
-  if (next.getTime() <= Date.now()) return { label: copy.dueNow, due: true };
-  return { label: nextReviewFormatter.format(next).replace(".", ""), due: false };
-}
 
 /** Журнал решённого на платформах: что зафиксировало расширение, сколько
     подсказок потрачено и как пользователь сам оценил задачу. */
@@ -209,13 +191,12 @@ export function ReviewsJournalClient({ copy }: Readonly<{ copy: ReviewsJournalCo
                 <th>{copy.columns.status}</th>
                 <th>{copy.columns.hints}</th>
                 <th>{copy.columns.rating}</th>
-                <th>{copy.columns.next}</th>
               </tr>
             </thead>
             <tbody>
               {loadState === "loading" ? (
                 <tr>
-                  <td className="data-table__empty" colSpan={7} role="status" aria-live="polite">
+                  <td className="data-table__empty" colSpan={6} role="status" aria-live="polite">
                     {copy.loading}
                   </td>
                 </tr>
@@ -223,7 +204,7 @@ export function ReviewsJournalClient({ copy }: Readonly<{ copy: ReviewsJournalCo
 
               {loadState === "error" ? (
                 <tr>
-                  <td className="data-table__empty" colSpan={7} role="alert">
+                  <td className="data-table__empty" colSpan={6} role="alert">
                     <strong>{copy.errorTitle}</strong>
                     {error ? <> · {error}</> : null}{" "}
                     <button
@@ -240,7 +221,6 @@ export function ReviewsJournalClient({ copy }: Readonly<{ copy: ReviewsJournalCo
               {loadState === "loaded"
                 ? visible.map((item) => {
                     const meta = statusMeta.get(item.status);
-                    const next = formatNextReview(item.nextReviewAt, copy);
                     const difficulty = copy.difficulty[item.difficulty];
                     const rating = item.lastRating ? copy.ratings[item.lastRating] : null;
                     return (
@@ -296,9 +276,6 @@ export function ReviewsJournalClient({ copy }: Readonly<{ copy: ReviewsJournalCo
                             <span className="data-table__mono">{copy.noValue}</span>
                           )}
                         </td>
-                        <td className={next.due ? "data-table__mono problem-next--due" : "data-table__mono"}>
-                          {next.label}
-                        </td>
                       </tr>
                     );
                   })
@@ -306,7 +283,7 @@ export function ReviewsJournalClient({ copy }: Readonly<{ copy: ReviewsJournalCo
 
               {loadState === "loaded" && visible.length === 0 ? (
                 <tr>
-                  <td className="data-table__empty" colSpan={7}>
+                  <td className="data-table__empty" colSpan={6}>
                     {problems.length === 0 ? (
                       <>
                         {copy.emptyAll}{" "}

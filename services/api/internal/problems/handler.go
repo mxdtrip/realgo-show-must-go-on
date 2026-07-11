@@ -149,7 +149,7 @@ func parseListParams(r *http.Request) (ListParams, int, error) {
 
 	platform := strings.TrimSpace(r.URL.Query().Get("platform"))
 	if platform != "" && !validPlatform(platform) {
-		return ListParams{}, 0, errors.New("platform must be one of leetcode, neetcode, codeforces, custom")
+		return ListParams{}, 0, errors.New("platform must be one of leetcode, hackerrank, codeforces, custom")
 	}
 
 	cursor := initialCursor()
@@ -214,7 +214,7 @@ func validStatus(status string) bool {
 
 func validPlatform(platform string) bool {
 	switch platform {
-	case "leetcode", "neetcode", "codeforces", "custom":
+	case "leetcode", "hackerrank", "codeforces", "custom":
 		return true
 	default:
 		return false

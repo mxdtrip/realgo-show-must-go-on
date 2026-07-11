@@ -9,22 +9,20 @@ import {
 } from "./types";
 
 /**
- * NeetCode adapter (MVP target).
+ * HackerRank adapter.
  *
- * Problem pages live at https://neetcode.io/problems/<slug>. NeetCode embeds
- * the LeetCode-style problem; the slug usually matches the LeetCode slug, which
- * is exactly what the seeded `problems` rows use, so the backend can resolve it.
- *
- * The DOM selectors below are best-effort. NeetCode is a SPA and ships no stable
- * data-* hooks, so detection degrades gracefully to "unknown" rather than break.
+ * Challenge pages live at https://www.hackerrank.com/challenges/<slug>/problem.
+ * HackerRank is a SPA and ships no stable data-* hooks for the statement,
+ * verdict or submit control, so detection degrades gracefully to "unknown"
+ * rather than break (same convention as the other adapters in this folder).
  */
-export const neetcodeAdapter: PlatformAdapter = {
-  platform: "neetcode",
+export const hackerrankAdapter: PlatformAdapter = {
+  platform: "hackerrank",
 
   matches(url: string): boolean {
     try {
       const u = new URL(url);
-      return u.hostname.endsWith("neetcode.io") && u.pathname.includes("/problems/");
+      return u.hostname.endsWith("hackerrank.com") && u.pathname.includes("/challenges/");
     } catch {
       return false;
     }
@@ -35,7 +33,7 @@ export const neetcodeAdapter: PlatformAdapter = {
     if (!slug) return null;
 
     const title =
-      findText(["h1", "[class*='problem'] h1", "[class*='title']"]) ||
+      findText(["h1", "[class*='challenge'] h1", "[class*='title']"]) ||
       slugToTitle(slug) ||
       cleanDocTitle();
 
@@ -46,23 +44,25 @@ export const neetcodeAdapter: PlatformAdapter = {
       tags: extractTags(),
       difficulty: extractDifficulty(),
       taskDescription: extractDescription([
-        "[class*='description']",
+        "[class*='problem-statement']",
+        "[class*='challenge-body']",
         "[role='tabpanel']",
       ]),
     };
   },
 
   findSubmitButton(): HTMLElement | null {
-    return findButtonByText((t) => t === "submit" || t.startsWith("submit"));
+    return findButtonByText((t) => t.includes("submit"));
   },
 
   detectSubmitResult(): SubmitResult {
-    // NeetCode surfaces the verdict near the editor/console once a run resolves.
+    // HackerRank surfaces the verdict in a result/status panel once a submit resolves.
     const text = findText([
       "[class*='result']",
       "[class*='verdict']",
       "[class*='status']",
-      "[class*='console']",
+      "[class*='score']",
+      "[class*='submission']",
     ]);
     return classifyVerdict(text);
   },
@@ -70,7 +70,7 @@ export const neetcodeAdapter: PlatformAdapter = {
 
 function slugFromPath(pathname: string): string | undefined {
   const parts = pathname.split("/").filter(Boolean);
-  const idx = parts.indexOf("problems");
+  const idx = parts.indexOf("challenges");
   if (idx >= 0 && parts[idx + 1]) return parts[idx + 1];
   return undefined;
 }
@@ -83,18 +83,18 @@ function slugToTitle(slug: string): string {
 }
 
 function cleanDocTitle(): string {
-  return document.title.replace(/\s*[-|]\s*NeetCode.*$/i, "").trim();
+  return document.title.replace(/\s*[-|]\s*HackerRank.*$/i, "").trim();
 }
 
 /**
- * Best-effort topic tags (e.g. "arrays", "two pointers"). NeetCode exposes no
- * stable hooks, so we scan likely "topic/tag/category" containers and keep a few
- * short, sane labels. Returns [] when nothing trustworthy is found — the popup
- * simply renders no tags rather than guessing wrong.
+ * Best-effort topic tags (e.g. "arrays", "dynamic programming"). HackerRank
+ * exposes no stable hooks, so we scan likely "topic/tag/track" containers and
+ * keep a few short, sane labels. Returns [] when nothing trustworthy is found
+ * — the popup simply renders no tags rather than guessing wrong.
  */
 function extractTags(): string[] {
   const nodes = document.querySelectorAll<HTMLElement>(
-    "[class*='topic'] a, [class*='topic'] span, [class*='tag'] a, [class*='category'] a"
+    "[class*='track'] a, [class*='track'] span, [class*='tag'] a, [class*='topic'] a"
   );
   const seen = new Set<string>();
   for (const el of nodes) {
@@ -109,10 +109,10 @@ function extractDifficulty(): string | undefined {
   const text = findText([
     "[class*='difficulty']",
     "[class*='badge']",
-    "[class*='tag']",
+    "[class*='label']",
   ]).toLowerCase();
   if (text.includes("easy")) return "easy";
   if (text.includes("medium")) return "medium";
-  if (text.includes("hard")) return "hard";
+  if (text.includes("hard") || text.includes("advanced") || text.includes("expert")) return "hard";
   return undefined;
 }

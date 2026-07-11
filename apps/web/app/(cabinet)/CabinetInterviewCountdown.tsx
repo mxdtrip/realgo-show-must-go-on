@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 
+import { useAuth } from "../_api/AuthProvider";
 import {
   onboardingProfileStorageKey,
   profileSettingsChangedEvent,
@@ -19,8 +20,6 @@ type InterviewCopy = {
 
 type CabinetInterviewCountdownProps = {
   copy: InterviewCopy;
-  defaultInterviewDate: string;
-  defaultTimezone: string;
 };
 
 function currentDateInTimezone(timezone: string) {
@@ -70,19 +69,21 @@ function interviewMeta(dateValue: string, timezone: string, copy: InterviewCopy)
   return `${copy.prefix} · T−${days}d`;
 }
 
-export function CabinetInterviewCountdown({
-  copy,
-  defaultInterviewDate,
-  defaultTimezone,
-}: Readonly<CabinetInterviewCountdownProps>) {
+export function CabinetInterviewCountdown({ copy }: Readonly<CabinetInterviewCountdownProps>) {
+  // API-профиль — источник правды; localStorage лишь мгновенно отражает
+  // локальные правки настроек до следующей загрузки пользователя.
+  const { user } = useAuth();
+  const userInterviewDate = user?.interview_date ? user.interview_date.slice(0, 10) : "";
+  const userTimezone = user?.timezone ?? "";
+
   const [profile, setProfile] = useState<ProfileSettings>({
-    timezone: defaultTimezone,
-    interviewDate: defaultInterviewDate,
+    timezone: userTimezone,
+    interviewDate: userInterviewDate,
   });
 
   const refreshProfile = useCallback(() => {
-    setProfile(readProfileSettings({ timezone: defaultTimezone, interviewDate: defaultInterviewDate }));
-  }, [defaultInterviewDate, defaultTimezone]);
+    setProfile(readProfileSettings({ timezone: userTimezone, interviewDate: userInterviewDate }));
+  }, [userInterviewDate, userTimezone]);
 
   useEffect(() => {
     refreshProfile();
@@ -104,6 +105,9 @@ export function CabinetInterviewCountdown({
       window.removeEventListener(profileSettingsChangedEvent, refreshProfile);
     };
   }, [refreshProfile]);
+
+  // Без даты интервью (ни в профиле, ни в локальных настройках) бейдж не нужен.
+  if (!profile.interviewDate) return null;
 
   return (
     <span className="cabinet-interview-countdown">

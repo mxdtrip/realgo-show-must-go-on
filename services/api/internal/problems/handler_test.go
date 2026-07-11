@@ -29,7 +29,7 @@ func TestListRequiresAuth(t *testing.T) {
 func TestListRejectsInvalidFilters(t *testing.T) {
 	tests := []string{
 		"/api/v1/me/problems?status=due",
-		"/api/v1/me/problems?platform=hackerrank",
+		"/api/v1/me/problems?platform=topcoder",
 		"/api/v1/me/problems?limit=zero",
 		"/api/v1/me/problems?limit=0",
 	}
