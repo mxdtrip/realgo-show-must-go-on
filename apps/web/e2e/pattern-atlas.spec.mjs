@@ -46,8 +46,11 @@ test.describe("pattern atlas tree", () => {
     await expect(page.locator(".atlas-sub:visible")).toHaveCount(2);
     const answerSub = page.locator(".atlas-sub", { hasText: "Binary Search on Answer" });
     await expect(answerSub.locator(".atlas-difficulty-badge")).toHaveText(["easy 3", "medium 6", "hard 3"]);
+    // Все три уровня рендерятся всегда (фиксированные колонки), нулевой
+    // прячется классом is-zero, но место под колонку сохраняет.
     const boundsSub = page.locator(".atlas-sub", { hasText: "Lower / Upper Bound" });
-    await expect(boundsSub.locator(".atlas-difficulty-badge")).toHaveText(["easy 2", "medium 2"]);
+    await expect(boundsSub.locator(".atlas-difficulty-badge")).toHaveText(["easy 2", "medium 2", "hard 0"]);
+    await expect(boundsSub.locator(".atlas-difficulty-badge.is-zero")).toHaveText(["hard 0"]);
     // The family name itself links to the pattern profile page.
     await expect(page.locator('a[href="/patterns/binary_search"]')).toBeVisible();
     await expect(page.locator('a[href="/patterns/binary_search_on_answer"]')).toBeVisible();
