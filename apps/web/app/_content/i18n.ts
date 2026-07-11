@@ -1005,11 +1005,14 @@ const ru = {
         privacyTitle: "Data controls",
         privacyDescription:
           "Не вставляй NDA-материалы, premium/editorial-контент, скриншоты интервью или чужие закрытые материалы в заметки и AI-поля.",
-        exportProgress: "export data",
-        exportRequested: "export request accepted",
-        deleteAccount: "delete account",
-        deleteConfirm: "Удалить аккаунт ReAlgo? Это действие нельзя отменить.",
-        deletePasswordPrompt: "Введите пароль, чтобы удалить аккаунт",
+        deleteTitle: "удаление аккаунта и данных",
+        deleteDescription:
+          "По заявке мы безвозвратно удаляем аккаунт и все связанные с ним данные: решённые задачи, историю повторений, карточки, AI-материалы и настройки. Право на удаление персональных данных гарантировано законом.",
+        deleteAccount: "оставить заявку на удаление",
+        deleteConfirm: "Аккаунт ReAlgo и все данные будут удалены безвозвратно. Это действие нельзя отменить.",
+        deletePasswordPrompt: "Введите пароль, чтобы подтвердить удаление",
+        deleteCancel: "отмена",
+        deleteForever: "удалить навсегда",
         deleteDone: "account deleted",
         actionFailed: "action failed",
         profile: {
