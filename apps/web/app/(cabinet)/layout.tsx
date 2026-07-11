@@ -52,7 +52,10 @@ export default function CabinetLayout({
             <CabinetPath prefix={copy.pathPrefix} />
             <div className="cabinet-topbar__actions">
               <DemoBanner label={copy.demoBadge} title={copy.demoTitle} />
-              <ReportProblemLauncher copy={shellCopy.report} />
+              {/* No topbar trigger: the report dialog opens from the user menu
+                  (CabinetUserMenu -> openReportProblemDialog), but the dialog
+                  itself must stay mounted to receive that event. */}
+              <ReportProblemLauncher copy={shellCopy.report} showTrigger={false} />
               <CabinetDueChip label={copy.dueChip} />
               <Link className="cabinet-topbar__link cabinet-topbar__back" href="/">
                 {copy.backToMarketing}
