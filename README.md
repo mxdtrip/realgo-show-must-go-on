@@ -87,8 +87,10 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile prod-d
 (22 семейства / 111 субпаттернов с диалогом выбора компании и Company Overlay),
 персональный roadmap (число недель считается из даты собеседования, темы — из реально
 релевантных компании субпаттернов атласа), карточки повторения с AI-генерацией, квизы,
-AI-подсказки ассистента и браузерное расширение, которое ловит submit на LeetCode и
-HackerRank и кладёт задачу в персональную систему повторений. Полный контракт backend API —
-в [docs/cabinet-api-contract.md](docs/cabinet-api-contract.md).
+AI-подсказки ассистента и браузерное расширение. Поддерживаются 4 площадки — LeetCode,
+HackerRank, GeeksforGeeks и Codeforces (выбор в онбординге и настройках, фильтр по площадке
+в атласе); расширение сейчас активно ловит submit на LeetCode и HackerRank и кладёт задачу
+в персональную систему повторений, GeeksforGeeks/Codeforces — задел на следующую интеграцию.
+Полный контракт backend API — в [docs/cabinet-api-contract.md](docs/cabinet-api-contract.md).
 
 Правила создания веток, коммитов и pull request описаны в [CONTRIBUTING.md](CONTRIBUTING.md).
