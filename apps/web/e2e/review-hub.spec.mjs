@@ -2,9 +2,9 @@ import { expect, test } from "@playwright/test";
 
 // The reworked cabinet mechanics: /reviews is the journal of problems solved
 // on platforms (status, hints used, self-rating), /problems tracks the
-// practice set of subpatterns per stage, /cards carries the big "start
-// practice" launcher over the deck browser. Backed by the PROBLEMS /
-// PRACTICE / DECK_CARDS fixtures in auth-stub.mjs.
+// practice set of subpatterns per stage. /cards is the original mock-driven
+// launcher (unrelated to this rework). Backed by the PROBLEMS / PRACTICE
+// fixtures in auth-stub.mjs.
 
 const AKEY = "realgo:auth:access:v1";
 const RKEY = "realgo:auth:refresh:v1";
@@ -104,23 +104,6 @@ test.describe("/dashboard — лаунчер практики", () => {
       "href",
       "/cards/session?scope=practice",
     );
-  });
-});
-
-test.describe("/cards — колода без лаунчера", () => {
-  test("deck browser works; the practice launcher moved to the dashboard", async ({ page }) => {
-    await openAuthed(page, "/cards");
-
-    await expect(page.getByText("Практика по активным подпаттернам")).toHaveCount(0);
-
-    const front = page.getByText("STUB DECK: which approach fits a sorted array?");
-    await expect(front).toBeVisible();
-    await page.getByRole("button", { name: "показать ответ" }).first().click();
-    await expect(page.getByText("STUB DECK BACK: two pointers moving inward.")).toBeVisible();
-
-    await page.getByRole("button", { name: /edge cases/ }).click();
-    await expect(page.getByText("STUB DECK: what breaks on an empty input?")).toBeVisible();
-    await expect(front).toHaveCount(0);
   });
 });
 
