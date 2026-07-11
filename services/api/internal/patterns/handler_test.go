@@ -141,6 +141,8 @@ type fakeRepository struct {
 	companies []AtlasCompany
 	node      NodeDetail
 	nodeErr   error
+
+	gotNodePlatform *string
 }
 
 func (f fakeRepository) List(context.Context, int64) ([]Pattern, error) {
@@ -175,7 +177,10 @@ func (f fakeRepository) ListCompanies(context.Context) ([]AtlasCompany, error) {
 	return f.companies, nil
 }
 
-func (f fakeRepository) GetAtlasNode(context.Context, int64, string) (NodeDetail, error) {
+func (f fakeRepository) GetAtlasNode(_ context.Context, _ int64, _ string, platformCode string) (NodeDetail, error) {
+	if f.gotNodePlatform != nil {
+		*f.gotNodePlatform = platformCode
+	}
 	if f.nodeErr != nil {
 		return NodeDetail{}, f.nodeErr
 	}

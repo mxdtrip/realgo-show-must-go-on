@@ -130,6 +130,23 @@ func ListRoadmapProblems(ctx context.Context, pool *pgxpool.Pool, roadmapCode st
 
 Для дорожной карты NeetCode 150 передавай `roadmapCode = "neetcode_150"`.
 
+## HackerRank Interview Corpus
+
+`atlas_hackerrank_problems.yaml` - официальный interview-корпус HackerRank
+(Classic + 1 Week + 1 Month + 3 Months Preparation Kits): 150 уникальных
+slug-ов, memberships наборов в `collections`, статусы `mapped` /
+`gap_candidate` / `non_pattern`. Линкуются на подпаттерны только `mapped`
+записи (131); HRX-* gap-кандидаты и implementation-задачи ждут
+cross-platform review и в атлас не попадают (force-mapping запрещён).
+
+```sh
+DATABASE_URL='postgres://postgres:postgres@localhost:5432/freeburger?sslmode=disable' \
+  python seed_hackerrank_corpus.py atlas_hackerrank_problems.yaml
+```
+
+Идемпотентен: задачи апсертятся по `(platform_id, external_slug)`, curated
+линки (`tier IS NOT NULL`) никогда не перетираются.
+
 ## Company Problems Dataset
 
 `atlas_company_problems.csv.gz` — реальные company↔problem улики из публичных

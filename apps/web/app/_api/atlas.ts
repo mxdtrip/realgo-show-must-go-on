@@ -153,6 +153,7 @@ export type PracticeProblem = {
   difficulty: string;
   tier?: string;
   status: string;
+  platform?: string;
   rating?: string;
   solved_at?: string;
   next_review_at?: string;
@@ -204,6 +205,9 @@ export function getAtlasCompanies(signal?: AbortSignal) {
   return apiFetch<{ companies: AtlasCompany[] }>("/me/patterns/atlas/companies", { signal });
 }
 
-export function getAtlasNode(code: string, signal?: AbortSignal) {
-  return apiFetch<NodeDetail>(`/me/patterns/atlas/${encodeURIComponent(code)}`, { signal });
+// platform ("" = все) сужает practice-список узла до одной площадки; ключ
+// выбора хранит тулбар атласа в localStorage (realgo.atlas.platform).
+export function getAtlasNode(code: string, platform?: string, signal?: AbortSignal) {
+  const params = platform ? `?platform=${encodeURIComponent(platform)}` : "";
+  return apiFetch<NodeDetail>(`/me/patterns/atlas/${encodeURIComponent(code)}${params}`, { signal });
 }
