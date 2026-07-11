@@ -1,6 +1,14 @@
 package companies
 
-import "strings"
+import (
+	"context"
+	"fmt"
+	"strings"
+
+	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/mxdtrip/freeburger/services/api/internal/storage/postgres/db"
+)
 
 const (
 	defaultSearchLimit = 8
@@ -12,11 +20,11 @@ type companyEntry struct {
 	aliases []string
 }
 
-// catalog is an intentionally static, in-memory list of companies for
-// autocomplete suggestions. There is no companies table/repository behind
-// this endpoint by design: the catalog is small, changes rarely, and doesn't
-// need per-user data or persistence. Revisit only if we need user-submitted
-// companies or a size that no longer fits in code.
+// catalog is the curated alias layer on top of the companies table: it keeps
+// canonical display names and the alias matches (facebook -> Meta, gcp ->
+// Google Cloud) that a plain ILIKE over the table cannot provide. The bulk of
+// the suggestions now comes from the companies table, populated by the
+// company-problems dataset seed.
 var catalog = []companyEntry{
 	{Company: Company{ID: "cmp_google", Name: "Google", Source: "manual"}, aliases: []string{"alphabet"}},
 	{Company: Company{ID: "cmp_google_cloud", Name: "Google Cloud", Source: "manual"}, aliases: []string{"gcp"}},
@@ -45,14 +53,56 @@ var catalog = []companyEntry{
 	{Company: Company{ID: "cmp_vk", Name: "VK", Source: "manual"}, aliases: []string{"vkontakte"}},
 }
 
-func Search(query string, limit int) []Company {
+// Repository searches companies: curated catalog first (aliases, canonical
+// names), then the companies table. A nil pool degrades to catalog-only.
+type Repository struct {
+	q *db.Queries
+}
+
+func NewRepository(pool *pgxpool.Pool) *Repository {
+	if pool == nil {
+		return &Repository{}
+	}
+	return &Repository{q: db.New(pool)}
+}
+
+func (r *Repository) Search(ctx context.Context, query string, limit int) ([]Company, error) {
 	query = strings.ToLower(strings.TrimSpace(query))
-	if query == "" {
-		return []Company{}
+	limit = clampLimit(limit)
+	results := searchCatalog(query, limit)
+	if query == "" || r.q == nil || len(results) >= limit {
+		return results, nil
 	}
 
-	limit = clampLimit(limit)
+	rows, err := r.q.SearchCompanies(ctx, db.SearchCompaniesParams{
+		Query:      escapeLike(query),
+		MaxResults: int32(limit),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("companies: search: %w", err)
+	}
+
+	seen := make(map[string]bool, len(results))
+	for _, c := range results {
+		seen[c.ID] = true
+	}
+	for _, row := range rows {
+		if seen[row.Code] {
+			continue
+		}
+		results = append(results, Company{ID: row.Code, Name: row.Name, Source: "dataset"})
+		if len(results) >= limit {
+			break
+		}
+	}
+	return results, nil
+}
+
+func searchCatalog(query string, limit int) []Company {
 	results := make([]Company, 0, limit)
+	if query == "" {
+		return results
+	}
 	for _, entry := range catalog {
 		if !matches(entry, query) {
 			continue
@@ -75,6 +125,14 @@ func matches(entry companyEntry, query string) bool {
 		}
 	}
 	return false
+}
+
+// escapeLike neutralizes LIKE wildcards in user input so "100%" searches for
+// a literal percent sign.
+func escapeLike(s string) string {
+	s = strings.ReplaceAll(s, `\`, `\\`)
+	s = strings.ReplaceAll(s, `%`, `\%`)
+	return strings.ReplaceAll(s, `_`, `\_`)
 }
 
 func clampLimit(limit int) int {
