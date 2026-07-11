@@ -246,8 +246,8 @@ type User struct {
 	NotifyReviewReminder  bool
 	NotifyWeeklyDigest    bool
 	NotifyEmailEnabled    bool
-	Platform              pgtype.Text
 	TargetTopics          []string
+	Platform              pgtype.Text
 }
 
 type UserPracticePattern struct {
