@@ -40,11 +40,8 @@ export default function SettingsPage() {
           <NotificationSettingsPanel copy={page.notifications} />
         </CabinetPanel>
 
-        <CabinetPanel eyebrow={page.privacyEyebrow} title={page.privacyTitle}>
-          <div className="privacy-box">
-            <p>{page.privacyDescription}</p>
-            <PrivacyActions copy={page} />
-          </div>
+        <CabinetPanel eyebrow={page.privacyEyebrow} title={page.privacyTitle} padded>
+          <PrivacyActions copy={page} />
         </CabinetPanel>
       </div>
     </main>

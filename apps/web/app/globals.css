@@ -3854,8 +3854,7 @@ a.roadmap-step__practice-card:hover {
 /* ---------- settings ---------- */
 
 .settings-list,
-.profile-settings-list,
-.privacy-box {
+.profile-settings-list {
   display: grid;
 }
 
@@ -4137,18 +4136,6 @@ a.roadmap-step__practice-card:hover {
   color-scheme: dark;
   font-family: var(--font-stack-mono);
   font-size: 12.5px;
-}
-
-.privacy-box {
-  gap: 0;
-}
-
-.privacy-box p {
-  margin: 0;
-  padding: 14px 16px;
-  color: var(--text-dim);
-  font-size: 12.5px;
-  line-height: 1.55;
 }
 
 /* ---------- danger zone ---------- */
