@@ -130,6 +130,25 @@ func ListRoadmapProblems(ctx context.Context, pool *pgxpool.Pool, roadmapCode st
 
 Для дорожной карты NeetCode 150 передавай `roadmapCode = "neetcode_150"`.
 
+## Company Problems Dataset
+
+`atlas_company_problems.csv.gz` — реальные company↔problem улики из публичных
+company-wise репозиториев (liquidslr, snehasishroy, krishnadey30, hxu296;
+338 компаний, ~21k пар, source_type=dataset). `evidence_count` = число
+независимых источников, `last_seen` — оценка свежести из recency-бакетов.
+Пересборка из свежих клонов источников: `build_company_problems.py --help`.
+
+```sh
+DATABASE_URL='postgres://postgres:postgres@localhost:5432/freeburger?sslmode=disable' \
+  python seed_company_problems.py atlas_company_problems.csv.gz
+```
+
+Сидер идемпотентен (dataset-слой пересобирается целиком) и сам выводит
+relevance подпаттернов для Company Overlay из линков problem_subpatterns —
+руками relevance в датасете не назначается. Demo-строки при коллизии
+вытесняются dataset'ом, manual/community не трогаются. Запускать ПОСЛЕ
+seed_atlas.py и seed_atlas_corpus.py (нужны линки задач на подпаттерны).
+
 ## realgo Demo Cards
 
 `realgo_demo_cards.yaml` - демо-набор Anki-style карточек для задач и
