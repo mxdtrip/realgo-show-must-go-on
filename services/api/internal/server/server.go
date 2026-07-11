@@ -81,7 +81,7 @@ func New(deps Deps) http.Handler {
 	cardsSvc := cards.NewService(cards.NewRepository(deps.Postgres.Pool), reviewService)
 	problemCardsHandler := problemcards.NewHandler(problemcards.NewService(problemcards.NewRepository(deps.Postgres.Pool), cardsSvc, deps.Redis))
 	roadmapsHandler := roadmaps.NewHandler(roadmaps.NewRepository(deps.Postgres.Pool))
-	companiesHandler := companies.NewHandler()
+	companiesHandler := companies.NewHandler(companies.NewRepository(deps.Postgres.Pool))
 	dashboardHandler := dashboard.NewHandler(dashboard.NewService(dashboard.NewRepository(deps.Postgres.Pool), patterns.NewRepository(deps.Postgres.Pool)))
 	cardsHandler := cards.NewHandler(cardsSvc)
 	practiceHandler := practice.NewHandler(practice.NewRepository(deps.Postgres.Pool))
