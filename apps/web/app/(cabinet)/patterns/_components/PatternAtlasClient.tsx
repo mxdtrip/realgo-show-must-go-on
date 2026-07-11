@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   getAtlas,
@@ -20,7 +20,7 @@ import { platformOptions, type PlatformId } from "../../../_profile/platforms";
 type AtlasCopy = ReturnType<typeof getDictionary>["cabinet"]["pages"]["atlas"];
 
 type LoadState = "loading" | "loaded" | "error";
-type AtlasView = "tree" | "readiness";
+type AtlasView = "tree" | "companies";
 type DifficultyLevel = "easy" | "medium" | "hard";
 type DifficultyBreakdown = { level: DifficultyLevel; count: number };
 type DifficultyCounts = Partial<Record<DifficultyLevel | "unknown", number>>;
@@ -139,15 +139,18 @@ export function PatternAtlasClient({ copy }: Readonly<{ copy: AtlasCopy }>) {
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
   const [hydrated, setHydrated] = useState(false);
+  const [companyPickerOpen, setCompanyPickerOpen] = useState(false);
+  const [companyQuery, setCompanyQuery] = useState("");
+  const companyDialogRef = useRef<HTMLDivElement>(null);
 
   // Restore persisted selection before the first fetch.
   useEffect(() => {
     const storedCompany = readStored(COMPANY_KEY) ?? "";
     setCompany(storedCompany);
     setPlatform((readStored(PLATFORM_KEY) as PlatformId | null) ?? "");
-    // Readiness имеет смысл только относительно компании: без неё режим
+    // Companies имеет смысл только относительно компании: без неё режим
     // заблокирован, поэтому сохранённый выбор восстанавливаем условно.
-    setView(storedCompany && readStored(VIEW_KEY) === "readiness" ? "readiness" : "tree");
+    setView(storedCompany && readStored(VIEW_KEY) === "companies" ? "companies" : "tree");
     try {
       const raw = readStored(EXPANDED_KEY);
       if (raw) setExpanded(new Set(JSON.parse(raw) as string[]));
@@ -195,10 +198,29 @@ export function PatternAtlasClient({ copy }: Readonly<{ copy: AtlasCopy }>) {
     return () => controller.abort();
   }, [company, hydrated, reloadVersion, copy.errorTitle]);
 
+  useEffect(() => {
+    if (!companyPickerOpen) return;
+    companyDialogRef.current?.focus();
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setCompanyPickerOpen(false);
+      }
+    }
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [companyPickerOpen]);
+
   const selectCompany = useCallback((code: string) => {
     setCompany(code);
     writeStored(COMPANY_KEY, code || null);
-    if (!code) {
+    if (code) {
+      // Выбор компании сразу переключает на режим готовности по ней —
+      // иначе выбор выглядит так, будто ничего не произошло.
+      setView("companies");
+      writeStored(VIEW_KEY, "companies");
+    } else {
       setView("tree");
       writeStored(VIEW_KEY, "tree");
     }
@@ -208,6 +230,19 @@ export function PatternAtlasClient({ copy }: Readonly<{ copy: AtlasCopy }>) {
     setPlatform(next);
     writeStored(PLATFORM_KEY, next || null);
   }, []);
+
+  const openCompanyPicker = useCallback(() => {
+    setCompanyQuery("");
+    setCompanyPickerOpen(true);
+  }, []);
+
+  const pickCompany = useCallback(
+    (code: string) => {
+      selectCompany(code);
+      setCompanyPickerOpen(false);
+    },
+    [selectCompany],
+  );
 
   const selectView = useCallback((next: AtlasView) => {
     setView(next);
@@ -253,6 +288,16 @@ export function PatternAtlasClient({ copy }: Readonly<{ copy: AtlasCopy }>) {
 
   const overlay = atlas?.company ?? null;
 
+  const selectedCompanyName = company
+    ? companies.find((item) => item.code === company)?.name ?? company
+    : copy.companyNone;
+
+  const companyQueryNormalized = companyQuery.trim().toLowerCase();
+  const filteredCompanies = useMemo(() => {
+    if (!companyQueryNormalized) return companies;
+    return companies.filter((item) => item.name.toLowerCase().includes(companyQueryNormalized));
+  }, [companies, companyQueryNormalized]);
+
   return (
     <main className="cabinet-page">
       <section className="cabinet-page-head">
@@ -269,21 +314,19 @@ export function PatternAtlasClient({ copy }: Readonly<{ copy: AtlasCopy }>) {
       </section>
 
       <div className="atlas-toolbar">
-        <label className="atlas-company">
+        <div className="atlas-company">
           <span>{copy.companyLabel}</span>
-          <select
+          <button
+            type="button"
+            className="atlas-company__trigger"
+            aria-haspopup="dialog"
+            aria-expanded={companyPickerOpen}
             aria-label={copy.companyAria}
-            value={company}
-            onChange={(e) => selectCompany(e.target.value)}
+            onClick={openCompanyPicker}
           >
-            <option value="">{copy.companyNone}</option>
-            {companies.map((item) => (
-              <option key={item.code} value={item.code}>
-                {item.name}
-              </option>
-            ))}
-          </select>
-        </label>
+            {selectedCompanyName}
+          </button>
+        </div>
 
         <label className="atlas-company">
           <span>{copy.platformLabel}</span>
@@ -302,8 +345,8 @@ export function PatternAtlasClient({ copy }: Readonly<{ copy: AtlasCopy }>) {
         </label>
 
         <div className="atlas-view-toggle" role="tablist" aria-label={copy.viewAria}>
-          {(["tree", "readiness"] as const).map((item) => {
-            const locked = item === "readiness" && !company;
+          {(["tree", "companies"] as const).map((item) => {
+            const locked = item === "companies" && !company;
             return (
               <button
                 key={item}
@@ -331,6 +374,77 @@ export function PatternAtlasClient({ copy }: Readonly<{ copy: AtlasCopy }>) {
         />
       </div>
 
+      {companyPickerOpen ? (
+        <div
+          className="shell-overlay"
+          data-shell-overlay
+          role="presentation"
+          onClick={() => setCompanyPickerOpen(false)}
+        >
+          <div
+            className="shell-dialog shell-dialog--company"
+            role="dialog"
+            aria-modal="true"
+            aria-label={copy.companyAria}
+            ref={companyDialogRef}
+            tabIndex={-1}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <header className="shell-dialog__head">
+              <strong>{copy.companyLabel}</strong>
+              <button
+                className="shell-dialog__close"
+                type="button"
+                aria-label={copy.close}
+                onClick={() => setCompanyPickerOpen(false)}
+              >
+                ×
+              </button>
+            </header>
+            <input
+              className="atlas-company__search"
+              type="search"
+              autoFocus
+              placeholder={copy.companySearchPlaceholder}
+              aria-label={copy.companySearchAria}
+              value={companyQuery}
+              onChange={(e) => setCompanyQuery(e.target.value)}
+            />
+            <ul className="atlas-company__list" role="listbox" aria-label={copy.companyLabel}>
+              <li>
+                <button
+                  type="button"
+                  className={!company ? "atlas-company__option is-active" : "atlas-company__option"}
+                  role="option"
+                  aria-selected={!company}
+                  onClick={() => pickCompany("")}
+                >
+                  {copy.companyNone}
+                </button>
+              </li>
+              {filteredCompanies.map((item) => (
+                <li key={item.code}>
+                  <button
+                    type="button"
+                    className={
+                      company === item.code ? "atlas-company__option is-active" : "atlas-company__option"
+                    }
+                    role="option"
+                    aria-selected={company === item.code}
+                    onClick={() => pickCompany(item.code)}
+                  >
+                    {item.name}
+                  </button>
+                </li>
+              ))}
+              {filteredCompanies.length === 0 ? (
+                <li className="atlas-company__empty">{copy.companyPickerEmpty}</li>
+              ) : null}
+            </ul>
+          </div>
+        </div>
+      ) : null}
+
       {overlay?.demo_only ? (
         <p className="atlas-demo-note">
           <span className="meta-chip meta-chip--muted">{copy.demoBadge}</span> {copy.demoNote}
@@ -353,8 +467,8 @@ export function PatternAtlasClient({ copy }: Readonly<{ copy: AtlasCopy }>) {
       ) : null}
 
       {loadState === "loaded" && atlas ? (
-        view === "readiness" ? (
-          <ReadinessView atlas={atlas} copy={copy} />
+        view === "companies" ? (
+          <CompaniesView atlas={atlas} copy={copy} />
         ) : (
           <TreeView
             copy={copy}
@@ -514,11 +628,11 @@ function RelevanceBadge({
   );
 }
 
-function ReadinessView({ atlas, copy }: Readonly<{ atlas: AtlasResponse; copy: AtlasCopy }>) {
+function CompaniesView({ atlas, copy }: Readonly<{ atlas: AtlasResponse; copy: AtlasCopy }>) {
   const overlay = atlas.company;
   if (!overlay) {
     return (
-      <CabinetPanel eyebrow="readiness" title={copy.coverage.title} padded>
+      <CabinetPanel eyebrow="companies" title={copy.coverage.title} padded>
         <p>{copy.coverage.noCompany}</p>
         <p className="atlas-tools-hint">{copy.companyHint}</p>
       </CabinetPanel>
@@ -526,15 +640,6 @@ function ReadinessView({ atlas, copy }: Readonly<{ atlas: AtlasResponse; copy: A
   }
 
   const coverage = overlay.coverage;
-  const relevant = atlas.subpatterns
-    .filter((sub) => sub.relevance && ["high", "medium", "low"].includes(sub.relevance.relevance))
-    .sort((a, b) => {
-      const order: Record<string, number> = { high: 0, medium: 1, low: 2 };
-      const byLevel =
-        order[a.relevance?.relevance ?? "low"] - order[b.relevance?.relevance ?? "low"];
-      return byLevel !== 0 ? byLevel : a.mastery.percent - b.mastery.percent;
-    });
-
   const problems = overlay.relevant_problems ?? [];
   const problemGroups: {
     code: string;
@@ -554,6 +659,8 @@ function ReadinessView({ atlas, copy }: Readonly<{ atlas: AtlasResponse; copy: A
     }
   }
 
+  const studied = coverage.strong + coverage.unstable + coverage.weak;
+
   return (
     <div className="cabinet-grid">
       <CabinetPanel
@@ -568,8 +675,10 @@ function ReadinessView({ atlas, copy }: Readonly<{ atlas: AtlasResponse; copy: A
       >
         <dl className="atlas-coverage">
           <div>
-            <dt>{copy.coverage.relevant}</dt>
-            <dd>{coverage.relevant_subpatterns}</dd>
+            <dt>{copy.coverage.studied}</dt>
+            <dd>
+              {studied}/{coverage.relevant_subpatterns}
+            </dd>
           </div>
           <div>
             <dt>{copy.coverage.strong}</dt>
@@ -582,10 +691,6 @@ function ReadinessView({ atlas, copy }: Readonly<{ atlas: AtlasResponse; copy: A
           <div>
             <dt>{copy.coverage.weak}</dt>
             <dd className="confidence--danger">{coverage.weak}</dd>
-          </div>
-          <div>
-            <dt>{copy.coverage.notStarted}</dt>
-            <dd>{coverage.not_started}</dd>
           </div>
         </dl>
 
@@ -604,23 +709,6 @@ function ReadinessView({ atlas, copy }: Readonly<{ atlas: AtlasResponse; copy: A
               </li>
             ))}
           </ol>
-        )}
-      </CabinetPanel>
-
-      <CabinetPanel
-        eyebrow="relevant"
-        title={copy.familiesTitle}
-        padded
-        meta={<span className="cabinet-panel__meta">{relevant.length}</span>}
-      >
-        {relevant.length === 0 ? (
-          <p>{copy.companiesEmpty}</p>
-        ) : (
-          <ul className="atlas-subs atlas-subs--flat">
-            {relevant.map((sub) => (
-              <SubpatternRow key={sub.code} sub={sub} copy={copy} />
-            ))}
-          </ul>
         )}
       </CabinetPanel>
 
@@ -655,7 +743,8 @@ function ReadinessView({ atlas, copy }: Readonly<{ atlas: AtlasResponse; copy: A
                             <span className="meta-chip meta-chip--muted">{problem.tier}</span>
                           ) : null}
                           <span className={`atlas-status atlas-status--${problem.status}`}>
-                            {problem.status}
+                            {(copy.coverage.problemStatuses as Record<string, string>)[problem.status] ??
+                              problem.status}
                           </span>
                           {problem.evidence_count > 0 ? (
                             <span className="atlas-solved">×{problem.evidence_count}</span>

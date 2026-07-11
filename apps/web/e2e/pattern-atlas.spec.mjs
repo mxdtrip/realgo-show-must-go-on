@@ -1,12 +1,24 @@
 import { expect, test } from "@playwright/test";
 
 // Pattern Atlas UI: taxonomy tree with progressive disclosure, company
-// relevance overlay, readiness view and the subpattern educational detail.
+// relevance overlay, companies view and the subpattern educational detail.
 // Backed by the atlas fixtures in auth-stub.mjs.
 
 const AKEY = "realgo:auth:access:v1";
 const RKEY = "realgo:auth:refresh:v1";
 const TOUR_KEY = "realgo.cabinet.tour";
+
+// Company selector is a search dialog (button trigger → dialog with a list
+// of option buttons), not a native <select> — pick by visible name, or pass
+// "" to reset via the "— без компании —" option.
+async function selectCompany(page, name) {
+  await page.locator(".atlas-company__trigger").click();
+  const dialog = page.locator(".shell-dialog--company");
+  await expect(dialog).toBeVisible();
+  const optionName = name || "— без компании —";
+  await dialog.getByRole("option", { name: optionName, exact: true }).click();
+  await expect(dialog).toBeHidden();
+}
 
 async function openAtlas(page, { token = "LIVE" } = {}) {
   await page.goto("/patterns");
@@ -81,7 +93,10 @@ test.describe("pattern atlas tree", () => {
     await openAtlas(page);
     await expect(page.locator(".atlas-tree")).toBeVisible();
 
-    await page.selectOption(".atlas-company select", "cmp_stub");
+    // Выбор компании сразу переключает на companies view — этот тест
+    // проверяет relevance-бейджи в дереве, поэтому возвращаемся на Tree.
+    await selectCompany(page, "Stub Corp");
+    await page.getByRole("tab", { name: "Tree" }).click();
     await expect(page.locator(".atlas-demo-note")).toBeVisible();
 
     await page.getByRole("button", { name: /Binary Search$/ }).click();
@@ -93,25 +108,26 @@ test.describe("pattern atlas tree", () => {
     await expect(windowRow.locator(".atlas-relevance")).toHaveCount(0);
   });
 
-  test("readiness view is locked without a company and shows coverage with one", async ({ page }) => {
+  test("companies view is locked without a company and shows coverage with one", async ({ page }) => {
     await openAtlas(page);
     await expect(page.locator(".atlas-tree")).toBeVisible();
 
-    // Without a company the readiness mode is disabled.
-    const readinessTab = page.locator(".atlas-view-toggle button:nth-child(2)");
-    await expect(readinessTab).toBeDisabled();
+    // Without a company the companies mode is disabled.
+    const companiesTab = page.locator(".atlas-view-toggle button:nth-child(2)");
+    await expect(companiesTab).toBeDisabled();
 
-    await page.selectOption(".atlas-company select", "cmp_stub");
-    await expect(readinessTab).toBeEnabled();
-    await readinessTab.click();
+    // Выбор компании сразу переключает на companies view — отдельный клик
+    // по табу не нужен, но тест всё равно проверяет, что таб включился.
+    await selectCompany(page, "Stub Corp");
+    await expect(companiesTab).toBeEnabled();
     await expect(page.locator(".atlas-coverage")).toBeVisible();
     await expect(page.locator(".atlas-gaps li")).toHaveCount(1);
     await expect(page.locator(".atlas-gaps")).toContainText("Binary Search on Answer");
 
-    // Сброс компании возвращает дерево и снова блокирует readiness.
-    await page.selectOption(".atlas-company select", "");
+    // Сброс компании возвращает дерево и снова блокирует companies view.
+    await selectCompany(page, "");
     await expect(page.locator(".atlas-tree")).toBeVisible();
-    await expect(readinessTab).toBeDisabled();
+    await expect(companiesTab).toBeDisabled();
   });
 
   test("API failure shows error state with retry", async ({ page }) => {
