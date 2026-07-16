@@ -14,7 +14,9 @@
   /* text */
   --text: #e6edf3;
   --text-dim: #7d8590;
-  --text-faint: #6e7681;
+  /* #115 a11y: было #6e7681 (4.12:1 на --bg, ниже WCAG AA 4.5:1 для обычного
+     текста); осветлено ровно настолько, чтобы пройти AA на обоих фонах. */
+  --text-faint: #7e8691;
 
   /* accent — GitHub blue (links / labels) */
   --accent: #2f81f7;
@@ -501,6 +503,11 @@ h3 {
 .code-sheet:hover,
 .code-sheet:focus {
   color: rgba(225, 232, 245, 0.95);
+}
+
+.code-sheet:focus-visible {
+  outline: 2px solid var(--accent-line);
+  outline-offset: -2px;
 }
 
 /* --- hero tagline + controls --- */
@@ -7803,7 +7810,7 @@ a.roadmap-step__practice-card:hover {
   flex-wrap: wrap;
   align-items: center;
   gap: 12px;
-  margin-bottom: 28px;
+  margin-bottom: 40px;
 }
 
 .atlas-company {
@@ -8026,7 +8033,7 @@ a.roadmap-step__practice-card:hover {
   min-width: 0;
 }
 
-/* имя семейства = ссылка на страницу паттерна, каретка = отдельная кнопка раскрытия */
+/* имя семейства + каретка = один disclosure-триггер, URL не меняется (#166) */
 .atlas-table__cell--name {
   display: flex;
   align-items: center;
@@ -8034,14 +8041,13 @@ a.roadmap-step__practice-card:hover {
 }
 
 .atlas-family__toggle {
-  flex-shrink: 0;
+  flex: 1;
+  min-width: 0;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
+  gap: 8px;
   margin-left: -5px;
-  padding: 0;
+  padding: 4px 6px;
   border: 0;
   border-radius: 6px;
   background: transparent;
@@ -8057,42 +8063,24 @@ a.roadmap-step__practice-card:hover {
   border-left-color: var(--text);
 }
 
+.atlas-family__toggle:hover .atlas-family__name {
+  color: var(--accent-bright);
+}
+
 .atlas-family__toggle:focus-visible {
   outline: 2px solid var(--accent-line);
   outline-offset: 1px;
 }
 
 .atlas-family__name {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  max-width: 100%;
-  padding: 0;
-  border: 0;
-  background: transparent;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
   color: var(--text);
   font-weight: 600;
   font-size: 14px;
   font-family: var(--font-stack-sans);
   text-align: left;
-  cursor: pointer;
-  border-radius: 6px;
-  text-decoration: none;
-}
-
-.atlas-family__name:hover {
-  color: var(--accent-bright);
-}
-
-.atlas-family__name:focus-visible {
-  outline: 2px solid var(--accent-line);
-  outline-offset: 4px;
-}
-
-.atlas-family__name span {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .atlas-caret {

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import {
@@ -16,7 +17,7 @@ import {
 import { ApiError } from "../../../../_api/types";
 import { useToast } from "../../../../_toast";
 import { CabinetPanel } from "../../../_components";
-import { PatternProfile, ProfileSection } from "./PatternProfile";
+import { ProfileSection } from "./PatternProfile";
 import type { getDictionary } from "../../../../_content/i18n";
 
 type NodeCopy = ReturnType<typeof getDictionary>["cabinet"]["pages"]["atlasNode"];
@@ -69,6 +70,7 @@ export function AtlasNodeClient({
   copy,
   atlasCopy,
 }: Readonly<{ code: string; copy: NodeCopy; atlasCopy: AtlasCopy }>) {
+  const router = useRouter();
   const [detail, setDetail] = useState<NodeDetail | null>(null);
   const [loadState, setLoadState] = useState<LoadState>("loading");
   const [error, setError] = useState("");
@@ -81,9 +83,13 @@ export function AtlasNodeClient({
 
     getAtlasNode(code, storedPlatform(), controller.signal)
       .then((data) => {
-        // Субпаттерн = рабочий узел, семейство = страница паттерна;
-        // у tool/pattern своих страниц нет.
-        if (data.kind !== "subpattern" && data.kind !== "family") {
+        // Family больше не своя страница (#166) — редиректим на /patterns с
+        // раскрытой группой. Субпаттерн = единственный узел со своей страницей.
+        if (data.kind === "family") {
+          router.replace(`/patterns?family=${encodeURIComponent(code)}`);
+          return;
+        }
+        if (data.kind !== "subpattern") {
           setDetail(null);
           setLoadState("not_found");
           return;
@@ -134,11 +140,7 @@ export function AtlasNodeClient({
       ) : null}
 
       {loadState === "loaded" && detail ? (
-        detail.kind === "family" ? (
-          <PatternProfile detail={detail} copy={copy.profile} />
-        ) : (
-          <SubpatternProfile detail={detail} copy={copy} atlasCopy={atlasCopy} />
-        )
+        <SubpatternProfile detail={detail} copy={copy} atlasCopy={atlasCopy} />
       ) : null}
     </main>
   );
