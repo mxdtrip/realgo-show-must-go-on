@@ -62,12 +62,33 @@ npm run build          # build/chrome-mv3-prod  ← это грузим в Chrom
 npm run package        # Web Store / team zip через Plasmo
 npm run package:crx:mac # signed CRX через локальный Chrome и приватный ключ
 
+# Firefox (MV3, стабильный extension id через browser_specific_settings.gecko.id)
+npm run dev:firefox    # build/firefox-mv3-dev
+npm run build:firefox  # build/firefox-mv3-prod ← about:debugging → This Firefox → Load Temporary Add-on
+
 # Предпросмотр popup как веб-страницы
 npm run preview        # http://localhost:5174
 
 # Проверка типов
 npm run typecheck
 ```
+
+## Firefox-совместимость (#309)
+
+Проверено сборкой (не живым браузером): `plasmo build --target=firefox-mv3`
+проходит чисто, манифест транслируется корректно (`background.scripts` вместо
+`service_worker`, свой `browser_specific_settings.gecko.id` вместо
+Chrome-only `key`). Кодовая база уже была написана с оглядкой на кроссбраузерность:
+`chrome.action.openPopup()` в `background.ts` изначально обёрнут в try/catch с
+документированным fallback на in-page overlay (эта API не гарантирована даже
+в самом Chrome вне user gesture), `chrome.permissions.*` в `options.tsx` уже
+проверяет `typeof chrome === "undefined"` перед вызовом.
+
+**Не проверено** (нужен живой Firefox, недоступен из этого окружения): реальная
+детекция submit на LeetCode/HackerRank, popup/overlay рендеринг, полный auth-флоу
+через `chrome.storage.local`. Загрузить `build/firefox-mv3-prod` через
+`about:debugging` → «This Firefox» → «Load Temporary Add-on» и прогнать вручную
+(см. #81 матрицу тестов) — обязательный шаг перед тем, как считать #309 закрытой.
 
 ## Extension ID и упаковка
 
