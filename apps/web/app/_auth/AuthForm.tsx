@@ -31,12 +31,14 @@ export function AuthForm({ mode }: { mode: Mode }) {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [consent, setConsent] = useState(false);
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     if (pending) return;
+    if (mode === "register" && !consent) return;
     setPending(true);
     setError("");
     try {
@@ -91,13 +93,35 @@ export function AuthForm({ mode }: { mode: Mode }) {
           />
         </label>
 
+        {mode === "register" ? (
+          <label className="auth-consent">
+            <input
+              checked={consent}
+              disabled={pending}
+              onChange={(e) => setConsent(e.target.checked)}
+              required
+              type="checkbox"
+            />
+            <span>
+              Принимаю{" "}
+              <Link href="/terms" target="_blank">
+                Условия использования
+              </Link>{" "}
+              и{" "}
+              <Link href="/privacy" target="_blank">
+                Политику конфиденциальности
+              </Link>
+            </span>
+          </label>
+        ) : null}
+
         {error ? (
           <p className="auth-form__error" role="alert">
             {error}
           </p>
         ) : null}
 
-        <button type="submit" disabled={pending}>
+        <button disabled={pending || (mode === "register" && !consent)} type="submit">
           {pending ? copy.pending : copy.submit}
         </button>
       </form>

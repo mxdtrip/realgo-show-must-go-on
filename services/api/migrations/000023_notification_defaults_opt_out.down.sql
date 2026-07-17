@@ -1,0 +1,6 @@
+BEGIN;
+
+ALTER TABLE users
+    ALTER COLUMN notify_weekly_digest SET DEFAULT TRUE;
+
+COMMIT;
