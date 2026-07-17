@@ -1462,6 +1462,14 @@ h3 {
   color: var(--accent-bright);
 }
 
+.legal-page__date {
+  margin-top: clamp(20px, 3vw, 28px);
+  font-family: var(--font-stack-mono);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--text-faint);
+}
+
 /* Success state of the MVP payment stub. */
 .checkout-done {
   display: flex;
@@ -9092,7 +9100,9 @@ a.roadmap-step__practice-card:hover {
   padding-left: 28px;
 }
 
-.pattern-profile__body > p + p {
+.pattern-profile__body > p + p,
+.pattern-profile__body > p + ul,
+.pattern-profile__body > ul + p {
   margin-top: 12px;
 }
 
