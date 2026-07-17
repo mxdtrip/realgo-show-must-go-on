@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { updateNotificationSettings } from "../../../_api/account";
@@ -128,6 +129,11 @@ export function NotificationSettingsPanel({ copy }: Readonly<NotificationSetting
   return (
     <div className="notification-settings-panel">
       <p>{copy.description}</p>
+      <p className="notification-settings-panel__legal">
+        Еженедельный дайджест выключен по умолчанию для новых аккаунтов —
+        включайте его сами. Что и зачем мы отправляем на почту, описано в{" "}
+        <Link href="/privacy">Политике конфиденциальности</Link>.
+      </p>
 
       <div className="notification-status-row">
         <span>{settings.enabled ? copy.enabled : permissionLabel}</span>

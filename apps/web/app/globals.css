@@ -699,6 +699,28 @@ h3 {
   color-scheme: dark;
 }
 
+.auth-form textarea {
+  font-family: var(--font-stack-sans);
+  font-size: 14px;
+  padding: 11px 13px;
+  border-radius: 9px;
+  border: 0;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+  outline: none;
+  resize: vertical;
+  transition: background 0.18s ease, box-shadow 0.18s ease;
+}
+
+.auth-form textarea::placeholder {
+  color: var(--text-faint);
+}
+
+.auth-form textarea:focus {
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+
 .auth-form button[type="submit"] {
   margin-top: 4px;
   padding: 12px;
@@ -714,6 +736,80 @@ h3 {
 
 .auth-form button[type="submit"]:hover {
   background: var(--success-bright);
+}
+
+.auth-consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+  padding: 2px 0;
+}
+
+.auth-consent input {
+  appearance: none;
+  -webkit-appearance: none;
+  flex: none;
+  width: 17px;
+  height: 17px;
+  margin-top: 1px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  position: relative;
+  transition:
+    background 0.16s ease,
+    border-color 0.16s ease;
+}
+
+.auth-consent input:hover {
+  border-color: var(--text-dim);
+}
+
+.auth-consent input::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 5px;
+  width: 4px;
+  height: 8px;
+  border: solid #ffffff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg) scale(0);
+  transform-origin: center;
+  transition: transform 0.14s ease;
+}
+
+.auth-consent input:checked {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+.auth-consent input:checked::after {
+  transform: rotate(45deg) scale(1);
+}
+
+.auth-consent input:focus-visible {
+  outline: 2px solid var(--accent-bright);
+  outline-offset: 2px;
+}
+
+.auth-consent span {
+  font-family: var(--font-stack-sans);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+
+.auth-consent span a {
+  color: var(--text);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.auth-consent span a:hover {
+  color: var(--accent-bright);
 }
 
 /* ============================================================
@@ -1344,6 +1440,26 @@ h3 {
   font-size: 12.5px;
   color: var(--text-faint);
   text-align: center;
+}
+
+.checkout-note a {
+  color: var(--text-dim);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.checkout-note a:hover {
+  color: var(--accent-bright);
+}
+
+.legal-page a {
+  color: var(--text);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.legal-page a:hover {
+  color: var(--accent-bright);
 }
 
 /* Success state of the MVP payment stub. */
@@ -4092,6 +4208,16 @@ a.roadmap-step__practice-card:hover {
   color: var(--text-dim);
   font-size: 12.5px;
   line-height: 1.55;
+}
+
+.notification-settings-panel__legal a {
+  color: var(--text);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.notification-settings-panel__legal a:hover {
+  color: var(--accent-bright);
 }
 
 .install-app-panel__status,
