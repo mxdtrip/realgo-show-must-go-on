@@ -231,8 +231,15 @@ const ru = {
           links: [
             { href: "#", label: "About" },
             { href: "#", label: "Blog" },
-            { href: "#", label: "Privacy" },
-            { href: "#", label: "Terms" },
+          ],
+        },
+        {
+          title: "documents",
+          links: [
+            { href: "/privacy", label: "Privacy" },
+            { href: "/terms", label: "Terms" },
+            { href: "/offer", label: "Offer" },
+            { href: "/support", label: "Support" },
           ],
         },
       ],
