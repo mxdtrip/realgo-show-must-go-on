@@ -82,7 +82,11 @@ func (r *pgRepository) GetQuizQuestion(ctx context.Context, questionID, userID i
 		return questionDetail{}, fmt.Errorf("quiz: get question: %w", err)
 	}
 
-	d := questionDetail{CorrectOption: int(row.CorrectOption)}
+	var options []string
+	if err := json.Unmarshal(row.Options, &options); err != nil {
+		return questionDetail{}, fmt.Errorf("quiz: decode question options: %w", err)
+	}
+	d := questionDetail{CorrectOption: int(row.CorrectOption), OptionCount: len(options)}
 	if row.Explanation.Valid {
 		d.Explanation = &row.Explanation.String
 	}

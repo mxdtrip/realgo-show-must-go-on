@@ -3,6 +3,8 @@ package redis
 import (
 	"bytes"
 	"context"
+	"crypto/rand"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -11,6 +13,13 @@ import (
 
 	"github.com/mxdtrip/freeburger/services/api/internal/config"
 )
+
+var releaseLockScript = goredis.NewScript(`
+if redis.call("get", KEYS[1]) == ARGV[1] then
+  return redis.call("del", KEYS[1])
+end
+return 0
+`)
 
 type Storage struct {
 	Client *goredis.Client
@@ -61,21 +70,34 @@ func (s *Storage) SaveJSON(ctx context.Context, key string, value any, ttl time.
 	return s.Save(ctx, key, data, ttl)
 }
 
-// TryLock attempts to acquire a short-lived lock at key, expiring after ttl
-// even if never released (e.g. the holder crashes mid-generation). Returns
-// true only for the caller that actually acquired it.
-func (s *Storage) TryLock(ctx context.Context, key string, ttl time.Duration) (bool, error) {
-	acquired, err := s.Client.SetNX(ctx, key, "1", ttl).Result()
-	if err != nil {
-		return false, fmt.Errorf("redis trylock %q: %w", key, err)
+// AcquireLock attempts to acquire a short-lived owned lock at key. The random
+// token must be passed to ReleaseLock, preventing an expired holder from
+// deleting a lock that a newer worker has since acquired.
+func (s *Storage) AcquireLock(ctx context.Context, key string, ttl time.Duration) (token string, acquired bool, err error) {
+	random := make([]byte, 32)
+	if _, err := rand.Read(random); err != nil {
+		return "", false, fmt.Errorf("redis generate lock owner: %w", err)
 	}
-	return acquired, nil
+	token = base64.RawURLEncoding.EncodeToString(random)
+
+	acquired, err = s.Client.SetNX(ctx, key, token, ttl).Result()
+	if err != nil {
+		return "", false, fmt.Errorf("redis acquire lock %q: %w", key, err)
+	}
+	if !acquired {
+		return "", false, nil
+	}
+	return token, true, nil
 }
 
-// Unlock releases a lock acquired via TryLock.
-func (s *Storage) Unlock(ctx context.Context, key string) error {
-	if err := s.Client.Del(ctx, key).Err(); err != nil {
-		return fmt.Errorf("redis unlock %q: %w", key, err)
+// ReleaseLock releases key only while token still owns it. A mismatched or
+// already-expired lock is an idempotent no-op.
+func (s *Storage) ReleaseLock(ctx context.Context, key, token string) error {
+	if token == "" {
+		return fmt.Errorf("redis release lock %q: empty owner token", key)
+	}
+	if _, err := releaseLockScript.Run(ctx, s.Client, []string{key}, token).Result(); err != nil {
+		return fmt.Errorf("redis release lock %q: %w", key, err)
 	}
 	return nil
 }

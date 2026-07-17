@@ -11,6 +11,23 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const finishAssistantHintRequest = `-- name: FinishAssistantHintRequest :exec
+UPDATE ai_request_logs
+SET status = $1::text
+WHERE id = $2::bigint
+  AND feature = 'assistant_hint'
+`
+
+type FinishAssistantHintRequestParams struct {
+	Status string
+	ID     int64
+}
+
+func (q *Queries) FinishAssistantHintRequest(ctx context.Context, arg FinishAssistantHintRequestParams) error {
+	_, err := q.db.Exec(ctx, finishAssistantHintRequest, arg.Status, arg.ID)
+	return err
+}
+
 const getAssistantProblemContext = `-- name: GetAssistantProblemContext :one
 
 SELECT
@@ -113,31 +130,37 @@ func (q *Queries) ListAssistantProblemSubpatterns(ctx context.Context, problemID
 	return items, nil
 }
 
-const logAssistantHintRequest = `-- name: LogAssistantHintRequest :exec
-INSERT INTO ai_request_logs (user_id, feature, provider, model, status, problem_id)
+const reserveAssistantHintRequest = `-- name: ReserveAssistantHintRequest :one
+INSERT INTO ai_request_logs (user_id, feature, provider, model, prompt_version, status, problem_id)
 VALUES (
     $1::bigint,
     'assistant_hint',
-    'gemini',
     $2::text,
     $3::text,
-    $4
+    $4::text,
+    'queued',
+    $5
 )
+RETURNING id
 `
 
-type LogAssistantHintRequestParams struct {
-	UserID    int64
-	Model     string
-	Status    string
-	ProblemID pgtype.Int8
+type ReserveAssistantHintRequestParams struct {
+	UserID        int64
+	Provider      string
+	Model         string
+	PromptVersion string
+	ProblemID     pgtype.Int8
 }
 
-func (q *Queries) LogAssistantHintRequest(ctx context.Context, arg LogAssistantHintRequestParams) error {
-	_, err := q.db.Exec(ctx, logAssistantHintRequest,
+func (q *Queries) ReserveAssistantHintRequest(ctx context.Context, arg ReserveAssistantHintRequestParams) (int64, error) {
+	row := q.db.QueryRow(ctx, reserveAssistantHintRequest,
 		arg.UserID,
+		arg.Provider,
 		arg.Model,
-		arg.Status,
+		arg.PromptVersion,
 		arg.ProblemID,
 	)
-	return err
+	var id int64
+	err := row.Scan(&id)
+	return id, err
 }

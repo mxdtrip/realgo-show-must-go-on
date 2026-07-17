@@ -49,6 +49,9 @@ function init() {
   chrome.runtime.onMessage.addListener(onRuntimeMessage);
   refreshAssistant();
   window.setInterval(refreshAssistant, ASSISTANT_REFRESH_MS);
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) refreshAssistant();
+  });
 }
 
 function onRuntimeMessage(
@@ -265,8 +268,14 @@ async function saveViaBackground(
 let assistantHost: HTMLDivElement | null = null;
 let assistantRoot: Root | null = null;
 let assistantKey = "";
+let assistantUrl = "";
 
 function refreshAssistant() {
+  if (document.hidden) return;
+  // The one-second timer remains a robust fallback for SPA navigation, but a
+  // stable mounted task now avoids all adapter/DOM extraction work.
+  if (location.href === assistantUrl && assistantHost?.isConnected) return;
+
   const task = currentAssistantTaskResponse().task ?? null;
   if (!task) {
     removeAssistant();
@@ -274,10 +283,14 @@ function refreshAssistant() {
   }
 
   const key = `${task.platform}:${task.platformTaskSlug}:${task.taskUrl}`;
-  if (key === assistantKey && assistantHost?.isConnected) return;
+  if (key === assistantKey && assistantHost?.isConnected) {
+    assistantUrl = location.href;
+    return;
+  }
 
   removeAssistant();
   assistantKey = key;
+  assistantUrl = location.href;
   assistantHost = document.createElement("div");
   assistantHost.id = "realgo-assistant-host";
   assistantHost.style.cssText =
@@ -311,6 +324,7 @@ function removeAssistant() {
   assistantRoot = null;
   assistantHost = null;
   assistantKey = "";
+  assistantUrl = "";
 }
 
 function assistantTaskFrom(adapter: PlatformAdapter, info: TaskInfo): AssistantTask | null {

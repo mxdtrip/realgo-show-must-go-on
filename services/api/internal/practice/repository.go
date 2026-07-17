@@ -97,11 +97,27 @@ func (r *Repository) Add(ctx context.Context, userID int64, code string) (err er
 // Remove выключает подпаттерн из практики (идемпотентно: отсутствие строки —
 // не ошибка, чтобы двойной клик не превращался в 404).
 func (r *Repository) Remove(ctx context.Context, userID int64, code string) error {
-	if _, err := r.q.RemovePracticeSubpattern(ctx, db.RemovePracticeSubpatternParams{
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("practice: begin remove tx: %w", err)
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+
+	q := r.q.WithTx(tx)
+	if _, err := q.RemovePracticeSubpattern(ctx, db.RemovePracticeSubpatternParams{
 		UserID: userID,
 		Code:   code,
 	}); err != nil {
 		return fmt.Errorf("practice: remove: %w", err)
+	}
+	if _, err := q.RemoveUnreviewedPracticeSchedules(ctx, db.RemoveUnreviewedPracticeSchedulesParams{
+		UserID: userID,
+		Code:   code,
+	}); err != nil {
+		return fmt.Errorf("practice: remove untouched schedules: %w", err)
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("practice: commit remove tx: %w", err)
 	}
 	return nil
 }

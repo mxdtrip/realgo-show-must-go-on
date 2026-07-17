@@ -96,8 +96,17 @@ chrome.runtime.onMessage.addListener(
 chrome.runtime.onConnect.addListener((port) => {
   if (port.name !== ASSISTANT_HINT_STREAM_PORT) return;
 
+  let activeStream: AbortController | null = null;
+  port.onDisconnect.addListener(() => {
+    activeStream?.abort();
+    activeStream = null;
+  });
+
   port.onMessage.addListener((message: AssistantHintStreamStartMessage) => {
     if (message.type !== "start") return;
+    activeStream?.abort();
+    const controller = new AbortController();
+    activeStream = controller;
     const startedAt = Date.now();
     console.log("[realgo] background: assistant hint stream started", {
       platform: message.payload.platform,
@@ -107,7 +116,7 @@ chrome.runtime.onConnect.addListener((port) => {
 
     streamAssistantHint(message.payload, (text) => {
       post(port, { type: "delta", text });
-    })
+    }, controller.signal)
       .then((result) => {
         console.log("[realgo] background: assistant hint stream done", {
           ms: Date.now() - startedAt,
@@ -115,6 +124,7 @@ chrome.runtime.onConnect.addListener((port) => {
         post(port, { type: "done", result });
       })
       .catch((e) => {
+        if (controller.signal.aborted) return;
         console.error("[realgo] background: assistant hint stream failed", {
           ms: Date.now() - startedAt,
           error: e,
@@ -123,6 +133,9 @@ chrome.runtime.onConnect.addListener((port) => {
           type: "error",
           error: e instanceof Error ? e.message : String(e),
         });
+      })
+      .finally(() => {
+        if (activeStream === controller) activeStream = null;
       });
   });
 });

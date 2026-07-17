@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/mxdtrip/freeburger/services/api/internal/auth"
 	"github.com/mxdtrip/freeburger/services/api/internal/server/response"
@@ -21,6 +22,13 @@ type authHandler struct {
 }
 
 const maxJSONBodyBytes = 1 << 20
+
+const (
+	maxPrepGoalRunes    = 100
+	maxTargetTextRunes  = 200
+	maxTargetTopics     = 50
+	maxTargetTopicRunes = 64
+)
 
 type credentialsRequest struct {
 	Email    string `json:"email"`
@@ -158,6 +166,26 @@ func (h *authHandler) refresh(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, map[string]auth.TokenPair{"tokens": tokens})
 }
 
+// deviceSession exchanges an already authenticated access token for an
+// independent refresh session. It lets the browser extension avoid sharing the
+// web app's one-time rotating refresh token.
+func (h *authHandler) deviceSession(w http.ResponseWriter, r *http.Request) {
+	if h.unavailable(w) {
+		return
+	}
+	userID, ok := auth.UserIDFromContext(r.Context())
+	if !ok {
+		response.Fail(w, http.StatusUnauthorized, "unauthorized", "authentication required")
+		return
+	}
+	tokens, err := h.svc.NewSession(r.Context(), userID)
+	if err != nil {
+		writeAuthError(w, err, "DeviceSession", slog.Int64("user_id", userID))
+		return
+	}
+	response.JSON(w, http.StatusCreated, map[string]auth.TokenPair{"tokens": tokens})
+}
+
 func (h *authHandler) logout(w http.ResponseWriter, r *http.Request) {
 	if h.unavailable(w) {
 		return
@@ -287,16 +315,28 @@ func validTimezone(tz string) bool {
 // normaliseTopics lowercases topic codes and converts dashes to underscores,
 // so "two-pointers" from the web onboarding becomes the canonical "two_pointers"
 // used across roadmap weeks and Pattern Atlas. Empty entries are dropped.
-func normaliseTopics(in []string) []string {
+func normaliseTopics(in []string) ([]string, error) {
+	if len(in) > maxTargetTopics {
+		return nil, errors.New("too many target topics")
+	}
 	out := make([]string, 0, len(in))
+	seen := make(map[string]struct{}, len(in))
 	for _, t := range in {
 		t = strings.ToLower(strings.TrimSpace(t))
 		t = strings.ReplaceAll(t, "-", "_")
-		if t != "" {
-			out = append(out, t)
+		if t == "" {
+			continue
 		}
+		if utf8.RuneCountInString(t) > maxTargetTopicRunes {
+			return nil, errors.New("target topic is too long")
+		}
+		if _, exists := seen[t]; exists {
+			continue
+		}
+		seen[t] = struct{}{}
+		out = append(out, t)
 	}
-	return out
+	return out, nil
 }
 
 // patchProfile handles PATCH /me/profile — a partial update of the onboarding
@@ -328,9 +368,21 @@ func (h *authHandler) patchProfile(w http.ResponseWriter, r *http.Request) {
 		response.Fail(w, http.StatusBadRequest, "validation_error", "timezone must be a valid IANA time zone, e.g. Europe/Moscow")
 		return
 	}
-	if req.Platform != nil && *req.Platform != "" && !validPlatforms[*req.Platform] {
+	if req.Platform != nil && !validPlatforms[*req.Platform] {
 		slog.Warn("auth: PatchProfile failed", slog.Int64("user_id", userID), slog.String("field", "platform"))
 		response.FailWithDetails(w, http.StatusBadRequest, "validation_error", "platform must be one of: leetcode, geeksforgeeks, hackerrank, codeforces", "platform")
+		return
+	}
+	if req.PrepGoal != nil && utf8.RuneCountInString(*req.PrepGoal) > maxPrepGoalRunes {
+		response.FailWithDetails(w, http.StatusBadRequest, "validation_error", "prep_goal must be at most 100 characters", "prep_goal")
+		return
+	}
+	if req.TargetCompany != nil && utf8.RuneCountInString(*req.TargetCompany) > maxTargetTextRunes {
+		response.FailWithDetails(w, http.StatusBadRequest, "validation_error", "target_company must be at most 200 characters", "target_company")
+		return
+	}
+	if req.TargetPosition != nil && utf8.RuneCountInString(*req.TargetPosition) > maxTargetTextRunes {
+		response.FailWithDetails(w, http.StatusBadRequest, "validation_error", "target_position must be at most 200 characters", "target_position")
 		return
 	}
 
@@ -343,7 +395,11 @@ func (h *authHandler) patchProfile(w http.ResponseWriter, r *http.Request) {
 		Platform:       req.Platform,
 	}
 	if req.TargetTopics != nil {
-		normalised := normaliseTopics(*req.TargetTopics)
+		normalised, err := normaliseTopics(*req.TargetTopics)
+		if err != nil {
+			response.FailWithDetails(w, http.StatusBadRequest, "validation_error", err.Error(), "target_topics")
+			return
+		}
 		upd.TargetTopics = &normalised
 	}
 	if req.InterviewDate != nil {
@@ -371,6 +427,51 @@ type patchNotificationSettingsRequest struct {
 	ReviewReminder *bool `json:"review_reminder"`
 	WeeklyDigest   *bool `json:"weekly_digest"`
 	EmailEnabled   *bool `json:"email_enabled"`
+}
+
+type changePasswordRequest struct {
+	CurrentPassword string `json:"current_password"`
+	NewPassword     string `json:"new_password"`
+}
+
+func (h *authHandler) changePassword(w http.ResponseWriter, r *http.Request) {
+	if h.unavailable(w) {
+		return
+	}
+	userID, ok := auth.UserIDFromContext(r.Context())
+	if !ok {
+		response.Fail(w, http.StatusUnauthorized, "unauthorized", "authentication required")
+		return
+	}
+	var req changePasswordRequest
+	if !decodeJSON(w, r, &req) {
+		return
+	}
+	if req.CurrentPassword == "" || req.NewPassword == "" {
+		response.Fail(w, http.StatusBadRequest, "validation_error", "current_password and new_password are required")
+		return
+	}
+	if err := h.svc.ChangePassword(r.Context(), userID, req.CurrentPassword, req.NewPassword); err != nil {
+		writeAuthError(w, err, "ChangePassword", slog.Int64("user_id", userID))
+		return
+	}
+	response.JSON(w, http.StatusOK, map[string]string{"status": "password_changed"})
+}
+
+func (h *authHandler) revokeAllSessions(w http.ResponseWriter, r *http.Request) {
+	if h.unavailable(w) {
+		return
+	}
+	userID, ok := auth.UserIDFromContext(r.Context())
+	if !ok {
+		response.Fail(w, http.StatusUnauthorized, "unauthorized", "authentication required")
+		return
+	}
+	if err := h.svc.RevokeAllSessions(r.Context(), userID); err != nil {
+		writeAuthError(w, err, "RevokeAllSessions", slog.Int64("user_id", userID))
+		return
+	}
+	response.JSON(w, http.StatusOK, map[string]string{"status": "sessions_revoked"})
 }
 
 // patchNotificationSettings handles PATCH /me/notification-settings.

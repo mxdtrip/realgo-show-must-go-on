@@ -107,8 +107,8 @@ export function useCardReviewSession(
   cards: readonly ReviewCard[],
   nextReviewByRating: Record<ReviewRating, string>,
   onSessionComplete?: () => void,
-  /** Fire-and-forget side channel for persisting a rating (e.g. POST to the api). */
-  onRate?: (cardId: string, rating: ReviewRating, reviewedAt: string) => void,
+  /** Persists a rating before local session state is advanced. */
+  onRate?: (cardId: string, rating: ReviewRating, reviewedAt: string) => void | Promise<void>,
 ) {
   const [isReady, setIsReady] = useState(false);
   const [queue, setQueue] = useState<string[]>([]);
@@ -137,7 +137,7 @@ export function useCardReviewSession(
   const progressPercent = sessionCardIds.length === 0 ? 0 : Math.round((completedUnique / sessionCardIds.length) * 100);
 
   const rate = useCallback(
-    (rating: ReviewRating) => {
+    async (rating: ReviewRating) => {
       const currentId = queue[0];
       if (!currentId) return;
 
@@ -148,8 +148,12 @@ export function useCardReviewSession(
         nextReview: nextReviewByRating[rating],
       };
 
-      onRate?.(currentId, rating, logItem.reviewedAt);
+      await onRate?.(currentId, rating, logItem.reviewedAt);
 
+      // Reset the face before exposing the next queue item. Keeping this
+      // ordering prevents a fast click on the newly rendered card from being
+      // overwritten by the previous card's late flip reset.
+      setIsFlipped(false);
       setHistory((currentHistory) => [logItem, ...currentHistory].slice(0, 12));
       setQueue((currentQueue) => {
         const [, ...rest] = currentQueue;
@@ -159,7 +163,6 @@ export function useCardReviewSession(
         }
         return nextQueue;
       });
-      setIsFlipped(false);
     },
     [nextReviewByRating, onRate, onSessionComplete, queue],
   );

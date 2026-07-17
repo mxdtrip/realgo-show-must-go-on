@@ -36,13 +36,21 @@ ORDER BY
     ps.position NULLS LAST,
     sp.name;
 
--- name: LogAssistantHintRequest :exec
-INSERT INTO ai_request_logs (user_id, feature, provider, model, status, problem_id)
+-- name: ReserveAssistantHintRequest :one
+INSERT INTO ai_request_logs (user_id, feature, provider, model, prompt_version, status, problem_id)
 VALUES (
     sqlc.arg(user_id)::bigint,
     'assistant_hint',
-    'gemini',
+    sqlc.arg(provider)::text,
     sqlc.arg(model)::text,
-    sqlc.arg(status)::text,
+    sqlc.arg(prompt_version)::text,
+    'queued',
     sqlc.narg(problem_id)
-);
+)
+RETURNING id;
+
+-- name: FinishAssistantHintRequest :exec
+UPDATE ai_request_logs
+SET status = sqlc.arg(status)::text
+WHERE id = sqlc.arg(id)::bigint
+  AND feature = 'assistant_hint';

@@ -8,10 +8,23 @@ WHERE code = $1;
 INSERT INTO problems (platform_id, external_slug, title, url, difficulty, source_type, created_by_user_id)
 VALUES ($1, $2, $3, $4, $5, 'extension', $6)
 ON CONFLICT (platform_id, external_slug) DO UPDATE
-    SET title = EXCLUDED.title,
-        url = EXCLUDED.url,
-        difficulty = COALESCE(EXCLUDED.difficulty, problems.difficulty),
-        updated_at = NOW()
+    SET title = CASE
+            WHEN problems.created_by_user_id = EXCLUDED.created_by_user_id THEN EXCLUDED.title
+            ELSE problems.title
+        END,
+        url = CASE
+            WHEN problems.created_by_user_id = EXCLUDED.created_by_user_id THEN EXCLUDED.url
+            ELSE problems.url
+        END,
+        difficulty = CASE
+            WHEN problems.created_by_user_id = EXCLUDED.created_by_user_id
+                THEN COALESCE(EXCLUDED.difficulty, problems.difficulty)
+            ELSE problems.difficulty
+        END,
+        updated_at = CASE
+            WHEN problems.created_by_user_id = EXCLUDED.created_by_user_id THEN NOW()
+            ELSE problems.updated_at
+        END
 RETURNING id;
 
 -- name: InsertExtensionEvent :one
@@ -83,8 +96,11 @@ RETURNING id, next_review_at;
 -- name: ListExtensionPlatformStatuses :many
 SELECT
     p.code AS source,
-    'connected'::text AS status,
-    MAX(ee.event_time)::timestamptz AS last_sync_at
+    CASE
+      WHEN MAX(COALESCE(ee.created_at, ee.event_time)) >= NOW() - INTERVAL '24 hours' THEN 'connected'
+      ELSE 'stale'
+    END::text AS status,
+    MAX(COALESCE(ee.created_at, ee.event_time))::timestamptz AS last_sync_at
 FROM extension_events ee
 JOIN platforms p ON p.id = ee.platform_id
 WHERE ee.user_id = sqlc.arg(user_id)::bigint

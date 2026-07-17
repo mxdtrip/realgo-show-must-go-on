@@ -46,11 +46,12 @@ type fakeProvisioner struct {
 	slug      string
 }
 
-func (f *fakeProvisioner) ProvisionAsync(problemID int64, platform, slug string) {
+func (f *fakeProvisioner) ProvisionAsync(problemID int64, platform, slug string) bool {
 	f.calls++
 	f.problemID = problemID
 	f.platform = platform
 	f.slug = slug
+	return true
 }
 
 func solvedRequest() EventRequest {
@@ -168,6 +169,37 @@ func TestHandle_Solved_TriggersProvisioner(t *testing.T) {
 	}
 	if provisioner.problemID != 42 || provisioner.platform != "leetcode" || provisioner.slug != "two-sum" {
 		t.Errorf("unexpected provisioner args: problemID=%d platform=%q slug=%q", provisioner.problemID, provisioner.platform, provisioner.slug)
+	}
+}
+
+func TestHandle_DuplicateSolved_DoesNotTriggerProvisioner(t *testing.T) {
+	repo := &fakeRepo{
+		platformID: 7,
+		out:        IngestOutput{ProblemID: 42, Status: "reviewing", Duplicate: true},
+	}
+	provisioner := &fakeProvisioner{}
+	svc := newTestService(repo, time.Now()).WithProvisioner(provisioner)
+
+	if _, err := svc.Handle(context.Background(), 100, solvedRequest()); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if provisioner.calls != 0 {
+		t.Fatalf("provisioner calls = %d, want 0 for duplicate event", provisioner.calls)
+	}
+}
+
+func TestHandle_RejectsCrossPlatformProblemURL(t *testing.T) {
+	repo := &fakeRepo{platformID: 7}
+	svc := newTestService(repo, time.Now())
+	req := solvedRequest()
+	req.Problem.URL = "https://evil.example/problems/two-sum/"
+
+	_, err := svc.Handle(context.Background(), 100, req)
+	if !errors.Is(err, ErrValidation) {
+		t.Fatalf("error = %v, want ErrValidation", err)
+	}
+	if repo.calls != 0 {
+		t.Fatalf("repo calls = %d, want 0", repo.calls)
 	}
 }
 

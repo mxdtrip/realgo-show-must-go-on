@@ -1,0 +1,6 @@
+BEGIN;
+
+ALTER TABLE users
+    DROP COLUMN IF EXISTS is_demo;
+
+COMMIT;

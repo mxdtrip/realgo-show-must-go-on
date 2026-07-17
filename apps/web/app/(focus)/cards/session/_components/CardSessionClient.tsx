@@ -58,13 +58,10 @@ export function CardSessionClient({
     return () => controller.abort();
   }, [errorFallback, router, scope, reloadVersion]);
 
-  const persistRating = useCallback((cardId: string, rating: ReviewRating, reviewedAt: string) => {
+  const persistRating = useCallback(async (cardId: string, rating: ReviewRating, reviewedAt: string) => {
     const sessionId = sessionIdRef.current;
-    if (!sessionId) return;
-    rateCard(cardId, { sessionId, rating, reviewedAt }).catch(() => {
-      // Non-blocking: the local queue has already advanced; the next session
-      // fetch reflects whatever the server last accepted.
-    });
+    if (!sessionId) throw new Error("card session is not initialized");
+    await rateCard(cardId, { sessionId, rating, reviewedAt });
   }, []);
 
   if (loadState === "loading") {

@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/mxdtrip/freeburger/services/api/internal/auth"
 	"github.com/mxdtrip/freeburger/services/api/internal/server/response"
 	redisstore "github.com/mxdtrip/freeburger/services/api/internal/storage/redis"
 )
@@ -30,7 +31,14 @@ func rateLimit(store *redisstore.Storage, namespace string, limit int64, window 
 			return next
 		}
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			key := fmt.Sprintf("rate:%s:%s:%s:%s", namespace, r.Method, r.URL.Path, clientIP(r))
+			identity := "ip:" + clientIP(r)
+			if userID, ok := auth.UserIDFromContext(r.Context()); ok {
+				// Authenticated cost/ingest limits follow the account across
+				// devices and source IPs. This also keeps unrelated users behind
+				// one NAT in separate buckets.
+				identity = fmt.Sprintf("user:%d", userID)
+			}
+			key := fmt.Sprintf("rate:%s:%s:%s:%s", namespace, r.Method, r.URL.Path, identity)
 			count, retryAfter, err := incrementRateLimit(store, r, key, window)
 			if err != nil {
 				slog.Error("server: rate limit failed", slog.Any("err", err), slog.String("namespace", namespace))

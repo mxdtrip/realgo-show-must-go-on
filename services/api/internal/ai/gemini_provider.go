@@ -18,6 +18,14 @@ import (
 
 const requestTimeout = 45 * time.Second
 
+const (
+	maxProviderErrorBodyBytes = 2000
+	maxProviderResponseBytes  = 512 * 1024
+	maxStreamEventBytes       = 128 * 1024
+)
+
+var errProviderResponseTooLarge = errors.New("ai: provider response exceeds size limit")
+
 // chatMaxAttempts bounds retries on transient upstream failures (429/5xx):
 // the first call plus this many extra attempts, with exponential backoff.
 const chatMaxAttempts = 3
@@ -46,6 +54,7 @@ type GeminiProvider struct {
 	apiKey     string
 	model      string
 	baseURL    string
+	provider   string
 	httpClient *http.Client
 	// retryDelay is the base backoff delay for chat()'s 429/5xx retries.
 	// Defaults to chatRetryBaseDelay; tests shrink it to keep runtime short.
@@ -60,6 +69,7 @@ func NewGeminiProvider(cfg config.AI) *GeminiProvider {
 		apiKey:     cfg.APIKey,
 		model:      cfg.Model,
 		baseURL:    strings.TrimRight(cfg.BaseURL, "/"),
+		provider:   providerNameFromBaseURL(cfg.BaseURL),
 		httpClient: &http.Client{Timeout: requestTimeout},
 		retryDelay: chatRetryBaseDelay,
 	}
@@ -98,6 +108,20 @@ type chatCompletionChunk struct {
 }
 
 func (p *GeminiProvider) ModelName() string { return p.model }
+
+func (p *GeminiProvider) ProviderName() string { return p.provider }
+
+func providerNameFromBaseURL(baseURL string) string {
+	host := strings.ToLower(baseURL)
+	switch {
+	case strings.Contains(host, "api.groq.com"):
+		return "groq"
+	case strings.Contains(host, "googleapis.com"):
+		return "gemini"
+	default:
+		return "openai-compatible"
+	}
+}
 
 // GenerateCards asks the model for the three-card batch and strictly
 // validates the reply (see parseGenerationContent). A reply that fails
@@ -235,20 +259,14 @@ func (p *GeminiProvider) chatStream(ctx context.Context, messages []chatMessage,
 		return "", ErrQuotaExceeded
 	}
 	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		const maxLoggedBody = 2000
-		bodyStr := string(body)
-		if len(bodyStr) > maxLoggedBody {
-			bodyStr = bodyStr[:maxLoggedBody] + "...(truncated)"
-		}
-		return "", &APIError{StatusCode: resp.StatusCode, Body: bodyStr}
+		return "", &APIError{StatusCode: resp.StatusCode, Body: readProviderErrorBody(resp.Body)}
 	}
 
 	extractor := newHintFieldExtractor()
 	var full strings.Builder
 
 	scanner := bufio.NewScanner(resp.Body)
-	scanner.Buffer(make([]byte, 0, 64*1024), 1024*1024)
+	scanner.Buffer(make([]byte, 0, 64*1024), maxStreamEventBytes)
 	for scanner.Scan() {
 		line := scanner.Text()
 		data, ok := strings.CutPrefix(line, "data: ")
@@ -268,6 +286,9 @@ func (p *GeminiProvider) chatStream(ctx context.Context, messages []chatMessage,
 		delta := chunk.Choices[0].Delta.Content
 		if delta == "" {
 			continue
+		}
+		if len(delta) > maxProviderResponseBytes-full.Len() {
+			return "", errProviderResponseTooLarge
 		}
 		full.WriteString(delta)
 		if revealed := extractor.feed(delta); revealed != "" && onDelta != nil {
@@ -354,23 +375,43 @@ func (p *GeminiProvider) doChat(ctx context.Context, messages []chatMessage) (st
 		return "", ErrQuotaExceeded
 	}
 	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		const maxLoggedBody = 2000 // cap so a verbose HTML/JSON error page doesn't flood the log
-		bodyStr := string(body)
-		if len(bodyStr) > maxLoggedBody {
-			bodyStr = bodyStr[:maxLoggedBody] + "...(truncated)"
-		}
-		return "", &APIError{StatusCode: resp.StatusCode, Body: bodyStr}
+		return "", &APIError{StatusCode: resp.StatusCode, Body: readProviderErrorBody(resp.Body)}
 	}
 
+	body, err := readProviderResponseBody(resp.Body)
+	if err != nil {
+		return "", err
+	}
 	var completion chatCompletionResponse
-	if err := json.NewDecoder(resp.Body).Decode(&completion); err != nil {
+	if err := json.Unmarshal(body, &completion); err != nil {
 		return "", fmt.Errorf("ai: decode gemini response: %w", err)
 	}
 	if len(completion.Choices) == 0 {
 		return "", fmt.Errorf("ai: gemini returned no choices")
 	}
 	return completion.Choices[0].Message.Content, nil
+}
+
+func readProviderResponseBody(body io.Reader) ([]byte, error) {
+	limited, err := io.ReadAll(io.LimitReader(body, maxProviderResponseBytes+1))
+	if err != nil {
+		return nil, fmt.Errorf("ai: read provider response: %w", err)
+	}
+	if len(limited) > maxProviderResponseBytes {
+		return nil, errProviderResponseTooLarge
+	}
+	return limited, nil
+}
+
+func readProviderErrorBody(body io.Reader) string {
+	limited, err := io.ReadAll(io.LimitReader(body, maxProviderErrorBodyBytes+1))
+	if err != nil {
+		return "(failed to read provider error body)"
+	}
+	if len(limited) > maxProviderErrorBodyBytes {
+		return string(limited[:maxProviderErrorBodyBytes]) + "...(truncated)"
+	}
+	return string(limited)
 }
 
 type generatedCardJSON struct {

@@ -25,8 +25,16 @@ func (s *StatusService) Get(ctx context.Context, userID int64, limit int32) (Sta
 		return StatusResponse{}, err
 	}
 
+	connected := false
+	for _, platform := range platforms {
+		if platform.Status == "connected" {
+			connected = true
+			break
+		}
+	}
+
 	return StatusResponse{
-		Connected:    len(platforms) > 0,
+		Connected:    connected,
 		Platforms:    platforms,
 		RecentEvents: events,
 	}, nil

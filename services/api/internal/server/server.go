@@ -29,7 +29,10 @@ import (
 	"github.com/mxdtrip/freeburger/services/api/internal/storage/redis"
 )
 
-const requestTimeout = 30 * time.Second
+// The upstream AI client is bounded at 45 seconds. Keep the request context
+// slightly longer so synchronous/SSE responses can finish instead of being
+// cancelled by middleware first.
+const requestTimeout = 60 * time.Second
 
 // Deps are the dependencies required to build the HTTP handler.
 type Deps struct {
@@ -115,11 +118,14 @@ func New(deps Deps) http.Handler {
 			r.With(authRateLimit).Post("/register", ah.register)
 			r.With(authRateLimit).Post("/login", ah.login)
 			r.With(authRateLimit).Post("/refresh", ah.refresh)
+			r.With(requireAuth(deps.Auth), authRateLimit).Post("/device-session", ah.deviceSession)
 			r.Post("/logout", ah.logout)
 		})
 		r.With(requireAuth(deps.Auth)).Get("/me", ah.me)
 		r.With(requireAuth(deps.Auth)).Patch("/me/profile", ah.patchProfile)
 		r.With(requireAuth(deps.Auth)).Patch("/me/notification-settings", ah.patchNotificationSettings)
+		r.With(requireAuth(deps.Auth)).Post("/me/password", ah.changePassword)
+		r.With(requireAuth(deps.Auth)).Post("/me/sessions/revoke", ah.revokeAllSessions)
 		r.With(requireAuth(deps.Auth)).Post("/me/export", ah.postExport)
 		r.With(requireAuth(deps.Auth)).Delete("/me", ah.deleteMe)
 		r.Route("/users", func(r chi.Router) {
@@ -149,7 +155,8 @@ func New(deps Deps) http.Handler {
 		r.With(requireAuth(deps.Auth)).Get("/companies/search", companiesHandler.Search)
 
 		r.Route("/extension", func(r chi.Router) {
-			r.With(requireAuth(deps.Auth)).Group(func(r chi.Router) {
+			extensionRateLimit := rateLimit(deps.Redis, "extension", 120, time.Minute)
+			r.With(requireAuth(deps.Auth), extensionRateLimit).Group(func(r chi.Router) {
 				extension.RegisterRoutes(r, extensionHandler)
 			})
 		})
@@ -181,14 +188,14 @@ func New(deps Deps) http.Handler {
 		r.Route("/me/cards", func(r chi.Router) {
 			r.With(requireAuth(deps.Auth)).Group(func(r chi.Router) {
 				cards.RegisterRoutes(r, cardsHandler)
-				ai.RegisterCardRoutes(r, aiHandler)
+				ai.RegisterCardRoutes(r.With(rateLimit(deps.Redis, "card-generation", 10, time.Minute)), aiHandler)
 			})
 		})
 
 		r.Route("/me/quiz", func(r chi.Router) {
 			r.With(requireAuth(deps.Auth)).Group(func(r chi.Router) {
 				quiz.RegisterRoutes(r, quizHandler)
-				ai.RegisterQuizRoutes(r, aiHandler)
+				ai.RegisterQuizRoutes(r.With(rateLimit(deps.Redis, "quiz-generation", 10, time.Minute)), aiHandler)
 			})
 		})
 

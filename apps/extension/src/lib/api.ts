@@ -231,7 +231,8 @@ export async function getProblemCards(
  */
 export async function streamAssistantHint(
   payload: AssistantHintPayload,
-  onDelta: (text: string) => void
+  onDelta: (text: string) => void,
+  signal?: AbortSignal
 ): Promise<AssistantHintResult> {
   const baseUrl = await getApiBaseUrl();
   const url = `${baseUrl}${ASSISTANT_HINT_PATH}?stream=1`;
@@ -240,10 +241,10 @@ export async function streamAssistantHint(
   let token = await getAccessToken();
   if (!token) token = await tryRefresh();
 
-  let res = await authedPost(url, body, token);
+  let res = await authedPost(url, body, token, signal);
   if (res.status === 401) {
     token = await tryRefresh();
-    res = await authedPost(url, body, token);
+    res = await authedPost(url, body, token, signal);
   }
 
   if (!res.ok || !res.body) {
@@ -262,33 +263,53 @@ async function readAssistantHintStream(
   const reader = body.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
+  let receivedBytes = 0;
 
-  while (true) {
-    const { value, done } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
+  const MAX_STREAM_BYTES = 1024 * 1024;
+  const MAX_FRAME_BUFFER_CHARS = 256 * 1024;
 
-    let sep: number;
-    while ((sep = buffer.indexOf("\n\n")) !== -1) {
-      const frame = buffer.slice(0, sep);
-      buffer = buffer.slice(sep + 2);
-      const parsed = parseSseFrame(frame);
-      if (!parsed) continue;
+  try {
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      receivedBytes += value.byteLength;
+      if (receivedBytes > MAX_STREAM_BYTES) {
+        throw new ApiError("Ответ AI-помощника слишком большой.", 502, "response_too_large");
+      }
+      buffer += decoder.decode(value, { stream: true });
+      if (buffer.length > MAX_FRAME_BUFFER_CHARS && !buffer.includes("\n\n")) {
+        throw new ApiError("Некорректный поток AI-помощника.", 502, "stream_frame_too_large");
+      }
 
-      if (parsed.event === "delta") {
-        const data = JSON.parse(parsed.data) as { text: string };
-        onDelta(data.text);
-      } else if (parsed.event === "done") {
-        return JSON.parse(parsed.data) as AssistantHintResult;
-      } else if (parsed.event === "error") {
-        const data = JSON.parse(parsed.data) as { message?: string; code?: string };
-        throw new ApiError(
-          data.message ?? "AI-помощник сейчас недоступен.",
-          502,
-          data.code
-        );
+      let sep: number;
+      while ((sep = buffer.indexOf("\n\n")) !== -1) {
+        const frame = buffer.slice(0, sep);
+        buffer = buffer.slice(sep + 2);
+        const parsed = parseSseFrame(frame);
+        if (!parsed) continue;
+
+        if (parsed.event === "delta") {
+          const data = JSON.parse(parsed.data) as { text: string };
+          onDelta(data.text);
+        } else if (parsed.event === "done") {
+          return JSON.parse(parsed.data) as AssistantHintResult;
+        } else if (parsed.event === "error") {
+          const data = JSON.parse(parsed.data) as { message?: string; code?: string };
+          throw new ApiError(
+            data.message ?? "AI-помощник сейчас недоступен.",
+            502,
+            data.code
+          );
+        }
       }
     }
+  } finally {
+    try {
+      await reader.cancel();
+    } catch {
+      // The stream may already be closed or aborted.
+    }
+    reader.releaseLock();
   }
   throw new ApiError("AI-помощник прервал соединение.", 502, "stream_closed");
 }
@@ -328,7 +349,7 @@ async function tryRefresh(): Promise<string> {
   }
 }
 
-async function authedPost(url: string, body: string, token: string): Promise<Response> {
+async function authedPost(url: string, body: string, token: string, signal?: AbortSignal): Promise<Response> {
   try {
     return await fetch(url, {
       method: "POST",
@@ -337,8 +358,10 @@ async function authedPost(url: string, body: string, token: string): Promise<Res
         Authorization: `Bearer ${token}`,
       },
       body,
+      signal,
     });
-  } catch {
+  } catch (error) {
+    if (signal?.aborted) throw error;
     throw new ApiError(
       "Не удалось связаться с realgo. Проверьте, что бэкенд запущен.",
       0,

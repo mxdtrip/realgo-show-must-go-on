@@ -2932,6 +2932,95 @@ a.cabinet-panel__meta:hover {
   color: var(--accent-bright);
 }
 
+/* ---------- actionable review queue ---------- */
+
+.review-queue {
+  display: grid;
+}
+
+.review-queue > p {
+  margin: 0;
+  padding: 16px;
+  color: var(--text-dim);
+}
+
+.review-queue > p button,
+.review-queue__actions a,
+.review-queue__actions button {
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 6px 9px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text);
+  font-family: var(--font-stack-mono);
+  font-size: 11px;
+  text-decoration: none;
+}
+
+.review-queue__item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 20px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.review-queue__item:last-of-type {
+  border-bottom: 0;
+}
+
+.review-queue__item > div:first-child {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.review-queue__item span,
+.review-queue__item small,
+.review-queue__actions legend {
+  color: var(--text-faint);
+  font-family: var(--font-stack-mono);
+  font-size: 10.5px;
+}
+
+.review-queue__item strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.review-queue__actions,
+.review-queue__actions fieldset {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.review-queue__actions fieldset {
+  margin: 0;
+  border: 0;
+  padding: 0;
+}
+
+.review-queue__actions button:disabled {
+  opacity: 0.55;
+}
+
+.review-queue__error {
+  color: var(--danger-bright) !important;
+}
+
+@media (max-width: 720px) {
+  .review-queue__item {
+    grid-template-columns: 1fr;
+  }
+
+  .review-queue__actions,
+  .review-queue__actions fieldset {
+    flex-wrap: wrap;
+  }
+}
+
 /* ---------- toolbar row above tables/lists ---------- */
 
 .cabinet-toolbar {
@@ -3688,6 +3777,28 @@ a.roadmap-step__practice-card:hover {
 }
 
 /* ---------- cards page: session launcher ---------- */
+
+.cards-summary-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border: 1px solid color-mix(in srgb, var(--danger) 45%, transparent);
+  border-radius: 12px;
+  padding: 12px 16px;
+  color: var(--danger-bright);
+  font-family: var(--font-stack-mono);
+  font-size: 12px;
+}
+
+.cards-summary-error button {
+  border: 1px solid var(--danger);
+  border-radius: 8px;
+  padding: 7px 12px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
 
 .cards-launcher {
   display: grid;
@@ -4689,6 +4800,18 @@ a.roadmap-step__practice-card:hover {
   margin-bottom: 0;
   color: var(--text-faint);
   text-align: center;
+}
+
+.focus-rating__status {
+  margin: 0;
+  color: var(--text-dim);
+  font-family: var(--font-stack-mono);
+  font-size: 12px;
+  text-align: center;
+}
+
+.focus-rating__status--error {
+  color: var(--danger-bright);
 }
 
 .focus-rating > div {

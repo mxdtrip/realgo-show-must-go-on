@@ -96,6 +96,9 @@ func (h *Handler) answer(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, ErrAlreadyAnswered):
 			slog.Warn("quiz: answer rejected (already answered)", slog.Int64("user_id", userID), slog.Int64("question_id", questionID))
 			response.Fail(w, http.StatusConflict, "CONFLICT", "question already answered")
+		case errors.Is(err, ErrInvalidOption):
+			slog.Warn("quiz: answer rejected (invalid option)", slog.Int64("user_id", userID), slog.Int64("question_id", questionID), slog.Int("option", req.Option))
+			response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "option is out of range")
 		default:
 			slog.Error("quiz: answer failed", slog.Any("err", err), slog.Int64("user_id", userID), slog.Int64("question_id", questionID))
 			response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", "could not record answer")

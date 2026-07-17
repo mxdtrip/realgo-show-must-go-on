@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -52,9 +53,10 @@ func (r *pgRepository) GetAtlas(ctx context.Context, userID int64, companyCode s
 			return AtlasResponse{}, err
 		}
 		for _, company := range companies {
-			if company.Code != companyCode {
+			if company.Code != companyCode && !strings.EqualFold(company.Name, companyCode) {
 				continue
 			}
+			companyCode = company.Code
 			overlay = &AtlasCompanyOverlay{Code: company.Code, Name: company.Name, DemoOnly: company.DemoOnly}
 			break
 		}

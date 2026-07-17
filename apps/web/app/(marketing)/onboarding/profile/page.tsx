@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 
 import { updateProfile } from "../../../_api/account";
 import { useAuth } from "../../../_api/AuthProvider";
-import { searchCompanies } from "../../../_api/companies";
+import { searchCompanies, type Company } from "../../../_api/companies";
 import { ApiError } from "../../../_api/types";
 import { getDictionary, onboardingApiCopy } from "../../../_content/i18n";
 import { platformOptions, type PlatformId } from "../../../_profile/platforms";
@@ -17,18 +17,22 @@ import {
   type RoadmapResult,
 } from "../../../_profile/roadmapGenerator";
 
-const fallbackCompanies = [
-  "Amazon",
-  "Apple",
-  "Bloomberg",
-  "Google",
-  "Meta",
-  "Microsoft",
-  "Netflix",
-  "OpenAI",
-  "Uber",
-  "Yandex",
+const fallbackCompanies: readonly Company[] = [
+  { id: "cmp_amazon", name: "Amazon", source: "fallback" },
+  { id: "cmp_apple", name: "Apple", source: "fallback" },
+  { id: "cmp_bloomberg", name: "Bloomberg", source: "fallback" },
+  { id: "cmp_google", name: "Google", source: "fallback" },
+  { id: "cmp_meta", name: "Meta", source: "fallback" },
+  { id: "cmp_microsoft", name: "Microsoft", source: "fallback" },
+  { id: "cmp_netflix", name: "Netflix", source: "fallback" },
+  { id: "cmp_openai", name: "OpenAI", source: "fallback" },
+  { id: "cmp_uber", name: "Uber", source: "fallback" },
+  { id: "cmp_yandex", name: "Yandex", source: "fallback" },
 ] as const;
+
+const fallbackCompanyCodes = Object.fromEntries(
+  fallbackCompanies.map((company) => [company.name.toLowerCase(), company.id]),
+);
 
 type OnboardingStep = "platform" | "company" | "date" | "roadmap" | "welcome";
 
@@ -273,7 +277,8 @@ export default function OnboardingProfilePage() {
   const copy = dictionary.onboarding.profile;
 
   const [selectedPlatform, setSelectedPlatform] = useState<PlatformId | "">("");
-  const [companySuggestions, setCompanySuggestions] = useState<string[]>([...fallbackCompanies]);
+  const [companySuggestions, setCompanySuggestions] = useState<Company[]>([...fallbackCompanies]);
+  const [companyCodesByName, setCompanyCodesByName] = useState<Record<string, string>>(fallbackCompanyCodes);
   const [companyInput, setCompanyInput] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
   const [step, setStep] = useState<OnboardingStep>("platform");
@@ -294,6 +299,8 @@ export default function OnboardingProfilePage() {
 
   const currentStepIndex = Math.max(0, steps.indexOf(step));
   const selectedCompanies = useMemo(() => splitCompanies(companyInput), [companyInput]);
+  const targetCompany = selectedCompanies[0] ?? "";
+  const targetCompanyCode = companyCodesByName[targetCompany.toLowerCase()] ?? "";
   const currentStepHasValue =
     (step === "platform" && selectedPlatform.length > 0) ||
     (step === "company" && selectedCompanies.length > 0) ||
@@ -366,7 +373,7 @@ export default function OnboardingProfilePage() {
     const used = new Set(selectedCompanies.map((item) => item.toLowerCase()));
     if (query.length < 2) return [];
     return companySuggestions
-      .filter((item) => item.toLowerCase().includes(query) && !used.has(item.toLowerCase()))
+      .filter((item) => item.name.toLowerCase().includes(query) && !used.has(item.name.toLowerCase()))
       .slice(0, 6);
   }, [companySuggestions, companyInput, selectedCompanies]);
 
@@ -383,7 +390,11 @@ export default function OnboardingProfilePage() {
       try {
         const results = await searchCompanies(query.trim(), controller.signal, 8);
         if (!controller.signal.aborted) {
-          setCompanySuggestions(results.map((company) => company.name));
+          setCompanySuggestions(results);
+          setCompanyCodesByName((current) => ({
+            ...current,
+            ...Object.fromEntries(results.map((company) => [company.name.toLowerCase(), company.id])),
+          }));
         }
       } catch {
         // Keep fallback suggestions on error.
@@ -412,7 +423,7 @@ export default function OnboardingProfilePage() {
     if (step !== "roadmap") return;
     const controller = new AbortController();
     setRoadmapLoadState("loading");
-    generateRoadmap({ weeksCount, targetCompany: selectedCompanies[0] ?? "" }, controller.signal)
+    generateRoadmap({ weeksCount, targetCompany, targetCompanyCode }, controller.signal)
       .then((result) => {
         setRoadmapResult(result);
         setRoadmapLoadState("loaded");
@@ -422,7 +433,7 @@ export default function OnboardingProfilePage() {
         setRoadmapLoadState("error");
       });
     return () => controller.abort();
-  }, [step, weeksCount, selectedCompanies]);
+  }, [step, targetCompany, targetCompanyCode, weeksCount]);
 
   const saveProfile = useCallback(async () => {
     setSaving(true);
@@ -430,31 +441,41 @@ export default function OnboardingProfilePage() {
     try {
       const timezone =
         Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+      const roadmapConfig = { weeksCount, targetCompany, targetCompanyCode };
+      const result = roadmapLoadState === "loaded"
+        ? roadmapResult
+        : await generateRoadmap(roadmapConfig);
+
+      // Persist every client-side prerequisite before committing
+      // onboarding_completed on the server. A failed roadmap request can now
+      // be retried without the auth guard skipping this page on reload.
+      saveRoadmap(roadmapConfig, result);
+      window.localStorage.setItem(
+        onboardingStorageKey,
+        JSON.stringify({
+          platform: selectedPlatform || null,
+          interviewDate: selectedDate || null,
+          targetCompany: targetCompany || null,
+          targetCompanyCode: targetCompanyCode || null,
+          savedAt: new Date().toISOString(),
+        }),
+      );
+
       await updateProfile({
-        target_company: selectedCompanies[0] ?? "",
+        target_company: targetCompany,
         interview_date: selectedDate ? `${selectedDate}T09:00:00Z` : undefined,
         platform: selectedPlatform || undefined,
         timezone,
         onboarding_completed: true,
       });
-      window.localStorage.setItem(
-        onboardingStorageKey,
-        JSON.stringify({
-          platform: selectedPlatform || null,
-          savedAt: new Date().toISOString(),
-        }),
-      );
-      // Save the personalized roadmap to localStorage for the /roadmap page.
-      const config = { weeksCount, targetCompany: selectedCompanies[0] ?? "" };
-      const result = await generateRoadmap(config);
-      saveRoadmap(config, result);
+      setRoadmapResult(result);
       setStep("welcome");
     } catch (e) {
       setSaveError(e instanceof ApiError ? e.message : onboardingApiCopy.saveFailed);
     } finally {
       setSaving(false);
     }
-  }, [selectedCompanies, selectedDate, selectedPlatform, weeksCount]);
+  }, [roadmapLoadState, roadmapResult, selectedDate, selectedPlatform, targetCompany, targetCompanyCode, weeksCount]);
 
   const goNext = useCallback(() => {
     if (step === "platform") {
@@ -624,7 +645,7 @@ export default function OnboardingProfilePage() {
               </label>
               <datalist id="realgo-company-suggestions">
                 {suggestions.map((item) => (
-                  <option key={item} value={item} />
+                  <option key={item.id} value={item.name} />
                 ))}
               </datalist>
               {selectedCompanies.length > 0 ? (
@@ -644,8 +665,8 @@ export default function OnboardingProfilePage() {
               {suggestions.length > 0 ? (
                 <div className="company-suggestions" aria-label={copy.company.suggestionsLabel}>
                   {suggestions.map((item) => (
-                    <button key={item} type="button" onClick={() => setCompanyInput(replaceActiveCompany(companyInput, item))}>
-                      {item}
+                    <button key={item.id} type="button" onClick={() => setCompanyInput(replaceActiveCompany(companyInput, item.name))}>
+                      {item.name}
                     </button>
                   ))}
                 </div>
@@ -683,6 +704,8 @@ export default function OnboardingProfilePage() {
               </p>
               {roadmapLoadState === "loading" ? (
                 <p className="onboarding-hint">{copy.roadmap.previewLoading}</p>
+              ) : roadmapLoadState === "error" ? (
+                <p className="onboarding-save-error" role="alert">{copy.roadmap.previewError}</p>
               ) : roadmapResult.source === "none" ? (
                 <div className="onboarding-roadmap-empty">
                   <strong>{copy.roadmap.noPoolTitle}</strong>

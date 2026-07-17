@@ -14,7 +14,7 @@ import (
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (email, password_hash)
 VALUES ($1, $2)
-RETURNING id, email, password_hash, timezone, plan, interview_date, created_at, updated_at, prep_goal, grade, target_company, target_position, onboarding_completed_at, notify_review_reminder, notify_weekly_digest, notify_email_enabled, target_topics, platform
+RETURNING id, email, password_hash, timezone, plan, interview_date, created_at, updated_at, prep_goal, grade, target_company, target_position, onboarding_completed_at, notify_review_reminder, notify_weekly_digest, notify_email_enabled, target_topics, platform, is_demo
 `
 
 type CreateUserParams struct {
@@ -44,13 +44,31 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.NotifyEmailEnabled,
 		&i.TargetTopics,
 		&i.Platform,
+		&i.IsDemo,
 	)
 	return i, err
 }
 
+const deleteAIRequestLogsByUserID = `-- name: DeleteAIRequestLogsByUserID :exec
+DELETE FROM ai_request_logs WHERE user_id = $1::bigint
+`
+
+func (q *Queries) DeleteAIRequestLogsByUserID(ctx context.Context, userID int64) error {
+	_, err := q.db.Exec(ctx, deleteAIRequestLogsByUserID, userID)
+	return err
+}
+
+const deleteExtensionEventsByUserID = `-- name: DeleteExtensionEventsByUserID :exec
+DELETE FROM extension_events WHERE user_id = $1::bigint
+`
+
+func (q *Queries) DeleteExtensionEventsByUserID(ctx context.Context, userID int64) error {
+	_, err := q.db.Exec(ctx, deleteExtensionEventsByUserID, userID)
+	return err
+}
+
 const deleteUserByID = `-- name: DeleteUserByID :exec
-DELETE FROM users
-WHERE id = $1
+DELETE FROM users WHERE users.id = $1
 `
 
 func (q *Queries) DeleteUserByID(ctx context.Context, id int64) error {
@@ -59,7 +77,7 @@ func (q *Queries) DeleteUserByID(ctx context.Context, id int64) error {
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, email, password_hash, timezone, plan, interview_date, created_at, updated_at, prep_goal, grade, target_company, target_position, onboarding_completed_at, notify_review_reminder, notify_weekly_digest, notify_email_enabled, target_topics, platform FROM users
+SELECT id, email, password_hash, timezone, plan, interview_date, created_at, updated_at, prep_goal, grade, target_company, target_position, onboarding_completed_at, notify_review_reminder, notify_weekly_digest, notify_email_enabled, target_topics, platform, is_demo FROM users
 WHERE email = $1
 `
 
@@ -85,12 +103,13 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.NotifyEmailEnabled,
 		&i.TargetTopics,
 		&i.Platform,
+		&i.IsDemo,
 	)
 	return i, err
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, email, password_hash, timezone, plan, interview_date, created_at, updated_at, prep_goal, grade, target_company, target_position, onboarding_completed_at, notify_review_reminder, notify_weekly_digest, notify_email_enabled, target_topics, platform FROM users
+SELECT id, email, password_hash, timezone, plan, interview_date, created_at, updated_at, prep_goal, grade, target_company, target_position, onboarding_completed_at, notify_review_reminder, notify_weekly_digest, notify_email_enabled, target_topics, platform, is_demo FROM users
 WHERE id = $1
 `
 
@@ -116,8 +135,22 @@ func (q *Queries) GetUserByID(ctx context.Context, id int64) (User, error) {
 		&i.NotifyEmailEnabled,
 		&i.TargetTopics,
 		&i.Platform,
+		&i.IsDemo,
 	)
 	return i, err
+}
+
+const lockUserForDeletion = `-- name: LockUserForDeletion :one
+SELECT id FROM users
+WHERE id = $1
+FOR UPDATE
+`
+
+// Blocks new child-row FK references while account erasure removes payloads.
+func (q *Queries) LockUserForDeletion(ctx context.Context, id int64) (int64, error) {
+	row := q.db.QueryRow(ctx, lockUserForDeletion, id)
+	err := row.Scan(&id)
+	return id, err
 }
 
 const updateNotificationSettings = `-- name: UpdateNotificationSettings :one
@@ -128,7 +161,7 @@ SET
   notify_email_enabled   = COALESCE($3, notify_email_enabled),
   updated_at             = NOW()
 WHERE id = $4
-RETURNING id, email, password_hash, timezone, plan, interview_date, created_at, updated_at, prep_goal, grade, target_company, target_position, onboarding_completed_at, notify_review_reminder, notify_weekly_digest, notify_email_enabled, target_topics, platform
+RETURNING id, email, password_hash, timezone, plan, interview_date, created_at, updated_at, prep_goal, grade, target_company, target_position, onboarding_completed_at, notify_review_reminder, notify_weekly_digest, notify_email_enabled, target_topics, platform, is_demo
 `
 
 type UpdateNotificationSettingsParams struct {
@@ -166,8 +199,28 @@ func (q *Queries) UpdateNotificationSettings(ctx context.Context, arg UpdateNoti
 		&i.NotifyEmailEnabled,
 		&i.TargetTopics,
 		&i.Platform,
+		&i.IsDemo,
 	)
 	return i, err
+}
+
+const updateUserPassword = `-- name: UpdateUserPassword :execrows
+UPDATE users
+SET password_hash = $2, updated_at = NOW()
+WHERE id = $1
+`
+
+type UpdateUserPasswordParams struct {
+	ID           int64
+	PasswordHash string
+}
+
+func (q *Queries) UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) (int64, error) {
+	result, err := q.db.Exec(ctx, updateUserPassword, arg.ID, arg.PasswordHash)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const updateUserProfile = `-- name: UpdateUserProfile :one
@@ -187,7 +240,7 @@ SET
   END,
   updated_at              = NOW()
 WHERE id = $10
-RETURNING id, email, password_hash, timezone, plan, interview_date, created_at, updated_at, prep_goal, grade, target_company, target_position, onboarding_completed_at, notify_review_reminder, notify_weekly_digest, notify_email_enabled, target_topics, platform
+RETURNING id, email, password_hash, timezone, plan, interview_date, created_at, updated_at, prep_goal, grade, target_company, target_position, onboarding_completed_at, notify_review_reminder, notify_weekly_digest, notify_email_enabled, target_topics, platform, is_demo
 `
 
 type UpdateUserProfileParams struct {
@@ -239,6 +292,7 @@ func (q *Queries) UpdateUserProfile(ctx context.Context, arg UpdateUserProfilePa
 		&i.NotifyEmailEnabled,
 		&i.TargetTopics,
 		&i.Platform,
+		&i.IsDemo,
 	)
 	return i, err
 }

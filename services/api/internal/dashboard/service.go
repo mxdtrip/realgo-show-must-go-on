@@ -191,7 +191,7 @@ func mapWeakPatterns(items []patterns.WeakPattern) []WeakPattern {
 		mapped = append(mapped, WeakPattern{
 			ID:         patternID(item.PatternCode),
 			Name:       item.Pattern,
-			Confidence: weakPatternConfidence(item.HardCount),
+			Confidence: weakPatternConfidence(item.HardCount, item.ReviewCount),
 			Signal:     fmt.Sprintf("%d hard из %d повторений", item.HardCount, item.ReviewCount),
 		})
 	}
@@ -246,8 +246,14 @@ func patternID(code string) string {
 	return "pat_" + code
 }
 
-func weakPatternConfidence(hardCount int) int {
-	return clamp(100-hardCount*20, 0, 100)
+func weakPatternConfidence(hardCount, reviewCount int) int {
+	if reviewCount <= 0 {
+		return 100
+	}
+	// A ratio remains meaningful as history grows: five hard ratings among a
+	// hundred reviews should not look worse than three among four.
+	hardPercent := (hardCount*100 + reviewCount/2) / reviewCount
+	return clamp(100-hardPercent, 0, 100)
 }
 
 func readinessHint(progressCount int) string {

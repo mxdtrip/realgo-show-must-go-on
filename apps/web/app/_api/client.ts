@@ -79,16 +79,51 @@ export function refreshAccessToken(): Promise<string> {
 }
 
 async function doRefreshAccessToken(): Promise<string> {
-  const refresh = getRefreshToken();
-  if (!refresh) {
+  const initialRefresh = getRefreshToken();
+  const initialSubject = accessTokenSubject(getAccessToken());
+  if (!initialRefresh) {
     throw new ApiError("Сессия не найдена. Войдите в аккаунт.", 401, "no_session");
   }
+
+  // refreshInFlight protects one tab. Web Locks extends the same guarantee to
+  // every tab on this origin: after waiting, a loser reuses the token pair the
+  // winner already stored instead of submitting the consumed refresh token.
+  const locks =
+    typeof navigator !== "undefined"
+      ? (navigator as Navigator & { locks?: LockManager }).locks
+      : undefined;
+  if (locks) {
+    return locks.request("realgo-auth-refresh", async () => {
+      const currentRefresh = getRefreshToken();
+      if (currentRefresh && currentRefresh !== initialRefresh) {
+        const access = getAccessToken();
+        // A normal cross-tab refresh keeps the JWT subject. A login into a
+        // different account also replaces the refresh token, but replaying the
+        // original request with that account's access token would mutate/read
+        // the wrong account. Fail that one request instead.
+        if (access && initialSubject && accessTokenSubject(access) === initialSubject) {
+          return access;
+        }
+        throw new ApiError("Аккаунт изменился. Повторите действие.", 409, "session_changed");
+      }
+      return exchangeRefreshToken(currentRefresh ?? initialRefresh);
+    });
+  }
+  return exchangeRefreshToken(initialRefresh);
+}
+
+async function exchangeRefreshToken(refresh: string): Promise<string> {
   try {
     const data = await rawRequest<{ tokens: AuthTokens }>(
       "/auth/refresh",
       { method: "POST", body: { refresh_token: refresh } },
       null,
     );
+    if (getRefreshToken() !== refresh) {
+      // Login/logout may have replaced the session while this network request
+      // was in flight. Never resurrect or overwrite that newer account.
+      throw new ApiError("Сессия изменилась. Повторите действие.", 409, "session_changed");
+    }
     setTokens(data.tokens);
     return data.tokens.access_token;
   } catch (e) {
@@ -96,8 +131,22 @@ async function doRefreshAccessToken(): Promise<string> {
     // it so the guard sends the user back to login. Transient failures (5xx, 429,
     // rate limit, network/status 0) must NOT wipe a still-valid session, otherwise
     // a hiccup on a public page silently logs the user out.
-    if (e instanceof ApiError && e.status === 401) clearTokens();
+    if (e instanceof ApiError && e.status === 401 && getRefreshToken() === refresh) clearTokens();
     throw e;
+  }
+}
+
+function accessTokenSubject(token: string | null): string | null {
+  if (!token) return null;
+  try {
+    const payload = token.split(".")[1];
+    if (!payload) return null;
+    const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, "=");
+    const claims = JSON.parse(atob(padded)) as { sub?: unknown };
+    return typeof claims.sub === "string" && claims.sub !== "" ? claims.sub : null;
+  } catch {
+    return null;
   }
 }
 

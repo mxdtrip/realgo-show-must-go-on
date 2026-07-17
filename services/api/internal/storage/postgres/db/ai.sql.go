@@ -16,8 +16,8 @@ INSERT INTO ai_request_logs (user_id, feature, provider, model, status)
 VALUES (
     $1::bigint,
     $2,
-    'openai',
-    'gpt-4o-mini',
+    'stub',
+    NULL,
     'queued'
 )
 RETURNING id, created_at
@@ -41,20 +41,22 @@ func (q *Queries) CreateAIRequestLog(ctx context.Context, arg CreateAIRequestLog
 }
 
 const logCardGenerationRequest = `-- name: LogCardGenerationRequest :exec
-INSERT INTO ai_request_logs (user_id, feature, provider, model, status)
+INSERT INTO ai_request_logs (user_id, feature, provider, model, prompt_version, status)
 VALUES (
     NULL,
     'card_generation',
     $1,
     $2,
-    $3
+    $3,
+    $4
 )
 `
 
 type LogCardGenerationRequestParams struct {
-	Provider pgtype.Text
-	Model    pgtype.Text
-	Status   pgtype.Text
+	Provider      pgtype.Text
+	Model         pgtype.Text
+	PromptVersion pgtype.Text
+	Status        pgtype.Text
 }
 
 // Records the outcome of one CardProvisioner generation attempt (success,
@@ -62,6 +64,11 @@ type LogCardGenerationRequestParams struct {
 // the resulting cards are global, not tied to whichever user's solve event
 // happened to trigger generation.
 func (q *Queries) LogCardGenerationRequest(ctx context.Context, arg LogCardGenerationRequestParams) error {
-	_, err := q.db.Exec(ctx, logCardGenerationRequest, arg.Provider, arg.Model, arg.Status)
+	_, err := q.db.Exec(ctx, logCardGenerationRequest,
+		arg.Provider,
+		arg.Model,
+		arg.PromptVersion,
+		arg.Status,
+	)
 	return err
 }

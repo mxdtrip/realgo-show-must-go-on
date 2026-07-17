@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"math"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -257,13 +258,15 @@ func (r *pgRepository) upsertSchedule(ctx context.Context, q *db.Queries, in Ing
 	default:
 		// Re-solve — use NextWithState with existing FSRS history.
 		prior := scheduler.SchedulerState{
-			Stability:  existing.Stability,
-			Difficulty: existing.Difficulty,
-			Ease:       existing.Ease,
-			State:      int8(existing.State),
-			Lapses:     uint64(existing.Lapses),
-			LastReview: existing.LastReviewAt.Time,
-			Due:        existing.NextReviewAt.Time,
+			Stability:     existing.Stability,
+			Difficulty:    existing.Difficulty,
+			Ease:          existing.Ease,
+			State:         int8(existing.State),
+			ScheduledDays: uint64(math.Max(0, math.Round(existing.IntervalDays))),
+			Reps:          uint64(max(0, existing.ReviewCount.Int32)),
+			Lapses:        uint64(max(0, existing.Lapses)),
+			LastReview:    existing.LastReviewAt.Time,
+			Due:           existing.NextReviewAt.Time,
 		}
 		decision, derr := r.sched.NextWithState(prior, rating, in.EventTime)
 		if derr != nil {

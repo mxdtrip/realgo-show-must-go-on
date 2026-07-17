@@ -161,8 +161,8 @@ func TestServiceGet_UserWithData(t *testing.T) {
 	if weak.ID != "pat_sliding_window" {
 		t.Fatalf("weak ID = %q, want pat_sliding_window", weak.ID)
 	}
-	if weak.Confidence != 40 {
-		t.Fatalf("weak Confidence = %d, want 40", weak.Confidence)
+	if weak.Confidence != 25 {
+		t.Fatalf("weak Confidence = %d, want 25", weak.Confidence)
 	}
 	if weak.Signal != "3 hard из 4 повторений" {
 		t.Fatalf("weak Signal = %q", weak.Signal)

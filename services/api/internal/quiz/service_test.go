@@ -60,12 +60,16 @@ func (f *fakeRater) RateByProblemID(_ context.Context, userID, problemID int64, 
 
 func int64Ptr(v int64) *int64 { return &v }
 
+func quizQuestion(correctOption int, problemID *int64) questionDetail {
+	return questionDetail{CorrectOption: correctOption, OptionCount: 4, ProblemID: problemID}
+}
+
 // --- tests ---
 
 // 1. ProblemID задан, верный ответ → Correct=true, FSRS-рейтинг "normal" (fsrs.Good).
 func TestRecordAnswer_CorrectAnswer_RatesNormal(t *testing.T) {
 	repo := &fakeRepo{
-		question: questionDetail{CorrectOption: 1, ProblemID: int64Ptr(42)},
+		question: quizQuestion(1, int64Ptr(42)),
 		rows:     1,
 	}
 	rater := &fakeRater{}
@@ -98,7 +102,7 @@ func TestRecordAnswer_CorrectAnswer_RatesNormal(t *testing.T) {
 // 2. ProblemID задан, неверный ответ → Correct=false, FSRS-рейтинг "hard".
 func TestRecordAnswer_IncorrectAnswer_RatesHard(t *testing.T) {
 	repo := &fakeRepo{
-		question: questionDetail{CorrectOption: 1, ProblemID: int64Ptr(42)},
+		question: quizQuestion(1, int64Ptr(42)),
 		rows:     1,
 	}
 	rater := &fakeRater{}
@@ -122,7 +126,7 @@ func TestRecordAnswer_IncorrectAnswer_RatesHard(t *testing.T) {
 // 3. ProblemID=nil (вопрос по pattern) → FSRS не вызывается.
 func TestRecordAnswer_PatternOnly_SkipsRating(t *testing.T) {
 	repo := &fakeRepo{
-		question: questionDetail{CorrectOption: 1, ProblemID: nil}, // pattern-only
+		question: quizQuestion(1, nil), // pattern-only
 		rows:     1,
 	}
 	rater := &fakeRater{}
@@ -160,7 +164,7 @@ func TestRecordAnswer_QuestionNotFound(t *testing.T) {
 // 5. Повторный ответ (rows=0) → ErrAlreadyAnswered; FSRS не вызывается.
 func TestRecordAnswer_AlreadyAnswered(t *testing.T) {
 	repo := &fakeRepo{
-		question: questionDetail{CorrectOption: 1, ProblemID: int64Ptr(42)},
+		question: quizQuestion(1, int64Ptr(42)),
 		rows:     0, // анти-чит: пара уже существует
 	}
 	rater := &fakeRater{}
@@ -175,10 +179,26 @@ func TestRecordAnswer_AlreadyAnswered(t *testing.T) {
 	}
 }
 
+func TestRecordAnswer_RejectsOptionOutsideQuestionRange(t *testing.T) {
+	for _, option := range []int{-1, 4} {
+		repo := &fakeRepo{question: quizQuestion(1, int64Ptr(42)), rows: 1}
+		rater := &fakeRater{}
+		svc := NewService(repo, rater)
+
+		_, err := svc.RecordAnswer(context.Background(), 7, 100, option)
+		if !errors.Is(err, ErrInvalidOption) {
+			t.Errorf("option %d: expected ErrInvalidOption, got %v", option, err)
+		}
+		if repo.recordCalls != 0 || len(rater.calls) != 0 {
+			t.Errorf("option %d: invalid input reached storage/rater", option)
+		}
+	}
+}
+
 // 6. FSRS-рейтинг упал — это non-fatal: ответ всё равно успешен.
 func TestRecordAnswer_RatingErrorIsNonFatal(t *testing.T) {
 	repo := &fakeRepo{
-		question: questionDetail{CorrectOption: 1, ProblemID: int64Ptr(42)},
+		question: quizQuestion(1, int64Ptr(42)),
 		rows:     1,
 	}
 	rater := &fakeRater{err: errors.New("fsrs down")}
@@ -200,7 +220,7 @@ func TestRecordAnswer_RatingErrorIsNonFatal(t *testing.T) {
 func TestRecordAnswer_CorrectnessBoundary(t *testing.T) {
 	const correctOption = 2
 	repo := &fakeRepo{
-		question: questionDetail{CorrectOption: correctOption, ProblemID: int64Ptr(42)},
+		question: quizQuestion(correctOption, int64Ptr(42)),
 		rows:     1,
 	}
 	rater := &fakeRater{}
