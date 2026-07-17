@@ -1512,7 +1512,7 @@ h3 {
   margin: 0 auto;
   padding: clamp(48px, 7vw, 80px) var(--pad) 32px;
   display: grid;
-  grid-template-columns: 1.4fr repeat(3, 1fr);
+  grid-template-columns: 1.4fr repeat(4, 1fr);
   gap: 40px;
 }
 
