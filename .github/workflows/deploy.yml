@@ -1,0 +1,44 @@
+name: Deploy staging
+# Staging auto-deploy for the realgo-show-must-go-on fork: every push to dev
+# rebuilds the isolated realgo-staging compose stack on appbox (see
+# docker-compose.staging.yml), served as staging.realgo.dev via the VPS edge.
+# Prod (realgo.dev) deploys from mxdtrip/freeburger and is untouched by this.
+on:
+  push:
+    branches: [dev]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, linux, appbox]
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build & start staging stack
+        env:
+          AUTH_JWT_SECRET: ${{ secrets.AUTH_JWT_SECRET }}
+          FRP_VPS_HOST: ${{ secrets.FRP_VPS_HOST }}
+          FRP_TOKEN: ${{ secrets.FRP_TOKEN }}
+          # No SEED_USERS_PASSWORD here on purpose: staging runs on a restored
+          # prod snapshot and the seed jobs are parked behind an unused profile
+          # (see docker-compose.staging.yml), so nothing would consume it.
+        run: |
+          docker compose -f docker-compose.yml -f docker-compose.staging.yml --profile prod-demo pull --ignore-buildable || true
+          docker compose -f docker-compose.yml -f docker-compose.staging.yml --profile prod-demo up -d --build --remove-orphans
+
+      - name: Smoke check
+        run: |
+          sleep 5
+          # Through the staging caddy on its host port: / must be the web app,
+          # /healthz must reach the api container.
+          curl -fsS -o /dev/null -w "web: %{http_code}\n" http://127.0.0.1:8081/
+          curl -fsS -o /dev/null -w "api: %{http_code}\n" http://127.0.0.1:8081/healthz
+
+      - name: Prune old images
+        run: docker image prune -f

@@ -1,0 +1,65 @@
+# Staging overlay for the appbox server, merged on top of docker-compose.yml:
+# `docker compose -f docker-compose.yml -f docker-compose.staging.yml --profile prod-demo up -d --build`
+#
+# This is the deploy target of the realgo-show-must-go-on fork: a second, fully
+# isolated copy of the product stack running NEXT TO the freeburger prod stack
+# on the same docker daemon. Isolation comes from the project name below (own
+# containers/network/volumes, so its pgdata never touches prod data) plus
+# non-colliding host ports. Exposed to the internet as staging.realgo.dev
+# through the same VPS edge (frps:8081, see frpc.staging.toml).
+#
+# Differences from prod on purpose:
+#   - no vpngw: staging runs without the VLESS egress tunnel, so AI card
+#     generation is disabled here (GEMINI_API_KEY stays unset).
+#   - frpc registers its own tunnel proxy (remotePort 8081) and does NOT
+#     carry the homeserver-ssh proxy — prod's frpc already holds :2222.
+#   - seed jobs are parked behind a never-enabled profile (see below).
+
+name: realgo-staging
+
+services:
+  # Staging's content comes from a restored prod DB snapshot, not from the
+  # seed fixtures — so every seed job is parked behind a profile the deploy
+  # workflow never enables. Without this they would re-run on EVERY deploy on
+  # top of real user rows; the seeds are meant to be idempotent since #215,
+  # but that is exactly the class of bug that once wiped user progress in
+  # prod, and there is no reason to re-take the risk on data we did not
+  # generate. Nothing outside this group depends on them (api/web/caddy only
+  # need postgres/redis/migrate), so parking them changes no other wiring.
+  #
+  # `migrate` deliberately stays ON: the snapshot carries the schema plus its
+  # schema_migrations table, so migrate is a no-op when staging is level with
+  # the dump, and correctly applies the delta when the fork adds migrations.
+  #
+  # To load fixtures into staging on purpose (e.g. a from-scratch DB with no
+  # snapshot), add `--profile seeds` to the compose command.
+  seed-roadmap:
+    profiles: ["seeds"]
+  seed-cards:
+    profiles: ["seeds"]
+  seed-pattern-content:
+    profiles: ["seeds"]
+  seed-pattern-cards:
+    profiles: ["seeds"]
+  seed-atlas:
+    profiles: ["seeds"]
+  seed-subpattern-cards:
+    profiles: ["seeds"]
+  seed-users:
+    profiles: ["seeds"]
+
+  postgres:
+    ports: !override
+      - "127.0.0.1:5433:5432"
+
+  redis:
+    ports: !override
+      - "127.0.0.1:6380:6379"
+
+  caddy:
+    ports: !override
+      - "8081:80"
+
+  frpc:
+    volumes: !override
+      - ./frpc.staging.toml:/etc/frp/frpc.toml:ro
