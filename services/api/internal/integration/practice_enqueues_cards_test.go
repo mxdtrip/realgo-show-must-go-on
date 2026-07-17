@@ -4,6 +4,7 @@ package integration
 
 import (
 	"net/http"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -57,11 +58,21 @@ func TestContractPracticeAddEnqueuesSubpatternCards(t *testing.T) {
 	})
 
 	t.Run("Remove keeps review history intact", func(t *testing.T) {
+		// Remove only clears schedules Add eager-enqueued but the user never
+		// touched (see RemoveUnreviewedPracticeSchedules); rate every card
+		// first so this subtest actually exercises "history survives
+		// removal" rather than "untouched schedules get cleaned up".
+		for _, cardID := range cardIDs {
+			resp := h.request(t, http.MethodPost, "/api/v1/me/cards/"+strconv.FormatInt(cardID, 10)+"/rate", tokens.access,
+				map[string]string{"rating": "normal", "reviewedAt": "2026-07-07T10:00:00Z"})
+			requireSuccessEnvelope(t, resp, http.StatusOK)
+		}
+
 		resp := h.request(t, http.MethodDelete, "/api/v1/me/practice/subpatterns/"+subpatternCode, tokens.access, nil)
 		require.Equal(t, http.StatusNoContent, resp.status, resp.raw)
 
 		scheduled := h.countReviewSchedulesForCards(t, tokens.userID, cardIDs)
-		require.Equal(t, 3, scheduled, "removing from practice must not delete review_schedules")
+		require.Equal(t, 3, scheduled, "removing from practice must not delete reviewed review_schedules")
 	})
 
 	t.Run("unknown subpattern code is rejected", func(t *testing.T) {
