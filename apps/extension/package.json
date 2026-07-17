@@ -2,12 +2,13 @@
   "name": "@freeburger/extension",
   "version": "0.1.0",
   "private": true,
-  "description": "realgo browser extension — fixes a coding-problem result after submit and feeds it into the spaced-repetition queue.",
+  "description": "realgo — фиксирует решённую задачу на LeetCode и HackerRank и добавляет её в очередь интервальных повторений.",
   "scripts": {
     "dev": "plasmo dev",
     "dev:firefox": "plasmo dev --target=firefox-mv3",
     "build": "plasmo build",
     "build:firefox": "plasmo build --target=firefox-mv3",
+    "build:store": "node scripts/build-store.mjs",
     "package": "plasmo package",
     "package:crx:mac": "npm run build && \"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome\" --pack-extension=build/chrome-mv3-prod --pack-extension-key=${REALGO_EXTENSION_KEY:-$HOME/.realgo/extension/realgo-extension.pem}",
     "preview": "vite --config preview/vite.config.ts",
@@ -41,11 +42,6 @@
     "permissions": [
       "storage",
       "activeTab"
-    ],
-    "optional_host_permissions": [
-      "http://localhost/*",
-      "http://127.0.0.1/*",
-      "https://*/*"
     ],
     "host_permissions": [
       "https://www.hackerrank.com/*",
