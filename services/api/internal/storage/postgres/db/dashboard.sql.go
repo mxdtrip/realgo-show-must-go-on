@@ -35,7 +35,11 @@ progress AS (
             WHERE solved_at IS NOT NULL
                OR status IN ('solved', 'reviewing')
         )::integer AS solved_count,
-        COUNT(*)::integer AS progress_count,
+        COUNT(*) FILTER (
+            WHERE confidence IS NOT NULL
+               OR rating IS NOT NULL
+               OR status IN ('in_progress', 'solved', 'reviewing')
+        )::integer AS progress_count,
         ROUND(COALESCE(AVG(
             CASE
                 WHEN confidence IS NOT NULL THEN LEAST(100, GREATEST(0, confidence))
@@ -46,6 +50,10 @@ progress AS (
                 WHEN status = 'in_progress' THEN 30
                 ELSE 0
             END
+        ) FILTER (
+            WHERE confidence IS NOT NULL
+               OR rating IS NOT NULL
+               OR status IN ('in_progress', 'solved', 'reviewing')
         ), 0))::integer AS readiness
     FROM user_problem_progress
     WHERE user_id = $1
@@ -60,14 +68,6 @@ activity_days AS (
         SELECT (upp.solved_at AT TIME ZONE COALESCE((SELECT tz FROM settings), 'UTC'))::date AS activity_day
         FROM user_problem_progress upp
         WHERE upp.user_id = $1 AND upp.solved_at IS NOT NULL
-        UNION ALL
-        SELECT (upp.last_reviewed_at AT TIME ZONE COALESCE((SELECT tz FROM settings), 'UTC'))::date AS activity_day
-        FROM user_problem_progress upp
-        WHERE upp.user_id = $1 AND upp.last_reviewed_at IS NOT NULL
-        UNION ALL
-        SELECT (upp.first_seen_at AT TIME ZONE COALESCE((SELECT tz FROM settings), 'UTC'))::date AS activity_day
-        FROM user_problem_progress upp
-        WHERE upp.user_id = $1 AND upp.first_seen_at IS NOT NULL
     ) days
     WHERE activity_day IS NOT NULL
       AND activity_day <= (SELECT day FROM today)

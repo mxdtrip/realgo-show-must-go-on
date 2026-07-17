@@ -4,5 +4,29 @@
 # Caddy can obtain a Let's Encrypt cert directly.
 {$REALGO_SITE_ADDRESS:realgo.dev} {
 	encode zstd gzip
+	header {
+		Content-Security-Policy "frame-ancestors 'none'"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+	}
 	reverse_proxy frps:8080
+}
+
+# Staging edge: same VPS/frps, routes to the isolated realgo-staging stack on
+# appbox (frpc.staging.toml registers remotePort 8081 there). staging.realgo.dev
+# must also be a DNS-only A record pointing at this VPS.
+staging.realgo.dev {
+	encode zstd gzip
+	header {
+		Content-Security-Policy "frame-ancestors 'none'"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+	}
+	reverse_proxy frps:8081
 }

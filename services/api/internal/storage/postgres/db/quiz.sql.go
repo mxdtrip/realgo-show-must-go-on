@@ -88,6 +88,12 @@ FROM quiz_questions qq
 LEFT JOIN problems p   ON p.id   = qq.problem_id
 LEFT JOIN patterns pat ON pat.id = qq.pattern_id
 WHERE qq.user_id = $1::bigint
+  AND NOT EXISTS (
+    SELECT 1
+    FROM quiz_answers qa
+    WHERE qa.user_id = $1::bigint
+      AND qa.question_id = qq.id
+  )
 ORDER BY qq.created_at DESC
 LIMIT $2::int
 `

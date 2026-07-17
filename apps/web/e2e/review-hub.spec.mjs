@@ -26,10 +26,11 @@ test.describe("/reviews — журнал решённых задач", () => {
   test("rows carry status, hints used, self-rating and due marker", async ({ page }) => {
     await openAuthed(page, "/reviews");
 
-    const koko = page.getByRole("link", { name: /Stub Problem: Koko Eating Bananas/ });
+    const journal = page.locator("table.data-table");
+    const koko = journal.getByRole("link", { name: /Stub Problem: Koko Eating Bananas/ });
     await expect(koko).toHaveAttribute("href", "https://example.test/koko");
 
-    const kokoRow = page.getByRole("row", { name: /Koko Eating Bananas/ });
+    const kokoRow = journal.getByRole("row", { name: /Koko Eating Bananas/ });
     // Difficulty renders as bare colored text, not a pill.
     await expect(kokoRow.locator(".difficulty-text--medium")).toHaveText("medium");
     // Hints used comes from the assistant log join.
@@ -43,15 +44,29 @@ test.describe("/reviews — журнал решённых задач", () => {
       "/patterns/binary_search_on_answer",
     );
 
+    // The due queue is actionable: rating waits for the API and only then
+    // removes that queue item. The journal below remains an independent log.
+    const kokoQueue = page.locator(".review-queue__item", {
+      hasText: "Stub Problem: Koko Eating Bananas",
+    });
+    const rate = page.waitForRequest(
+      (request) =>
+        request.method() === "POST" && request.url().includes("/me/reviews/501/rate"),
+    );
+    await kokoQueue.getByRole("button", { name: "easy", exact: true }).click();
+    const rateRequest = await rate;
+    expect(rateRequest.postDataJSON()).toMatchObject({ rating: "easy" });
+    await expect(kokoQueue).toHaveCount(0);
+
     // Search and status tabs narrow the journal.
     await page.getByRole("searchbox").fill("two sum");
-    await expect(page.getByText("Stub Problem: Two Sum")).toBeVisible();
-    await expect(page.getByText("Stub Problem: Koko Eating Bananas")).toHaveCount(0);
+    await expect(journal.getByText("Stub Problem: Two Sum")).toBeVisible();
+    await expect(journal.getByText("Stub Problem: Koko Eating Bananas")).toHaveCount(0);
 
     await page.getByRole("searchbox").fill("");
     await page.getByRole("button", { name: /освоена/ }).click();
-    await expect(page.getByText("Stub Problem: Two Sum")).toBeVisible();
-    await expect(page.getByText("Stub Problem: Koko Eating Bananas")).toHaveCount(0);
+    await expect(journal.getByText("Stub Problem: Two Sum")).toBeVisible();
+    await expect(journal.getByText("Stub Problem: Koko Eating Bananas")).toHaveCount(0);
   });
 });
 

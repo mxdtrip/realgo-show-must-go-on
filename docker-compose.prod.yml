@@ -7,6 +7,14 @@
 # unbuildable image here would break that for everyone (as it briefly did).
 
 services:
+  # Demo identities stay available in the base local stack, but are not
+  # started by the production `prod-demo` profile. Run this separate profile
+  # explicitly only when a disposable public demo really needs seeded users.
+  seed-users:
+    profiles: ["prod-demo-users"]
+    environment:
+      APP_ENV: production
+
   # VPN gateway: Cloudflare (fronting Groq's API) 403s requests from this
   # network's address space with a bot-management challenge, regardless of
   # API key/model/User-Agent — evidence points to IP/ASN reputation, not
@@ -52,6 +60,8 @@ services:
 
   api:
     network_mode: "service:vpngw"
+    environment:
+      APP_ENV: production
     depends_on:
       vpngw:
         condition: service_healthy

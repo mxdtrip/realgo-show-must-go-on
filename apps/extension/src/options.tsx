@@ -5,6 +5,7 @@ import { AuthError, getCurrentUserEmail, login, logout } from "./lib/auth";
 import {
   getApiBaseUrl,
   getWebBaseUrl,
+  normalizeServiceBaseUrl,
   setApiBaseUrl,
   setWebBaseUrl,
 } from "./lib/storage";
@@ -50,21 +51,33 @@ function Options() {
       setBaseSaved(true);
       setTimeout(() => setBaseSaved(false), 2000);
     } catch (err) {
-      setError(err instanceof AuthError ? err.message : "Не удалось сохранить API URL.");
+      setError(err instanceof Error ? err.message : "Не удалось сохранить API URL.");
     }
   }
 
   async function handleSaveWebUrl() {
-    await setWebBaseUrl(webUrl);
-    setWebSaved(true);
-    setTimeout(() => setWebSaved(false), 2000);
+    setError("");
+    try {
+      await setWebBaseUrl(webUrl);
+      setWebSaved(true);
+      setTimeout(() => setWebSaved(false), 2000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Не удалось сохранить Web URL.");
+    }
   }
 
   async function handleCheckConnection() {
-    await setApiBaseUrl(baseUrl); // probe the value currently in the field
-    setConn("checking");
-    const ok = await checkApiStatus();
-    setConn(ok ? "online" : "offline");
+    setError("");
+    try {
+      await ensureApiHostPermission(baseUrl);
+      await setApiBaseUrl(baseUrl); // probe the value currently in the field
+      setConn("checking");
+      const ok = await checkApiStatus();
+      setConn(ok ? "online" : "offline");
+    } catch (err) {
+      setConn("offline");
+      setError(err instanceof Error ? err.message : "Некорректный API URL.");
+    }
   }
 
   async function handleLogin(e: React.FormEvent) {
@@ -88,7 +101,7 @@ function Options() {
   async function handleLogout() {
     setBusy(true);
     await logout();
-    setAccount(null);
+    setAccount((await getCurrentUserEmail()) ?? null);
     setBusy(false);
   }
 
@@ -174,6 +187,12 @@ function Options() {
           </p>
         </div>
 
+        {error && (
+          <div className="realgo-error" role="alert">
+            <span className="realgo-error__text">{error}</span>
+          </div>
+        )}
+
         <hr className="realgo-divider" />
 
         {account === undefined ? null : account ? (
@@ -213,11 +232,6 @@ function Options() {
               placeholder="пароль"
               onChange={(e) => setPassword(e.target.value)}
             />
-            {error && (
-              <div className="realgo-error" role="alert">
-                <span className="realgo-error__text">{error}</span>
-              </div>
-            )}
             <button
               className="realgo-btn realgo-btn--primary realgo-btn--block"
               type="submit"
@@ -233,7 +247,7 @@ function Options() {
 }
 
 function apiOriginPattern(baseUrl: string): string {
-  const parsed = new URL(baseUrl);
+  const parsed = new URL(normalizeServiceBaseUrl(baseUrl));
   return `${parsed.protocol}//${parsed.host}/*`;
 }
 

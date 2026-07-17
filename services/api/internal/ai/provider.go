@@ -30,7 +30,7 @@ type APIError struct {
 }
 
 func (e *APIError) Error() string {
-	return fmt.Sprintf("ai: gemini responded %d: %s", e.StatusCode, e.Body)
+	return fmt.Sprintf("ai: provider responded %d: %s", e.StatusCode, e.Body)
 }
 
 // GenerateCardsInput is the problem context fed into the generation prompt.
@@ -55,6 +55,8 @@ type GeneratedCard struct {
 // CardProvisioner can treat them as a "none" outcome rather than a hard error.
 type Provider interface {
 	GenerateCards(ctx context.Context, in GenerateCardsInput) ([]GeneratedCard, error)
+	ProviderName() string
+	ModelName() string
 	// PromptVersion identifies the prompt revision used, stored on generated
 	// cards (cards.ai_prompt_version) to invalidate stale batches when the
 	// prompt materially changes.
@@ -70,5 +72,6 @@ type HintProvider interface {
 	// them, so callers can render it incrementally instead of waiting for the
 	// full response.
 	StreamHint(ctx context.Context, in AssistantHintInput, onDelta func(text string)) (AssistantHintResponse, error)
+	ProviderName() string
 	ModelName() string
 }

@@ -6,13 +6,16 @@ bindPort = 7000
 auth.method = "token"
 auth.token = "{{ .Envs.FRP_TOKEN }}"
 
-# Accept the TLS the client enables; don't force it on the control channel.
-transport.tls.force = false
+# Every deployed frpc client already enables TLS. Reject plaintext control
+# connections so the shared token is never accepted over an unencrypted link.
+transport.tls.force = true
 
 # Restrict which remotePorts a proxy may claim to the ones we actually publish
-# (8080 for realgo-web, 2222 for homeserver-ssh) so a leaked token can't bind
-# arbitrary ports on the VPS.
+# (8080 for realgo-web, 8081 for staging, 8091 for repository knowledge and
+# 2222 for homeserver-ssh) so a leaked token can't bind arbitrary ports.
 allowPorts = [
   { start = 8080, end = 8080 },
+  { start = 8081, end = 8081 },
+  { start = 8091, end = 8091 },
   { start = 2222, end = 2222 },
 ]

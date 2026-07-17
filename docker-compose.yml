@@ -21,7 +21,9 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
       POSTGRES_DB: ${DB_NAME:-freeburger}
     ports:
-      - "${DB_PORT:-5432}:5432"
+      # Host tools can still connect through localhost; LAN/public clients
+      # cannot reach the database accidentally.
+      - "127.0.0.1:${DB_PORT:-5432}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -33,10 +35,24 @@ services:
   redis:
     image: redis:7-alpine
     restart: unless-stopped
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+    command:
+      - /bin/sh
+      - -c
+      - |
+        if [ -n "$$REDIS_PASSWORD" ]; then
+          exec redis-server --requirepass "$$REDIS_PASSWORD"
+        fi
+        exec redis-server
     ports:
-      - "${REDIS_PORT:-6379}:6379"
+      # Preserve localhost access for developers without publishing Redis to
+      # every host interface.
+      - "127.0.0.1:${REDIS_PORT:-6379}:6379"
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test:
+        - CMD-SHELL
+        - if [ -n "$$REDIS_PASSWORD" ]; then redis-cli --no-auth-warning -a "$$REDIS_PASSWORD" ping; else redis-cli ping; fi
       interval: 5s
       timeout: 3s
       retries: 10

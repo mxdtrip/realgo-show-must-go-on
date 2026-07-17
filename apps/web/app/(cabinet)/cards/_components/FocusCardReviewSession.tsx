@@ -39,6 +39,8 @@ type FocusCopy = {
     of: string;
     progress: string;
     ratePrompt: string;
+    saveError: string;
+    saving: string;
     repeatDue: string;
     repeatDueFallback: string;
     returnToCards: string;
@@ -50,8 +52,8 @@ type FocusCardReviewSessionProps = {
   brand: string;
   cards: readonly ReviewCard[];
   copy: FocusCopy;
-  /** Fire-and-forget side channel for persisting a rating (e.g. POST to the api). */
-  onRate?: (cardId: string, rating: ReviewRating, reviewedAt: string) => void;
+  /** Persists a rating before the UI advances to the next card. */
+  onRate?: (cardId: string, rating: ReviewRating, reviewedAt: string) => void | Promise<void>;
 };
 
 const ratings = [
@@ -64,6 +66,7 @@ const cardExitMs = 420;
 
 export function FocusCardReviewSession({ brand, cards, copy, onRate }: Readonly<FocusCardReviewSessionProps>) {
   const [advanceRating, setAdvanceRating] = useState<ReviewRating | null>(null);
+  const [rateError, setRateError] = useState("");
   const advanceTimeoutRef = useRef<number | null>(null);
 
   const notifyComplete = useCallback(() => {
@@ -84,17 +87,24 @@ export function FocusCardReviewSession({ brand, cards, copy, onRate }: Readonly<
     (rating: ReviewRating) => {
       if (!session.isFlipped || advanceRating !== null || advanceTimeoutRef.current !== null) return;
 
+      setRateError("");
       setAdvanceRating(rating);
       const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       const delay = prefersReducedMotion ? 0 : cardExitMs;
 
       advanceTimeoutRef.current = window.setTimeout(() => {
-        session.rate(rating);
-        setAdvanceRating(null);
         advanceTimeoutRef.current = null;
+        void session
+          .rate(rating)
+          .catch(() => {
+            setRateError(copy.focus.saveError);
+          })
+          .finally(() => {
+            setAdvanceRating(null);
+          });
       }, delay);
     },
-    [advanceRating, session],
+    [advanceRating, copy.focus.saveError, session],
   );
 
   useEffect(() => {
@@ -263,6 +273,16 @@ export function FocusCardReviewSession({ brand, cards, copy, onRate }: Readonly<
 
                 <div className="focus-rating">
                   <span>{copy.focus.ratePrompt}</span>
+                  {rateError ? (
+                    <p className="focus-rating__status focus-rating__status--error" role="alert">
+                      {rateError}
+                    </p>
+                  ) : null}
+                  {isAdvancing ? (
+                    <p className="focus-rating__status" role="status">
+                      {copy.focus.saving}
+                    </p>
+                  ) : null}
                   <div>
                     {ratings.map(({ key, shortcut }) => (
                       <button

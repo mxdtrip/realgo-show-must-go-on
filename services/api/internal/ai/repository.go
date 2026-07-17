@@ -74,18 +74,27 @@ func (r *pgRepository) AssistantProblemContext(ctx context.Context, platform, sl
 	}, nil
 }
 
-func (r *pgRepository) LogAssistantHintRequest(ctx context.Context, userID int64, problemID *int64, model, status string) error {
+func (r *pgRepository) ReserveAssistantHintRequest(ctx context.Context, userID int64, problemID *int64, provider, model, promptVersion string) (int64, error) {
 	var pid pgtype.Int8
 	if problemID != nil {
 		pid = pgtype.Int8{Int64: *problemID, Valid: true}
 	}
-	if err := r.q.LogAssistantHintRequest(ctx, db.LogAssistantHintRequestParams{
-		UserID:    userID,
-		Model:     model,
-		Status:    status,
-		ProblemID: pid,
-	}); err != nil {
-		return fmt.Errorf("ai: log assistant hint request: %w", err)
+	id, err := r.q.ReserveAssistantHintRequest(ctx, db.ReserveAssistantHintRequestParams{
+		UserID:        userID,
+		Provider:      provider,
+		Model:         model,
+		PromptVersion: promptVersion,
+		ProblemID:     pid,
+	})
+	if err != nil {
+		return 0, fmt.Errorf("ai: reserve assistant hint request: %w", err)
+	}
+	return id, nil
+}
+
+func (r *pgRepository) FinishAssistantHintRequest(ctx context.Context, requestID int64, status string) error {
+	if err := r.q.FinishAssistantHintRequest(ctx, db.FinishAssistantHintRequestParams{ID: requestID, Status: status}); err != nil {
+		return fmt.Errorf("ai: finish assistant hint request: %w", err)
 	}
 	return nil
 }
@@ -171,11 +180,12 @@ func (r *pgRepository) UpsertGeneratedCards(ctx context.Context, problemID int64
 
 // LogGenerationRequest records one CardProvisioner attempt in ai_request_logs
 // for observability (status: success | failed | refused).
-func (r *pgRepository) LogGenerationRequest(ctx context.Context, model, status string) error {
+func (r *pgRepository) LogGenerationRequest(ctx context.Context, provider, model, promptVersion, status string) error {
 	if err := r.q.LogCardGenerationRequest(ctx, db.LogCardGenerationRequestParams{
-		Provider: pgtype.Text{String: "ai_provisioner", Valid: true},
-		Model:    pgtype.Text{String: model, Valid: true},
-		Status:   pgtype.Text{String: status, Valid: true},
+		Provider:      pgtype.Text{String: provider, Valid: true},
+		Model:         pgtype.Text{String: model, Valid: true},
+		PromptVersion: pgtype.Text{String: promptVersion, Valid: true},
+		Status:        pgtype.Text{String: status, Valid: true},
 	}); err != nil {
 		return fmt.Errorf("ai: log generation request: %w", err)
 	}

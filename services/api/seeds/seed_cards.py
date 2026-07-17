@@ -191,10 +191,11 @@ def upsert(cur, manifest_code, rows):
     reference cards with ON DELETE CASCADE. A DELETE + re-INSERT here would
     therefore wipe every user's review history on those cards and reshuffle
     card ids on each deploy. Instead we update rows in place by their stable
-    `source` key, insert only what is new, and delete only seeded cards that
-    actually left the manifest. Only global rows (user_id IS NULL) are ever
-    touched, so user-created cards are safe even if their `source` collides
-    with the manifest prefix.
+    `source` key and insert only what is new. Cards removed from a manifest
+    are retained: without a tombstone/archive column, deleting them would
+    cascade through schedules and attempts and destroy user history. Only
+    global rows (user_id IS NULL) are ever touched, so user-created cards are
+    safe even if their `source` collides with the manifest prefix.
     """
     validate_cards_schema(cur, rows)
     problem_ids = resolve_problem_ids(
@@ -204,35 +205,6 @@ def upsert(cur, manifest_code, rows):
     pattern_ids = resolve_pattern_ids(
         cur,
         {row["pattern_code"] for row in rows if row["pattern_code"]},
-    )
-
-    source_prefix = f"{manifest_code}:"
-    current_sources = [row["source"] for row in rows]
-
-    # One-time repair for environments seeded before this script became
-    # idempotent: collapse accidental duplicates, keeping the oldest row
-    # (the one existing review schedules are most likely to point at).
-    cur.execute(
-        """
-        DELETE FROM cards a
-        USING cards b
-        WHERE a.user_id IS NULL AND b.user_id IS NULL
-          AND a.source = b.source
-          AND LEFT(a.source, %s) = %s
-          AND a.id > b.id
-        """,
-        (len(source_prefix), source_prefix),
-    )
-
-    # Drop only seeded cards that were removed from the manifest.
-    cur.execute(
-        """
-        DELETE FROM cards
-        WHERE user_id IS NULL
-          AND (source = %s OR LEFT(source, %s) = %s)
-          AND NOT (source = ANY(%s))
-        """,
-        (manifest_code, len(source_prefix), source_prefix, current_sources),
     )
 
     for row in rows:

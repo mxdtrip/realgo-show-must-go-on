@@ -51,5 +51,7 @@ export async function logout(): Promise<void> {
       // A failed revocation must not block local logout.
     }
   }
-  clearTokens();
+  // Do not wipe a newer login that completed in another tab while the
+  // best-effort revoke request above was in flight.
+  if (!refresh || getRefreshToken() === refresh) clearTokens();
 }

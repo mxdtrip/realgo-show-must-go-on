@@ -59,7 +59,7 @@ func (f *fakeProvisionRepo) UpsertGeneratedCards(_ context.Context, _ int64, _, 
 	return nil
 }
 
-func (f *fakeProvisionRepo) LogGenerationRequest(_ context.Context, _, status string) error {
+func (f *fakeProvisionRepo) LogGenerationRequest(_ context.Context, _, _, _, status string) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.logs = append(f.logs, status)
@@ -76,31 +76,40 @@ func (f *fakeProvisionRepo) upsertedCount() int {
 // locking plus a small readiness cache — in-process. It satisfies ai's
 // unexported redisClient interface structurally.
 type fakeRedis struct {
-	mu      sync.Mutex
-	locked  map[string]bool
-	cache   map[string][]byte
-	getErr  error
-	saveErr error
+	mu        sync.Mutex
+	locked    map[string]bool
+	owners    map[string]string
+	nextOwner int
+	cache     map[string][]byte
+	getErr    error
+	saveErr   error
 }
 
 func newFakeRedis() *fakeRedis {
-	return &fakeRedis{locked: map[string]bool{}, cache: map[string][]byte{}}
+	return &fakeRedis{locked: map[string]bool{}, owners: map[string]string{}, cache: map[string][]byte{}}
 }
 
-func (r *fakeRedis) TryLock(_ context.Context, key string, _ time.Duration) (bool, error) {
+func (r *fakeRedis) AcquireLock(_ context.Context, key string, _ time.Duration) (string, bool, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if r.locked[key] {
-		return false, nil
+		return "", false, nil
 	}
+	r.nextOwner++
+	owner := fmt.Sprintf("owner-%d", r.nextOwner)
 	r.locked[key] = true
-	return true, nil
+	r.owners[key] = owner
+	return owner, true, nil
 }
 
-func (r *fakeRedis) Unlock(_ context.Context, key string) error {
+func (r *fakeRedis) ReleaseLock(_ context.Context, key, owner string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+	if r.owners[key] != owner {
+		return nil
+	}
 	delete(r.locked, key)
+	delete(r.owners, key)
 	return nil
 }
 
@@ -210,7 +219,7 @@ func TestProvisioner_Provision_SkipsWhenLockHeld(t *testing.T) {
 	repo := &fakeProvisionRepo{}
 	provider := aitest.New()
 	redis := newFakeRedis()
-	_, _ = redis.TryLock(context.Background(), ai.LockKey("leetcode", "two-sum"), time.Minute)
+	_, _, _ = redis.AcquireLock(context.Background(), ai.LockKey("leetcode", "two-sum"), time.Minute)
 
 	p := ai.NewProvisioner(repo, redis, provider, testLogger())
 	if err := p.Provision(context.Background(), 1, "leetcode", "two-sum"); err != nil {
@@ -419,7 +428,7 @@ func TestProvisioner_Ensure_GeneratingWhenLockAlreadyHeld(t *testing.T) {
 	repo := &fakeProvisionRepo{info: ai.ProblemInfo{Platform: "leetcode", Slug: "two-sum"}}
 	provider := aitest.New()
 	redis := newFakeRedis()
-	if _, err := redis.TryLock(context.Background(), ai.LockKey("leetcode", "two-sum"), time.Minute); err != nil {
+	if _, _, err := redis.AcquireLock(context.Background(), ai.LockKey("leetcode", "two-sum"), time.Minute); err != nil {
 		t.Fatalf("seed lock: %v", err)
 	}
 	p := ai.NewProvisioner(repo, redis, provider, testLogger())

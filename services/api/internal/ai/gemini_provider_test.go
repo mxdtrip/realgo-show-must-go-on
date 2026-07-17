@@ -182,6 +182,71 @@ func TestGeminiProvider_StreamHint_Success(t *testing.T) {
 	}
 }
 
+func TestGeminiProvider_RejectsOversizedResponseBody(t *testing.T) {
+	srv := newTestServer(t, http.StatusOK, strings.Repeat("x", maxProviderResponseBytes+1))
+	p := NewGeminiProvider(config.AI{APIKey: "k", Model: "m", BaseURL: srv.URL})
+
+	_, err := p.doChat(context.Background(), nil)
+	if !errors.Is(err, errProviderResponseTooLarge) {
+		t.Fatalf("err = %v, want errProviderResponseTooLarge", err)
+	}
+}
+
+func TestGeminiProvider_CapsProviderErrorBody(t *testing.T) {
+	srv := newTestServer(t, http.StatusBadRequest, strings.Repeat("x", maxProviderErrorBodyBytes+100))
+	p := NewGeminiProvider(config.AI{APIKey: "k", Model: "m", BaseURL: srv.URL})
+
+	_, err := p.doChat(context.Background(), nil)
+	var apiErr *APIError
+	if !errors.As(err, &apiErr) {
+		t.Fatalf("err = %v, want *APIError", err)
+	}
+	if len(apiErr.Body) > maxProviderErrorBodyBytes+len("...(truncated)") || !strings.HasSuffix(apiErr.Body, "...(truncated)") {
+		t.Fatalf("provider error body was not capped: len=%d suffix=%q", len(apiErr.Body), apiErr.Body[len(apiErr.Body)-20:])
+	}
+}
+
+func TestGeminiProvider_RejectsOversizedStream(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "text/event-stream")
+		w.WriteHeader(http.StatusOK)
+		flusher := w.(http.Flusher)
+		chunkText := strings.Repeat("x", 32*1024)
+		for written := 0; written <= maxProviderResponseBytes; written += len(chunkText) {
+			chunk := chatCompletionChunk{Choices: []struct {
+				Delta struct {
+					Content string `json:"content"`
+				} `json:"delta"`
+			}{{Delta: struct {
+				Content string `json:"content"`
+			}{Content: chunkText}}}}
+			data, _ := json.Marshal(chunk)
+			_, _ = fmt.Fprintf(w, "data: %s\n\n", data)
+			flusher.Flush()
+		}
+	}))
+	defer srv.Close()
+
+	p := NewGeminiProvider(config.AI{APIKey: "k", Model: "m", BaseURL: srv.URL})
+	_, err := p.chatStream(context.Background(), nil, nil)
+	if !errors.Is(err, errProviderResponseTooLarge) {
+		t.Fatalf("err = %v, want errProviderResponseTooLarge", err)
+	}
+}
+
+func TestHintFieldExtractorCapsSearchBuffer(t *testing.T) {
+	extractor := newHintFieldExtractor()
+	if got := extractor.feed(strings.Repeat("x", maxHintKeySearchBytes*2)); got != "" {
+		t.Fatalf("unexpected extracted text: %q", got)
+	}
+	if extractor.pending.Len() > hintKeySearchOverlap {
+		t.Fatalf("pending search buffer grew to %d bytes", extractor.pending.Len())
+	}
+	if got := extractor.feed(`,"hint":"bounded"`); got != "bounded" {
+		t.Fatalf("extracted = %q, want bounded", got)
+	}
+}
+
 func TestGeminiProvider_GenerateCards_UnknownProblem(t *testing.T) {
 	srv := newTestServer(t, http.StatusOK, chatCompletionBody(`{"error":"unknown_problem"}`))
 	p := NewGeminiProvider(config.AI{APIKey: "k", Model: "m", BaseURL: srv.URL})

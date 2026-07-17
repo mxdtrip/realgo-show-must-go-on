@@ -13,6 +13,14 @@
 }
 
 :80 {
+	header {
+		Content-Security-Policy "frame-ancestors 'none'"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+	}
+
 	@api path /api/* /healthz /readyz
 	@allowed_origin header_regexp Origin ^(https?://(localhost|127[.]0[.]0[.]1):(5173|3000)|{$REALGO_EXTENSION_ORIGIN:chrome-extension://kclglopmphebagjjimjhdpnmoddmbgea})$
 

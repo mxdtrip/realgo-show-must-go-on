@@ -49,21 +49,28 @@ func TestStorageSaveGet(t *testing.T) {
 	require.NoError(t, err)
 	require.False(t, locked)
 
-	acquired, err := store.TryLock(ctx, "test:lock", time.Minute)
+	owner, acquired, err := store.AcquireLock(ctx, "test:lock", time.Minute)
 	require.NoError(t, err)
-	require.True(t, acquired, "first TryLock should acquire the lock")
+	require.True(t, acquired, "first AcquireLock should acquire the lock")
+	require.NotEmpty(t, owner)
 
-	acquired, err = store.TryLock(ctx, "test:lock", time.Minute)
+	_, acquired, err = store.AcquireLock(ctx, "test:lock", time.Minute)
 	require.NoError(t, err)
-	require.False(t, acquired, "second TryLock must not acquire an already-held lock")
+	require.False(t, acquired, "second AcquireLock must not acquire an already-held lock")
 
 	locked, err = store.Locked(ctx, "test:lock")
 	require.NoError(t, err)
 	require.True(t, locked)
 
-	require.NoError(t, store.Unlock(ctx, "test:lock"))
-
-	acquired, err = store.TryLock(ctx, "test:lock", time.Minute)
+	// A non-owner cannot release the current holder's lock.
+	require.NoError(t, store.ReleaseLock(ctx, "test:lock", "stale-owner"))
+	locked, err = store.Locked(ctx, "test:lock")
 	require.NoError(t, err)
-	require.True(t, acquired, "TryLock should acquire again after Unlock")
+	require.True(t, locked)
+
+	require.NoError(t, store.ReleaseLock(ctx, "test:lock", owner))
+
+	_, acquired, err = store.AcquireLock(ctx, "test:lock", time.Minute)
+	require.NoError(t, err)
+	require.True(t, acquired, "AcquireLock should acquire again after ReleaseLock")
 }

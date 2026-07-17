@@ -73,9 +73,6 @@ func (r *pgRepository) Save(ctx context.Context, userID, problemID int64) (strin
 		}
 		return "", fmt.Errorf("problems: save: %w", err)
 	}
-	if err := r.q.CreateProblemScheduleIfAbsent(ctx, db.CreateProblemScheduleIfAbsentParams{UserID: userID, ProblemID: problemID}); err != nil {
-		return "", fmt.Errorf("problems: create schedule: %w", err)
-	}
 	status := "not_started"
 	if row.Status.Valid {
 		status = row.Status.String

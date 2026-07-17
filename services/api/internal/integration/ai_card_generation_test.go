@@ -351,6 +351,21 @@ func TestAICardGeneration_ManualGenerateEndpoint(t *testing.T) {
 	problemID := int64(view["data"].(map[string]any)["problemId"].(float64))
 	require.Equal(t, 0, fake.Calls(), "a view event must not trigger generation")
 
+	// ListCardsByProblem hides global AI-generated cards from a user until
+	// they've solved/reviewed the problem (spoiler prevention — see
+	// cards_visibility_test.go). This test cares about the manual-trigger
+	// path, not that gate, so it satisfies it directly via SQL rather than
+	// through solveExtensionEvent, which would itself auto-trigger
+	// generation and break the fake.Calls()==1 assertion below.
+	var userID int64
+	require.NoError(t, pg.Pool.QueryRow(ctx, "SELECT id FROM users WHERE email = $1", email).Scan(&userID))
+	_, err := pg.Pool.Exec(ctx, `
+		INSERT INTO user_problem_progress (user_id, problem_id, status, first_seen_at)
+		VALUES ($1, $2, 'solved', NOW())
+		ON CONFLICT (user_id, problem_id) DO UPDATE SET status = EXCLUDED.status
+	`, userID, problemID)
+	require.NoError(t, err)
+
 	body, status := postJSONRaw(t, h, "/api/v1/me/cards/generate", token, map[string]any{"problem_id": problemID})
 	require.Equal(t, http.StatusAccepted, status, "body: %+v", body)
 	require.Equal(t, "generating", body["data"].(map[string]any)["status"])

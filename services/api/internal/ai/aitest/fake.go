@@ -62,6 +62,10 @@ func (f *Fake) PromptVersion() string {
 	return "fake-v1"
 }
 
+func (f *Fake) ProviderName() string { return "fake" }
+
+func (f *Fake) ModelName() string { return "fake-model" }
+
 // Calls reports how many times GenerateCards was invoked.
 func (f *Fake) Calls() int {
 	f.mu.Lock()

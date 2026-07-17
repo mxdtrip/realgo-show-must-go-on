@@ -23,3 +23,17 @@ WHERE user_id = sqlc.arg(user_id)::bigint
     SELECT id FROM patterns
     WHERE code = sqlc.arg(code)::text AND kind = 'subpattern'
   );
+
+-- name: RemoveUnreviewedPracticeSchedules :execrows
+-- Eager schedules created by Add are disposable until the user has actually
+-- reviewed the card. Remove those untouched rows with the membership; keep
+-- reviewed schedules/history intact.
+DELETE FROM review_schedules rs
+USING cards c, patterns p
+WHERE rs.user_id = sqlc.arg(user_id)::bigint
+  AND rs.card_id = c.id
+  AND c.pattern_id = p.id
+  AND p.code = sqlc.arg(code)::text
+  AND p.kind = 'subpattern'
+  AND COALESCE(rs.review_count, 0) = 0
+  AND rs.last_review_at IS NULL;

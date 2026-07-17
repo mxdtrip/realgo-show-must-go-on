@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"sync"
 	"time"
 
 	goredis "github.com/redis/go-redis/v9"
@@ -21,6 +22,11 @@ const defaultLockTTL = 90 * time.Second
 // as-yet-unset key rather than requiring the old one to be cleared.
 const cacheTTL = 30 * 24 * time.Hour
 
+const (
+	maxConcurrentGenerations = 4
+	maxQueuedGenerations     = 64
+)
+
 // readyCacheValue is the marker stored at a CacheKey; its content doesn't
 // matter, only presence (a cache hit) does.
 const readyCacheValue = "1"
@@ -30,6 +36,21 @@ const readyCacheValue = "1"
 const (
 	EnsureReady      = "ready"
 	EnsureGenerating = "generating"
+)
+
+var ErrGenerationBusy = errors.New("AI generation queue is full")
+
+type generationJob struct {
+	provisioner *Provisioner
+	problemID   int64
+	platform    string
+	slug        string
+	queueKey    string
+}
+
+var (
+	generationJobs        = make(chan generationJob, maxQueuedGenerations)
+	generationWorkersOnce sync.Once
 )
 
 // ProblemInfo is the problem context fed into the generation prompt.
@@ -52,7 +73,7 @@ type ProvisionRepository interface {
 	// reader must never observe a partial batch as "ready". platform/slug
 	// build each card's deterministic "ai:{platform}:{slug}:{type}" source key.
 	UpsertGeneratedCards(ctx context.Context, problemID int64, platform, slug string, cards []GeneratedCard, promptVersion string) error
-	LogGenerationRequest(ctx context.Context, model, status string) error
+	LogGenerationRequest(ctx context.Context, provider, model, promptVersion, status string) error
 }
 
 // redisClient is the narrow Redis behaviour CardProvisioner needs: SETNX-style
@@ -61,8 +82,8 @@ type ProvisionRepository interface {
 // once a problem's cards are known good. Satisfied structurally by
 // *redis.Storage.
 type redisClient interface {
-	TryLock(ctx context.Context, key string, ttl time.Duration) (bool, error)
-	Unlock(ctx context.Context, key string) error
+	AcquireLock(ctx context.Context, key string, ttl time.Duration) (token string, acquired bool, err error)
+	ReleaseLock(ctx context.Context, key, token string) error
 	Locked(ctx context.Context, key string) (bool, error)
 	Save(ctx context.Context, key string, value any, ttl time.Duration) error
 	Get(ctx context.Context, key string) ([]byte, error)
@@ -79,6 +100,7 @@ type Provisioner struct {
 	provider Provider
 	logger   *slog.Logger
 	lockTTL  time.Duration
+	queued   sync.Map
 }
 
 // NewProvisioner wires a CardProvisioner. provider is typically a
@@ -100,18 +122,46 @@ func CacheKey(promptVersion, platform, slug string) string {
 	return fmt.Sprintf("cards:v1:%s:%s:%s", promptVersion, platform, slug)
 }
 
-// ProvisionAsync runs Provision in the background with a bounded timeout,
-// logging (not returning) any failure. Safe to call on every solved event:
-// Provision is idempotent and cheap when cards already exist.
-func (p *Provisioner) ProvisionAsync(problemID int64, platform, slug string) {
-	go func() {
-		ctx, cancel := context.WithTimeout(context.Background(), defaultLockTTL)
-		defer cancel()
-		if err := p.Provision(ctx, problemID, platform, slug); err != nil {
-			p.logger.Warn("ai: card generation failed",
-				slog.Int64("problemId", problemID), slog.String("platform", platform), slog.String("slug", slug), slog.Any("err", err))
-		}
-	}()
+// ProvisionAsync enqueues Provision in a bounded process-wide worker pool.
+// It returns false when backpressure rejects a new unique job. Repeated jobs
+// for the same problem already queued on this Provisioner are accepted as an
+// idempotent no-op.
+func (p *Provisioner) ProvisionAsync(problemID int64, platform, slug string) bool {
+	generationWorkersOnce.Do(startGenerationWorkers)
+	queueKey := LockKey(platform, slug)
+	if _, loaded := p.queued.LoadOrStore(queueKey, struct{}{}); loaded {
+		return true
+	}
+
+	job := generationJob{provisioner: p, problemID: problemID, platform: platform, slug: slug, queueKey: queueKey}
+	select {
+	case generationJobs <- job:
+		return true
+	default:
+		p.queued.Delete(queueKey)
+		p.logger.Warn("ai: generation queue full", slog.Int64("problemId", problemID), slog.String("platform", platform), slog.String("slug", slug))
+		return false
+	}
+}
+
+func startGenerationWorkers() {
+	for range maxConcurrentGenerations {
+		go func() {
+			for job := range generationJobs {
+				job.run()
+			}
+		}()
+	}
+}
+
+func (j generationJob) run() {
+	defer j.provisioner.queued.Delete(j.queueKey)
+	ctx, cancel := context.WithTimeout(context.Background(), defaultLockTTL)
+	defer cancel()
+	if err := j.provisioner.Provision(ctx, j.problemID, j.platform, j.slug); err != nil {
+		j.provisioner.logger.Warn("ai: card generation failed",
+			slog.Int64("problemId", j.problemID), slog.String("platform", j.platform), slog.String("slug", j.slug), slog.Any("err", err))
+	}
 }
 
 // Ensure reports readiness for problemID without blocking on generation: it
@@ -141,7 +191,9 @@ func (p *Provisioner) Ensure(ctx context.Context, problemID int64) (string, erro
 		return "", fmt.Errorf("ai: check lock: %w", err)
 	}
 	if !locked {
-		p.ProvisionAsync(problemID, info.Platform, info.Slug)
+		if !p.ProvisionAsync(problemID, info.Platform, info.Slug) {
+			return "", ErrGenerationBusy
+		}
 	}
 	return EnsureGenerating, nil
 }
@@ -155,14 +207,14 @@ func (p *Provisioner) Provision(ctx context.Context, problemID int64, platform, 
 	}
 
 	key := LockKey(platform, slug)
-	acquired, err := p.redis.TryLock(ctx, key, p.lockTTL)
+	lockToken, acquired, err := p.redis.AcquireLock(ctx, key, p.lockTTL)
 	if err != nil {
 		return fmt.Errorf("ai: acquire lock: %w", err)
 	}
 	if !acquired {
 		return nil // another attempt is already generating this problem
 	}
-	defer func() { _ = p.redis.Unlock(context.WithoutCancel(ctx), key) }()
+	defer func() { _ = p.redis.ReleaseLock(context.WithoutCancel(ctx), key, lockToken) }()
 
 	// Re-check after acquiring the lock: a concurrent attempt may have
 	// finished generation between our first check and the lock acquisition.
@@ -252,7 +304,7 @@ func (p *Provisioner) logAndClassify(ctx context.Context, err error) error {
 }
 
 func (p *Provisioner) logGeneration(ctx context.Context, status string) {
-	if err := p.repo.LogGenerationRequest(ctx, p.provider.PromptVersion(), status); err != nil {
+	if err := p.repo.LogGenerationRequest(ctx, p.provider.ProviderName(), p.provider.ModelName(), p.provider.PromptVersion(), status); err != nil {
 		p.logger.Warn("ai: failed to log generation request", slog.Any("err", err))
 	}
 }
@@ -264,7 +316,7 @@ func (p *Provisioner) logGeneration(ctx context.Context, status string) {
 func (p *Provisioner) logProviderError(err error) {
 	var apiErr *APIError
 	if errors.As(err, &apiErr) {
-		p.logger.Warn("ai: card generation: gemini api error",
+		p.logger.Warn("ai: card generation: provider api error",
 			slog.Int("status_code", apiErr.StatusCode),
 			slog.String("body", apiErr.Body),
 		)

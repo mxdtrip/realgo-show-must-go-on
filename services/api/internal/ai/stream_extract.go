@@ -26,6 +26,11 @@ type hintFieldExtractor struct {
 
 var hintKeyPattern = regexp.MustCompile(`"hint"\s*:\s*"`)
 
+const (
+	maxHintKeySearchBytes = 16 * 1024
+	hintKeySearchOverlap  = 256
+)
+
 func newHintFieldExtractor() *hintFieldExtractor {
 	return &hintFieldExtractor{}
 }
@@ -44,6 +49,11 @@ func (h *hintFieldExtractor) feed(fragment string) string {
 			// Cap the search buffer: the key is expected within the first
 			// few tokens, so an unbounded wait here would only happen for a
 			// malformed response that never contains "hint" at all.
+			if len(buffered) > maxHintKeySearchBytes {
+				tail := buffered[len(buffered)-hintKeySearchOverlap:]
+				h.pending.Reset()
+				h.pending.WriteString(tail)
+			}
 			return ""
 		}
 		h.found = true

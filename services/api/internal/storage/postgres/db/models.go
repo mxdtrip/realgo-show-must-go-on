@@ -20,6 +20,7 @@ type AiRequestLog struct {
 	Status        pgtype.Text
 	CreatedAt     pgtype.Timestamptz
 	ProblemID     pgtype.Int8
+	PromptVersion pgtype.Text
 }
 
 type Card struct {
@@ -248,6 +249,7 @@ type User struct {
 	NotifyEmailEnabled    bool
 	TargetTopics          []string
 	Platform              pgtype.Text
+	IsDemo                bool
 }
 
 type UserPracticePattern struct {

@@ -80,9 +80,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = useCallback(async () => {
     await authApi.logout();
+    if (hasSession()) {
+      await sync();
+      return;
+    }
     setUser(null);
     setStatus("anonymous");
-  }, []);
+  }, [sync]);
 
   const value = useMemo<AuthContextValue>(
     () => ({ user, status, login, register, logout }),

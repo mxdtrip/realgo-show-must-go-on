@@ -24,19 +24,45 @@ async function set(key: string, value: unknown): Promise<void> {
 }
 
 export async function getApiBaseUrl(): Promise<string> {
-  return (await get<string>(STORAGE_KEYS.apiBaseUrl)) || DEFAULT_API_BASE_URL;
+  const stored = await get<string>(STORAGE_KEYS.apiBaseUrl);
+  try {
+    return normalizeServiceBaseUrl(stored || DEFAULT_API_BASE_URL);
+  } catch {
+    return DEFAULT_API_BASE_URL;
+  }
 }
 
 export function setApiBaseUrl(url: string): Promise<void> {
-  return set(STORAGE_KEYS.apiBaseUrl, url.trim().replace(/\/+$/, ""));
+  return set(STORAGE_KEYS.apiBaseUrl, normalizeServiceBaseUrl(url));
 }
 
 export async function getWebBaseUrl(): Promise<string> {
-  return (await get<string>(STORAGE_KEYS.webBaseUrl)) || DEFAULT_WEB_BASE_URL;
+  const stored = await get<string>(STORAGE_KEYS.webBaseUrl);
+  try {
+    return normalizeServiceBaseUrl(stored || DEFAULT_WEB_BASE_URL);
+  } catch {
+    return DEFAULT_WEB_BASE_URL;
+  }
 }
 
 export function setWebBaseUrl(url: string): Promise<void> {
-  return set(STORAGE_KEYS.webBaseUrl, url.trim().replace(/\/+$/, ""));
+  return set(STORAGE_KEYS.webBaseUrl, normalizeServiceBaseUrl(url));
+}
+
+/** HTTPS is required off-device; plaintext HTTP is limited to loopback dev. */
+export function normalizeServiceBaseUrl(raw: string): string {
+  const parsed = new URL(raw.trim());
+  const loopback = parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1" || parsed.hostname === "[::1]";
+  if (parsed.protocol !== "https:" && !(parsed.protocol === "http:" && loopback)) {
+    throw new Error("Используй HTTPS; HTTP разрешён только для localhost.");
+  }
+  if (parsed.username || parsed.password) {
+    throw new Error("URL не должен содержать логин или пароль.");
+  }
+  if (parsed.search || parsed.hash) {
+    throw new Error("URL не должен содержать query-параметры или fragment.");
+  }
+  return parsed.toString().replace(/\/+$/, "");
 }
 
 /** Absolute URL of the review cards section, e.g. https://realgo.dev/cards. */
@@ -56,6 +82,14 @@ export function getRefreshToken(): Promise<string | undefined> {
   return get<string>(STORAGE_KEYS.refreshToken);
 }
 
+export function getWebSessionFingerprint(): Promise<string | undefined> {
+  return get<string>(STORAGE_KEYS.webSessionFingerprint);
+}
+
+export function setWebSessionFingerprint(fingerprint: string): Promise<void> {
+  return set(STORAGE_KEYS.webSessionFingerprint, fingerprint);
+}
+
 /** Persists an access + refresh pair returned by the auth endpoints. */
 export async function setTokens(tokens: TokenPair): Promise<void> {
   await chrome.storage.local.set({
@@ -64,12 +98,23 @@ export async function setTokens(tokens: TokenPair): Promise<void> {
   });
 }
 
-/** Clears the session (tokens + cached email). Used on logout / expiry. */
-export function clearTokens(): Promise<void> {
-  return chrome.storage.local.remove([
+/**
+ * Clears the account session and all account-scoped cached data. API/Web URL
+ * preferences are intentionally retained because they belong to the extension
+ * installation rather than to a particular user.
+ */
+export async function clearTokens(): Promise<void> {
+  const all = await chrome.storage.local.get(null);
+  const accountKeys = Object.keys(all).filter((key) =>
+    key.startsWith(ASSISTANT_STATE_KEY_PREFIX)
+  );
+  await chrome.storage.local.remove([
     STORAGE_KEYS.accessToken,
     STORAGE_KEYS.refreshToken,
     STORAGE_KEYS.userEmail,
+    STORAGE_KEYS.webSessionFingerprint,
+    STORAGE_KEYS.lastSubmission,
+    ...accountKeys,
   ]);
 }
 

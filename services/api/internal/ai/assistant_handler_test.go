@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -13,8 +14,9 @@ import (
 )
 
 type fakeAssistantRepo struct {
-	ctxInput AssistantHintInput
-	logs     []string
+	ctxInput   AssistantHintInput
+	logs       []string
+	reserveErr error
 }
 
 func (f *fakeAssistantRepo) AssistantProblemContext(_ context.Context, platform, slug string) (AssistantHintInput, error) {
@@ -29,16 +31,22 @@ func (f *fakeAssistantRepo) AssistantProblemContext(_ context.Context, platform,
 	return f.ctxInput, nil
 }
 
-func (f *fakeAssistantRepo) LogAssistantHintRequest(_ context.Context, _ int64, _ *int64, _ string, status string) error {
+func (f *fakeAssistantRepo) ReserveAssistantHintRequest(_ context.Context, _ int64, _ *int64, _, _, _ string) (int64, error) {
+	return 1, f.reserveErr
+}
+
+func (f *fakeAssistantRepo) FinishAssistantHintRequest(_ context.Context, _ int64, status string) error {
 	f.logs = append(f.logs, status)
 	return nil
 }
 
 type fakeHintProvider struct {
 	input AssistantHintInput
+	calls int
 }
 
 func (f *fakeHintProvider) GenerateHint(_ context.Context, in AssistantHintInput) (AssistantHintResponse, error) {
+	f.calls++
 	f.input = in
 	return AssistantHintResponse{
 		Hint:         "Сфокусируйся на том, что нужно найти для текущего элемента.",
@@ -58,6 +66,30 @@ func (f *fakeHintProvider) StreamHint(ctx context.Context, in AssistantHintInput
 }
 
 func (f *fakeHintProvider) ModelName() string { return "fake-model" }
+
+func (f *fakeHintProvider) ProviderName() string { return "fake" }
+
+func TestAssistantHandler_ReservationFailureDoesNotCallProvider(t *testing.T) {
+	repo := &fakeAssistantRepo{reserveErr: errors.New("database unavailable")}
+	provider := &fakeHintProvider{}
+	handler := NewAssistantHandler(repo, provider)
+	raw, _ := json.Marshal(map[string]any{
+		"platform": "leetcode", "taskTitle": "Two Sum", "taskUrl": "https://leetcode.com/problems/two-sum/",
+		"platformTaskSlug": "two-sum", "message": "help", "hintLevel": 1,
+	})
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/assistant/hint", bytes.NewReader(raw))
+	req = req.WithContext(auth.ContextWithUserID(req.Context(), 42))
+	rec := httptest.NewRecorder()
+
+	handler.Hint(rec, req)
+
+	if rec.Code != http.StatusServiceUnavailable {
+		t.Fatalf("status = %d, want 503", rec.Code)
+	}
+	if provider.calls != 0 {
+		t.Fatalf("provider calls = %d, want 0", provider.calls)
+	}
+}
 
 func TestAssistantHandler_Hint(t *testing.T) {
 	repo := &fakeAssistantRepo{ctxInput: AssistantHintInput{

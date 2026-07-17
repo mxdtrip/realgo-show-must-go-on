@@ -16,6 +16,7 @@ import (
 )
 
 const refreshKeyPrefix = "auth:refresh:"
+const refreshUserKeyPrefix = "auth:user-refresh:"
 
 const rotateRefreshTokenScript = `
 local user_id = redis.call("GET", KEYS[1])
@@ -24,7 +25,19 @@ if not user_id then
 end
 redis.call("SET", KEYS[2], user_id, "PX", ARGV[1])
 redis.call("DEL", KEYS[1])
+local user_key = ARGV[2] .. user_id
+redis.call("SREM", user_key, KEYS[1])
+redis.call("SADD", user_key, KEYS[2])
+redis.call("PEXPIRE", user_key, ARGV[1])
 return user_id
+`
+
+const revokeRefreshTokenScript = `
+local user_id = redis.call("GET", KEYS[1])
+if user_id then
+	redis.call("SREM", ARGV[1] .. user_id, KEYS[1])
+end
+return redis.call("DEL", KEYS[1])
 `
 
 // TokenPair is the set of tokens issued on register, login and refresh.
@@ -98,10 +111,35 @@ func (s *Service) newRefreshToken(ctx context.Context, userID int64) (string, er
 	if err != nil {
 		return "", err
 	}
-	if err := s.redis.Set(ctx, refreshKey(token), userID, s.cfg.RefreshTTL).Err(); err != nil {
+	key := refreshKey(token)
+	userKey := refreshUserKey(userID)
+	_, err = s.redis.TxPipelined(ctx, func(pipe goredis.Pipeliner) error {
+		pipe.Set(ctx, key, userID, s.cfg.RefreshTTL)
+		pipe.SAdd(ctx, userKey, key)
+		pipe.Expire(ctx, userKey, s.cfg.RefreshTTL)
+		return nil
+	})
+	if err != nil {
 		return "", fmt.Errorf("store refresh token: %w", err)
 	}
 	return token, nil
+}
+
+// refreshTokenUserID resolves a token without consuming it. The subsequent Lua
+// rotation remains the authoritative one-time operation.
+func (s *Service) refreshTokenUserID(ctx context.Context, token string) (int64, error) {
+	raw, err := s.redis.Get(ctx, refreshKey(token)).Result()
+	if errors.Is(err, goredis.Nil) {
+		return 0, ErrInvalidToken
+	}
+	if err != nil {
+		return 0, fmt.Errorf("lookup refresh token: %w", err)
+	}
+	userID, err := strconv.ParseInt(raw, 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("parse refresh token user id: %w", err)
+	}
+	return userID, nil
 }
 
 func generateRefreshToken() (string, error) {
@@ -124,7 +162,7 @@ func (s *Service) rotateRefreshToken(ctx context.Context, token string) (int64, 
 	result, err := s.redis.Eval(ctx, rotateRefreshTokenScript, []string{
 		refreshKey(token),
 		refreshKey(newToken),
-	}, s.cfg.RefreshTTL.Milliseconds()).Result()
+	}, s.cfg.RefreshTTL.Milliseconds(), refreshUserKeyPrefix).Result()
 	if errors.Is(err, goredis.Nil) {
 		return 0, "", ErrInvalidToken
 	}
@@ -144,8 +182,55 @@ func (s *Service) rotateRefreshToken(ctx context.Context, token string) (int64, 
 
 // revokeRefreshToken removes a refresh token. A missing token is not an error.
 func (s *Service) revokeRefreshToken(ctx context.Context, token string) error {
-	if err := s.redis.Del(ctx, refreshKey(token)).Err(); err != nil {
+	if err := s.redis.Eval(ctx, revokeRefreshTokenScript, []string{refreshKey(token)}, refreshUserKeyPrefix).Err(); err != nil {
 		return fmt.Errorf("revoke refresh token: %w", err)
+	}
+	return nil
+}
+
+// revokeAllRefreshTokens deletes indexed tokens and scans the legacy keyspace,
+// so sessions created before the per-user index was introduced are covered too.
+func (s *Service) revokeAllRefreshTokens(ctx context.Context, userID int64) error {
+	wanted := strconv.FormatInt(userID, 10)
+	indexed, err := s.redis.SMembers(ctx, refreshUserKey(userID)).Result()
+	if err != nil {
+		return fmt.Errorf("list refresh sessions: %w", err)
+	}
+	keys := make(map[string]struct{}, len(indexed))
+	for _, key := range indexed {
+		keys[key] = struct{}{}
+	}
+
+	var cursor uint64
+	for {
+		batch, next, scanErr := s.redis.Scan(ctx, cursor, refreshKeyPrefix+"*", 200).Result()
+		if scanErr != nil {
+			return fmt.Errorf("scan refresh sessions: %w", scanErr)
+		}
+		if len(batch) > 0 {
+			values, getErr := s.redis.MGet(ctx, batch...).Result()
+			if getErr != nil {
+				return fmt.Errorf("read refresh sessions: %w", getErr)
+			}
+			for i, value := range values {
+				if value != nil && fmt.Sprint(value) == wanted {
+					keys[batch[i]] = struct{}{}
+				}
+			}
+		}
+		cursor = next
+		if cursor == 0 {
+			break
+		}
+	}
+
+	deleteKeys := make([]string, 0, len(keys)+1)
+	for key := range keys {
+		deleteKeys = append(deleteKeys, key)
+	}
+	deleteKeys = append(deleteKeys, refreshUserKey(userID))
+	if err := s.redis.Del(ctx, deleteKeys...).Err(); err != nil {
+		return fmt.Errorf("revoke refresh sessions: %w", err)
 	}
 	return nil
 }
@@ -153,4 +238,8 @@ func (s *Service) revokeRefreshToken(ctx context.Context, token string) error {
 func refreshKey(token string) string {
 	sum := sha256.Sum256([]byte(token))
 	return refreshKeyPrefix + hex.EncodeToString(sum[:])
+}
+
+func refreshUserKey(userID int64) string {
+	return refreshUserKeyPrefix + strconv.FormatInt(userID, 10)
 }

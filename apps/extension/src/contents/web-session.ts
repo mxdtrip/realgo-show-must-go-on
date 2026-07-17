@@ -3,9 +3,10 @@ import type { PlasmoCSConfig } from "plasmo";
 /**
  * Session bridge: watches the realgo.dev web app's localStorage tokens
  * (`realgo:auth:access:v1` / `realgo:auth:refresh:v1`, see
- * apps/web/app/_api/tokens.ts) and mirrors them into the extension's own
- * chrome.storage session (see lib/auth.ts syncWebSession), so logging into
- * the web cabinet also logs in the extension — no separate options-page login.
+ * apps/web/app/_api/tokens.ts) and asks the backend for an independent
+ * extension device session (see lib/auth.ts syncWebSession), so logging into
+ * the web cabinet also logs in the extension without sharing a rotating
+ * refresh token or requiring a separate options-page login.
  *
  * localStorage lives on the page origin and is readable from a content
  * script (isolated JS world, shared DOM/storage), no extra host permission
@@ -15,7 +16,13 @@ import type { PlasmoCSConfig } from "plasmo";
  * `storage` covers the case where the token changed in another tab.
  */
 export const config: PlasmoCSConfig = {
-  matches: ["https://realgo.dev/*", "http://localhost:3000/*"],
+  matches: [
+    "https://realgo.dev/*",
+    "http://localhost:3000/*",
+    "http://localhost:8080/*",
+    "http://127.0.0.1:3000/*",
+    "http://127.0.0.1:8080/*",
+  ],
   run_at: "document_idle",
 };
 

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 
 import { ApiError } from "../../../_api/types";
@@ -57,7 +58,7 @@ const ratingTone: Record<string, string> = {
 
 /** Журнал решённого на платформах: что зафиксировало расширение, сколько
     подсказок потрачено и как пользователь сам оценил задачу. */
-export function ReviewsJournalClient({ copy }: Readonly<{ copy: ReviewsJournalCopy }>) {
+export function ReviewsJournalClient({ copy, queue }: Readonly<{ copy: ReviewsJournalCopy; queue?: ReactNode }>) {
   const [problems, setProblems] = useState<ProblemListItem[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [loadState, setLoadState] = useState<LoadState>("loading");
@@ -133,6 +134,8 @@ export function ReviewsJournalClient({ copy }: Readonly<{ copy: ReviewsJournalCo
           </span>
         </div>
       </section>
+
+      {queue}
 
       <div className="cabinet-toolbar">
         <div className="cabinet-search">

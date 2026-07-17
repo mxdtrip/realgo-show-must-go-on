@@ -8,12 +8,12 @@ import { getReviewQueue } from "../_api/reviews";
 /** Живой счётчик «due today» в топбаре. До ответа API (и при ошибке) чип
     показывает только подпись — число не выдумываем. */
 export function CabinetDueChip({ label }: Readonly<{ label: string }>) {
-  const [count, setCount] = useState<number | null>(null);
+  const [count, setCount] = useState<string | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
     getReviewQueue(controller.signal)
-      .then((response) => setCount(response.data.length))
+      .then((response) => setCount(`${response.data.length}${response.meta?.nextCursor ? "+" : ""}`))
       .catch(() => {
         // Молча: чип остаётся без числа.
       });

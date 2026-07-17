@@ -13,6 +13,8 @@ var (
 	ErrQuestionNotFound = errors.New("quiz: question not found")
 	// ErrAlreadyAnswered — пользователь уже отвечал на этот вопрос (анти-чит).
 	ErrAlreadyAnswered = errors.New("quiz: question already answered")
+	// ErrInvalidOption — индекс ответа находится вне массива options.
+	ErrInvalidOption = errors.New("quiz: option is out of range")
 )
 
 // repository — consumer-side интерфейс сервиса: только те операции с данными,
@@ -69,6 +71,9 @@ func (s *Service) RecordAnswer(ctx context.Context, userID, questionID int64, op
 	}
 	if err != nil {
 		return answerResult{}, fmt.Errorf("quiz: get question: %w", err)
+	}
+	if option < 0 || option >= q.OptionCount {
+		return answerResult{}, ErrInvalidOption
 	}
 
 	correct := option == q.CorrectOption

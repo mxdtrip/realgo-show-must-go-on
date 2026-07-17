@@ -109,7 +109,7 @@ SELECT
     pt.parent_id,
     COUNT(DISTINCT ri.problem_id)::integer AS problem_count,
     COUNT(DISTINCT upp.problem_id) FILTER (
-        WHERE upp.status IN ('solving', 'solved', 'reviewing')
+        WHERE upp.status IN ('in_progress', 'solved', 'reviewing')
     )::integer AS solved_count,
     COUNT(DISTINCT rs.id) FILTER (
         WHERE rs.next_review_at <= NOW()
@@ -172,7 +172,10 @@ SELECT
 FROM review_attempts ra
 LEFT JOIN roadmap_items ri
     ON ri.problem_id = ra.problem_id AND ri.roadmap_code = 'neetcode_150'
-JOIN patterns pt ON pt.id = COALESCE(ra.pattern_id, ri.pattern_id)
+LEFT JOIN cards c ON c.id = ra.card_id
+LEFT JOIN roadmap_items card_ri
+    ON card_ri.problem_id = c.problem_id AND card_ri.roadmap_code = 'neetcode_150'
+JOIN patterns pt ON pt.id = COALESCE(ra.pattern_id, c.pattern_id, ri.pattern_id, card_ri.pattern_id)
 WHERE ra.user_id = $1
 GROUP BY pt.code, pt.name
 HAVING COUNT(*) FILTER (WHERE ra.rating = 'hard') > 0
