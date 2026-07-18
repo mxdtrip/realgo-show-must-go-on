@@ -11,6 +11,17 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const clearRoadmapTarget = `-- name: ClearRoadmapTarget :exec
+UPDATE users
+SET target_company = NULL, interview_date = NULL, target_topics = '{}', updated_at = NOW()
+WHERE id = $1
+`
+
+func (q *Queries) ClearRoadmapTarget(ctx context.Context, id int64) error {
+	_, err := q.db.Exec(ctx, clearRoadmapTarget, id)
+	return err
+}
+
 const getRoadmapUserTarget = `-- name: GetRoadmapUserTarget :one
 SELECT target_company, interview_date, target_topics
 FROM users
@@ -104,15 +115,4 @@ func (q *Queries) ListUserRoadmapItems(ctx context.Context, arg ListUserRoadmapI
 		return nil, err
 	}
 	return items, nil
-}
-
-const clearRoadmapTarget = `-- name: ClearRoadmapTarget :exec
-UPDATE users
-SET target_company = NULL, interview_date = NULL, target_topics = '{}', updated_at = NOW()
-WHERE id = $1
-`
-
-func (q *Queries) ClearRoadmapTarget(ctx context.Context, id int64) error {
-	_, err := q.db.Exec(ctx, clearRoadmapTarget, id)
-	return err
 }
