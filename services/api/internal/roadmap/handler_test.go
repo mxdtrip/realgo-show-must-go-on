@@ -29,7 +29,6 @@ func TestGet_ResponseShape(t *testing.T) {
 		OverallProgress: 50,
 		Target:          Target{Company: &Company{Code: &code, Name: "Google"}},
 		Weeks:           []Week{{ID: "week_01", Status: "active"}},
-		Patterns:        []Pattern{{Code: "arrays_hashing", Problems: []Problem{{ID: 1, Status: "reviewing"}}}},
 	}})
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/me/roadmap", nil)
 	req = req.WithContext(auth.ContextWithUserID(req.Context(), 10))
@@ -46,7 +45,7 @@ func TestGet_ResponseShape(t *testing.T) {
 	if err := json.Unmarshal(w.Body.Bytes(), &body); err != nil {
 		t.Fatalf("invalid json: %v", err)
 	}
-	if body.Data.OverallProgress != 50 || len(body.Data.Patterns) != 1 {
+	if body.Data.OverallProgress != 50 || len(body.Data.Weeks) != 1 {
 		t.Fatalf("unexpected data: %+v", body.Data)
 	}
 	if body.Data.Target.Company == nil || body.Data.Target.Company.Name != "Google" {
@@ -134,9 +133,6 @@ func (f fakeRepository) Get(context.Context, int64) (Response, error) {
 	}
 	if f.data.Weeks == nil {
 		f.data.Weeks = []Week{}
-	}
-	if f.data.Patterns == nil {
-		f.data.Patterns = []Pattern{}
 	}
 	return f.data, nil
 }
