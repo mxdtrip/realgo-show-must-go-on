@@ -42,7 +42,7 @@ export default function AboutPage() {
   return (
     <main className="landing-section legal-page">
       <article className="pattern-profile">
-        <header className="pattern-profile__hero">
+        <header className="pattern-profile__hero pattern-profile__hero--center">
           <span className="pattern-profile__code">Команда // About</span>
           <h1>built by devs who bombed a few interviews first</h1>
           <p className="pattern-profile__lead">
