@@ -125,6 +125,11 @@ export function RoadmapClient({ copy }: Readonly<{ copy: RoadmapCopy }>) {
   const countdown = interviewCountdown(data?.target.interviewDate ?? null);
   const firstActive = weeks.findIndex((week, index) => week.status === "active" && !isWeekLocked(index));
 
+  // GET /me/roadmap always returns the full canonical NeetCode 150 track —
+  // it's never actually empty, even for users who skipped onboarding. The
+  // real "hasn't built a roadmap" signal is whether onboarding set a target.
+  const isPersonalizedTarget = Boolean(data?.target.company || data?.target.interviewDate);
+
   // Fallback: показываем персональный план, если backend пустой или ошибся
   const showPersonalFallback =
     personal !== null &&
@@ -213,7 +218,7 @@ export function RoadmapClient({ copy }: Readonly<{ copy: RoadmapCopy }>) {
               <em>{personalOverall}%</em> {copy.overallLabel}
             </span>
           </div>
-        ) : loadState === "loaded" ? (
+        ) : loadState === "loaded" && isPersonalizedTarget ? (
           <div className="cabinet-page-head__actions">
             {countdown ? <span className="cabinet-next-hint">{countdown}</span> : null}
             <span className="cabinet-next-hint">
@@ -223,7 +228,7 @@ export function RoadmapClient({ copy }: Readonly<{ copy: RoadmapCopy }>) {
         ) : null}
       </section>
 
-      {!showPersonalFallback && loadState === "loaded" && weeks.length === 0 && !personal ? (
+      {!showPersonalFallback && loadState === "loaded" && !isPersonalizedTarget && !personal ? (
         <div className="cabinet-banner" role="status">
           <span>{copy.emptyStateDescription ?? copy.empty}</span>
           <Link className="cabinet-ghost-link" href="/onboarding/profile?force=1">
@@ -270,7 +275,7 @@ export function RoadmapClient({ copy }: Readonly<{ copy: RoadmapCopy }>) {
             )}
           </ol>
         </CabinetPanel>
-      ) : loadState === "loaded" ? (
+      ) : loadState === "loaded" && isPersonalizedTarget ? (
         <CabinetPanel
           eyebrow={copy.panelEyebrow}
           title={copy.panelTitle}
