@@ -1,8 +1,12 @@
+"use client";
+
+import { usePathname } from "next/navigation";
 import { getDictionary } from "../_content/i18n";
 
 export function SiteFooter() {
   const dictionary = getDictionary();
   const copy = dictionary.marketing;
+  const pathname = usePathname();
 
   return (
     <footer className="site-footer">
@@ -18,10 +22,12 @@ export function SiteFooter() {
             <h4>{column.title}</h4>
             {column.links.map((link) => {
               const isExternal = link.href.startsWith("http");
+              const isCurrent = !isExternal && link.href === pathname;
               return (
                 <a
                   href={link.href}
                   key={link.label}
+                  aria-current={isCurrent ? "page" : undefined}
                   {...(isExternal ? { target: "_blank", rel: "noopener noreferrer" } : {})}
                 >
                   {link.label}

@@ -1570,6 +1570,13 @@ h3 {
   color: var(--accent-bright);
 }
 
+.footer-col a[aria-current="page"] {
+  color: var(--text);
+  opacity: 0.45;
+  pointer-events: none;
+  cursor: default;
+}
+
 .site-footer__bar {
   max-width: var(--maxw);
   margin: 0 auto;
@@ -9142,6 +9149,13 @@ a.roadmap-step__practice-card:hover {
   content: "▸";
   font-size: 15px;
   top: 1px;
+}
+
+.team-member-detail {
+  display: block;
+  margin-top: 2px;
+  font-size: 12.5px;
+  color: var(--text-dim);
 }
 
 .pattern-profile__list--misfits li::before {
