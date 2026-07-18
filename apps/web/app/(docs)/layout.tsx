@@ -1,11 +1,13 @@
 import type { ReactNode } from "react";
-import { AuthPageHeader } from "../_auth/AuthPageHeader";
 import { SiteFooter } from "../components/SiteFooter";
+import { SiteHeader } from "../components/SiteHeader";
+import { DocsPagerNav } from "./DocsPagerNav";
 
 export default function DocsLayout({ children }: { children: ReactNode }) {
   return (
     <>
-      <AuthPageHeader />
+      <SiteHeader />
+      <DocsPagerNav />
       {children}
       <SiteFooter />
     </>

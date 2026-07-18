@@ -211,32 +211,38 @@ h3 {
   margin-left: auto;
 }
 
-.site-auth > button {
+.site-auth > button,
+.site-auth > a.site-auth__cta {
   font-family: var(--font-stack-mono);
   font-size: 12.5px;
   padding: 9px 16px;
   border-radius: 8px;
   border: 0;
+  text-decoration: none;
   transition: all 0.18s ease;
 }
 
-.site-auth > button:first-child {
+.site-auth > button:first-child,
+.site-auth > a.site-auth__cta:first-child {
   background: rgba(255, 255, 255, 0.05);
   color: var(--text-dim);
 }
 
-.site-auth > button:first-child:hover {
+.site-auth > button:first-child:hover,
+.site-auth > a.site-auth__cta:first-child:hover {
   color: var(--text);
   background: rgba(255, 255, 255, 0.09);
 }
 
-.site-auth > button:last-child {
+.site-auth > button:last-child,
+.site-auth > a.site-auth__cta:last-child {
   background: var(--accent);
   color: #ffffff;
   font-weight: 600;
 }
 
-.site-auth > button:last-child:hover {
+.site-auth > button:last-child:hover,
+.site-auth > a.site-auth__cta:last-child:hover {
   background: var(--accent-bright);
 }
 
@@ -1470,6 +1476,77 @@ h3 {
   font-size: 12px;
   letter-spacing: 0.04em;
   color: var(--text-faint);
+}
+
+/* ============================================================
+   DOCS PAGER (prev / home / next, sits below the fixed site-strip)
+   ============================================================ */
+
+.docs-pager {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 16px;
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 82px var(--pad) 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-2);
+  font-family: var(--font-stack-mono);
+  font-size: 12.5px;
+}
+
+.docs-pager__prev,
+.docs-pager__next {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  color: var(--text-dim);
+  transition: color 0.18s ease;
+}
+
+.docs-pager__prev {
+  justify-self: start;
+}
+
+.docs-pager__next {
+  justify-self: end;
+  text-align: right;
+}
+
+.docs-pager__prev:hover,
+.docs-pager__next:hover {
+  color: var(--accent-bright);
+}
+
+.docs-pager__arrow {
+  color: var(--text-faint);
+}
+
+.docs-pager__home {
+  justify-self: center;
+  white-space: nowrap;
+  color: var(--text-faint);
+  transition: color 0.18s ease;
+}
+
+.docs-pager__home:hover {
+  color: var(--text);
+}
+
+@media (max-width: 640px) {
+  .docs-pager {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+    gap: 10px;
+  }
+
+  .docs-pager__prev,
+  .docs-pager__next {
+    justify-self: center;
+  }
 }
 
 /* Success state of the MVP payment stub. */
