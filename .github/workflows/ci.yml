@@ -8,7 +8,7 @@ on:
 jobs:
   api:
     name: Go API
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, appbox]
     services:
       postgres:
         image: postgres:16-alpine
@@ -16,8 +16,11 @@ jobs:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: freeburger
+        # Host port remapped off the default 5432: this job now runs on the
+        # appbox self-hosted runner, which already has the deployed prod/
+        # staging stack's own Postgres bound to 5432 on that same machine.
         ports:
-          - 5432:5432
+          - 15432:5432
         options: >-
           --health-cmd "pg_isready -U postgres -d freeburger"
           --health-interval 5s
@@ -25,8 +28,9 @@ jobs:
           --health-retries 10
       redis:
         image: redis:7-alpine
+        # Same reasoning as postgres above — 6379 is taken by the deployed stack.
         ports:
-          - 6379:6379
+          - 16379:6379
         options: >-
           --health-cmd "redis-cli ping"
           --health-interval 5s
@@ -73,12 +77,14 @@ jobs:
             -v "$PWD/migrations:/migrations:ro" \
             migrate/migrate:v4.18.1 \
             -path=/migrations \
-            -database=postgres://postgres:postgres@localhost:5432/freeburger?sslmode=disable \
+            -database=postgres://postgres:postgres@localhost:15432/freeburger?sslmode=disable \
             up
 
       - name: Integration test
         env:
           DB_PASSWORD: postgres
+          DB_PORT: "15432"
+          REDIS_PORT: "16379"
           AUTH_JWT_SECRET: ci-secret-with-more-than-32-random-looking-characters
         run: go test -count=1 -tags=integration ./internal/integration
 
@@ -87,7 +93,7 @@ jobs:
 
       - name: Check migrations
         env:
-          DATABASE_URL: postgres://postgres:postgres@localhost:5432/freeburger?sslmode=disable
+          DATABASE_URL: postgres://postgres:postgres@localhost:15432/freeburger?sslmode=disable
         run: ./scripts/check-migrations.sh
 
       - name: Check Docker Compose config
@@ -98,7 +104,7 @@ jobs:
 
   web:
     name: Web
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, appbox]
     defaults:
       run:
         working-directory: apps/web
@@ -117,7 +123,7 @@ jobs:
 
   extension:
     name: Extension
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, appbox]
     defaults:
       run:
         working-directory: apps/extension
@@ -136,7 +142,7 @@ jobs:
 
   web-e2e:
     name: Web e2e
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, appbox]
     defaults:
       run:
         working-directory: apps/web
