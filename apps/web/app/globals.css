@@ -1452,13 +1452,15 @@ h3 {
   color: var(--accent-bright);
 }
 
-.legal-page a {
+.legal-page .pattern-profile__lead a,
+.legal-page .pattern-profile__body a {
   color: var(--text);
   text-decoration: underline;
   text-underline-offset: 2px;
 }
 
-.legal-page a:hover {
+.legal-page .pattern-profile__lead a:hover,
+.legal-page .pattern-profile__body a:hover {
   color: var(--accent-bright);
 }
 
