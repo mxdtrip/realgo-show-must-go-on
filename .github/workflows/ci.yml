@@ -143,6 +143,13 @@ jobs:
   web-e2e:
     name: Web e2e
     runs-on: [self-hosted, linux, appbox]
+    # `playwright install --with-deps` needs passwordless sudo to apt-get
+    # browser deps, which the appbox runner user doesn't have. Running the
+    # job inside Microsoft's official image (browsers + all system deps
+    # already baked in, version-matched to the pinned playwright package)
+    # sidesteps that entirely — no host package install needed.
+    container:
+      image: mcr.microsoft.com/playwright:v1.61.1-noble
     defaults:
       run:
         working-directory: apps/web
@@ -158,7 +165,7 @@ jobs:
       - run: npm ci
 
       - name: Install Playwright browser
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install chromium
 
       # Boots the zero-dep auth stub + a production build of the web app
       # (see playwright.config.mjs) and drives the auth flow end to end.
