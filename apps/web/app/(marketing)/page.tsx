@@ -6,6 +6,7 @@ import { FlipReviewCard } from "../components/FlipReviewCard";
 import { MemoryExtensionDemo } from "../components/MemoryExtensionDemo";
 import { ScrollReveal } from "../components/ScrollReveal";
 import { ScrollVideoBackground } from "../components/ScrollVideoBackground";
+import { SiteFooter } from "../components/SiteFooter";
 import { SortingMemoryHero } from "../components/SortingMemoryHero";
 import { LandingFAQ } from "./LandingFAQ";
 
@@ -171,49 +172,7 @@ export default function Home() {
 
       <LandingFAQ section={copy.sections.faq} />
 
-      <footer className="site-footer">
-        <div className="site-footer__inner" data-reveal="fade">
-          <div className="site-footer__brand">
-            <a className="site-brand" href="/">
-              {dictionary.common.brand}
-            </a>
-            <p>{copy.footer.description}</p>
-          </div>
-          {copy.footer.columns.map((column) => (
-            <nav className="footer-col" key={column.title}>
-              <h4>{column.title}</h4>
-              {column.links.map((link) => {
-                const isExternal = link.href.startsWith("http");
-                return (
-                  <a
-                    href={link.href}
-                    key={link.label}
-                    {...(isExternal ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-                  >
-                    {link.label}
-                  </a>
-                );
-              })}
-            </nav>
-          ))}
-        </div>
-        <div className="site-footer__bar">
-          <span>{copy.footer.copyright}</span>
-          <span className="footer-powered">
-            {copy.footer.poweredBy}
-            <img
-              src="/author-tag.png"
-              alt=""
-              className="footer-powered__logo"
-              decoding="async"
-              height="1024"
-              loading="lazy"
-              width="1024"
-            />
-          </span>
-          <span>{copy.footer.tagline}</span>
-        </div>
-      </footer>
+      <SiteFooter />
     </>
   );
 }
