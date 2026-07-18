@@ -66,9 +66,10 @@ function mapPersonalWeek(week: PersonalRoadmapWeek): RoadmapWeek {
   };
 }
 
-/** Роадмап на живых данных GET /me/roadmap: недели = паттерны NeetCode 150
-    с реальным прогрессом; неделя заблокирована, пока предыдущие не пройдены.
-    При ошибке/пустом ответе показывает персональный план из онбординга. */
+/** Роадмап на живых данных GET /me/roadmap: недели = семьи паттернов Pattern
+    Atlas, прогресс — реальная mastery-статистика по решённым задачам; неделя
+    заблокирована, пока предыдущие не пройдены. Пустой стейт с CTA на
+    онбординг показывается, если пользователь ещё не задавал цель подготовки. */
 export function RoadmapClient({ copy }: Readonly<{ copy: RoadmapCopy }>) {
   const [data, setData] = useState<RoadmapResponse | null>(null);
   const [loadState, setLoadState] = useState<LoadState>("loading");
@@ -125,9 +126,10 @@ export function RoadmapClient({ copy }: Readonly<{ copy: RoadmapCopy }>) {
   const countdown = interviewCountdown(data?.target.interviewDate ?? null);
   const firstActive = weeks.findIndex((week, index) => week.status === "active" && !isWeekLocked(index));
 
-  // GET /me/roadmap always returns the full canonical NeetCode 150 track —
-  // it's never actually empty, even for users who skipped onboarding. The
-  // real "hasn't built a roadmap" signal is whether onboarding set a target.
+  // GET /me/roadmap always returns one week per pattern family (the fixed
+  // global taxonomy) — weeks is never actually empty, even for users who
+  // skipped onboarding. The real "hasn't built a roadmap" signal is whether
+  // onboarding set a target, not whether the week list is non-empty.
   const isPersonalizedTarget = Boolean(data?.target.company || data?.target.interviewDate);
 
   // Fallback: показываем персональный план, если backend пустой или ошибся

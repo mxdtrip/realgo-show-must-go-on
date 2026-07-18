@@ -608,7 +608,7 @@ const ru = {
         eyebrow: "/roadmap",
         title: "ReAlgo Core Roadmap",
         description:
-          "Маршрут по паттернам NeetCode 150: каждая неделя закрывает один паттерн, прогресс считается по реально решённым задачам.",
+          "Маршрут по паттернам: каждая неделя закрывает один паттерн, прогресс считается по реально решённым задачам.",
         panelEyebrow: "plan",
         panelTitle: "Preparation track",
         overallLabel: "общий прогресс",
