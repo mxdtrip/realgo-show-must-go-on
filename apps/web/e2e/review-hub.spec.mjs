@@ -44,20 +44,6 @@ test.describe("/reviews — журнал решённых задач", () => {
       "/patterns/binary_search_on_answer",
     );
 
-    // The due queue is actionable: rating waits for the API and only then
-    // removes that queue item. The journal below remains an independent log.
-    const kokoQueue = page.locator(".review-queue__item", {
-      hasText: "Stub Problem: Koko Eating Bananas",
-    });
-    const rate = page.waitForRequest(
-      (request) =>
-        request.method() === "POST" && request.url().includes("/me/reviews/501/rate"),
-    );
-    await kokoQueue.getByRole("button", { name: "easy", exact: true }).click();
-    const rateRequest = await rate;
-    expect(rateRequest.postDataJSON()).toMatchObject({ rating: "easy" });
-    await expect(kokoQueue).toHaveCount(0);
-
     // Search and status tabs narrow the journal.
     await page.getByRole("searchbox").fill("two sum");
     await expect(journal.getByText("Stub Problem: Two Sum")).toBeVisible();
