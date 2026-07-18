@@ -8501,11 +8501,15 @@ a.roadmap-step__practice-card:hover {
    fr-долях, здесь на px/ch, точное совпадение всё равно не гарантировано. */
 .atlas-sub__link {
   display: grid;
-  /* Difficulty column must fit 3 badges at 12ch each (.atlas-difficulty-badges,
-     ~240px) — the previous 112px clipped/overlapped them into the next
-     column. Name column trimmed to make room (long names still ellipsis via
-     .atlas-sub__name, same as the family row) rather than overflow the panel. */
-  grid-template-columns: 280px max-content 240px 8ch 8ch 64px;
+  /* Every column is a fixed size, not max-content: each <li> is its own
+     independent grid, so a max-content track (e.g. the mastery column,
+     "не изучен" vs "нестабильный 41%") resolves to a different width per
+     row and the columns after it drift out of alignment row to row.
+     Difficulty needs ~240px to fit 3 badges at 12ch each (the previous
+     112px clipped/overlapped them into the solved-count column). Name is
+     trimmed to make room (long names still ellipsis via .atlas-sub__name,
+     same as the family row) rather than overflow the panel. */
+  grid-template-columns: 280px 150px 240px 8ch 8ch 64px;
   align-items: center;
   column-gap: 14px;
   padding: 7px 8px;
