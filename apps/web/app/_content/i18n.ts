@@ -210,11 +210,11 @@ const ru = {
         {
           title: "product",
           links: [
-            { href: "#memory", label: "Memory" },
-            { href: "#roadmap", label: "Roadmap" },
-            { href: "#reviews", label: "Reviews" },
-            { href: "#pricing", label: "Pricing" },
-            { href: "#faq", label: "FAQ" },
+            { href: "/#memory", label: "Memory" },
+            { href: "/#roadmap", label: "Roadmap" },
+            { href: "/#reviews", label: "Reviews" },
+            { href: "/#pricing", label: "Pricing" },
+            { href: "/#faq", label: "FAQ" },
           ],
         },
         {
