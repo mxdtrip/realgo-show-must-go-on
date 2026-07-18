@@ -8103,6 +8103,33 @@ a.roadmap-step__practice-card:hover {
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
+/* Native <select> (platform picker) — no wrapping trigger button, so it
+   needs its own dark styling instead of falling back to the browser's
+   default white control. color-scheme keeps the dropdown popup + arrow
+   dark too, not just the closed control. */
+.atlas-company select {
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--panel);
+  color: var(--text);
+  color-scheme: dark;
+  font-family: var(--font-stack-mono);
+  font-size: 12px;
+  cursor: pointer;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.atlas-company select:hover {
+  border-color: var(--border-strong);
+}
+
+.atlas-company select:focus-visible {
+  outline: none;
+  border-color: var(--accent-line);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
 .shell-dialog--company {
   display: flex;
   flex-direction: column;
@@ -8466,15 +8493,19 @@ a.roadmap-step__practice-card:hover {
   border-left: 1px solid var(--border);
 }
 
-/* Грид с фиксированными колонками. 459px под название подобраны так,
-   чтобы колонка сложности встала ровно под колонку сложности семейства
-   в Pattern Families (тот же паттерн, что и .atlas-family). Остальные
-   поля — фиксированной ширины и рендерятся всегда (пустая ячейка вместо
-   пропущенного элемента), иначе «решено» / due / релевантность сдвигают
-   всё, что идёт после них. */
+/* Грид с фиксированными колонками — каждое поле рендерится всегда (пустая
+   ячейка вместо пропущенного элемента), иначе «решено» / due / релевантность
+   сдвигают всё, что идёт после них, и колонки съезжают между строками
+   (см. SubpatternRow). Имя и сложность делят бюджет ширины панели, не
+   пытаясь буквально встать под колонки .atlas-family — там gridтемплейт на
+   fr-долях, здесь на px/ch, точное совпадение всё равно не гарантировано. */
 .atlas-sub__link {
   display: grid;
-  grid-template-columns: 459px max-content 112px 8ch 8ch 64px;
+  /* Difficulty column must fit 3 badges at 12ch each (.atlas-difficulty-badges,
+     ~240px) — the previous 112px clipped/overlapped them into the next
+     column. Name column trimmed to make room (long names still ellipsis via
+     .atlas-sub__name, same as the family row) rather than overflow the panel. */
+  grid-template-columns: 280px max-content 240px 8ch 8ch 64px;
   align-items: center;
   column-gap: 14px;
   padding: 7px 8px;
