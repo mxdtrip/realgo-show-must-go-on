@@ -168,3 +168,8 @@ export function readRoadmap(): StoredRoadmap | null {
     return null;
   }
 }
+
+export function clearRoadmap(): void {
+  if (typeof window === "undefined") return;
+  window.localStorage.removeItem(roadmapStorageKey);
+}

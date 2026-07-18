@@ -635,6 +635,8 @@ const ru = {
         emptyStateDescription:
           "Пройди онбординг, чтобы выбрать горизонт подготовки и темы — ReAlgo соберёт персональный план по неделям.",
         emptyStateAction: "построить roadmap",
+        deleteRoadmap: "удалить roadmap",
+        deleteRoadmapPending: "удаляем…",
       },
       patterns: {
         eyebrow: "/patterns",

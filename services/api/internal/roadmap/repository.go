@@ -50,6 +50,15 @@ func (r *pgRepository) Get(ctx context.Context, userID int64) (Response, error) 
 	return buildResponse(target, atlas), nil
 }
 
+// Clear resets the onboarding-set target (company, interview date, topics)
+// so the roadmap goes back to the "not personalized" empty state.
+func (r *pgRepository) Clear(ctx context.Context, userID int64) error {
+	if err := r.q.ClearRoadmapTarget(ctx, userID); err != nil {
+		return fmt.Errorf("roadmap: clear target: %w", err)
+	}
+	return nil
+}
+
 func (r *pgRepository) target(ctx context.Context, userID int64) (Target, error) {
 	row, err := r.q.GetRoadmapUserTarget(ctx, userID)
 	if err != nil {

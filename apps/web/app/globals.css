@@ -2288,6 +2288,26 @@ h3 {
   color: var(--text-dim);
 }
 
+/* Plain-text action variant: same barely-there look as the hint chips next
+   to it, just clickable — no border/background/shape, only a slight
+   brighten on hover as affordance. Used for the "delete roadmap" trigger,
+   which should not visually compete with the primary CTAs on this page. */
+.cabinet-next-hint--action {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+.cabinet-next-hint--action:hover:not(:disabled) {
+  color: var(--text-dim);
+}
+
+.cabinet-next-hint--action:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
 /* primary command button */
 .cabinet-cta,
 .focus-complete a,

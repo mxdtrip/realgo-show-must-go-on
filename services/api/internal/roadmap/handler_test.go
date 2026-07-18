@@ -123,8 +123,9 @@ func TestGet_UserNotFound(t *testing.T) {
 }
 
 type fakeRepository struct {
-	data Response
-	err  error
+	data     Response
+	err      error
+	clearErr error
 }
 
 func (f fakeRepository) Get(context.Context, int64) (Response, error) {
@@ -137,6 +138,10 @@ func (f fakeRepository) Get(context.Context, int64) (Response, error) {
 	return f.data, nil
 }
 
+func (f fakeRepository) Clear(context.Context, int64) error {
+	return f.clearErr
+}
+
 func TestGet_InternalError(t *testing.T) {
 	h := NewHandler(fakeRepository{err: errors.New("boom")})
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/me/roadmap", nil)
@@ -144,6 +149,47 @@ func TestGet_InternalError(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	h.Get(w, req)
+
+	if w.Code != http.StatusInternalServerError {
+		t.Fatalf("status = %d, want %d", w.Code, http.StatusInternalServerError)
+	}
+}
+
+func TestDelete_Unauthenticated(t *testing.T) {
+	h := NewHandler(fakeRepository{})
+	req := httptest.NewRequest(http.MethodDelete, "/api/v1/me/roadmap", nil)
+	w := httptest.NewRecorder()
+
+	h.Delete(w, req)
+
+	if w.Code != http.StatusUnauthorized {
+		t.Fatalf("status = %d, want %d", w.Code, http.StatusUnauthorized)
+	}
+}
+
+func TestDelete_Success(t *testing.T) {
+	h := NewHandler(fakeRepository{})
+	req := httptest.NewRequest(http.MethodDelete, "/api/v1/me/roadmap", nil)
+	req = req.WithContext(auth.ContextWithUserID(req.Context(), 10))
+	w := httptest.NewRecorder()
+
+	h.Delete(w, req)
+
+	if w.Code != http.StatusNoContent {
+		t.Fatalf("status = %d, want %d", w.Code, http.StatusNoContent)
+	}
+	if w.Body.Len() != 0 {
+		t.Fatalf("body = %q, want empty", w.Body.String())
+	}
+}
+
+func TestDelete_InternalError(t *testing.T) {
+	h := NewHandler(fakeRepository{clearErr: errors.New("boom")})
+	req := httptest.NewRequest(http.MethodDelete, "/api/v1/me/roadmap", nil)
+	req = req.WithContext(auth.ContextWithUserID(req.Context(), 10))
+	w := httptest.NewRecorder()
+
+	h.Delete(w, req)
 
 	if w.Code != http.StatusInternalServerError {
 		t.Fatalf("status = %d, want %d", w.Code, http.StatusInternalServerError)
