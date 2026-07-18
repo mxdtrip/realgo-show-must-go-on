@@ -9041,6 +9041,11 @@ a.roadmap-step__practice-card:hover {
   padding-bottom: clamp(24px, 3.5vw, 38px);
 }
 
+.pattern-profile__hero--center {
+  margin-inline: auto;
+  text-align: center;
+}
+
 .pattern-profile__code {
   font-family: var(--font-stack-mono);
   font-size: 11px;
