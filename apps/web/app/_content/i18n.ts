@@ -220,17 +220,16 @@ const ru = {
         {
           title: "developers",
           links: [
-            { href: "#", label: "Docs" },
-            { href: "#", label: "API" },
-            { href: "#", label: "Anki export" },
-            { href: "#", label: "Changelog" },
+            { href: "/docs", label: "Docs" },
+            { href: "/anki-export", label: "Anki export" },
+            { href: "/changelog", label: "Changelog" },
           ],
         },
         {
           title: "company",
           links: [
-            { href: "#", label: "About" },
-            { href: "#", label: "Blog" },
+            { href: "/about", label: "About" },
+            { href: "https://t.me/realgo_devlog", label: "Blog" },
           ],
         },
         {

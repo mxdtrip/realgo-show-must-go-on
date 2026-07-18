@@ -182,11 +182,18 @@ export default function Home() {
           {copy.footer.columns.map((column) => (
             <nav className="footer-col" key={column.title}>
               <h4>{column.title}</h4>
-              {column.links.map((link) => (
-                <a href={link.href} key={link.label}>
-                  {link.label}
-                </a>
-              ))}
+              {column.links.map((link) => {
+                const isExternal = link.href.startsWith("http");
+                return (
+                  <a
+                    href={link.href}
+                    key={link.label}
+                    {...(isExternal ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                  >
+                    {link.label}
+                  </a>
+                );
+              })}
             </nav>
           ))}
         </div>
