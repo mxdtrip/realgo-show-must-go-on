@@ -5,12 +5,37 @@ export const metadata: Metadata = {
 };
 
 const team = [
-  { handle: "Дима", role: "координация и продукт" },
-  { handle: "Валера", role: "frontend" },
-  { handle: "Mikebang", role: "backend и devops" },
-  { handle: "P1xart", role: "миграции данных" },
-  { handle: "bryack", role: "тесты" },
-  { handle: "PAO", role: "QA" },
+  {
+    handle: "Mxdtrip",
+    role: "координация и продукт",
+    detail:
+      "продуктовые решения и приоритеты, интеграции, деплой и секреты, часть веб-документов",
+  },
+  {
+    handle: "MixKage",
+    role: "frontend",
+    detail: "веб-кабинет, страницы продукта, подключение к API",
+  },
+  {
+    handle: "Mikebang",
+    role: "backend и devops",
+    detail: "API, индексы в БД, идемпотентность операций, runbook'и и оркестрация деплоя",
+  },
+  {
+    handle: "P1xart",
+    role: "миграции данных",
+    detail: "миграции схемы БД, констрейнты, консистентность данных, контракт API",
+  },
+  {
+    handle: "bryack",
+    role: "тесты",
+    detail: "цикл повторений и quiz-логика, автотесты и e2e-харнесс",
+  },
+  {
+    handle: "PAO",
+    role: "QA",
+    detail: "smoke-тесты, fixtures, e2e и ручная проверка перед релизом",
+  },
 ];
 
 export default function AboutPage() {
@@ -38,41 +63,10 @@ export default function AboutPage() {
               {team.map((member) => (
                 <li key={member.handle}>
                   <strong>{member.handle}</strong> — {member.role}
+                  <span className="team-member-detail">{member.detail}</span>
                 </li>
               ))}
             </ul>
-          </div>
-        </section>
-
-        <section className="pattern-profile__section" id="legal">
-          <header className="pattern-profile__rail">
-            <h2>Юридическая информация</h2>
-          </header>
-          <div className="pattern-profile__body">
-            <p>
-              Оператором Сервиса выступает индивидуальный предприниматель
-              Молчанов Дмитрий Александрович — подробности в{" "}
-              <a href="/privacy">Политике конфиденциальности</a> и{" "}
-              <a href="/terms">Пользовательском соглашении</a>.
-            </p>
-          </div>
-        </section>
-
-        <section className="pattern-profile__section" id="contact">
-          <header className="pattern-profile__rail">
-            <h2>Связаться</h2>
-          </header>
-          <div className="pattern-profile__body">
-            <p>
-              Вопросы, баги, идеи — на{" "}
-              <a href="mailto:mixkageyt@gmail.com">mixkageyt@gmail.com</a>{" "}
-              или через <a href="/support">страницу поддержки</a>. Что нового
-              в продукте — в <a href="/changelog">Changelog</a> и в{" "}
-              <a href="https://t.me/realgo_devlog" target="_blank" rel="noopener noreferrer">
-                Telegram-канале
-              </a>
-              .
-            </p>
           </div>
         </section>
       </article>
