@@ -3,9 +3,13 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-import { getRoadmap, type RoadmapResponse, type RoadmapWeek } from "../../../_api/roadmap";
+import { deleteRoadmap, getRoadmap, type RoadmapResponse, type RoadmapWeek } from "../../../_api/roadmap";
 import { ApiError } from "../../../_api/types";
-import { readRoadmap, type RoadmapWeek as PersonalRoadmapWeek } from "../../../_profile/roadmapGenerator";
+import {
+  clearRoadmap,
+  readRoadmap,
+  type RoadmapWeek as PersonalRoadmapWeek,
+} from "../../../_profile/roadmapGenerator";
 import { CabinetPanel, ProgressBar } from "../../_components";
 import { CabinetIcon } from "../../_icons";
 
@@ -41,6 +45,8 @@ type RoadmapCopy = Readonly<{
   emptyStateAction?: string;
   subpatternsLabel?: string;
   practiceMeta?: string;
+  deleteRoadmap?: string;
+  deleteRoadmapPending?: string;
 }>;
 
 function interviewCountdown(interviewDate: string | null): string | null {
@@ -79,6 +85,7 @@ export function RoadmapClient({ copy }: Readonly<{ copy: RoadmapCopy }>) {
     weeks: RoadmapWeek[];
     targetCompany: string;
   } | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     const stored = readRoadmap();
@@ -144,6 +151,22 @@ export function RoadmapClient({ copy }: Readonly<{ copy: RoadmapCopy }>) {
   const personalFirstActive = personalWeeks.findIndex((w) => w.status === "active");
   const isPersonalLocked = (index: number) =>
     personalWeeks.slice(0, index).some((w) => w.status !== "done");
+
+  const handleDeleteRoadmap = async () => {
+    if (deleting) return;
+    setDeleting(true);
+    try {
+      await deleteRoadmap();
+    } catch {
+      // Сервер мог уже быть недоступен (мы и так в showPersonalFallback) —
+      // локальный план всё равно чистим ниже, чтобы кнопка не залипала.
+    } finally {
+      clearRoadmap();
+      setPersonal(null);
+      setDeleting(false);
+      setReloadVersion((version) => version + 1);
+    }
+  };
 
   const renderWeek = (week: RoadmapWeek, index: number, locked: boolean, activeIndex: number) => {
     const stateName = week.status in statuses ? week.status : "todo";
@@ -219,6 +242,14 @@ export function RoadmapClient({ copy }: Readonly<{ copy: RoadmapCopy }>) {
             <span className="cabinet-next-hint">
               <em>{personalOverall}%</em> {copy.overallLabel}
             </span>
+            <button
+              className="cabinet-next-hint cabinet-next-hint--action"
+              type="button"
+              disabled={deleting}
+              onClick={() => void handleDeleteRoadmap()}
+            >
+              {deleting ? copy.deleteRoadmapPending ?? "удаляем…" : copy.deleteRoadmap ?? "удалить roadmap"}
+            </button>
           </div>
         ) : loadState === "loaded" && isPersonalizedTarget ? (
           <div className="cabinet-page-head__actions">
@@ -226,6 +257,14 @@ export function RoadmapClient({ copy }: Readonly<{ copy: RoadmapCopy }>) {
             <span className="cabinet-next-hint">
               <em>{overall}%</em> {copy.overallLabel}
             </span>
+            <button
+              className="cabinet-next-hint cabinet-next-hint--action"
+              type="button"
+              disabled={deleting}
+              onClick={() => void handleDeleteRoadmap()}
+            >
+              {deleting ? copy.deleteRoadmapPending ?? "удаляем…" : copy.deleteRoadmap ?? "удалить roadmap"}
+            </button>
           </div>
         ) : null}
       </section>

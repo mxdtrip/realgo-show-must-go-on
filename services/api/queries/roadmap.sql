@@ -24,3 +24,8 @@ LEFT JOIN user_problem_progress upp
     ON upp.problem_id = p.id AND upp.user_id = $2
 WHERE ri.roadmap_code = $1
 ORDER BY ri.position ASC;
+
+-- name: ClearRoadmapTarget :exec
+UPDATE users
+SET target_company = NULL, interview_date = NULL, target_topics = '{}', updated_at = NOW()
+WHERE id = $1;

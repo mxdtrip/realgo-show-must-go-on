@@ -36,3 +36,10 @@ export type RoadmapResponse = {
 export function getRoadmap(signal?: AbortSignal) {
   return apiFetch<RoadmapResponse>("/me/roadmap", { signal });
 }
+
+/** Clears the onboarding-set target (company/interview date/topics) — the
+    roadmap goes back to the empty "build your roadmap" state. Solve history
+    and progress are untouched. */
+export function deleteRoadmap(signal?: AbortSignal) {
+  return apiFetch<void>("/me/roadmap", { method: "DELETE", signal });
+}
