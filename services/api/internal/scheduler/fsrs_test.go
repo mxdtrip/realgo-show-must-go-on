@@ -141,3 +141,67 @@ func TestFSRSAdapter_ProducesDifferentIntervalsThanSimple(t *testing.T) {
 		}
 	}
 }
+
+// TestNewFromConfig_AppliesRetention pins down the user-tunable knob that A2
+// exposes: a lower RequestRetention produces a longer interval than a higher
+// one, all else equal. go-fsrs' nextInterval is inversely proportional to
+// retention, so the relationship is deterministic. Fuzz stays off (default) to
+// keep the comparison exact.
+//
+// This unit test is the fast inner-loop companion to the
+// FSRSRetentionAffectsIntervals acceptance spec: it proves the scheduler
+// itself honours Config before the wiring layer does.
+func TestNewFromConfig_AppliesRetention(t *testing.T) {
+	now := time.Date(2026, 7, 4, 12, 0, 0, 0, time.UTC)
+	low := scheduler.NewFromConfig(scheduler.Config{RequestRetention: 0.85, MaximumInterval: 36500})
+	high := scheduler.NewFromConfig(scheduler.Config{RequestRetention: 0.99, MaximumInterval: 36500})
+
+	// Use a card that has already graduated to Review so the next interval is
+	// computed by nextInterval (sensitive to retention) rather than the New/
+	// Learning short-term steps.
+	prior := scheduler.SchedulerState{
+		Stability:     5.0,
+		Difficulty:    5.5,
+		ScheduledDays: 3,
+		Reps:          2,
+		Lapses:        0,
+		State:         2, // Review
+		LastReview:    now.Add(-72 * time.Hour),
+		Due:           now.Add(-24 * time.Hour),
+	}
+
+	lowDecision, err := low.NextWithState(prior, scheduler.RatingEasy, now)
+	if err != nil {
+		t.Fatalf("low retention NextWithState: %v", err)
+	}
+	highDecision, err := high.NextWithState(prior, scheduler.RatingEasy, now)
+	if err != nil {
+		t.Fatalf("high retention NextWithState: %v", err)
+	}
+
+	if !(lowDecision.IntervalDays > highDecision.IntervalDays) {
+		t.Fatalf("lower retention must yield longer interval: low(0.85)=%v days, high(0.99)=%v days",
+			lowDecision.IntervalDays, highDecision.IntervalDays)
+	}
+}
+
+// TestNewFromConfig_DefaultsMatchOldConstructor guards the shorthand: building
+// from DefaultConfig must produce the same first-review decision as the legacy
+// NewFSRSAdapter(), so existing tests keep their meaning after the refactor.
+func TestNewFromConfig_DefaultsMatchOldConstructor(t *testing.T) {
+	now := time.Date(2026, 7, 4, 12, 0, 0, 0, time.UTC)
+	legacy := scheduler.NewFSRSAdapter()
+	fromCfg := scheduler.NewFromConfig(scheduler.DefaultConfig())
+
+	for _, rating := range []scheduler.Rating{scheduler.RatingHard, scheduler.RatingNormal, scheduler.RatingEasy} {
+		want, _ := legacy.Next(rating, now)
+		got, _ := fromCfg.Next(rating, now)
+		if got.IntervalDays != want.IntervalDays ||
+			got.Stability != want.Stability ||
+			got.Difficulty != want.Difficulty ||
+			got.State != want.State {
+			t.Errorf("rating=%q: NewFromConfig(DefaultConfig) differs from NewFSRSAdapter: got=%+v want=%+v",
+				rating, got, want)
+		}
+	}
+}

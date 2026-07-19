@@ -15,6 +15,7 @@ import (
 	"github.com/mxdtrip/freeburger/services/api/internal/auth"
 	"github.com/mxdtrip/freeburger/services/api/internal/cards"
 	"github.com/mxdtrip/freeburger/services/api/internal/config"
+	"github.com/mxdtrip/freeburger/services/api/internal/scheduler"
 	"github.com/mxdtrip/freeburger/services/api/internal/server"
 	"github.com/mxdtrip/freeburger/services/api/internal/storage/postgres"
 	"github.com/mxdtrip/freeburger/services/api/internal/storage/postgres/db"
@@ -64,11 +65,23 @@ func Run(ctx context.Context) error {
 
 	authSvc := auth.NewService(db.New(pg.Pool), rdb.Client, authCfg)
 
+	// Single FSRS scheduler shared by extension ingest and review/cards/quiz
+	// rate paths (FSRS audit A1). Built once from operator-facing config so
+	// changing request_retention / maximum_interval / fuzz / short-term moves
+	// every schedule in lockstep (A2).
+	sched := scheduler.NewFromConfig(scheduler.Config{
+		RequestRetention: cfg.RequestRetention,
+		MaximumInterval:  cfg.MaximumInterval,
+		EnableShortTerm:  cfg.EnableShortTerm,
+		EnableFuzz:       cfg.EnableFuzz,
+	})
+
 	deps := server.Deps{
-		Logger:   logger,
-		Postgres: pg,
-		Redis:    rdb,
-		Auth:     authSvc,
+		Logger:    logger,
+		Postgres:  pg,
+		Redis:     rdb,
+		Auth:      authSvc,
+		Scheduler: sched,
 	}
 	if cfg.Enabled() {
 		geminiProvider := ai.NewGeminiProvider(cfg.AI)

@@ -406,13 +406,31 @@ Response:
 }
 ```
 
-Правило MVP scheduling:
+Правило scheduling:
 
-- `hard` — вернуть сегодня в очередь или на следующий короткий интервал.
-- `normal` — через 3 дня.
-- `easy` — через 7 дней.
+Интервалы повторения вычисляются сервером алгоритмом **FSRS** (Free Spaced
+Repetition Scheduler) через библиотеку
+[`go-fsrs/v3`](https://github.com/open-spaced-repetition/go-fsrs) (`v3.3.1`).
+Все пути планирования — `POST /extension/events`, `POST /me/reviews/{id}/rate`,
+`POST /me/cards/{id}/rate` и quiz-answer — прогоняются через **единый
+scheduler**, поэтому одна и та же конфигурация параметров управляет всеми
+сущностями (задачами, карточками, паттернами).
 
-Точные интервалы должны быть backend-конфигурацией, чтобы frontend только отображал `nextReviewAt`.
+`nextReviewAt` в ответе — единственный source of truth для клиента. Численные
+интервалы не детерминированы фиксированной таблицей (как в раннем MVP
+`hard/normal/easy → 0/3/7 дней`): они зависят от предыдущего FSRS-состояния
+карточки (`stability`, `difficulty`, `state`, `lapses`, истекшее время) и
+глобальных параметров FSRS (`request_retention`, `maximum_interval`,
+`enable_fuzz`, `enable_short_term`).
+
+Параметры FSRS конфигурируются на стороне backend (секция `fsrs` в
+`config.yaml`, env `FSRS_*`; дефолты совпадают с `go-fsrs.DefaultParam`).
+Per-user оптимизация весов FSRS в текущей реализации отсутствует.
+
+> `internal/scheduler.Simple` (fixed-interval `hard=1d/normal=3d/easy=7d`) —
+> тестовый дублёр, в production не инстанцируется. Сохранён как reference для
+> unit-тестов и для фиксации того, что FSRS действительно отличается от
+> статической схемы.
 
 ## Problems
 

@@ -8,6 +8,7 @@ import (
 
 	"github.com/mxdtrip/freeburger/services/api/internal/entity"
 	"github.com/mxdtrip/freeburger/services/api/internal/repo"
+	"github.com/mxdtrip/freeburger/services/api/internal/scheduler"
 	"github.com/mxdtrip/freeburger/services/api/internal/service"
 )
 
@@ -17,7 +18,7 @@ func TestReviewService_GetQueue_DelegatesToRepo(t *testing.T) {
 			{ID: 1, Title: "Test Problem"},
 		},
 	}
-	svc := service.NewReviewService(mockRepo, nil)
+	svc := service.NewReviewService(mockRepo, scheduler.NewFSRSAdapter(), nil)
 
 	resp, err := svc.GetQueue(context.Background(), 1, "due", entity.FirstReviewQueueCursor(), 10)
 	if err != nil {
@@ -35,7 +36,7 @@ func TestReviewService_GetQueue_DelegatesToRepo(t *testing.T) {
 
 func TestReviewService_GetQueue_RequestsOneExtraRowToDetectNextPage(t *testing.T) {
 	mockRepo := &mockReviewRepository{items: []entity.ReviewItem{{ID: 1}}}
-	svc := service.NewReviewService(mockRepo, nil)
+	svc := service.NewReviewService(mockRepo, scheduler.NewFSRSAdapter(), nil)
 
 	cursor := entity.ReviewQueueCursor{NextReviewAt: time.Unix(1000, 0), ID: 7}
 	if _, err := svc.GetQueue(context.Background(), 1, "due", cursor, 10); err != nil {
@@ -59,7 +60,7 @@ func TestReviewService_GetQueue_NextCursorSetWhenMoreItemsExist(t *testing.T) {
 			{ID: 2, DueAt: dueAt2},
 		},
 	}
-	svc := service.NewReviewService(mockRepo, nil)
+	svc := service.NewReviewService(mockRepo, scheduler.NewFSRSAdapter(), nil)
 
 	resp, err := svc.GetQueue(context.Background(), 1, "due", entity.FirstReviewQueueCursor(), 1)
 	if err != nil {
@@ -89,7 +90,7 @@ func TestReviewService_GetQueue_NextCursorNilOnLastPage(t *testing.T) {
 	mockRepo := &mockReviewRepository{
 		items: []entity.ReviewItem{{ID: 1}, {ID: 2}},
 	}
-	svc := service.NewReviewService(mockRepo, nil)
+	svc := service.NewReviewService(mockRepo, scheduler.NewFSRSAdapter(), nil)
 
 	resp, err := svc.GetQueue(context.Background(), 1, "due", entity.FirstReviewQueueCursor(), 5)
 	if err != nil {
@@ -109,7 +110,7 @@ func TestReviewService_GetQueue_RepoError(t *testing.T) {
 	mockRepo := &mockReviewRepository{
 		err: testErr,
 	}
-	svc := service.NewReviewService(mockRepo, nil)
+	svc := service.NewReviewService(mockRepo, scheduler.NewFSRSAdapter(), nil)
 
 	_, err := svc.GetQueue(context.Background(), 1, "due", entity.FirstReviewQueueCursor(), 10)
 	if err == nil {
@@ -125,7 +126,7 @@ func TestReviewService_RateReview_ReviewNotFound(t *testing.T) {
 	mockRepo := &mockReviewRepository{
 		err: repo.ErrReviewNotFound,
 	}
-	svc := service.NewReviewService(mockRepo, nil)
+	svc := service.NewReviewService(mockRepo, scheduler.NewFSRSAdapter(), nil)
 
 	_, err := svc.RateReview(context.Background(), 1, 1, "normal", time.Now())
 	if !errors.Is(err, service.ErrReviewNotFound) {
@@ -134,7 +135,7 @@ func TestReviewService_RateReview_ReviewNotFound(t *testing.T) {
 }
 
 func TestReviewService_RateReview_InvalidRating(t *testing.T) {
-	svc := service.NewReviewService(nil, nil)
+	svc := service.NewReviewService(nil, scheduler.NewFSRSAdapter(), nil)
 
 	_, err := svc.RateReview(context.Background(), 1, 1, "invalid", time.Now())
 	if !errors.Is(err, service.ErrInvalidRating) {
@@ -153,7 +154,7 @@ func TestReviewService_RateReview_Success(t *testing.T) {
 			State:        0,
 		},
 	}
-	svc := service.NewReviewService(mockRepo, nil)
+	svc := service.NewReviewService(mockRepo, scheduler.NewFSRSAdapter(), nil)
 
 	reviewedAt := time.Now().UTC()
 	data, err := svc.RateReview(context.Background(), 1, 1, "normal", reviewedAt)
@@ -185,7 +186,7 @@ func TestReviewService_RateReview_RetriesConcurrentUpdate(t *testing.T) {
 		},
 		saveConflicts: 1,
 	}
-	svc := service.NewReviewService(mockRepo, nil)
+	svc := service.NewReviewService(mockRepo, scheduler.NewFSRSAdapter(), nil)
 
 	data, err := svc.RateReview(context.Background(), 1, 1, "normal", time.Now().UTC())
 	if err != nil {
@@ -213,7 +214,7 @@ func TestReviewService_GetStats_DelegatesToRepo(t *testing.T) {
 			NewCards:     2,
 		},
 	}
-	svc := service.NewReviewService(mockRepo, nil)
+	svc := service.NewReviewService(mockRepo, scheduler.NewFSRSAdapter(), nil)
 
 	stats, err := svc.GetStats(context.Background(), 1)
 	if err != nil {

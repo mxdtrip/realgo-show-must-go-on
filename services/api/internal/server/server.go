@@ -40,6 +40,13 @@ type Deps struct {
 	Postgres *postgres.Storage
 	Redis    *redis.Storage
 	Auth     *auth.Service
+	// Scheduler is the single FSRS scheduler shared by every code path that
+	// plans a review (extension ingest, manual review-rate, card-rate,
+	// quiz-rate). Created once in app.Run from config.FSRS so that one set of
+	// parameters governs all scheduling; see the FSRS audit A1+A2.
+	// When nil, server.New falls back to scheduler.NewFSRSAdapter() (default
+	// parameters) to keep wiring tests simple.
+	Scheduler scheduler.Scheduler
 	// CardProvisioner optionally triggers AI card generation when a user
 	// solves a problem with no existing cards, and backs POST
 	// /me/cards/generate's manual trigger. Nil disables generation (e.g. no
@@ -73,9 +80,17 @@ func New(deps Deps) http.Handler {
 	r.Get("/healthz", health.live)
 	r.Get("/readyz", health.ready)
 
+	// Single FSRS scheduler shared by every scheduling path. When the caller
+	// didn't supply one (e.g. legacy integration tests), fall back to the
+	// default-parameter adapter so the wiring still works.
+	sched := deps.Scheduler
+	if sched == nil {
+		sched = scheduler.NewFSRSAdapter()
+	}
+
 	// Новый слоистый reviews
 	reviewRepo := repo.NewReviewRepository(deps.Postgres.Pool)
-	reviewService := service.NewReviewService(reviewRepo, deps.Logger)
+	reviewService := service.NewReviewService(reviewRepo, sched, deps.Logger)
 	reviewHandler := v1.NewReviewHandler(reviewService)
 
 	patternsHandler := patterns.NewHandler(patterns.NewRepository(deps.Postgres.Pool))
@@ -103,8 +118,9 @@ func New(deps Deps) http.Handler {
 	assistantHandler := ai.NewAssistantHandler(ai.NewRepository(deps.Postgres.Pool), deps.AssistantProvider)
 
 	// Browser-extension ingest: FSRS scheduler behind the Scheduler interface,
-	// sharing the same algorithm as the review service (issue #160).
-	extensionSvc := extension.NewService(extension.NewRepository(deps.Postgres.Pool, scheduler.NewFSRSAdapter()))
+	// sharing the same algorithm (and the same instance) as the review service
+	// (issue #160, FSRS audit A1).
+	extensionSvc := extension.NewService(extension.NewRepository(deps.Postgres.Pool, sched))
 	if deps.CardProvisioner != nil {
 		extensionSvc = extensionSvc.WithProvisioner(deps.CardProvisioner)
 	}
