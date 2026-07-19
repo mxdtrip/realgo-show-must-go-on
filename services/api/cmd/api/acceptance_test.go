@@ -7,6 +7,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/mxdtrip/freeburger/services/api/internal/scheduler"
 	"github.com/mxdtrip/freeburger/services/api/internal/specifications"
 	httpdriver "github.com/mxdtrip/freeburger/services/api/internal/testdriver/http"
 	"github.com/mxdtrip/freeburger/services/api/internal/testutil"
@@ -100,4 +101,47 @@ func TestAcceptance_Quiz(t *testing.T) {
 	defer d.Close()
 
 	specifications.QuizSpecification(t, d, d, d)
+}
+
+// TestAcceptance_FSRS — north-star acceptance-тесты для FSRS-движка.
+//
+// Каждый под-тест — отдельный outer-loop цикл ATDD из плана A1+A2:
+//
+//   - retention_affects_intervals (A2): retention из конфигурации приложения
+//     доходит до FSRS-движка и влияет на интервалы. Драйвер поднимается дважды
+//     с разным request_retention через httpdriver.WithFSRS.
+//   - paths_share_algorithm (A1): оба пути планирования (extension-event и
+//     review-rate) используют один scheduler, поэтому для одинакового
+//     first-rating выдают одинаковый интервал.
+//
+// build tag'а нет: как и остальные acceptance-тесты, они skip'аются в -short.
+func TestAcceptance_FSRS(t *testing.T) {
+	if testing.Short() {
+		t.Skip("acceptance test requires Docker")
+	}
+
+	t.Run("retention_affects_intervals", func(t *testing.T) {
+		harness.Reset(t)
+
+		// Независимые системы с разным request_retention. Каждая поднимает свой
+		// httptest.Server на общем harness (изоляция — через harness.Reset в
+		// начале теста и разные email'ы внутри спецификации).
+		low := httpdriver.New(t, harness, httpdriver.WithFSRS(scheduler.Config{RequestRetention: 0.85}))
+		defer low.Close()
+		high := httpdriver.New(t, harness, httpdriver.WithFSRS(scheduler.Config{RequestRetention: 0.99}))
+		defer high.Close()
+
+		specifications.FSRSRetentionAffectsIntervals(t, low, high)
+	})
+
+	t.Run("paths_share_algorithm", func(t *testing.T) {
+		harness.Reset(t)
+
+		// Один driver — один scheduler для обоих путей. Retention не важен для
+		// этого инварианта, лишь бы был один и тот же scheduler.
+		d := httpdriver.New(t, harness)
+		defer d.Close()
+
+		specifications.FSRSPathsShareAlgorithm(t, d)
+	})
 }

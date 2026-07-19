@@ -15,6 +15,7 @@ type Config struct {
 	Database   `yaml:"database"`
 	Redis      `yaml:"redis"`
 	AI         `yaml:"ai"`
+	FSRS       `yaml:"fsrs"`
 }
 
 type HTTPServer struct {
@@ -55,6 +56,17 @@ type AI struct {
 // Enabled reports whether an AI provider key is configured.
 func (a *AI) Enabled() bool {
 	return a.APIKey != ""
+}
+
+// FSRS configures the spaced-repetition scheduler (go-fsrs/v3). Defaults match
+// go-fsrs' DefaultParam: RequestRetention=0.9, MaximumInterval=36500,
+// EnableShortTerm=true, EnableFuzz=false. Weights are intentionally not
+// exposed: per-user optimization is a separate milestone.
+type FSRS struct {
+	RequestRetention float64 `yaml:"request_retention" env:"FSRS_REQUEST_RETENTION" env-default:"0.9"`
+	MaximumInterval  int     `yaml:"maximum_interval" env:"FSRS_MAXIMUM_INTERVAL" env-default:"36500"`
+	EnableShortTerm  bool    `yaml:"enable_short_term" env:"FSRS_ENABLE_SHORT_TERM" env-default:"true"`
+	EnableFuzz       bool    `yaml:"enable_fuzz" env:"FSRS_ENABLE_FUZZ" env-default:"false"`
 }
 
 func Load() (*Config, error) {

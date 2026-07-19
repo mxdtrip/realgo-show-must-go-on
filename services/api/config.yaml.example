@@ -29,3 +29,12 @@ ai:
   api_key: ""
   model: gemini-2.5-flash
   base_url: https://generativelanguage.googleapis.com/v1beta/openai/
+
+fsrs:
+  # go-fsrs/v3 scheduler parameters. Defaults match go-fsrs DefaultParam;
+  # override only to tune repetition behaviour for this deployment. Per-user
+  # weights optimization is not implemented (see FSRS audit, item C1).
+  request_retention: 0.9
+  maximum_interval: 36500
+  enable_short_term: true
+  enable_fuzz: false

@@ -8,11 +8,10 @@ import (
 	"math"
 	"time"
 
-	"github.com/open-spaced-repetition/go-fsrs/v3"
-
 	"github.com/mxdtrip/freeburger/services/api/internal/controller/v1/response"
 	"github.com/mxdtrip/freeburger/services/api/internal/entity"
 	"github.com/mxdtrip/freeburger/services/api/internal/repo"
+	"github.com/mxdtrip/freeburger/services/api/internal/scheduler"
 )
 
 var (
@@ -36,14 +35,20 @@ type ReviewService interface {
 
 type reviewService struct {
 	repo   repo.ReviewRepository
-	fsrs   *fsrs.FSRS
+	sched  scheduler.Scheduler
 	logger *slog.Logger
 }
 
-func NewReviewService(repo repo.ReviewRepository, logger *slog.Logger) ReviewService {
+// NewReviewService builds the review service with a shared FSRS scheduler.
+// sched must be the same instance handed to the extension ingest path so that
+// both scheduling routes (POST /extension/events and POST /me/reviews/*/rate,
+// including the cards/quiz paths that funnel into RateReview) share one set of
+// FSRS parameters. This is the FSRS-audit A1 invariant; the
+// FSRSPathsShareAlgorithm acceptance spec pins it down.
+func NewReviewService(repo repo.ReviewRepository, sched scheduler.Scheduler, logger *slog.Logger) ReviewService {
 	return &reviewService{
 		repo:   repo,
-		fsrs:   fsrs.NewFSRS(fsrs.DefaultParam()),
+		sched:  sched,
 		logger: logger,
 	}
 }
@@ -97,12 +102,15 @@ func (s *reviewService) GetQueue(ctx context.Context, userID int64, status strin
 }
 
 func (s *reviewService) RateReview(ctx context.Context, reviewID, userID int64, rating string, reviewedAt time.Time) (response.RateReviewData, error) {
-	fsrsRating, err := toFsrsRating(rating)
-	if err != nil {
-		return response.RateReviewData{}, fmt.Errorf("reviews: RateReview: %w", err)
+	// Validate the rating up front: the scheduler would also reject it, but
+	// surfacing ErrInvalidRating before touching the DB keeps the existing
+	// service contract (TestReviewService_RateReview_InvalidRating relies on it).
+	if !scheduler.Rating(rating).Valid() {
+		return response.RateReviewData{}, fmt.Errorf("reviews: RateReview: %w", ErrInvalidRating)
 	}
 
 	var schedule, next entity.ReviewSchedule
+	var err error
 	for attemptNumber := 0; attemptNumber < maxReviewSaveAttempts; attemptNumber++ {
 		schedule, err = s.repo.ScheduleByID(ctx, reviewID, userID)
 		if err != nil {
@@ -112,8 +120,11 @@ func (s *reviewService) RateReview(ctx context.Context, reviewID, userID int64, 
 			return response.RateReviewData{}, fmt.Errorf("reviews: RateReview: %w", err)
 		}
 
-		info := s.fsrs.Next(scheduleToCard(schedule), reviewedAt, fsrsRating)
-		next = applyCard(schedule, info.Card, rating, reviewedAt)
+		decision, derr := s.sched.NextWithState(scheduleToState(schedule), scheduler.Rating(rating), reviewedAt)
+		if derr != nil {
+			return response.RateReviewData{}, fmt.Errorf("reviews: RateReview: %w", derr)
+		}
+		next = applyDecision(schedule, decision, reviewedAt)
 		next, err = s.repo.SaveReview(ctx, next, entity.ReviewAttempt{
 			UserID:      schedule.UserID,
 			ProblemID:   schedule.ProblemID,
@@ -176,46 +187,43 @@ func (s *reviewService) GetStats(ctx context.Context, userID int64) (response.St
 	}, nil
 }
 
-func toFsrsRating(rating string) (fsrs.Rating, error) {
-	switch rating {
-	case "hard":
-		return fsrs.Hard, nil
-	case "normal":
-		return fsrs.Good, nil
-	case "easy":
-		return fsrs.Easy, nil
-	default:
-		return 0, ErrInvalidRating
-	}
-}
-
-func scheduleToCard(s entity.ReviewSchedule) fsrs.Card {
-	lastReview := s.NextReviewAt
-	if s.LastReviewAt != nil {
-		lastReview = *s.LastReviewAt
-	}
-
-	return fsrs.Card{
-		Due:           s.NextReviewAt,
+// scheduleToState rebuilds the scheduler.SchedulerState from the persisted
+// schedule so the shared FSRS scheduler can continue from prior history. This
+// is the only place the service layer translates entity ↔ scheduler DTO; the
+// go-fsrs Card mapping lives in the scheduler package now (A1 unification).
+func scheduleToState(s entity.ReviewSchedule) scheduler.SchedulerState {
+	state := scheduler.SchedulerState{
 		Stability:     s.Stability,
 		Difficulty:    s.Difficulty,
+		Ease:          2.5, // legacy column, FSRS ignores it; kept for schema compat
 		ScheduledDays: uint64(math.Max(0, math.Round(s.IntervalDays))),
 		Reps:          uint64(max(0, s.ReviewCount)),
 		Lapses:        uint64(max(0, s.Lapses)),
-		State:         fsrs.State(s.State),
-		LastReview:    lastReview,
+		State:         s.State,
+		Due:           s.NextReviewAt,
 	}
+	if s.LastReviewAt != nil {
+		state.LastReview = *s.LastReviewAt
+	} else {
+		// Match the pre-refactor scheduleToCard fallback: absent LastReview
+		// falls back to Due so FSRS' elapsed-days math stays well-defined.
+		state.LastReview = s.NextReviewAt
+	}
+	return state
 }
 
-func applyCard(s entity.ReviewSchedule, card fsrs.Card, rating string, reviewedAt time.Time) entity.ReviewSchedule {
-	s.NextReviewAt = card.Due
-	s.IntervalDays = float64(card.ScheduledDays)
-	s.Stability = card.Stability
-	s.Difficulty = card.Difficulty
-	s.ReviewCount = int(card.Reps)
+// applyDecision writes the scheduler's Decision back into the schedule entity,
+// preserving DB columns that FSRS does not own (Ease is untouched).
+func applyDecision(s entity.ReviewSchedule, d scheduler.Decision, reviewedAt time.Time) entity.ReviewSchedule {
+	rating := d.LastRating
+	s.NextReviewAt = d.NextReviewAt
+	s.IntervalDays = d.IntervalDays
+	s.Stability = d.Stability
+	s.Difficulty = d.Difficulty
+	s.ReviewCount = d.Reps
 	s.LastRating = &rating
-	s.State = int8(card.State)
-	s.Lapses = int(card.Lapses)
+	s.State = d.State
+	s.Lapses = d.Lapses
 	s.LastReviewAt = &reviewedAt
 	return s
 }

@@ -14,10 +14,29 @@ type FSRSAdapter struct {
 	fsrs *fsrs.FSRS
 }
 
-// NewFSRSAdapter builds an adapter with default FSRS parameters, matching the
-// review service configuration.
+// NewFromConfig builds an FSRS scheduler from the operator-facing Config. It
+// starts from DefaultParam (which recomputes the internal Decay/Factor
+// coefficients and seeds the default 19 weights) and then applies only the
+// user-tunable knobs. Weights are intentionally not exposed here: per-user
+// optimization is a separate milestone (see fsrs audit, C1).
+func NewFromConfig(cfg Config) *FSRSAdapter {
+	param := fsrs.DefaultParam()
+	if cfg.RequestRetention > 0 {
+		param.RequestRetention = cfg.RequestRetention
+	}
+	if cfg.MaximumInterval > 0 {
+		param.MaximumInterval = float64(cfg.MaximumInterval)
+	}
+	param.EnableShortTerm = cfg.EnableShortTerm
+	param.EnableFuzz = cfg.EnableFuzz
+	return &FSRSAdapter{fsrs: fsrs.NewFSRS(param)}
+}
+
+// NewFSRSAdapter builds an adapter with default FSRS parameters. It is kept as
+// a shorthand for NewFromConfig(DefaultConfig()) so existing call sites and
+// tests do not have to construct a Config explicitly.
 func NewFSRSAdapter() *FSRSAdapter {
-	return &FSRSAdapter{fsrs: fsrs.NewFSRS(fsrs.DefaultParam())}
+	return NewFromConfig(DefaultConfig())
 }
 
 // Next computes a decision for a brand-new card (State=New, no prior history).
@@ -90,6 +109,7 @@ func cardToDecision(card fsrs.Card, rating Rating, now time.Time) Decision {
 		Difficulty:     card.Difficulty,
 		Ease:           2.5, // FSRS does not use ease; kept for schema compat
 		State:          int8(card.State),
+		Reps:           int(card.Reps),
 		Lapses:         int(card.Lapses),
 		LastRating:     string(rating),
 		RemainingSteps: 0, // FSRS v3 short-term steps are not tracked here

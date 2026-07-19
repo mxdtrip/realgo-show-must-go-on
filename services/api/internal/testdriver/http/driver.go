@@ -29,6 +29,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 
 	"github.com/mxdtrip/freeburger/services/api/internal/auth"
+	"github.com/mxdtrip/freeburger/services/api/internal/scheduler"
 	"github.com/mxdtrip/freeburger/services/api/internal/server"
 	"github.com/mxdtrip/freeburger/services/api/internal/specifications"
 	"github.com/mxdtrip/freeburger/services/api/internal/storage/postgres"
@@ -44,6 +45,7 @@ var (
 	_ specifications.QuizProvider    = (*Driver)(nil)
 	_ specifications.QuizSeeder      = (*Driver)(nil)
 	_ specifications.QuizProbe       = (*Driver)(nil)
+	_ specifications.FSRSProvider    = (*Driver)(nil)
 )
 
 const testJWTSecret = "acceptance-test-jwt-secret-32-bytes"
@@ -55,9 +57,32 @@ type Driver struct {
 	pg     *postgres.Storage
 }
 
-func New(t *testing.T, h *testutil.Harness) *Driver {
+// Option configures the driver's server.Deps beyond the test harness defaults.
+// Options are applied left-to-right; later options win.
+type Option func(*driverConfig)
+
+type driverConfig struct {
+	scheduler scheduler.Scheduler
+}
+
+// WithFSRS injects a scheduler built from the given FSRS config, so the
+// FSRSRetentionAffectsIntervals spec can spin up two drivers with different
+// request_retention and observe different intervals. When omitted, the driver
+// falls back to scheduler.NewFSRSAdapter() (default parameters).
+func WithFSRS(cfg scheduler.Config) Option {
+	return func(c *driverConfig) {
+		c.scheduler = scheduler.NewFromConfig(cfg)
+	}
+}
+
+func New(t *testing.T, h *testutil.Harness, opts ...Option) *Driver {
 	t.Helper()
 	ctx := context.Background()
+
+	cfg := driverConfig{}
+	for _, opt := range opts {
+		opt(&cfg)
+	}
 
 	dbCfg := h.DatabaseConfig()
 	pg, err := postgres.New(ctx, &dbCfg)
@@ -84,12 +109,17 @@ func New(t *testing.T, h *testutil.Harness) *Driver {
 		Issuer:     "freeburger",
 	})
 
-	handler := server.New(server.Deps{
+	deps := server.Deps{
 		Logger:   slog.Default(),
 		Postgres: pg,
 		Redis:    rd,
 		Auth:     authSvc,
-	})
+	}
+	if cfg.scheduler != nil {
+		deps.Scheduler = cfg.scheduler
+	}
+
+	handler := server.New(deps)
 
 	srv := httptest.NewServer(handler)
 	t.Cleanup(srv.Close)
@@ -98,6 +128,98 @@ func New(t *testing.T, h *testutil.Harness) *Driver {
 }
 
 func (d *Driver) Close() { d.srv.Close() }
+
+// --- FSRSProvider / FSRSUser ---
+
+// FSRSUser wraps an authenticated user and adds the two FSRS-touching client
+// operations the spec exercises: extension-event solve and card first-rate.
+func (d *Driver) FSRSUser(user specifications.AuthenticatedUser) specifications.FSRSUser {
+	t := d.t
+	return &fsrsUser{driver: d, user: user, t: t}
+}
+
+type fsrsUser struct {
+	driver *Driver
+	user   specifications.AuthenticatedUser
+	t      *testing.T
+}
+
+func (u *fsrsUser) OwnIdentity(t *testing.T) string { return u.user.OwnIdentity(t) }
+func (u *fsrsUser) UserID(t *testing.T) int64       { return u.user.UserID(t) }
+
+// SubmitExtensionSolved posts a "problem solved" extension event and returns
+// nextReviewAt from the server's response. The rating is the user's perceived
+// difficulty (hard/normal/easy), which the extension maps into an FSRS grade.
+func (u *fsrsUser) SubmitExtensionSolved(t *testing.T, title, url, slug, rating string) time.Time {
+	t.Helper()
+	body := map[string]any{
+		"eventId":          fmt.Sprintf("evt-%s-%d", slug, time.Now().UnixNano()),
+		"source":           "leetcode",
+		"event":            "problem_solved",
+		"occurredAt":       time.Now().UTC().Format(time.RFC3339),
+		"rating":           rating,
+		"extensionVersion": "0.0.1-acceptance",
+		"problem": map[string]any{
+			"externalId": slug,
+			"title":      title,
+			"url":        url,
+		},
+	}
+	resp := u.driver.do(t, http.MethodPost, "/api/v1/extension/events", body, u.token())
+
+	var out struct {
+		Data struct {
+			NextReviewAt time.Time `json:"nextReviewAt"`
+		} `json:"data"`
+	}
+	u.driver.decode(t, resp, &out)
+	if out.Data.NextReviewAt.IsZero() {
+		t.Fatalf("driver: extension solve: empty nextReviewAt in response")
+	}
+	return out.Data.NextReviewAt
+}
+
+// RateFirstReview creates a card and rates it once with the given rating,
+// returning nextReviewAt from the server's response. The card is created
+// fresh so this is its first FSRS rating.
+func (u *fsrsUser) RateFirstReview(t *testing.T, front, back, rating string) time.Time {
+	t.Helper()
+	cu := u.driver.CardsUser(u.user)
+
+	card := cu.CreateCard(t, front, back, "pattern_recognition")
+
+	// "all" scope catches a brand-new card (no schedule yet).
+	session := cu.StartSession(t, "all")
+
+	info := cu.RateCard(t, session.SessionID, card.ID, rating)
+
+	// RateCard returns session progress, not nextReviewAt. Re-read the
+	// schedule from the DB through the existing FSRS probe path so we get the
+	// same field the extension path exposes. This is the same test-only read
+	// exception used by QuizProbe: there is no HTTP read path for
+	// next_review_at on cards.
+	uid := u.user.UserID(t)
+	var due pgtype.Timestamptz
+	err := u.driver.pg.Pool.QueryRow(context.Background(),
+		`SELECT next_review_at FROM review_schedules WHERE user_id = $1 AND card_id = $2`,
+		uid, card.ID,
+	).Scan(&due)
+	if err != nil {
+		t.Fatalf("driver: read card next_review_at (card=%d): %v", card.ID, err)
+	}
+	if !due.Valid {
+		t.Fatalf("driver: card next_review_at is null (card=%d, info=%+v)", card.ID, info)
+	}
+	return due.Time.UTC()
+}
+
+func (u *fsrsUser) token() string {
+	if au, ok := u.user.(*authenticatedUser); ok {
+		return au.token
+	}
+	u.t.Fatalf("fsrsUser: expected *authenticatedUser, got %T", u.user)
+	return ""
+}
 
 // --- QuizProvider / QuizUser ---
 
