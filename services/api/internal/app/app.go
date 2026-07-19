@@ -70,10 +70,10 @@ func Run(ctx context.Context) error {
 	// changing request_retention / maximum_interval / fuzz / short-term moves
 	// every schedule in lockstep (A2).
 	sched := scheduler.NewFromConfig(scheduler.Config{
-		RequestRetention: cfg.FSRS.RequestRetention,
-		MaximumInterval:  cfg.FSRS.MaximumInterval,
-		EnableShortTerm:  cfg.FSRS.EnableShortTerm,
-		EnableFuzz:       cfg.FSRS.EnableFuzz,
+		RequestRetention: cfg.RequestRetention,
+		MaximumInterval:  cfg.MaximumInterval,
+		EnableShortTerm:  cfg.EnableShortTerm,
+		EnableFuzz:       cfg.EnableFuzz,
 	})
 
 	deps := server.Deps{
