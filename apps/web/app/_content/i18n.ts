@@ -230,6 +230,7 @@ const ru = {
           links: [
             { href: "/about", label: "About" },
             { href: "https://t.me/realgo_devlog", label: "Blog" },
+            { href: "/pitch-deck.html", label: "Pitch Deck" },
           ],
         },
         {
