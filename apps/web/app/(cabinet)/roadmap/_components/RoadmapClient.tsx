@@ -139,10 +139,11 @@ export function RoadmapClient({ copy }: Readonly<{ copy: RoadmapCopy }>) {
   // onboarding set a target, not whether the week list is non-empty.
   const isPersonalizedTarget = Boolean(data?.target.company || data?.target.interviewDate);
 
-  // Fallback: показываем персональный план, если backend пустой или ошибся
-  const showPersonalFallback =
-    personal !== null &&
-    (loadState === "error" || (loadState === "loaded" && weeks.length === 0));
+  // Персональный план из онбординга привязан к реальной дате интервью и
+  // компании, поэтому он в приоритете над бэкендовым roadmap'ом: тот всегда
+  // возвращает все семьи паттернов одним фиксированным списком недель, никак
+  // не учитывая срок до собеседования (см. isPersonalizedTarget выше).
+  const showPersonalFallback = personal !== null;
   const personalWeeks = showPersonalFallback && personal ? personal.weeks : [];
   const personalOverall =
     personalWeeks.length > 0
