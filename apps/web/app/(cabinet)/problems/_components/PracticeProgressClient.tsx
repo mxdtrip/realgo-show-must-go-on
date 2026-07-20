@@ -84,7 +84,7 @@ export function PracticeProgressClient({ copy }: Readonly<{ copy: PracticeCopy }
   const [error, setError] = useState("");
   const [reloadVersion, setReloadVersion] = useState(0);
   const [stageFilter, setStageFilter] = useState<"all" | PracticeStage>("all");
-  const [busyCode, setBusyCode] = useState<string | null>(null);
+  const [busyCodes, setBusyCodes] = useState<ReadonlySet<string>>(() => new Set());
   const toast = useToast();
 
   useEffect(() => {
@@ -129,8 +129,8 @@ export function PracticeProgressClient({ copy }: Readonly<{ copy: PracticeCopy }
   }, [copy.errorTitle, reloadVersion]);
 
   const remove = async (row: PracticeRow) => {
-    if (busyCode) return;
-    setBusyCode(row.code);
+    if (busyCodes.has(row.code)) return;
+    setBusyCodes((current) => new Set(current).add(row.code));
     try {
       await removePracticeSubpattern(row.code);
       setRows((current) => current.filter((item) => item.code !== row.code));
@@ -138,7 +138,11 @@ export function PracticeProgressClient({ copy }: Readonly<{ copy: PracticeCopy }
     } catch (e: unknown) {
       toast.error(e instanceof ApiError ? e.message : copy.removeFailed);
     } finally {
-      setBusyCode(null);
+      setBusyCodes((current) => {
+        const next = new Set(current);
+        next.delete(row.code);
+        return next;
+      });
     }
   };
 
@@ -244,7 +248,7 @@ export function PracticeProgressClient({ copy }: Readonly<{ copy: PracticeCopy }
                     </span>
                     <button
                       className="review-action review-action--ghost"
-                      disabled={busyCode !== null}
+                      disabled={busyCodes.has(row.code)}
                       type="button"
                       onClick={() => void remove(row)}
                     >

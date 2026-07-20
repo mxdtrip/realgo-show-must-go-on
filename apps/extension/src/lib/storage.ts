@@ -62,7 +62,10 @@ export function normalizeServiceBaseUrl(raw: string): string {
   if (parsed.search || parsed.hash) {
     throw new Error("URL не должен содержать query-параметры или fragment.");
   }
-  return parsed.toString().replace(/\/+$/, "");
+  if (parsed.pathname !== "/") {
+    throw new Error("URL сервиса не должен содержать путь.");
+  }
+  return parsed.origin;
 }
 
 /** Absolute URL of the review cards section, e.g. https://realgo.dev/cards. */

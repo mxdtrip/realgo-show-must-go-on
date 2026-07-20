@@ -4,7 +4,13 @@
 // { data } / { error } envelope, and transparently refreshes the access token
 // once on a 401 before retrying the original request.
 
-import { clearTokens, getAccessToken, getRefreshToken, setTokens } from "./tokens";
+import {
+  clearTokens,
+  getAccessToken,
+  getRefreshToken,
+  refreshTokenStorageKey,
+  setTokens,
+} from "./tokens";
 import { ApiError, type ApiEnvelope, type ApiErrorBody, type AuthTokens } from "./types";
 
 const configuredApiBase = process.env.NEXT_PUBLIC_API_BASE_URL?.trim();
@@ -14,6 +20,10 @@ const configuredApiBase = process.env.NEXT_PUBLIC_API_BASE_URL?.trim();
 const API_BASE = configuredApiBase ? configuredApiBase.replace(/\/$/, "") : "";
 
 const API_PREFIX = "/api/v1";
+const REFRESH_LEASE_KEY = "realgo:auth-refresh-lease:v1";
+const REFRESH_LEASE_TTL_MS = 30_000;
+const REFRESH_LEASE_SETTLE_MS = 40;
+const REFRESH_LEASE_RETRY_MS = 100;
 
 export type RequestOptions = {
   method?: string;
@@ -71,6 +81,105 @@ async function rawRequest<T>(path: string, options: RequestOptions, token: strin
 // All concurrent callers must therefore share one in-flight refresh.
 let refreshInFlight: Promise<string> | null = null;
 
+type RefreshLease = {
+  owner: string;
+  expiresAt: number;
+};
+
+function refreshCoordinationError(): ApiError {
+  return new ApiError(
+    "Браузер не поддерживает безопасное обновление сессии между вкладками. Закройте лишние вкладки и войдите снова.",
+    0,
+    "refresh_lock_unavailable",
+  );
+}
+
+function readRefreshLease(): RefreshLease | null {
+  try {
+    const raw = window.localStorage.getItem(REFRESH_LEASE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<RefreshLease>;
+    return typeof parsed.owner === "string" && typeof parsed.expiresAt === "number"
+      ? { owner: parsed.owner, expiresAt: parsed.expiresAt }
+      : null;
+  } catch {
+    throw refreshCoordinationError();
+  }
+}
+
+function writeRefreshLease(lease: RefreshLease) {
+  try {
+    window.localStorage.setItem(REFRESH_LEASE_KEY, JSON.stringify(lease));
+  } catch {
+    throw refreshCoordinationError();
+  }
+}
+
+function waitForRefreshSignal(timeoutMs: number): Promise<void> {
+  return new Promise((resolve) => {
+    let timer = 0;
+    const finish = () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("storage", onStorage);
+      resolve();
+    };
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === REFRESH_LEASE_KEY || event.key === refreshTokenStorageKey) finish();
+    };
+    timer = window.setTimeout(finish, timeoutMs);
+    window.addEventListener("storage", onStorage);
+  });
+}
+
+async function withRefreshLease<T>(action: () => Promise<T>): Promise<T> {
+  if (typeof window === "undefined") throw refreshCoordinationError();
+  const owner =
+    typeof crypto.randomUUID === "function"
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+  for (;;) {
+    const current = readRefreshLease();
+    const now = Date.now();
+    if (!current || current.expiresAt <= now) {
+      writeRefreshLease({ owner, expiresAt: now + REFRESH_LEASE_TTL_MS });
+
+      // Confirm ownership after a short settle window. If two tabs observed an
+      // expired lease together, only the last writer still sees its owner id
+      // and proceeds; the other returns to the wait loop.
+      await waitForRefreshSignal(REFRESH_LEASE_SETTLE_MS);
+      if (readRefreshLease()?.owner === owner) {
+        const heartbeat = window.setInterval(() => {
+          try {
+            if (readRefreshLease()?.owner === owner) {
+              writeRefreshLease({ owner, expiresAt: Date.now() + REFRESH_LEASE_TTL_MS });
+            }
+          } catch {
+            // The in-flight exchange still guards against overwriting a newer
+            // token. A later caller will get the explicit storage error.
+          }
+        }, REFRESH_LEASE_TTL_MS / 3);
+
+        try {
+          return await action();
+        } finally {
+          window.clearInterval(heartbeat);
+          try {
+            if (readRefreshLease()?.owner === owner) {
+              window.localStorage.removeItem(REFRESH_LEASE_KEY);
+            }
+          } catch {
+            // Nothing else can be done if storage became unavailable during
+            // cleanup; the lease expires naturally.
+          }
+        }
+      }
+    }
+
+    await waitForRefreshSignal(REFRESH_LEASE_RETRY_MS);
+  }
+}
+
 /** Exchanges the stored refresh token for a new access token, or throws. */
 export function refreshAccessToken(): Promise<string> {
   if (!refreshInFlight) {
@@ -96,21 +205,31 @@ async function doRefreshAccessToken(): Promise<string> {
       ? (navigator as Navigator & { locks?: LockManager }).locks
       : undefined;
   if (locks) {
-    return locks.request("realgo-auth-refresh", async () => {
-      const currentRefresh = getRefreshToken();
-      if (currentRefresh && currentRefresh !== initialRefresh) {
-        const access = getAccessToken();
-        // A normal cross-tab refresh keeps the JWT subject. A login into a
-        // different account also replaces the refresh token, but replaying the
-        // original request with that account's access token would mutate/read
-        // the wrong account. Fail that one request instead.
-        if (access && initialSubject && accessTokenSubject(access) === initialSubject) {
-          return access;
-        }
-        throw new ApiError("Аккаунт изменился. Повторите действие.", 409, "session_changed");
-      }
-      return exchangeRefreshToken(currentRefresh ?? initialRefresh);
-    });
+    return locks.request("realgo-auth-refresh", () =>
+      refreshCurrentSession(initialRefresh, initialSubject),
+    );
+  }
+
+  // Safari and embedded webviews may not expose Web Locks. Coordinate through
+  // a short renewable localStorage lease instead of silently falling back to
+  // unsafe per-tab single-flight behavior.
+  return withRefreshLease(() => refreshCurrentSession(initialRefresh, initialSubject));
+}
+
+function refreshCurrentSession(initialRefresh: string, initialSubject: string | null): Promise<string> {
+  const currentRefresh = getRefreshToken();
+  if (currentRefresh !== initialRefresh) {
+    const access = getAccessToken();
+    // A normal cross-tab refresh keeps the JWT subject. A login into a
+    // different account also replaces the refresh token, but replaying the
+    // original request with that account's access token would mutate/read the
+    // wrong account. Fail that one request instead.
+    if (currentRefresh && access && initialSubject && accessTokenSubject(access) === initialSubject) {
+      return Promise.resolve(access);
+    }
+    return Promise.reject(
+      new ApiError("Аккаунт изменился. Повторите действие.", 409, "session_changed"),
+    );
   }
   return exchangeRefreshToken(initialRefresh);
 }

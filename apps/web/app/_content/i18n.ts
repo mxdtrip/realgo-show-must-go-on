@@ -1,4 +1,4 @@
-export const supportedLocales = ["ru", "en", "es"] as const;
+export const supportedLocales = ["ru"] as const;
 
 export type Locale = (typeof supportedLocales)[number];
 
@@ -487,6 +487,8 @@ const ru = {
         retry: "повторить",
         dayToday: "сегодня",
         dayTomorrow: "завтра",
+        dayOverdue: "просрочено на",
+        dayUnits: ["день", "дня", "дней"],
         statTooltips: {
           today_queue:
             "Сколько повторений запланировано на сегодня: задачи, карточки и паттерны, у которых подошёл срок.",
@@ -1078,8 +1080,6 @@ export type Dictionary = typeof ru;
 
 const dictionaries: Record<Locale, Dictionary> = {
   ru,
-  en: ru,
-  es: ru,
 };
 
 export function getDictionary(locale: Locale = defaultLocale) {

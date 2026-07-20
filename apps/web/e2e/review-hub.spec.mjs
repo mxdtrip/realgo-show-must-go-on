@@ -80,6 +80,37 @@ test.describe("/problems — практика подпаттернов", () => {
     await expect(page.getByText("Binary Search on Answer")).toHaveCount(0);
     await page.getByRole("button", { name: /^all/ }).click();
 
+    // Removing one row must not disable every other row. Hold the first
+    // request open, then verify a second row can be removed concurrently.
+    let releaseFirst;
+    const firstCanFinish = new Promise((resolve) => {
+      releaseFirst = resolve;
+    });
+    await page.route("**/api/v1/me/practice/subpatterns/*", async (route) => {
+      if (route.request().url().includes("binary_search_on_answer")) {
+        await firstCanFinish;
+      }
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ data: { status: "removed" } }),
+      });
+    });
+    await working.getByRole("button", { name: "убрать из практики" }).click();
+    await expect(working.getByRole("button", { name: "убрать из практики" })).toBeDisabled();
+    await expect(mastered.getByRole("button", { name: "убрать из практики" })).toBeEnabled();
+
+    const secondDelete = page.waitForRequest(
+      (request) =>
+        request.method() === "DELETE" &&
+        request.url().includes("/me/practice/subpatterns/lower_upper_bound"),
+    );
+    await mastered.getByRole("button", { name: "убрать из практики" }).click();
+    await secondDelete;
+    releaseFirst();
+    await expect(working).toHaveCount(0);
+    await expect(mastered).toHaveCount(0);
+
     // Removing fires DELETE /me/practice/subpatterns/{code} and drops the row.
     const del = page.waitForRequest(
       (request) =>
@@ -105,6 +136,7 @@ test.describe("/dashboard — лаунчер практики", () => {
       "href",
       "/cards/session?scope=practice",
     );
+    await expect(page.locator(".review-when").first()).toContainText(/просрочено на 3 дня/);
   });
 });
 
