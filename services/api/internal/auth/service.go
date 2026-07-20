@@ -210,21 +210,23 @@ func (s *Service) UserByID(ctx context.Context, id int64) (db.User, error) {
 // pointer means "not provided — keep the existing value"; a non-nil pointer
 // (including an empty string) overwrites the column.
 type ProfileUpdate struct {
-	Timezone          *string
-	InterviewDate     *time.Time
-	PrepGoal          *string
-	Grade             *string
-	TargetCompany     *string
-	TargetPosition    *string
-	Platform          *string
-	TargetTopics      *[]string
-	SetOnboardingDone bool
+	Timezone           *string
+	InterviewDate      *time.Time
+	ClearInterviewDate bool
+	PrepGoal           *string
+	Grade              *string
+	TargetCompany      *string
+	TargetPosition     *string
+	Platform           *string
+	TargetTopics       *[]string
+	SetOnboardingDone  bool
 }
 
 // UpdateProfile applies a partial profile update for the given user.
 func (s *Service) UpdateProfile(ctx context.Context, userID int64, u ProfileUpdate) (db.User, error) {
 	params := db.UpdateUserProfileParams{
 		ID:                     userID,
+		ClearInterviewDate:     u.ClearInterviewDate,
 		SetOnboardingCompleted: u.SetOnboardingDone,
 	}
 	if u.Timezone != nil {
@@ -263,6 +265,7 @@ func (s *Service) UpdateProfile(ctx context.Context, userID int64, u ProfileUpda
 // keeps the current preference.
 type NotificationSettings struct {
 	ReviewReminder *bool
+	StreakReminder *bool
 	WeeklyDigest   *bool
 	EmailEnabled   *bool
 }
@@ -273,6 +276,9 @@ func (s *Service) UpdateNotificationSettings(ctx context.Context, userID int64, 
 	params := db.UpdateNotificationSettingsParams{ID: userID}
 	if ns.ReviewReminder != nil {
 		params.ReviewReminder = pgtype.Bool{Bool: *ns.ReviewReminder, Valid: true}
+	}
+	if ns.StreakReminder != nil {
+		params.StreakReminder = pgtype.Bool{Bool: *ns.StreakReminder, Valid: true}
 	}
 	if ns.WeeklyDigest != nil {
 		params.WeeklyDigest = pgtype.Bool{Bool: *ns.WeeklyDigest, Valid: true}

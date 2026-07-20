@@ -1,41 +1,32 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
 
-// MVP payment stub: no real billing yet. The button gives an honest, friendly
-// confirmation instead of a dead disabled control, and surfaces a success state
-// so the flow reads end-to-end.
+// Billing is not connected yet, so this control must never claim that a plan
+// was activated or persisted. Free users can continue to real registration;
+// paid checkout stays visibly unavailable until a real API exists.
 export function CheckoutAction({ isFree }: { isFree: boolean }) {
-  const [done, setDone] = useState(false);
-
-  if (done) {
+  if (isFree) {
     return (
-      <div className="checkout-done" role="status" aria-live="polite">
-        <strong>{isFree ? "Бесплатный план активен" : "Выбор сохранён ✓"}</strong>
-        <span>
-          Платёжный провайдер появится позже — мы сообщим, когда оплата заработает. Биллинг
-          пока в разработке.
-        </span>
-      </div>
+      <Link className="price-cta checkout-pay" href="/register">
+        Создать бесплатный аккаунт
+      </Link>
     );
   }
 
   return (
     <>
-      <button className="price-cta checkout-pay" type="button" onClick={() => setDone(true)}>
-        {isFree ? "Начать бесплатно" : "Перейти к оплате"}
+      <button className="price-cta checkout-pay" type="button" disabled>
+        Оплата временно недоступна
       </button>
-      <p className="checkout-note">Демо-режим: реальная оплата подключится позже.</p>
-      {!isFree ? (
-        <p className="checkout-note">
-          Оплачивая тариф Pro, вы принимаете условия{" "}
-          <Link href="/offer" target="_blank">
-            Публичной оферты
-          </Link>
-          .
-        </p>
-      ) : null}
+      <p className="checkout-note">Биллинг в разработке; выбор тарифа сейчас не сохраняется.</p>
+      <p className="checkout-note">
+        После запуска оплаты будут действовать условия{" "}
+        <Link href="/offer" target="_blank">
+          Публичной оферты
+        </Link>
+        .
+      </p>
     </>
   );
 }

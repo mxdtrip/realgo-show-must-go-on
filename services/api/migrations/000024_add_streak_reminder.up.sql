@@ -1,0 +1,6 @@
+BEGIN;
+
+ALTER TABLE users
+    ADD COLUMN notify_streak_reminder BOOLEAN NOT NULL DEFAULT FALSE;
+
+COMMIT;

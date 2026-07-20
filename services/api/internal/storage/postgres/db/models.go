@@ -250,6 +250,7 @@ type User struct {
 	TargetTopics          []string
 	Platform              pgtype.Text
 	IsDemo                bool
+	NotifyStreakReminder  bool
 }
 
 type UserPracticePattern struct {

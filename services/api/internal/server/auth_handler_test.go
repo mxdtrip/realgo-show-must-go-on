@@ -1,6 +1,33 @@
 package server
 
-import "testing"
+import (
+	"encoding/json"
+	"testing"
+)
+
+func TestOptionalNullableStringDistinguishesMissingNullAndValue(t *testing.T) {
+	var request patchProfileRequest
+	if err := json.Unmarshal([]byte(`{}`), &request); err != nil {
+		t.Fatalf("decode missing interview_date: %v", err)
+	}
+	if request.InterviewDate.Set {
+		t.Fatal("missing interview_date was marked as set")
+	}
+
+	if err := json.Unmarshal([]byte(`{"interview_date":null}`), &request); err != nil {
+		t.Fatalf("decode null interview_date: %v", err)
+	}
+	if !request.InterviewDate.Set || request.InterviewDate.Value != nil {
+		t.Fatalf("null interview_date = %#v, want set nullable value", request.InterviewDate)
+	}
+
+	if err := json.Unmarshal([]byte(`{"interview_date":"2026-08-12T09:00:00Z"}`), &request); err != nil {
+		t.Fatalf("decode interview_date value: %v", err)
+	}
+	if !request.InterviewDate.Set || request.InterviewDate.Value == nil || *request.InterviewDate.Value != "2026-08-12T09:00:00Z" {
+		t.Fatalf("valued interview_date = %#v", request.InterviewDate)
+	}
+}
 
 func TestValidTimezone(t *testing.T) {
 	valid := []string{"UTC", "Europe/Moscow", "America/New_York", "Asia/Tokyo"}

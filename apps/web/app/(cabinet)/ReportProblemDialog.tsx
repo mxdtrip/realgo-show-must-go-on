@@ -14,8 +14,8 @@ export type ReportCopy = Readonly<{
   copy: string;
   copied: string;
   copyFailed: string;
-  sentTitle: string;
-  sentNote: string;
+  handoffTitle: string;
+  handoffNote: string;
   close: string;
   email: string;
 }>;
@@ -42,7 +42,7 @@ export function ReportProblemLauncher({
 }: Readonly<{ copy: ReportCopy; showTrigger?: boolean }>) {
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
-  const [phase, setPhase] = useState<"edit" | "sent">("edit");
+  const [phase, setPhase] = useState<"edit" | "handoff">("edit");
   const [copyState, setCopyState] = useState<"idle" | "done" | "failed">("idle");
   const [context, setContext] = useState<string[]>([]);
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -87,7 +87,10 @@ export function ReportProblemLauncher({
     window.location.href = `mailto:${copy.email}?subject=${encodeURIComponent(
       subject,
     )}&body=${encodeURIComponent(composedReport())}`;
-    setPhase("sent");
+    // A mailto hand-off cannot tell us whether a mail client opened or whether
+    // the user actually sent anything. Show explicit next steps, never a false
+    // success confirmation.
+    setPhase("handoff");
   }
 
   async function copyReport() {
@@ -128,7 +131,7 @@ export function ReportProblemLauncher({
             onClick={(event) => event.stopPropagation()}
           >
             <header className="shell-dialog__head">
-              <strong>{phase === "sent" ? copy.sentTitle : copy.title}</strong>
+              <strong>{phase === "handoff" ? copy.handoffTitle : copy.title}</strong>
               <button
                 className="shell-dialog__close"
                 type="button"
@@ -171,7 +174,7 @@ export function ReportProblemLauncher({
               </>
             ) : (
               <>
-                <p className="shell-dialog__note">{copy.sentNote}</p>
+                <p className="shell-dialog__note">{copy.handoffNote}</p>
                 <div className="shell-dialog__actions">
                   <button className="shell-btn shell-btn--primary" type="button" onClick={copyReport}>
                     {copyLabel}

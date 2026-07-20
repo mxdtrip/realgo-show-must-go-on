@@ -7,8 +7,11 @@
 import { clearTokens, getAccessToken, getRefreshToken, setTokens } from "./tokens";
 import { ApiError, type ApiEnvelope, type ApiErrorBody, type AuthTokens } from "./types";
 
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ?? "http://localhost:8080";
+const configuredApiBase = process.env.NEXT_PUBLIC_API_BASE_URL?.trim();
+// The deployed app is fronted by Caddy, which routes same-origin `/api/*` to
+// the Go service. Missing configuration must therefore stay same-origin; a
+// localhost fallback would send production users to their own machines.
+const API_BASE = configuredApiBase ? configuredApiBase.replace(/\/$/, "") : "";
 
 const API_PREFIX = "/api/v1";
 

@@ -23,6 +23,20 @@ const USER = {
   interview_date: null,
   created_at: "2026-01-01T00:00:00Z",
   onboarding_completed: true,
+  profile: {
+    prep_goal: null,
+    grade: null,
+    target_company: null,
+    target_position: null,
+    platform: null,
+    target_topics: [],
+  },
+  notification_settings: {
+    review_reminder: true,
+    streak_reminder: false,
+    weekly_digest: false,
+    email_enabled: false,
+  },
 };
 
 const tokens = (kind) => ({
@@ -536,6 +550,31 @@ const server = createServer((req, res) => {
       if (kind === "LIVE") return ok(res, { user: USER });
       if (kind === "FLAKY") return fail(res, 500, "server_error", "stub transient failure");
       return fail(res, 401, "unauthorized", "stub: session invalid");
+    }
+
+    if (req.method === "PATCH" && path === `${PREFIX}/me/profile`) {
+      const bearer = (req.headers.authorization ?? "").replace(/^Bearer\s+/i, "");
+      if (kindOf(bearer) !== "LIVE") return fail(res, 401, "unauthorized", "stub: session invalid");
+      return ok(res, {
+        user: {
+          ...USER,
+          interview_date: Object.hasOwn(body, "interview_date")
+            ? body.interview_date
+            : USER.interview_date,
+          profile: { ...USER.profile, ...body },
+        },
+      });
+    }
+
+    if (req.method === "PATCH" && path === `${PREFIX}/me/notification-settings`) {
+      const bearer = (req.headers.authorization ?? "").replace(/^Bearer\s+/i, "");
+      if (kindOf(bearer) !== "LIVE") return fail(res, 401, "unauthorized", "stub: session invalid");
+      return ok(res, {
+        user: {
+          ...USER,
+          notification_settings: { ...USER.notification_settings, ...body },
+        },
+      });
     }
 
     if (req.method === "POST" && path === `${PREFIX}/auth/refresh`) {

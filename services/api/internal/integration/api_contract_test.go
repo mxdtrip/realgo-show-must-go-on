@@ -394,6 +394,44 @@ func TestContractRoadmapTargetAfterOnboarding(t *testing.T) {
 	require.Contains(t, date, "2026-07-21")
 }
 
+func TestContractProfileCanClearInterviewDateAndPersistStreakReminder(t *testing.T) {
+	h := newContractHarness(t)
+	email := uniqueEmail("profile-clear-date")
+	t.Cleanup(func() { h.cleanupUser(email) })
+	tokens := h.register(t, email, "Password123!")
+	t.Cleanup(func() { h.deleteRefreshTokens(tokens.refresh) })
+
+	setDate := h.request(t, http.MethodPatch, "/api/v1/me/profile", tokens.access, map[string]any{
+		"interview_date": "2026-08-12T09:00:00Z",
+	})
+	setDateData := requireSuccessEnvelope(t, setDate, http.StatusOK)
+	setDateUser := objectField(t, setDateData, "user")
+	require.Contains(t, stringField(t, setDateUser, "interview_date"), "2026-08-12")
+
+	clearDate := h.request(t, http.MethodPatch, "/api/v1/me/profile", tokens.access, map[string]any{
+		"interview_date": nil,
+	})
+	clearDateData := requireSuccessEnvelope(t, clearDate, http.StatusOK)
+	clearDateUser := objectField(t, clearDateData, "user")
+	require.Nil(t, clearDateUser["interview_date"], "explicit null must clear interview_date")
+
+	notifications := h.request(t, http.MethodPatch, "/api/v1/me/notification-settings", tokens.access, map[string]any{
+		"review_reminder": false,
+		"streak_reminder": true,
+	})
+	notificationData := requireSuccessEnvelope(t, notifications, http.StatusOK)
+	notificationUser := objectField(t, notificationData, "user")
+	settings := objectField(t, notificationUser, "notification_settings")
+	require.Equal(t, false, settings["review_reminder"])
+	require.Equal(t, true, settings["streak_reminder"])
+
+	me := h.request(t, http.MethodGet, "/api/v1/users/me", tokens.access, nil)
+	meData := requireSuccessEnvelope(t, me, http.StatusOK)
+	meUser := objectField(t, meData, "user")
+	require.Nil(t, meUser["interview_date"])
+	require.Equal(t, true, objectField(t, meUser, "notification_settings")["streak_reminder"])
+}
+
 // TestContractRoadmapTargetEmptyForFreshUser verifies that a freshly registered
 // user (no onboarding yet) gets target.company == null and target.topics == []
 // rather than null/missing, so the frontend never has to guard against null.
