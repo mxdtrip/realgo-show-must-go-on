@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+import { getAtlas } from "../../../_api/atlas";
 import { deleteRoadmap, getRoadmap, type RoadmapResponse, type RoadmapWeek } from "../../../_api/roadmap";
 import { ApiError } from "../../../_api/types";
 import {
@@ -72,6 +73,41 @@ function mapPersonalWeek(week: PersonalRoadmapWeek): RoadmapWeek {
   };
 }
 
+// The personal roadmap's `progress` field, as saved in localStorage, is a
+// one-time snapshot taken at generation time (5% for the first week, 0% for
+// the rest — see generateRoadmap in roadmapGenerator.ts) and is never
+// rewritten afterwards. Without this, completing practice never moves the
+// bars on /roadmap: recompute each week's progress from the live per-
+// subpattern mastery percent (same source /me/patterns/atlas and /me/roadmap
+// use) whenever it's available, and fall back to the stored snapshot only
+// until that data has loaded.
+function applyLiveProgress(weeks: RoadmapWeek[], mastery: Record<string, number> | null): RoadmapWeek[] {
+  if (!mastery) return weeks;
+  return weeks.map((week) => {
+    if (week.topics.length === 0) return week;
+    const percents = week.topics.map((code) => mastery[code] ?? 0);
+    const progress = Math.round(percents.reduce((sum, value) => sum + value, 0) / percents.length);
+    return { ...week, progress };
+  });
+}
+
+// Status is generated once alongside progress (first week "active", rest
+// "todo") and never advances either, which permanently locks every week
+// after the first regardless of actual progress. Derive it from the live
+// progress instead: the first not-yet-complete week is "active", earlier
+// ones are "done", later ones stay "todo".
+function deriveStatuses(weeks: RoadmapWeek[]): RoadmapWeek[] {
+  let activeAssigned = false;
+  return weeks.map((week) => {
+    if (week.progress >= 100) return week.status === "done" ? week : { ...week, status: "done" };
+    if (!activeAssigned) {
+      activeAssigned = true;
+      return week.status === "active" ? week : { ...week, status: "active" };
+    }
+    return week.status === "todo" ? week : { ...week, status: "todo" };
+  });
+}
+
 /** Роадмап на живых данных GET /me/roadmap: недели = семьи паттернов Pattern
     Atlas, прогресс — реальная mastery-статистика по решённым задачам; неделя
     заблокирована, пока предыдущие не пройдены. Пустой стейт с CTA на
@@ -84,8 +120,14 @@ export function RoadmapClient({ copy }: Readonly<{ copy: RoadmapCopy }>) {
   const [personal, setPersonal] = useState<{
     weeks: RoadmapWeek[];
     targetCompany: string;
+    targetCompanyCode: string;
   } | null>(null);
   const [deleting, setDeleting] = useState(false);
+  // Live mastery percent per subpattern code, keyed the same way as
+  // week.topics — refetched whenever we (re)land on /roadmap so a practice
+  // session completed elsewhere is reflected instead of the frozen progress
+  // snapshot saved at roadmap-generation time (see personalWeeks below).
+  const [personalMastery, setPersonalMastery] = useState<Record<string, number> | null>(null);
 
   useEffect(() => {
     const stored = readRoadmap();
@@ -93,9 +135,29 @@ export function RoadmapClient({ copy }: Readonly<{ copy: RoadmapCopy }>) {
       setPersonal({
         weeks: stored.weeks.map(mapPersonalWeek),
         targetCompany: stored.targetCompany,
+        targetCompanyCode: stored.targetCompanyCode?.trim() || stored.targetCompany,
       });
     }
   }, []);
+
+  useEffect(() => {
+    if (!personal?.targetCompanyCode) {
+      setPersonalMastery(null);
+      return;
+    }
+    const controller = new AbortController();
+    getAtlas(personal.targetCompanyCode, controller.signal)
+      .then((atlas) => {
+        const mastery: Record<string, number> = {};
+        for (const sub of atlas.subpatterns) mastery[sub.code] = sub.mastery.percent;
+        setPersonalMastery(mastery);
+      })
+      .catch(() => {
+        // Keep showing the last-known (possibly stale) progress rather than
+        // wiping it on a transient fetch error.
+      });
+    return () => controller.abort();
+  }, [personal?.targetCompanyCode]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -144,7 +206,8 @@ export function RoadmapClient({ copy }: Readonly<{ copy: RoadmapCopy }>) {
   // возвращает все семьи паттернов одним фиксированным списком недель, никак
   // не учитывая срок до собеседования (см. isPersonalizedTarget выше).
   const showPersonalFallback = personal !== null;
-  const personalWeeks = showPersonalFallback && personal ? personal.weeks : [];
+  const personalWeeks =
+    showPersonalFallback && personal ? deriveStatuses(applyLiveProgress(personal.weeks, personalMastery)) : [];
   const personalOverall =
     personalWeeks.length > 0
       ? Math.round(personalWeeks.reduce((sum, w) => sum + w.progress, 0) / personalWeeks.length)
