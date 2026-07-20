@@ -4,6 +4,7 @@ import {
   extractDescription,
   findButtonByText,
   findText,
+  looksLikeSubmitLabel,
   type PlatformAdapter,
   type TaskInfo,
 } from "./types";
@@ -48,7 +49,7 @@ export const leetcodeAdapter: PlatformAdapter = {
   findSubmitButton(): HTMLElement | null {
     return (
       document.querySelector<HTMLElement>("[data-e2e-locator='console-submit-button']") ||
-      findButtonByText((t) => t === "submit")
+      findButtonByText(looksLikeSubmitLabel)
     );
   },
 

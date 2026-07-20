@@ -9,6 +9,7 @@ import type {
   ExtensionEventResult,
   RuntimeMessage,
   SaveResponse,
+  SubmissionDetectedResponse,
   SubmissionPayload,
   SubmitResult,
 } from "../lib/types";
@@ -17,6 +18,7 @@ import { streamAssistantHintViaBackground } from "../lib/assistantClient";
 import { fetchCardsViaBackground } from "../lib/cardsClient";
 import { getReviewUrl } from "../lib/storage";
 import { detectAdapter, type PlatformAdapter, type TaskInfo } from "../platforms";
+import { looksLikeSubmitLabel } from "../platforms/types";
 import { PopupApp } from "../popup/PopupApp";
 
 export const config: PlasmoCSConfig = {
@@ -80,10 +82,14 @@ function isSubmitClick(target: HTMLElement, adapter: PlatformAdapter): boolean {
   if (submitButton && (submitButton === target || submitButton.contains(target))) {
     return true;
   }
-  // Fallback: the clicked element (or its button ancestor) reads "submit".
+  // Fallback: the clicked element (or its button ancestor) reads like a
+  // submit control. Unbounded startsWith("submit") used to also match
+  // unrelated buttons elsewhere on the page ("Submit application" on a
+  // HackerRank jobs widget, "Submit feedback", etc.) — this search isn't
+  // scoped to the code editor, so the text itself is the only signal.
   const button = target.closest("button, [role='button']") as HTMLElement | null;
   const text = (button?.textContent ?? "").trim().toLowerCase();
-  return text === "submit" || text.startsWith("submit");
+  return looksLikeSubmitLabel(text);
 }
 
 let watching = false;
@@ -94,6 +100,15 @@ function watchForResult(adapter: PlatformAdapter, clickInfo: TaskInfo | null) {
 
   const startedAt = Date.now();
   let sawMutation = false;
+  // A single reading isn't trusted on its own: right after a click, the
+  // *previous* submission's verdict panel (e.g. an old "Accepted") can
+  // still be sitting in the DOM for a moment before the site clears it for
+  // the new run, and the broad `[class*='result']`-style selectors the
+  // adapters use can't tell old from new by markup alone. Requiring the
+  // same reading to repeat on a later poll — i.e. the DOM has actually
+  // settled — filters out that transient/stale state without penalizing a
+  // genuine resubmit that happens to land on the same verdict again.
+  let lastSeen: SubmitResult | null = null;
   const finish = (result: SubmitResult) => {
     clearInterval(timer);
     observer.disconnect();
@@ -108,11 +123,12 @@ function watchForResult(adapter: PlatformAdapter, clickInfo: TaskInfo | null) {
     }
     if (Date.now() - startedAt < 800) return;
     const result = adapter.detectSubmitResult();
-    if (result !== "unknown") {
+    if (result !== "unknown" && result === lastSeen) {
       finish(result);
-    } else if (Date.now() - startedAt > RESULT_TIMEOUT_MS) {
-      finish("unknown");
+      return;
     }
+    lastSeen = result;
+    if (Date.now() - startedAt > RESULT_TIMEOUT_MS) finish(result);
   };
 
   const observer = new MutationObserver(() => {
@@ -181,19 +197,50 @@ function finalize(
   // timeouts are not solved tasks and must never create review schedules.
   if (submitResult !== "accepted") return;
 
-  try {
-    chrome.runtime.sendMessage({ type: "REALGO_SUBMISSION_DETECTED", submission });
-  } catch {
-    /* background may be asleep; overlay still works */
-  }
-
-  showOverlay(submission);
+  // Ask the background worker to try opening the toolbar popup first, and
+  // only fall back to the in-page overlay if that didn't happen — showing
+  // both at once for the same submission stacks two identical rating cards
+  // (one anchored to the page, one in the toolbar) on top of each other.
+  Promise.resolve(chrome.runtime.sendMessage({ type: "REALGO_SUBMISSION_DETECTED", submission }))
+    .then((response: SubmissionDetectedResponse | undefined) => {
+      if (!response?.popupOpened) enqueueOverlay(submission);
+    })
+    .catch(() => {
+      /* background may be asleep; the in-page overlay is the only UI left */
+      enqueueOverlay(submission);
+    });
 }
 
 /* -- In-page fallback overlay (shadow DOM, PopupApp reused) ------------- */
 
 let overlayHost: HTMLDivElement | null = null;
 let overlayRoot: Root | null = null;
+
+// Submissions detected while an earlier one is still on screen, unrated. A
+// second accepted submit used to call showOverlay() straight away, which
+// unmounts whatever's showing first — if the user hadn't picked a
+// difficulty yet, that submission was never sent to REALGO_SAVE_SUBMISSION
+// and its review card silently never got created. Queuing instead means
+// nothing gets replaced until the user actually disposes of the current one
+// (saves it or dismisses it).
+const overlayQueue: DetectedSubmission[] = [];
+
+function enqueueOverlay(submission: DetectedSubmission) {
+  overlayQueue.push(submission);
+  if (!overlayRoot) showNextQueuedOverlay();
+}
+
+function showNextQueuedOverlay() {
+  const next = overlayQueue.shift();
+  if (next) showOverlay(next);
+}
+
+/** Dismisses the current overlay (saved, collapsed, or closed) and, unlike a
+    bare removeOverlay(), advances to the next queued submission if any. */
+function dismissOverlay() {
+  removeOverlay();
+  showNextQueuedOverlay();
+}
 
 function removeOverlay() {
   overlayRoot?.unmount();
@@ -230,8 +277,9 @@ function showOverlay(submission: DetectedSubmission) {
       onSave: saveViaBackground,
       // Cards readiness poll ticks, routed through the background worker.
       onFetchCards: fetchCardsViaBackground,
-      // "Свернуть": hide until the next solved task (overlay re-renders on submit).
-      onClose: removeOverlay,
+      // "Свернуть": dismiss this one and reveal the next queued submission,
+      // if any, instead of just hiding until the next fresh solve.
+      onClose: dismissOverlay,
       // "К повторению": open the web app's review cards in a new tab.
       onReview: openReview,
     })
@@ -242,7 +290,7 @@ function showOverlay(submission: DetectedSubmission) {
 async function openReview() {
   const url = await getReviewUrl();
   window.open(url, "_blank", "noopener,noreferrer");
-  removeOverlay();
+  dismissOverlay();
 }
 
 /**

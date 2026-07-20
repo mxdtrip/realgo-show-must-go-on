@@ -88,14 +88,25 @@ export function findText(selectors: string[]): string {
   return "";
 }
 
-/** First clickable element whose visible text matches the predicate. */
+/** First clickable element whose visible text matches the predicate. Plain
+    `<a>` links are deliberately excluded: a real code-submit control is a
+    button (or ARIA button), and including links widened the search to any
+    matching nav/footer/marketing link anywhere on the page. */
 export function findButtonByText(match: (text: string) => boolean): HTMLElement | null {
-  const candidates = document.querySelectorAll<HTMLElement>(
-    "button, [role='button'], a"
-  );
+  const candidates = document.querySelectorAll<HTMLElement>("button, [role='button']");
   for (const el of candidates) {
     const text = (el.textContent ?? "").trim().toLowerCase();
     if (text && match(text)) return el;
   }
   return null;
+}
+
+/** A short label starting with "submit" — "Submit", "Submit Code", "Submit
+    Solution" — as opposed to an unrelated "Submit application"/"Submit your
+    feedback" button that merely happens to start with the same word (a real
+    risk: this is a page-wide search, not scoped to the code editor, and a
+    platform page can embed unrelated forms — job listings, feedback widgets
+    — alongside the problem). */
+export function looksLikeSubmitLabel(text: string): boolean {
+  return text === "submit" || (text.startsWith("submit") && text.length <= 16);
 }

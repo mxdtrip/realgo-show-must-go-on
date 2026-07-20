@@ -1,6 +1,6 @@
 import { ApiError, getProblemCards, saveSubmission, streamAssistantHint } from "./lib/api";
 import { syncWebSession } from "./lib/auth";
-import { clearLastSubmission, setLastSubmission } from "./lib/storage";
+import { addPendingSubmission, getPendingSubmissions, removePendingSubmission } from "./lib/storage";
 import type {
   AssistantHintStreamMessage,
   AssistantHintStreamStartMessage,
@@ -23,8 +23,8 @@ chrome.runtime.onMessage.addListener(
   (message: RuntimeMessage, _sender, sendResponse) => {
     if (message.type === "REALGO_SUBMISSION_DETECTED") {
       handleDetected(message.submission)
-        .then(() => sendResponse({ ok: true }))
-        .catch((e) => sendResponse({ ok: false, error: String(e) }));
+        .then(({ popupOpened }) => sendResponse({ ok: true, popupOpened }))
+        .catch((e) => sendResponse({ ok: false, popupOpened: false, error: String(e) }));
       return true; // keep the message channel open for the async response
     }
 
@@ -35,14 +35,12 @@ chrome.runtime.onMessage.addListener(
       // policy — and the UI never duplicates network/business logic (#35, #38).
       saveSubmission(message.payload)
         .then(async (result) => {
-          // Saved successfully: drop the pending submission and clear the badge
-          // so the extension doesn't keep showing a stale "1" pending state.
-          await clearLastSubmission();
-          try {
-            await chrome.action.setBadgeText({ text: "" });
-          } catch {
-            /* badge is cosmetic */
-          }
+          // Saved successfully: drop *this* pending submission and refresh
+          // the badge to the remaining count — other tabs may still have
+          // their own unrated submissions queued, so this must not wipe
+          // the badge to empty (or the queue) outright.
+          await removePendingSubmission(message.payload.eventId);
+          await syncBadge();
           sendResponse({ ok: true, result } satisfies SaveResponse);
         })
         .catch((e) => sendResponse(toErrorResponse(e)))
@@ -161,20 +159,32 @@ function toErrorResponse(e: unknown): SaveResponse {
   };
 }
 
-async function handleDetected(submission: DetectedSubmission): Promise<void> {
-  await setLastSubmission(submission);
-
+/** Badge text always reflects the actual pending-queue length, not a
+    hardcoded "1"/"" — with multiple tabs each able to queue their own
+    unrated submission, clearing to empty after saving just one of several
+    would misreport nothing left pending. */
+async function syncBadge(): Promise<void> {
   try {
-    await chrome.action.setBadgeText({ text: "1" });
-    await chrome.action.setBadgeBackgroundColor({ color: "#2f81f7" });
+    const count = (await getPendingSubmissions()).length;
+    await chrome.action.setBadgeText({ text: count > 0 ? String(count) : "" });
+    if (count > 0) await chrome.action.setBadgeBackgroundColor({ color: "#2f81f7" });
   } catch {
     /* badge is cosmetic */
   }
+}
+
+async function handleDetected(submission: DetectedSubmission): Promise<{ popupOpened: boolean }> {
+  await addPendingSubmission(submission);
+  await syncBadge();
 
   try {
     // Chrome 127+ only, and only within a user gesture window — may throw.
     await chrome.action.openPopup();
+    return { popupOpened: true };
   } catch {
-    /* expected on most versions; the in-page overlay is the fallback */
+    // Expected on most versions/browsers — the caller reports this back to
+    // the content script so it shows its own in-page overlay as the
+    // fallback. It must NOT show unconditionally, or the two UIs stack.
+    return { popupOpened: false };
   }
 }

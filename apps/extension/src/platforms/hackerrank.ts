@@ -4,6 +4,7 @@ import {
   extractDescription,
   findButtonByText,
   findText,
+  looksLikeSubmitLabel,
   type PlatformAdapter,
   type TaskInfo,
 } from "./types";
@@ -52,7 +53,7 @@ export const hackerrankAdapter: PlatformAdapter = {
   },
 
   findSubmitButton(): HTMLElement | null {
-    return findButtonByText((t) => t.includes("submit"));
+    return findButtonByText(looksLikeSubmitLabel);
   },
 
   detectSubmitResult(): SubmitResult {

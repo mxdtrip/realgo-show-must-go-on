@@ -97,7 +97,20 @@ function readStoredSession(cards: readonly ReviewCard[]): StoredSession {
     // showing a "completed" empty queue.
     if (sessionCardIds.length === 0) return fallback;
 
-    return { queue, history, sessionCardIds };
+    // `cards` is the fresh, authoritative fetch for this session — it can
+    // contain ids that weren't part of the stored session yet (more cards
+    // became due, or were added to practice, since it was last saved).
+    // Filtering the stored queue/sessionCardIds above only ever *removes*
+    // stale ids; without this merge, any such new id is silently dropped
+    // and never shown in this session at all.
+    const known = new Set(sessionCardIds);
+    const newIds = cards.map((card) => card.id).filter((id) => !known.has(id));
+
+    return {
+      queue: [...queue, ...newIds],
+      history,
+      sessionCardIds: [...sessionCardIds, ...newIds],
+    };
   } catch {
     return fallback;
   }

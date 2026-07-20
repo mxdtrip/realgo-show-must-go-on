@@ -144,6 +144,16 @@ export interface ExtensionEventResult {
   nextReviewAt: string | null;
 }
 
+/** Reply shape for REALGO_SUBMISSION_DETECTED (background → content script).
+    Tells the content script whether chrome.action.openPopup() actually opened
+    the toolbar popup, so it shows its own in-page overlay only when the
+    popup didn't — otherwise the user sees the same rating card twice at once
+    (in-page overlay + toolbar popup). See background.ts handleDetected. */
+export interface SubmissionDetectedResponse {
+  ok: boolean;
+  popupOpened: boolean;
+}
+
 /** Reply shape for REALGO_SAVE_SUBMISSION (background → UI). */
 export interface SaveResponse {
   ok: boolean;
@@ -200,7 +210,13 @@ export interface AuthUser {
 }
 
 export const STORAGE_KEYS = {
-  lastSubmission: "realgo:lastSubmission",
+  // New key (not a rename of the old single-object "realgo:lastSubmission"):
+  // holds an array now, one entry per accepted submission still waiting to
+  // be rated, instead of a single global slot that one tab's submission
+  // could silently overwrite for another (see storage.ts pending-queue
+  // helpers). The old key is left as harmless dead storage rather than
+  // migrated, since its old shape (a lone object) isn't an array.
+  pendingSubmissions: "realgo:pendingSubmissions",
   apiBaseUrl: "realgo:apiBaseUrl",
   webBaseUrl: "realgo:webBaseUrl",
   accessToken: "realgo:accessToken",
