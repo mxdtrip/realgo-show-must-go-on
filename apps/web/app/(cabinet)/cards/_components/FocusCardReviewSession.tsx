@@ -278,11 +278,6 @@ export function FocusCardReviewSession({ brand, cards, copy, onRate }: Readonly<
                       {rateError}
                     </p>
                   ) : null}
-                  {isAdvancing ? (
-                    <p className="focus-rating__status" role="status">
-                      {copy.focus.saving}
-                    </p>
-                  ) : null}
                   <div>
                     {ratings.map(({ key, shortcut }) => (
                       <button
