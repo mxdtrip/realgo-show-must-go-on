@@ -41,6 +41,9 @@ export default function CardsPage() {
 
   const dueCount = live ? String(live.totalDue) : "—";
   const estimatedTime = live ? `~${live.estimatedMinutes} ${overview.minuteUnit}` : "—";
+  // Не показываем «start session», пока карточек нет (0 или ещё не загрузились):
+  // сессия по пустой очереди бессмысленна.
+  const hasDue = live !== null && live.totalDue > 0;
 
   const mix = overview.types.map(([key, label]) => {
     if (live) {
@@ -67,12 +70,14 @@ export default function CardsPage() {
           <p>{page.description}</p>
         </div>
         <div className="cabinet-page-head__actions">
-          <div>
-            <Link className="cabinet-cta" href="/cards/session">
-              {overview.start}
-              <CabinetIcon name="arrow" />
-            </Link>
-          </div>
+          {hasDue ? (
+            <div>
+              <Link className="cabinet-cta" href="/cards/session">
+                {overview.start}
+                <CabinetIcon name="arrow" />
+              </Link>
+            </div>
+          ) : null}
           <span className="cabinet-next-hint">
             <em>{dueCount}</em> {overview.cardUnit} · {estimatedTime}
           </span>
@@ -106,10 +111,12 @@ export default function CardsPage() {
               <span>{estimatedTime}</span>
             </div>
           </div>
-          <Link className="cabinet-cta" href="/cards/session">
-            {overview.start}
-            <CabinetIcon name="arrow" />
-          </Link>
+          {hasDue ? (
+            <Link className="cabinet-cta" href="/cards/session">
+              {overview.start}
+              <CabinetIcon name="arrow" />
+            </Link>
+          ) : null}
         </div>
       </CabinetPanel>
 
