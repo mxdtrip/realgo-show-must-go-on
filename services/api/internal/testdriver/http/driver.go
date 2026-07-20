@@ -46,6 +46,7 @@ var (
 	_ specifications.QuizSeeder      = (*Driver)(nil)
 	_ specifications.QuizProbe       = (*Driver)(nil)
 	_ specifications.FSRSProvider    = (*Driver)(nil)
+	_ specifications.FSRSStateProbe  = (*Driver)(nil)
 )
 
 const testJWTSecret = "acceptance-test-jwt-secret-32-bytes"
@@ -131,8 +132,9 @@ func (d *Driver) Close() { d.srv.Close() }
 
 // --- FSRSProvider / FSRSUser ---
 
-// FSRSUser wraps an authenticated user and adds the two FSRS-touching client
-// operations the spec exercises: extension-event solve and card first-rate.
+// FSRSUser wraps an authenticated user and adds the FSRS-touching client
+// operations the spec exercises: extension-event solve, card first-rate,
+// unrated-card creation, repeated rate, session listing.
 func (d *Driver) FSRSUser(user specifications.AuthenticatedUser) specifications.FSRSUser {
 	t := d.t
 	return &fsrsUser{driver: d, user: user, t: t}
@@ -142,6 +144,11 @@ type fsrsUser struct {
 	driver *Driver
 	user   specifications.AuthenticatedUser
 	t      *testing.T
+
+	// lastCardID remembers the card created/rated by the most recent
+	// CreateUnratedCard or RateFirstReview call, so LastRatedCardID can return
+	// it without exposing card_id through the HTTP response.
+	lastCardID int64
 }
 
 func (u *fsrsUser) OwnIdentity(t *testing.T) string { return u.user.OwnIdentity(t) }
@@ -187,6 +194,7 @@ func (u *fsrsUser) RateFirstReview(t *testing.T, front, back, rating string) tim
 	cu := u.driver.CardsUser(u.user)
 
 	card := cu.CreateCard(t, front, back, "pattern_recognition")
+	u.lastCardID = card.ID
 
 	// "all" scope catches a brand-new card (no schedule yet).
 	session := cu.StartSession(t, "all")
@@ -198,17 +206,69 @@ func (u *fsrsUser) RateFirstReview(t *testing.T, front, back, rating string) tim
 	// same field the extension path exposes. This is the same test-only read
 	// exception used by QuizProbe: there is no HTTP read path for
 	// next_review_at on cards.
+	return u.readCardNextReviewAt(t, card.ID, info)
+}
+
+// CreateUnratedCard creates a card via POST /me/cards without rating it. The
+// spec B1 then checks the schedule row written (if any) carries the canonical
+// fsrs.NewCard() state rather than hardcoded placeholder values.
+func (u *fsrsUser) CreateUnratedCard(t *testing.T, front, back, cardType string) int64 {
+	t.Helper()
+	cu := u.driver.CardsUser(u.user)
+	card := cu.CreateCard(t, front, back, cardType)
+	u.lastCardID = card.ID
+	return card.ID
+}
+
+// StartSessionAll starts a card session with scope="all" (includes unrated
+// cards) and returns the sessionId. Used by the spec to trigger any lazy
+// schedule creation as a side effect of listing.
+func (u *fsrsUser) StartSessionAll(t *testing.T) string {
+	t.Helper()
+	cu := u.driver.CardsUser(u.user)
+	session := cu.StartSession(t, "all")
+	return session.SessionID
+}
+
+// RateCardAgain rates an already-rated card with the same rating and returns
+// the new nextReviewAt. Used by the spec B3-test to verify replay advances
+// the FSRS schedule.
+func (u *fsrsUser) RateCardAgain(t *testing.T, cardID int64, rating string) time.Time {
+	t.Helper()
+	cu := u.driver.CardsUser(u.user)
+	// Use scope "all" so the previously-rated card is still included (it may
+	// no longer be "due" after the first rating, but "all" lists every card).
+	session := cu.StartSession(t, "all")
+	info := cu.RateCard(t, session.SessionID, cardID, rating)
+	return u.readCardNextReviewAt(t, cardID, info)
+}
+
+// LastRatedCardID returns the card id from the most recent CreateUnratedCard
+// or RateFirstReview call. The HTTP response of RateCard does not carry
+// card_id, so the driver remembers it at creation time.
+func (u *fsrsUser) LastRatedCardID(t *testing.T) int64 {
+	t.Helper()
+	if u.lastCardID == 0 {
+		t.Fatal("fsrsUser: LastRatedCardID called before any card was created/rated")
+	}
+	return u.lastCardID
+}
+
+// readCardNextReviewAt reads next_review_at for a card schedule directly from
+// the DB. Test-only: there is no HTTP read path for next_review_at on cards.
+func (u *fsrsUser) readCardNextReviewAt(t *testing.T, cardID int64, info any) time.Time {
+	t.Helper()
 	uid := u.user.UserID(t)
 	var due pgtype.Timestamptz
 	err := u.driver.pg.Pool.QueryRow(context.Background(),
 		`SELECT next_review_at FROM review_schedules WHERE user_id = $1 AND card_id = $2`,
-		uid, card.ID,
+		uid, cardID,
 	).Scan(&due)
 	if err != nil {
-		t.Fatalf("driver: read card next_review_at (card=%d): %v", card.ID, err)
+		t.Fatalf("driver: read card next_review_at (card=%d): %v", cardID, err)
 	}
 	if !due.Valid {
-		t.Fatalf("driver: card next_review_at is null (card=%d, info=%+v)", card.ID, info)
+		t.Fatalf("driver: card next_review_at is null (card=%d, info=%+v)", cardID, info)
 	}
 	return due.Time.UTC()
 }
@@ -219,6 +279,50 @@ func (u *fsrsUser) token() string {
 	}
 	u.t.Fatalf("fsrsUser: expected *authenticatedUser, got %T", u.user)
 	return ""
+}
+
+// --- FSRSStateProbe (test-only read) ---
+
+// CardScheduleState returns the FSRS-relevant columns of the card's
+// review_schedules row. Returns (state, false) when no schedule exists
+// (unrated card with no history yet) — a valid state per the B1 invariant.
+func (d *Driver) CardScheduleState(t *testing.T, userID, cardID int64) (specifications.FSRSState, bool) {
+	t.Helper()
+	var (
+		state        int16
+		stability    float64
+		difficulty   float64
+		intervalDays float64
+		reviewCount  int32
+		lapses       int32
+		lastReview   pgtype.Timestamptz
+		nextReview   pgtype.Timestamptz
+	)
+	err := d.pg.Pool.QueryRow(context.Background(),
+		`SELECT state, stability, difficulty, interval_days, review_count, lapses, last_review_at, next_review_at
+		 FROM review_schedules WHERE user_id = $1 AND card_id = $2`,
+		userID, cardID,
+	).Scan(&state, &stability, &difficulty, &intervalDays, &reviewCount, &lapses, &lastReview, &nextReview)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return specifications.FSRSState{}, false
+	}
+	if err != nil {
+		t.Fatalf("driver: read card schedule state (card=%d): %v", cardID, err)
+	}
+	out := specifications.FSRSState{
+		State:        int8(state),
+		Stability:    stability,
+		Difficulty:   difficulty,
+		IntervalDays: intervalDays,
+		ReviewCount:  int(reviewCount),
+		Lapses:       int(lapses),
+		NextReviewAt: nextReview.Time.UTC(),
+	}
+	if lastReview.Valid {
+		t := lastReview.Time.UTC()
+		out.LastReviewAt = &t
+	}
+	return out, true
 }
 
 // --- QuizProvider / QuizUser ---

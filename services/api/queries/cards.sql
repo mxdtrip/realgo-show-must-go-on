@@ -341,11 +341,17 @@ WHERE c.id = sqlc.arg(card_id)::bigint
   );
 
 -- name: CreateCardReviewSchedule :one
+-- Inserts a placeholder schedule row matching fsrs.NewCard(): state=0 (New),
+-- stability=0, difficulty=0, no last_review. RateReview overwrites these with
+-- FSRS-computed values on the first rate within the same request, but the row
+-- itself must not carry fake "history-like" numbers — otherwise a crash
+-- between insert and persist would leave a schedule that looks reviewed but
+-- isn't.
 INSERT INTO review_schedules (
     user_id, card_id, next_review_at, interval_days,
-    ease, stability, difficulty, review_count, algorithm
+    ease, stability, difficulty, review_count, algorithm, state
 )
-VALUES ($1, $2, $3, 0, 2.5, 0.1, 5.0, 0, 'fsrs')
+VALUES ($1, $2, $3, 0, 2.5, 0, 0, 0, 'fsrs', 0)
 ON CONFLICT (user_id, card_id) WHERE card_id IS NOT NULL DO UPDATE
 SET updated_at = review_schedules.updated_at
 RETURNING id;
@@ -359,7 +365,7 @@ INSERT INTO review_schedules (
     user_id, card_id, next_review_at, interval_days,
     ease, stability, difficulty, review_count, algorithm, state
 )
-SELECT sqlc.arg(user_id)::bigint, c.id, NOW(), 1, 2.5, 1.0, 5.0, 0, 'fsrs', 0
+SELECT sqlc.arg(user_id)::bigint, c.id, NOW(), 0, 2.5, 0, 0, 0, 'fsrs', 0
 FROM cards c
 WHERE c.pattern_id = sqlc.arg(pattern_id)::bigint AND c.user_id IS NULL
 ON CONFLICT (user_id, card_id) WHERE card_id IS NOT NULL DO NOTHING;

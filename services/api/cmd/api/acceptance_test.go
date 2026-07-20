@@ -144,4 +144,31 @@ func TestAcceptance_FSRS(t *testing.T) {
 
 		specifications.FSRSPathsShareAlgorithm(t, d)
 	})
+
+	t.Run("unrated_card_has_no_or_canonical_state", func(t *testing.T) {
+		harness.Reset(t)
+
+		d := httpdriver.New(t, harness)
+		defer d.Close()
+
+		specifications.FSRSUnratedCardHasNoOrCanonicalState(t, d, d)
+	})
+
+	t.Run("first_rate_computes_canonical_state", func(t *testing.T) {
+		harness.Reset(t)
+
+		d := httpdriver.New(t, harness)
+		defer d.Close()
+
+		specifications.FSRSFirstRateComputesCanonicalState(t, d, d)
+	})
+
+	t.Run("manual_rate_replay_advances", func(t *testing.T) {
+		harness.Reset(t)
+
+		d := httpdriver.New(t, harness)
+		defer d.Close()
+
+		specifications.FSRSManualRateReplayAdvances(t, d, d)
+	})
 }

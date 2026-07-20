@@ -432,6 +432,30 @@ Per-user оптимизация весов FSRS в текущей реализа
 > unit-тестов и для фиксации того, что FSRS действительно отличается от
 > статической схемы.
 
+### Initial state и идемпотентность
+
+**Unrated-сущности.** Карточка или задача без единого оценки либо не имеет
+строки в `review_schedules` (ленивая модель — расписание создаётся в момент
+первого rate через `EnsureReviewSchedule`/`EnsureScheduleForProblem`), либо
+имеет строку в каноническом New-state из `fsrs.NewCard()`: `state=0`,
+`stability=0`, `difficulty=0`, `review_count=0`, `last_review_at IS NULL`.
+Placeholder-значения вроде `stability=0.1` или `difficulty=5.0` в этой точке
+запрещены: они создают видимость «карточки с историей», которой нет.
+
+**Первый rate.** Любой путь (`/extension/events`, `/me/cards/{id}/rate`,
+quiz-answer, `/me/reviews/{id}/rate`) при первом рейтинге прогоняет карточку
+через единый FSRS-scheduler, который честно вычисляет `S0`/`D0` (initial
+stability/difficulty) и переводит её из `New` в `Learning`/`Review`.
+Placeholder из insert-шага перезаписывается в той же HTTP-транзакции.
+
+**Идемпотентность rate.** Повторный `POST /me/reviews/{reviewId}/rate` или
+`POST /me/cards/{cardId}/rate` с тем же рейтингом засчитывается как новая
+попытка: `review_count` растёт, FSRS пересчитывает интервал (как правило —
+продвигает `nextReviewAt` вперёд). Это осознанный контракт: manual rate не
+защищён от replay (в отличие от `POST /extension/events`, где есть
+`idempotency_key`). Если пользователю нужна повторная оценка — сервер её
+учитывает.
+
 ## Problems
 
 ### `GET /me/problems?status=reviewing&platform=leetcode&limit=50&cursor=...`

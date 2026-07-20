@@ -80,9 +80,11 @@ ON CONFLICT (user_id, problem_id) DO UPDATE
 RETURNING user_id, problem_id, status;
 
 -- name: CreateProblemScheduleIfAbsent :exec
--- Create review schedule only when none exists yet.
+-- Create review schedule only when none exists yet. Placeholder state matches
+-- fsrs.NewCard() (state=0, stability=0, difficulty=0); the first rate through
+-- RateByProblemID/RateReview overwrites it with FSRS-computed values.
 INSERT INTO review_schedules (user_id, problem_id, next_review_at, interval_days, ease, stability, difficulty, review_count, algorithm, state)
-VALUES (sqlc.arg(user_id)::bigint, sqlc.arg(problem_id)::bigint, NOW(), 1, 2.5, 1.0, 5.0, 0, 'fsrs', 0)
+VALUES (sqlc.arg(user_id)::bigint, sqlc.arg(problem_id)::bigint, NOW(), 0, 2.5, 0, 0, 0, 'fsrs', 0)
 ON CONFLICT (user_id, problem_id) WHERE problem_id IS NOT NULL DO NOTHING;
 
 -- name: ListUserProblems :many
