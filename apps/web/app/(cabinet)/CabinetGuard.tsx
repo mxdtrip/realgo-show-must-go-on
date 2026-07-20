@@ -14,7 +14,7 @@ const AUTH_BYPASS = process.env.NEXT_PUBLIC_AUTH_BYPASS === "1";
 // server layout can't gate access — this redirects anonymous users to /login and
 // holds rendering until the session is confirmed.
 export function CabinetGuard({ children }: { children: React.ReactNode }) {
-  const { status } = useAuth();
+  const { status, retry } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -23,6 +23,27 @@ export function CabinetGuard({ children }: { children: React.ReactNode }) {
 
   if (AUTH_BYPASS) {
     return <>{children}</>;
+  }
+
+  // Distinct from the "loading" spinner below: the session check already
+  // failed once (network/backend down, not a 401) — showing an endless
+  // spinner here would strand the user with no way back in short of a
+  // manual page reload.
+  if (status === "error") {
+    return (
+      <div className="cabinet-guard" role="alert">
+        <span className="cabinet-guard__label">
+          Не удалось проверить сессию. Проверьте соединение и попробуйте ещё раз.
+        </span>
+        <button
+          className="review-action review-action--ghost"
+          type="button"
+          onClick={retry}
+        >
+          Повторить
+        </button>
+      </div>
+    );
   }
 
   if (status !== "authenticated") {

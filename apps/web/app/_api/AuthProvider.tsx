@@ -11,7 +11,11 @@ import { authChangedEvent, hasSession } from "./tokens";
 import { ApiError } from "./types";
 import type { AuthUser } from "./types";
 
-type AuthStatus = "loading" | "authenticated" | "anonymous";
+// "error" — the initial session check failed for a reason other than "no
+// session"/401 (network down, backend unreachable, 5xx…). Distinct from
+// "loading" so CabinetGuard can stop spinning and offer a retry instead of
+// waiting forever for a sync that already failed once.
+type AuthStatus = "loading" | "authenticated" | "anonymous" | "error";
 
 type AuthContextValue = {
   user: AuthUser | null;
@@ -19,6 +23,8 @@ type AuthContextValue = {
   login: (email: string, password: string) => Promise<AuthUser>;
   register: (email: string, password: string) => Promise<AuthUser>;
   logout: () => Promise<void>;
+  /** Re-runs the session check — CabinetGuard's retry action on `status === "error"`. */
+  retry: () => void;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -49,7 +55,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setStatus("anonymous");
         return;
       }
-      setStatus((current) => (current === "authenticated" ? "authenticated" : "loading"));
+      // An already-confirmed session survives a transient failure as-is
+      // (don't demote to an error screen over one flaky request). But a
+      // session that was never confirmed yet ("loading") must not stay
+      // "loading" forever with no way out — surface it as an error instead.
+      setStatus((current) => (current === "authenticated" ? "authenticated" : "error"));
     }
   }, []);
 
@@ -88,9 +98,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setStatus("anonymous");
   }, [sync]);
 
+  const retry = useCallback(() => {
+    void sync();
+  }, [sync]);
+
   const value = useMemo<AuthContextValue>(
-    () => ({ user, status, login, register, logout }),
-    [user, status, login, register, logout],
+    () => ({ user, status, login, register, logout, retry }),
+    [user, status, login, register, logout, retry],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
