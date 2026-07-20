@@ -31,8 +31,18 @@ const REFRESH_KEY = "realgo:auth:refresh:v1";
 const CHANGED_EVENT = "realgo:auth-changed";
 
 function syncSession() {
-  const accessToken = window.localStorage.getItem(ACCESS_KEY);
-  const refreshToken = window.localStorage.getItem(REFRESH_KEY);
+  let accessToken: string | null;
+  let refreshToken: string | null;
+  try {
+    accessToken = window.localStorage.getItem(ACCESS_KEY);
+    refreshToken = window.localStorage.getItem(REFRESH_KEY);
+  } catch (error) {
+    // Storage can throw synchronously in locked-down/private contexts. Keep
+    // the content script alive so later auth/storage events can retry instead
+    // of aborting before the listeners below are registered.
+    console.error("[realgo] web-session: localStorage unavailable", error);
+    return;
+  }
   console.log("[realgo] web-session: syncing", {
     hasAccess: Boolean(accessToken),
     hasRefresh: Boolean(refreshToken),

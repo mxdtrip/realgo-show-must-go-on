@@ -16,6 +16,8 @@ const accountScopedStorageKeys = [
   "realgo:profile-settings:v1",
   "realgo:onboarding-profile:v1",
   "realgo:notification-settings:v1",
+  "realgo.atlas.company",
+  "realgo.atlas.platform",
 ] as const;
 
 export function getAccessToken(): string | null {

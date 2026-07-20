@@ -21,6 +21,8 @@ export default function DashboardPage() {
         viewAll: copy.common.viewAll,
         dayToday: page.dayToday,
         dayTomorrow: page.dayTomorrow,
+        dayOverdue: page.dayOverdue,
+        dayUnits: page.dayUnits,
         statTooltips: page.statTooltips,
         launcher: page.launcher,
         heatmap: page.heatmap,

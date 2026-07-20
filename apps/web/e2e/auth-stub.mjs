@@ -40,7 +40,8 @@ const USER = {
 };
 
 const tokens = (kind) => ({
-  access_token: `${kind}.access`,
+  // JWT-shaped enough for the web client's cross-tab subject comparison.
+  access_token: `${kind}.eyJzdWIiOiIxIn0.signature`,
   refresh_token: `${kind}.refresh`,
   token_type: "Bearer",
   expires_in: 900,
@@ -105,6 +106,7 @@ const STUB_RELEVANCE = {
 // "today / due now" branches regardless of when the suite runs.
 const NOW_ISO = new Date().toISOString();
 const PAST_ISO = new Date(Date.now() - 3 * 3600_000).toISOString();
+const OVERDUE_ISO = new Date(Date.now() - 3 * 86_400_000).toISOString();
 const FUTURE_ISO = new Date(Date.now() + 26 * 3600_000).toISOString();
 
 const REVIEW_QUEUE = [
@@ -445,7 +447,7 @@ const DASHBOARD = {
       type: "problem_review",
       title: "Stub Problem: Koko Eating Bananas",
       meta: "Binary Search · medium",
-      dueAt: NOW_ISO,
+      dueAt: OVERDUE_ISO,
       lastRating: "hard",
     },
   ],

@@ -110,11 +110,21 @@ test.describe("bug #2 — cabinet logo & session hardening", () => {
   test("revoked session (refresh 401) clears tokens", async ({ page }) => {
     await page.goto("/dashboard");
     await seedTokens(page, "DEAD", "DEAD"); // getMe 401 -> refresh 401 -> clearTokens
+    await page.evaluate(() => {
+      localStorage.setItem("realgo.atlas.company", "cmp_previous_account");
+      localStorage.setItem("realgo.atlas.platform", "hackerrank");
+    });
     await page.goto("/dashboard");
 
     await expect
       .poll(async () => await readTokens(page), { timeout: 10_000 })
       .toEqual([null, null]);
+    expect(
+      await page.evaluate(() => [
+        localStorage.getItem("realgo.atlas.company"),
+        localStorage.getItem("realgo.atlas.platform"),
+      ]),
+    ).toEqual([null, null]);
   });
 
   test("transient refresh failure (500) keeps the session", async ({ page }) => {
@@ -125,5 +135,53 @@ test.describe("bug #2 — cabinet logo & session hardening", () => {
 
     // This is the exact line the fix changed: only a genuine 401 wipes tokens.
     expect(await readTokens(page)).toEqual(["DEAD.access", "FLAKY.refresh"]);
+  });
+
+  test("localStorage lease serializes refresh across tabs without Web Locks", async ({ context }) => {
+    let refreshRequests = 0;
+    await context.route("**/api/v1/auth/refresh", async (route) => {
+      refreshRequests += 1;
+      await new Promise((resolve) => setTimeout(resolve, 250));
+      await route.continue();
+    });
+    await context.addInitScript(
+      ({ accessKey, refreshKey }) => {
+        Object.defineProperty(navigator, "locks", {
+          configurable: true,
+          value: undefined,
+        });
+        if (location.origin.startsWith("http://127.0.0.1:")) {
+          localStorage.setItem(accessKey, "DEAD.eyJzdWIiOiIxIn0.signature");
+          localStorage.setItem(refreshKey, "LIVE.refresh.initial");
+        }
+      },
+      { accessKey: AKEY, refreshKey: RKEY },
+    );
+
+    const first = await context.newPage();
+    const second = await context.newPage();
+    await Promise.all([first.goto("/"), second.goto("/")]);
+
+    await expect.poll(() => refreshRequests, { timeout: 10_000 }).toBe(1);
+    await expect
+      .poll(
+        async () =>
+          Promise.all(
+            [first, second].map((tab) =>
+              tab.evaluate(
+                ([accessKey, refreshKey]) => [
+                  localStorage.getItem(accessKey),
+                  localStorage.getItem(refreshKey),
+                ],
+                [AKEY, RKEY],
+              ),
+            ),
+          ),
+        { timeout: 10_000 },
+      )
+      .toEqual([
+        ["LIVE.eyJzdWIiOiIxIn0.signature", "LIVE.refresh"],
+        ["LIVE.eyJzdWIiOiIxIn0.signature", "LIVE.refresh"],
+      ]);
   });
 });

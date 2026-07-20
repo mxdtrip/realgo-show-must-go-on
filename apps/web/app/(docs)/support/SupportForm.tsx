@@ -7,6 +7,12 @@ const SUPPORT_EMAIL = "mixkageyt@gmail.com";
 export function SupportForm() {
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
+  const [handoffStarted, setHandoffStarted] = useState(false);
+  const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">("idle");
+
+  function composedMessage() {
+    return `Кому: ${SUPPORT_EMAIL}\nТема: ${subject || "Вопрос по realgo"}\n\n${message}`;
+  }
 
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -14,6 +20,16 @@ export function SupportForm() {
       subject || "Вопрос по realgo",
     )}&body=${encodeURIComponent(message)}`;
     window.location.href = mailto;
+    setHandoffStarted(true);
+  }
+
+  async function copyMessage() {
+    try {
+      await navigator.clipboard.writeText(composedMessage());
+      setCopyState("copied");
+    } catch {
+      setCopyState("failed");
+    }
   }
 
   return (
@@ -37,6 +53,21 @@ export function SupportForm() {
         />
       </label>
       <button type="submit">Открыть письмо в почте</button>
+      {handoffStarted ? (
+        <div role="status" aria-live="polite">
+          <p>
+            ReAlgo не может проверить, открылся ли почтовый клиент. Если ничего не произошло,
+            скопируйте сообщение и отправьте его на {SUPPORT_EMAIL} вручную.
+          </p>
+          <button type="button" onClick={copyMessage}>
+            {copyState === "copied"
+              ? "Сообщение скопировано ✓"
+              : copyState === "failed"
+                ? "Не удалось скопировать — выделите текст вручную"
+                : "Скопировать сообщение"}
+          </button>
+        </div>
+      ) : null}
     </form>
   );
 }

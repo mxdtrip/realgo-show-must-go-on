@@ -114,6 +114,11 @@ function extractDifficulty(): string | undefined {
   ]).toLowerCase();
   if (text.includes("easy")) return "easy";
   if (text.includes("medium")) return "medium";
-  if (text.includes("hard") || text.includes("advanced") || text.includes("expert")) return "hard";
+  // HackerRank exposes Advanced and Expert as distinct labels. Preserve the
+  // site's wording for the assistant badge instead of misrepresenting both as
+  // Hard. The API currently stores unsupported catalog levels as unknown.
+  if (text.includes("expert")) return "expert";
+  if (text.includes("advanced")) return "advanced";
+  if (text.includes("hard")) return "hard";
   return undefined;
 }

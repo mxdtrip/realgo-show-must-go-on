@@ -36,6 +36,8 @@ type DashboardCopy = Readonly<{
   viewAll: string;
   dayToday: string;
   dayTomorrow: string;
+  dayOverdue: string;
+  dayUnits: readonly [string, string, string];
   statTooltips: Readonly<Record<string, string>>;
   launcher: PracticeLauncherCopy;
   heatmap: Readonly<{
@@ -123,8 +125,22 @@ function formatDue(value: string, copy: DashboardCopy): { day: string; time: str
   const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
   const diffDays = Math.round((startOfDay(due) - startOfDay(now)) / 86_400_000);
   const day =
-    diffDays <= 0 ? copy.dayToday : diffDays === 1 ? copy.dayTomorrow : dueDateFormatter.format(due).replace(".", "");
+    diffDays < 0
+      ? `${copy.dayOverdue} ${-diffDays} ${pluralRu(-diffDays, copy.dayUnits)}`
+      : diffDays === 0
+        ? copy.dayToday
+        : diffDays === 1
+          ? copy.dayTomorrow
+          : dueDateFormatter.format(due).replace(".", "");
   return { day, time: dueTimeFormatter.format(due) };
+}
+
+function pluralRu(value: number, forms: readonly [string, string, string]): string {
+  const mod10 = value % 10;
+  const mod100 = value % 100;
+  if (mod10 === 1 && mod100 !== 11) return forms[0];
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return forms[1];
+  return forms[2];
 }
 
 function confidenceTone(value: number) {
