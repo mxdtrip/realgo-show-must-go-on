@@ -56,6 +56,7 @@ export function NotificationSettingsPanel({ copy }: Readonly<NotificationSetting
             enabled: remote.email_enabled,
             dailyReminder: remote.weekly_digest,
             cardReviewReminder: remote.review_reminder,
+            streakReminder: remote.streak_reminder,
           }
         : localSettings,
     );
@@ -93,6 +94,7 @@ export function NotificationSettingsPanel({ copy }: Readonly<NotificationSetting
         email_enabled: next.enabled,
         weekly_digest: next.dailyReminder,
         review_reminder: next.cardReviewReminder,
+        streak_reminder: next.streakReminder,
       });
     } catch (e) {
       toast.error(e instanceof ApiError ? e.message : copy.syncFailed);

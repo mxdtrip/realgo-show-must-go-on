@@ -47,6 +47,7 @@ export type AuthUser = {
   };
   notification_settings?: {
     review_reminder: boolean;
+    streak_reminder: boolean;
     weekly_digest: boolean;
     email_enabled: boolean;
   };

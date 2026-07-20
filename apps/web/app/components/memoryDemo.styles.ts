@@ -55,9 +55,10 @@ export const MEMORY_DEMO_CSS = `
 
 .realgo-popup, .realgo-popup * { box-sizing: border-box; }
 
-/* Panel: fixed size for every state; the form screen is the reference */
+/* Panel: fixed height and desktop max-width for every state. */
 .realgo-popup {
-  width: 400px;
+  width: 100%;
+  max-width: 400px;
   height: 372px;
   display: flex;
   flex-direction: column;

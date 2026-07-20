@@ -59,7 +59,7 @@ function inputDateFromISO(value: string | null | undefined, fallback: string) {
 }
 
 function rfc3339FromInputDate(value: string) {
-  if (!value) return undefined;
+  if (!value) return null;
   return `${value}T09:00:00Z`;
 }
 

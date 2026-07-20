@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 
 import { getDictionary } from "../_content/i18n";
 import { CheckoutAction } from "./CheckoutAction";
@@ -19,9 +20,8 @@ export default async function CheckoutPage({
   const copy = getDictionary().marketing;
 
   const requested = (planParam ?? "pro").toLowerCase();
-  const plan =
-    copy.pricing.find(([name]) => name.toLowerCase() === requested) ??
-    copy.pricing[copy.pricing.length - 1];
+  const plan = copy.pricing.find(([name]) => name.toLowerCase() === requested);
+  if (!plan) notFound();
   const [name, price, features] = plan;
   const isFree = price.replace(/[^0-9]/g, "") === "0";
 
@@ -32,8 +32,9 @@ export default async function CheckoutPage({
         <div className="section-copy">
           <h2>Оформление подписки</h2>
           <p>
-            Вы выбрали план <strong>{name}</strong>. Проверьте состав и перейдите
-            к оплате.
+            Вы выбрали план <strong>{name}</strong>. {isFree
+              ? "Проверьте состав и создайте аккаунт."
+              : "Проверьте состав. Оплата временно недоступна, пока биллинг в разработке."}
           </p>
           <Link className="checkout-back" href="/#pricing">
             ← Назад к тарифам

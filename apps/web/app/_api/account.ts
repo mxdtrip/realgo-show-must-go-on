@@ -8,7 +8,7 @@ type UserResponse = { user: AuthUser };
 
 export type ProfileUpdate = {
   timezone?: string;
-  interview_date?: string;
+  interview_date?: string | null;
   prep_goal?: string;
   grade?: string;
   target_company?: string;
@@ -19,6 +19,7 @@ export type ProfileUpdate = {
 
 export type NotificationSettingsUpdate = {
   review_reminder?: boolean;
+  streak_reminder?: boolean;
   weekly_digest?: boolean;
   email_enabled?: boolean;
 };

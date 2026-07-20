@@ -77,11 +77,26 @@ export async function showRealgoNotification(title: string, options?: Notificati
   };
 
   if ("serviceWorker" in navigator) {
-    const registration = await navigator.serviceWorker.ready;
-    await registration.showNotification(title, notificationOptions);
-    return true;
+    try {
+      // `navigator.serviceWorker.ready` may remain pending forever when this
+      // origin has no active worker. A direct lookup always settles and lets
+      // us fall back to the page Notification API instead of hanging every
+      // reminder silently.
+      const registration = await navigator.serviceWorker.getRegistration();
+      if (registration?.active) {
+        await registration.showNotification(title, notificationOptions);
+        return true;
+      }
+    } catch {
+      // A broken/unavailable registration should not disable notifications
+      // that the page itself can still display.
+    }
   }
 
-  new Notification(title, notificationOptions);
-  return true;
+  try {
+    new Notification(title, notificationOptions);
+    return true;
+  } catch {
+    return false;
+  }
 }

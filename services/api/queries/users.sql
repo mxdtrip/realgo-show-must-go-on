@@ -38,7 +38,10 @@ WHERE id = $1;
 UPDATE users
 SET
   timezone                = COALESCE(sqlc.narg('timezone'), timezone),
-  interview_date          = COALESCE(sqlc.narg('interview_date'), interview_date),
+  interview_date          = CASE
+    WHEN sqlc.arg('clear_interview_date')::bool THEN NULL
+    ELSE COALESCE(sqlc.narg('interview_date'), interview_date)
+  END,
   prep_goal               = COALESCE(sqlc.narg('prep_goal'), prep_goal),
   grade                   = COALESCE(sqlc.narg('grade'), grade),
   target_company          = COALESCE(sqlc.narg('target_company'), target_company),
@@ -58,6 +61,7 @@ RETURNING *;
 UPDATE users
 SET
   notify_review_reminder = COALESCE(sqlc.narg('review_reminder'), notify_review_reminder),
+  notify_streak_reminder = COALESCE(sqlc.narg('streak_reminder'), notify_streak_reminder),
   notify_weekly_digest   = COALESCE(sqlc.narg('weekly_digest'), notify_weekly_digest),
   notify_email_enabled   = COALESCE(sqlc.narg('email_enabled'), notify_email_enabled),
   updated_at             = NOW()

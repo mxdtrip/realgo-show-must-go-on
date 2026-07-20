@@ -52,6 +52,7 @@ type profileResponse struct {
 
 type notificationSettingsResponse struct {
 	ReviewReminder bool `json:"review_reminder"`
+	StreakReminder bool `json:"streak_reminder"`
 	WeeklyDigest   bool `json:"weekly_digest"`
 	EmailEnabled   bool `json:"email_enabled"`
 }
@@ -82,6 +83,7 @@ func newUserResponse(u db.User) userResponse {
 		OnboardingCompleted: u.OnboardingCompletedAt.Valid,
 		NotificationSettings: notificationSettingsResponse{
 			ReviewReminder: u.NotifyReviewReminder,
+			StreakReminder: u.NotifyStreakReminder,
 			WeeklyDigest:   u.NotifyWeeklyDigest,
 			EmailEnabled:   u.NotifyEmailEnabled,
 		},
@@ -275,16 +277,36 @@ func decodeJSON(w http.ResponseWriter, r *http.Request, dst any) bool {
 	return true
 }
 
+type optionalNullableString struct {
+	Set   bool
+	Value *string
+}
+
+func (value *optionalNullableString) UnmarshalJSON(data []byte) error {
+	value.Set = true
+	if strings.TrimSpace(string(data)) == "null" {
+		value.Value = nil
+		return nil
+	}
+
+	var decoded string
+	if err := json.Unmarshal(data, &decoded); err != nil {
+		return err
+	}
+	value.Value = &decoded
+	return nil
+}
+
 type patchProfileRequest struct {
-	Timezone            *string   `json:"timezone"`
-	InterviewDate       *string   `json:"interview_date"`
-	PrepGoal            *string   `json:"prep_goal"`
-	Grade               *string   `json:"grade"`
-	TargetCompany       *string   `json:"target_company"`
-	TargetPosition      *string   `json:"target_position"`
-	Platform            *string   `json:"platform"`
-	TargetTopics        *[]string `json:"target_topics"`
-	OnboardingCompleted *bool     `json:"onboarding_completed"`
+	Timezone            *string                `json:"timezone"`
+	InterviewDate       optionalNullableString `json:"interview_date"`
+	PrepGoal            *string                `json:"prep_goal"`
+	Grade               *string                `json:"grade"`
+	TargetCompany       *string                `json:"target_company"`
+	TargetPosition      *string                `json:"target_position"`
+	Platform            *string                `json:"platform"`
+	TargetTopics        *[]string              `json:"target_topics"`
+	OnboardingCompleted *bool                  `json:"onboarding_completed"`
 }
 
 var validGrades = map[string]bool{
@@ -340,8 +362,8 @@ func normaliseTopics(in []string) ([]string, error) {
 }
 
 // patchProfile handles PATCH /me/profile — a partial update of the onboarding
-// profile. Omitted fields are left untouched; an explicit value (including "")
-// overwrites the field.
+// profile. Omitted fields are left untouched; interview_date:null explicitly
+// clears the date while an RFC3339 string replaces it.
 func (h *authHandler) patchProfile(w http.ResponseWriter, r *http.Request) {
 	if h.unavailable(w) {
 		return
@@ -402,14 +424,18 @@ func (h *authHandler) patchProfile(w http.ResponseWriter, r *http.Request) {
 		}
 		upd.TargetTopics = &normalised
 	}
-	if req.InterviewDate != nil {
-		t, err := time.Parse(time.RFC3339, *req.InterviewDate)
-		if err != nil {
-			slog.Warn("auth: PatchProfile failed", slog.Int64("user_id", userID), slog.Any("err", err), slog.String("field", "interview_date"))
-			response.FailWithDetails(w, http.StatusBadRequest, "validation_error", "interview_date must be RFC3339", "interview_date")
-			return
+	if req.InterviewDate.Set {
+		if req.InterviewDate.Value == nil {
+			upd.ClearInterviewDate = true
+		} else {
+			t, err := time.Parse(time.RFC3339, *req.InterviewDate.Value)
+			if err != nil {
+				slog.Warn("auth: PatchProfile failed", slog.Int64("user_id", userID), slog.Any("err", err), slog.String("field", "interview_date"))
+				response.FailWithDetails(w, http.StatusBadRequest, "validation_error", "interview_date must be RFC3339 or null", "interview_date")
+				return
+			}
+			upd.InterviewDate = &t
 		}
-		upd.InterviewDate = &t
 	}
 	if req.OnboardingCompleted != nil && *req.OnboardingCompleted {
 		upd.SetOnboardingDone = true
@@ -425,6 +451,7 @@ func (h *authHandler) patchProfile(w http.ResponseWriter, r *http.Request) {
 
 type patchNotificationSettingsRequest struct {
 	ReviewReminder *bool `json:"review_reminder"`
+	StreakReminder *bool `json:"streak_reminder"`
 	WeeklyDigest   *bool `json:"weekly_digest"`
 	EmailEnabled   *bool `json:"email_enabled"`
 }
@@ -490,7 +517,7 @@ func (h *authHandler) patchNotificationSettings(w http.ResponseWriter, r *http.R
 	if !decodeJSON(w, r, &req) {
 		return
 	}
-	if req.ReviewReminder == nil && req.WeeklyDigest == nil && req.EmailEnabled == nil {
+	if req.ReviewReminder == nil && req.StreakReminder == nil && req.WeeklyDigest == nil && req.EmailEnabled == nil {
 		slog.Warn("auth: PatchNotificationSettings failed", slog.Int64("user_id", userID))
 		response.Fail(w, http.StatusBadRequest, "validation_error", "at least one field is required")
 		return
@@ -498,6 +525,7 @@ func (h *authHandler) patchNotificationSettings(w http.ResponseWriter, r *http.R
 
 	user, err := h.svc.UpdateNotificationSettings(r.Context(), userID, auth.NotificationSettings{
 		ReviewReminder: req.ReviewReminder,
+		StreakReminder: req.StreakReminder,
 		WeeklyDigest:   req.WeeklyDigest,
 		EmailEnabled:   req.EmailEnabled,
 	})
