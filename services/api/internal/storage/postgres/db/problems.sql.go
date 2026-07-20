@@ -13,7 +13,7 @@ import (
 
 const createProblemScheduleIfAbsent = `-- name: CreateProblemScheduleIfAbsent :exec
 INSERT INTO review_schedules (user_id, problem_id, next_review_at, interval_days, ease, stability, difficulty, review_count, algorithm, state)
-VALUES ($1::bigint, $2::bigint, NOW(), 1, 2.5, 1.0, 5.0, 0, 'fsrs', 0)
+VALUES ($1::bigint, $2::bigint, NOW(), 0, 2.5, 0, 0, 0, 'fsrs', 0)
 ON CONFLICT (user_id, problem_id) WHERE problem_id IS NOT NULL DO NOTHING
 `
 
@@ -22,7 +22,9 @@ type CreateProblemScheduleIfAbsentParams struct {
 	ProblemID int64
 }
 
-// Create review schedule only when none exists yet.
+// Create review schedule only when none exists yet. Placeholder state matches
+// fsrs.NewCard() (state=0, stability=0, difficulty=0); the first rate through
+// RateByProblemID/RateReview overwrites it with FSRS-computed values.
 func (q *Queries) CreateProblemScheduleIfAbsent(ctx context.Context, arg CreateProblemScheduleIfAbsentParams) error {
 	_, err := q.db.Exec(ctx, createProblemScheduleIfAbsent, arg.UserID, arg.ProblemID)
 	return err
