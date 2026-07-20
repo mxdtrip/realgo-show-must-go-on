@@ -70,8 +70,15 @@ export function AccountUserMenu({
   async function handleLogout() {
     if (pending) return;
     setPending(true);
-    await logout();
-    router.push("/");
+    try {
+      await logout();
+      router.push("/");
+    } finally {
+      // Always release the button, success or failure — an unhandled
+      // rejection anywhere in the chain (network, storage access) used to
+      // leave it disabled forever with no way to retry short of a reload.
+      setPending(false);
+    }
   }
 
   return (

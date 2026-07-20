@@ -30,9 +30,12 @@ const GO_TARGETS: Record<string, string> = {
   // Тест-триггер: полевой онбординг заново (?force=1 обходит редирект
   // «уже онбордился» на странице онбординга).
   KeyO: "/onboarding/profile?force=1",
+  // Раньше был отдельным bare-key шорткатом ("s" без префикса) — делил
+  // букву с "g s"→settings, из-за чего случайное "s" вне поля ввода уводило
+  // с текущей страницы на сессию карточек. Теперь живёт в общей g-схеме,
+  // как и остальная навигация.
+  KeyN: "/cards/session",
 };
-
-const SESSION_ROUTE = "/cards/session";
 
 function isEditableTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false;
@@ -106,11 +109,6 @@ export function CabinetHotkeys({ copy }: Readonly<{ copy: HotkeysCopy }>) {
         return;
       }
       pendingGoUntil.current = 0;
-
-      if (event.code === "KeyS") {
-        event.preventDefault();
-        router.push(SESSION_ROUTE);
-      }
     }
 
     document.addEventListener("keydown", onKeyDown);
