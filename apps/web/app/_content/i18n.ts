@@ -184,7 +184,7 @@ const ru = {
           {
             question: "ReAlgo сам решает задачи или только помогает повторять?",
             answer:
-              "ReAlgo не подменяет практику. Ты решаешь задачи на LeetCode или NeetCode, отмечаешь уверенность, а сервис возвращает нужные задачи, паттерны и карточки в расписание повторений.",
+              "ReAlgo не подменяет практику. Ты решаешь задачи на LeetCode, GeeksforGeeks, HackerRank или Codeforces, отмечаешь уверенность, а сервис возвращает нужные задачи, паттерны и карточки в расписание повторений.",
           },
           {
             question: "Что именно сохраняет браузерное расширение?",
@@ -210,27 +210,27 @@ const ru = {
         {
           title: "product",
           links: [
-            { href: "#memory", label: "Memory" },
-            { href: "#roadmap", label: "Roadmap" },
-            { href: "#reviews", label: "Reviews" },
-            { href: "#pricing", label: "Pricing" },
-            { href: "#faq", label: "FAQ" },
+            { href: "/#memory", label: "Memory" },
+            { href: "/#roadmap", label: "Roadmap" },
+            { href: "/#reviews", label: "Reviews" },
+            { href: "/#pricing", label: "Pricing" },
+            { href: "/#faq", label: "FAQ" },
           ],
         },
         {
           title: "developers",
           links: [
-            { href: "#", label: "Docs" },
-            { href: "#", label: "API" },
-            { href: "#", label: "Anki export" },
-            { href: "#", label: "Changelog" },
+            { href: "/docs", label: "Docs" },
+            { href: "/anki-export", label: "Anki export" },
+            { href: "/changelog", label: "Changelog" },
           ],
         },
         {
           title: "company",
           links: [
-            { href: "#", label: "About" },
-            { href: "#", label: "Blog" },
+            { href: "/about", label: "About" },
+            { href: "https://t.me/realgo_devlog", label: "Blog" },
+            { href: "/pitch-deck.html", label: "Pitch Deck" },
           ],
         },
         {
@@ -531,21 +531,6 @@ const ru = {
           ["card", "карточки", "success"],
           ["pattern", "паттерны", "warning"],
         ],
-        queue: {
-          eyebrow: "due now",
-          title: "Очередь повторений",
-          loading: "Загружаем очередь…",
-          empty: "На сегодня всё повторено.",
-          error: "Не удалось загрузить очередь повторений.",
-          retry: "повторить",
-          openProblem: "открыть задачу ↗",
-          openCards: "повторить карточки",
-          openPattern: "открыть паттерн",
-          ratePrompt: "как вспомнилось?",
-          saving: "сохраняем…",
-          saveError: "Не удалось сохранить оценку. Попробуй ещё раз.",
-          ratings: { hard: "hard", normal: "normal", easy: "easy" },
-        },
         journal: {
           eyebrow: "/reviews",
           title: "Решённые задачи",
@@ -624,7 +609,7 @@ const ru = {
         eyebrow: "/roadmap",
         title: "ReAlgo Core Roadmap",
         description:
-          "Маршрут по паттернам NeetCode 150: каждая неделя закрывает один паттерн, прогресс считается по реально решённым задачам.",
+          "Маршрут по паттернам: каждая неделя закрывает один паттерн, прогресс считается по реально решённым задачам.",
         panelEyebrow: "plan",
         panelTitle: "Preparation track",
         overallLabel: "общий прогресс",
@@ -651,6 +636,8 @@ const ru = {
         emptyStateDescription:
           "Пройди онбординг, чтобы выбрать горизонт подготовки и темы — ReAlgo соберёт персональный план по неделям.",
         emptyStateAction: "построить roadmap",
+        deleteRoadmap: "удалить roadmap",
+        deleteRoadmapPending: "удаляем…",
       },
       patterns: {
         eyebrow: "/patterns",
@@ -1027,13 +1014,14 @@ const ru = {
         notificationsTitle: "Review reminders",
         privacyEyebrow: "privacy",
         privacyTitle: "Data controls",
-        privacyDescription:
-          "Не вставляй NDA-материалы, premium/editorial-контент, скриншоты интервью или чужие закрытые материалы в заметки и AI-поля.",
-        exportProgress: "export data",
-        exportRequested: "export request accepted",
-        deleteAccount: "delete account",
-        deleteConfirm: "Удалить аккаунт ReAlgo? Это действие нельзя отменить.",
-        deletePasswordPrompt: "Введите пароль, чтобы удалить аккаунт",
+        deleteTitle: "удаление аккаунта и данных",
+        deleteDescription:
+          "По заявке мы безвозвратно удаляем аккаунт и все связанные с ним данные: решённые задачи, историю повторений, карточки, AI-материалы и настройки.",
+        deleteAccount: "оставить заявку на удаление",
+        deleteConfirm: "Аккаунт ReAlgo и все данные будут удалены безвозвратно. Это действие нельзя отменить.",
+        deletePasswordPrompt: "Введите пароль, чтобы подтвердить удаление",
+        deleteCancel: "отмена",
+        deleteForever: "удалить навсегда",
         deleteDone: "account deleted",
         actionFailed: "action failed",
         profile: {

@@ -6,6 +6,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgtype"
 
+	"github.com/mxdtrip/freeburger/services/api/internal/patterns"
 	"github.com/mxdtrip/freeburger/services/api/internal/storage/postgres/db"
 )
 
@@ -73,8 +74,20 @@ func TestTargetFromRow_EmptyTopicsDefaultsToEmptySlice(t *testing.T) {
 	}
 }
 
-func TestBuildResponse_EmptyAccount(t *testing.T) {
-	resp := buildResponse(Target{}, nil)
+func subpattern(code string, familyProblemCount, solved int, masteryPercent int) patterns.AtlasSubpattern {
+	return patterns.AtlasSubpattern{
+		Code: code,
+		Name: code,
+		Stats: patterns.SubpatternStats{
+			ProblemCount: familyProblemCount,
+			SolvedCount:  solved,
+		},
+		Mastery: patterns.Mastery{Percent: masteryPercent},
+	}
+}
+
+func TestBuildResponse_EmptyAtlas(t *testing.T) {
+	resp := buildResponse(Target{}, patterns.AtlasResponse{})
 
 	if resp.OverallProgress != 0 {
 		t.Fatalf("overallProgress = %d, want 0", resp.OverallProgress)
@@ -82,43 +95,108 @@ func TestBuildResponse_EmptyAccount(t *testing.T) {
 	if resp.Weeks == nil {
 		t.Fatal("weeks must be an empty array, not null")
 	}
-	if resp.Patterns == nil {
-		t.Fatal("patterns must be an empty array, not null")
+	if len(resp.Weeks) != 0 {
+		t.Fatalf("weeks = %v, want none", resp.Weeks)
 	}
 }
 
-func TestBuildResponse_AppliesUserProgressByPattern(t *testing.T) {
-	resp := buildResponse(Target{}, []roadmapItem{
-		{Position: 1, PatternCode: "arrays_hashing", PatternName: "Arrays & Hashing", ProblemID: 1, Title: "Contains Duplicate", Status: "reviewing", Difficulty: "easy"},
-		{Position: 2, PatternCode: "arrays_hashing", PatternName: "Arrays & Hashing", ProblemID: 2, Title: "Two Sum", Status: "in_progress", Difficulty: "easy"},
-		{Position: 3, PatternCode: "two_pointers", PatternName: "Two Pointers", ProblemID: 3, Title: "Valid Palindrome", Status: "not_started", Difficulty: "easy"},
-	})
+func TestBuildResponse_GroupsSubpatternsByFamilyAndRollsUpProgress(t *testing.T) {
+	atlas := patterns.AtlasResponse{
+		Families: []patterns.AtlasFamily{
+			{Code: "arrays_hashing", Name: "Arrays & Hashing", Description: "frequency and grouping", Position: 1, SubpatternCodes: []string{"frequency_map", "grouping"}},
+			{Code: "two_pointers", Name: "Two Pointers", Position: 2, SubpatternCodes: []string{"opposite_ends"}},
+		},
+		Subpatterns: []patterns.AtlasSubpattern{
+			subpattern("frequency_map", 4, 4, 100),
+			subpattern("grouping", 4, 0, 0),
+			subpattern("opposite_ends", 2, 0, 0),
+		},
+	}
 
-	if resp.OverallProgress != 33 {
-		t.Fatalf("overallProgress = %d, want 33", resp.OverallProgress)
-	}
-	if len(resp.Patterns) != 2 {
-		t.Fatalf("patterns = %d, want 2", len(resp.Patterns))
+	resp := buildResponse(Target{}, atlas)
+
+	if len(resp.Weeks) != 2 {
+		t.Fatalf("weeks = %d, want 2", len(resp.Weeks))
 	}
 
-	first := resp.Patterns[0]
-	if first.TotalProblems != 2 || first.SolvedProblems != 1 || first.InProgressProblems != 1 || first.Progress != 50 {
-		t.Fatalf("unexpected first pattern counters: %+v", first)
+	first := resp.Weeks[0]
+	if first.Title != "Arrays & Hashing" || first.Focus != "frequency and grouping" {
+		t.Fatalf("unexpected first week: %+v", first)
 	}
-	if first.Problems[0].Status != "reviewing" || first.Problems[1].Status != "in_progress" {
-		t.Fatalf("unexpected problem statuses: %+v", first.Problems)
+	// 4 solved out of 8 total across the family's two subpatterns.
+	if first.Progress != 50 {
+		t.Fatalf("first.progress = %d, want 50", first.Progress)
 	}
-	if resp.Weeks[0].Status != "active" || resp.Weeks[1].Status != "todo" {
-		t.Fatalf("unexpected week statuses: %+v", resp.Weeks)
+	if first.Status != "active" {
+		t.Fatalf("first.status = %q, want active", first.Status)
+	}
+
+	second := resp.Weeks[1]
+	if second.Progress != 0 || second.Status != "todo" {
+		t.Fatalf("unexpected second week: %+v", second)
+	}
+
+	// 4 solved out of 10 total problems across the whole atlas.
+	if resp.OverallProgress != 40 {
+		t.Fatalf("overallProgress = %d, want 40", resp.OverallProgress)
 	}
 }
 
-func TestBuildResponse_DefaultsMissingStatusToNotStarted(t *testing.T) {
-	resp := buildResponse(Target{}, []roadmapItem{
-		{Position: 1, PatternCode: "stack", PatternName: "Stack", ProblemID: 1, Title: "Valid Parentheses"},
-	})
+func TestBuildResponse_WeekTopicIsWeakestSubpatternInFamily(t *testing.T) {
+	atlas := patterns.AtlasResponse{
+		Families: []patterns.AtlasFamily{
+			{Code: "arrays_hashing", Name: "Arrays & Hashing", Position: 1, SubpatternCodes: []string{"strong_one", "weak_one"}},
+		},
+		Subpatterns: []patterns.AtlasSubpattern{
+			subpattern("strong_one", 4, 4, 100),
+			subpattern("weak_one", 4, 1, 25),
+		},
+	}
 
-	if got := resp.Patterns[0].Problems[0].Status; got != "not_started" {
-		t.Fatalf("status = %q, want not_started", got)
+	resp := buildResponse(Target{}, atlas)
+
+	if len(resp.Weeks) != 1 || len(resp.Weeks[0].Topics) != 1 {
+		t.Fatalf("unexpected week topics: %+v", resp.Weeks)
+	}
+	if resp.Weeks[0].Topics[0] != "weak_one" {
+		t.Fatalf("topics[0] = %q, want weak_one (lowest mastery)", resp.Weeks[0].Topics[0])
+	}
+}
+
+func TestBuildResponse_FamiliesOrderedByPositionRegardlessOfInputOrder(t *testing.T) {
+	atlas := patterns.AtlasResponse{
+		Families: []patterns.AtlasFamily{
+			{Code: "later", Name: "Later Week", Position: 5},
+			{Code: "earlier", Name: "Earlier Week", Position: 1},
+		},
+	}
+
+	resp := buildResponse(Target{}, atlas)
+
+	if len(resp.Weeks) != 2 {
+		t.Fatalf("weeks = %d, want 2", len(resp.Weeks))
+	}
+	if resp.Weeks[0].Title != "Earlier Week" || resp.Weeks[1].Title != "Later Week" {
+		t.Fatalf("weeks not sorted by position: %+v", resp.Weeks)
+	}
+	if resp.Weeks[0].ID != "week_01" || resp.Weeks[1].ID != "week_02" {
+		t.Fatalf("unexpected week ids: %+v", resp.Weeks)
+	}
+}
+
+func TestBuildResponse_FamilyWithNoKnownSubpatternsHasNoTopics(t *testing.T) {
+	atlas := patterns.AtlasResponse{
+		Families: []patterns.AtlasFamily{
+			{Code: "empty_family", Name: "Empty Family", Position: 1, SubpatternCodes: []string{"missing_code"}},
+		},
+	}
+
+	resp := buildResponse(Target{}, atlas)
+
+	if len(resp.Weeks) != 1 {
+		t.Fatalf("weeks = %d, want 1", len(resp.Weeks))
+	}
+	if resp.Weeks[0].Topics == nil || len(resp.Weeks[0].Topics) != 0 {
+		t.Fatalf("topics = %v, want empty slice", resp.Weeks[0].Topics)
 	}
 }

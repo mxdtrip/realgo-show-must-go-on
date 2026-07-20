@@ -23,11 +23,6 @@ export type NotificationSettingsUpdate = {
   email_enabled?: boolean;
 };
 
-export type ExportResponse = {
-  status: string;
-  message: string;
-};
-
 export async function updateProfile(update: ProfileUpdate): Promise<AuthUser> {
   const data = await apiFetch<UserResponse>("/me/profile", {
     method: "PATCH",
@@ -44,10 +39,6 @@ export async function updateNotificationSettings(
     body: update,
   });
   return data.user;
-}
-
-export function requestDataExport(): Promise<ExportResponse> {
-  return apiFetch<ExportResponse>("/me/export", { method: "POST" });
 }
 
 export async function deleteAccount(password: string): Promise<void> {
