@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { AssistantApp } from "./assistant/AssistantApp";
 import { streamAssistantHintViaBackground } from "./lib/assistantClient";
 import { fetchCardsViaBackground } from "./lib/cardsClient";
-import { clearLastSubmission, getLastSubmission, getReviewUrl } from "./lib/storage";
+import { getPendingSubmissions, getReviewUrl, removePendingSubmission } from "./lib/storage";
 import type {
   AssistantTask,
   CurrentTaskResponse,
@@ -50,15 +50,17 @@ function IndexPopup() {
 
   useEffect(() => {
     let alive = true;
-    Promise.all([getLastSubmission().catch(() => undefined), getCurrentTask()])
-      .then(([lastSubmission, task]) => {
+    Promise.all([getPendingSubmissions().catch(() => []), getCurrentTask()])
+      .then(([pending, task]) => {
         if (!alive) return;
         setCurrentTask(task);
-        setSubmission(
-          lastSubmission && isAcceptedForTask(lastSubmission, task)
-            ? lastSubmission
-            : null
-        );
+        // Prefer whichever pending submission matches the active tab (most
+        // relevant to what the user is looking at), but don't require a
+        // match: a submission stays in the queue until it's rated, so if
+        // the user switched tabs/tasks before rating it, it must still be
+        // reachable from the toolbar icon — not just "task not recognised".
+        const forCurrentTask = task ? pending.find((item) => matchesTask(item, task)) : undefined;
+        setSubmission(forCurrentTask ?? pending[0] ?? null);
       })
       .catch(() => {
         if (!alive) return;
@@ -82,9 +84,12 @@ function IndexPopup() {
     if (!res?.ok) {
       throw new Error(res?.error ?? "Не удалось сохранить.");
     }
-    await clearLastSubmission();
+    await removePendingSubmission(payload.eventId);
     try {
-      await chrome.action.setBadgeText({ text: "" });
+      // Reflect what's actually still pending (other tabs may have their
+      // own queued submissions) instead of clearing the badge outright.
+      const remaining = (await getPendingSubmissions()).length;
+      await chrome.action.setBadgeText({ text: remaining > 0 ? String(remaining) : "" });
     } catch {
       /* action API may be unavailable in some contexts */
     }
@@ -147,11 +152,7 @@ async function getCurrentTask(): Promise<AssistantTask | null> {
   }
 }
 
-function isAcceptedForTask(
-  submission: DetectedSubmission,
-  task: AssistantTask | null
-): boolean {
-  if (!task || submission.submitResult !== "accepted") return false;
+function matchesTask(submission: DetectedSubmission, task: AssistantTask): boolean {
   return (
     submission.platform === task.platform &&
     submission.platformTaskSlug === task.platformTaskSlug

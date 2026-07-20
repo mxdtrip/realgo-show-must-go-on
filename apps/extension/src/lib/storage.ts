@@ -113,7 +113,7 @@ export async function clearTokens(): Promise<void> {
     STORAGE_KEYS.refreshToken,
     STORAGE_KEYS.userEmail,
     STORAGE_KEYS.webSessionFingerprint,
-    STORAGE_KEYS.lastSubmission,
+    STORAGE_KEYS.pendingSubmissions,
     ...accountKeys,
   ]);
 }
@@ -126,16 +126,43 @@ export function setUserEmail(email: string): Promise<void> {
   return set(STORAGE_KEYS.userEmail, email);
 }
 
-export function getLastSubmission(): Promise<DetectedSubmission | undefined> {
-  return get<DetectedSubmission>(STORAGE_KEYS.lastSubmission);
+/** Newest, more room for retries than any realistic number of tabs a user
+    would actually leave mid-rating at once; older entries are dropped. */
+const MAX_PENDING_SUBMISSIONS = 5;
+
+async function readPendingSubmissions(): Promise<DetectedSubmission[]> {
+  const stored = await get<DetectedSubmission[]>(STORAGE_KEYS.pendingSubmissions);
+  return Array.isArray(stored) ? stored : [];
 }
 
-export function setLastSubmission(submission: DetectedSubmission): Promise<void> {
-  return set(STORAGE_KEYS.lastSubmission, submission);
+/** All accepted submissions still waiting to be rated, oldest first. */
+export function getPendingSubmissions(): Promise<DetectedSubmission[]> {
+  return readPendingSubmissions();
 }
 
-export function clearLastSubmission(): Promise<void> {
-  return chrome.storage.local.remove(STORAGE_KEYS.lastSubmission);
+/**
+ * Queues a newly detected accepted submission. This used to be a single
+ * global "last submission" slot: two tabs detecting an accepted submit
+ * independently (even for different tasks) both wrote it, and the second
+ * write silently discarded the first tab's still-unrated submission from
+ * the toolbar popup's point of view. Re-adding the same eventId (e.g. a
+ * background retry) replaces the earlier entry instead of duplicating it.
+ */
+export async function addPendingSubmission(submission: DetectedSubmission): Promise<void> {
+  const current = await readPendingSubmissions();
+  const next = [...current.filter((item) => item.eventId !== submission.eventId), submission].slice(
+    -MAX_PENDING_SUBMISSIONS
+  );
+  await set(STORAGE_KEYS.pendingSubmissions, next);
+}
+
+/** Removes one submission (by eventId) once it's been rated and saved. */
+export async function removePendingSubmission(eventId: string): Promise<void> {
+  const current = await readPendingSubmissions();
+  await set(
+    STORAGE_KEYS.pendingSubmissions,
+    current.filter((item) => item.eventId !== eventId)
+  );
 }
 
 /** A day: assistant state older than this is stale (limits reset per task/day). */
