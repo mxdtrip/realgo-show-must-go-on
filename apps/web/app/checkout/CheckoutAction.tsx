@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 
 // MVP payment stub: no real billing yet. The button gives an honest, friendly
@@ -26,6 +27,15 @@ export function CheckoutAction({ isFree }: { isFree: boolean }) {
         {isFree ? "Начать бесплатно" : "Перейти к оплате"}
       </button>
       <p className="checkout-note">Демо-режим: реальная оплата подключится позже.</p>
+      {!isFree ? (
+        <p className="checkout-note">
+          Оплачивая тариф Pro, вы принимаете условия{" "}
+          <Link href="/offer" target="_blank">
+            Публичной оферты
+          </Link>
+          .
+        </p>
+      ) : null}
     </>
   );
 }

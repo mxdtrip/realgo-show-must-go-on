@@ -3,9 +3,13 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-import { getRoadmap, type RoadmapResponse, type RoadmapWeek } from "../../../_api/roadmap";
+import { deleteRoadmap, getRoadmap, type RoadmapResponse, type RoadmapWeek } from "../../../_api/roadmap";
 import { ApiError } from "../../../_api/types";
-import { readRoadmap, type RoadmapWeek as PersonalRoadmapWeek } from "../../../_profile/roadmapGenerator";
+import {
+  clearRoadmap,
+  readRoadmap,
+  type RoadmapWeek as PersonalRoadmapWeek,
+} from "../../../_profile/roadmapGenerator";
 import { CabinetPanel, ProgressBar } from "../../_components";
 import { CabinetIcon } from "../../_icons";
 
@@ -41,6 +45,8 @@ type RoadmapCopy = Readonly<{
   emptyStateAction?: string;
   subpatternsLabel?: string;
   practiceMeta?: string;
+  deleteRoadmap?: string;
+  deleteRoadmapPending?: string;
 }>;
 
 function interviewCountdown(interviewDate: string | null): string | null {
@@ -66,9 +72,10 @@ function mapPersonalWeek(week: PersonalRoadmapWeek): RoadmapWeek {
   };
 }
 
-/** Роадмап на живых данных GET /me/roadmap: недели = паттерны NeetCode 150
-    с реальным прогрессом; неделя заблокирована, пока предыдущие не пройдены.
-    При ошибке/пустом ответе показывает персональный план из онбординга. */
+/** Роадмап на живых данных GET /me/roadmap: недели = семьи паттернов Pattern
+    Atlas, прогресс — реальная mastery-статистика по решённым задачам; неделя
+    заблокирована, пока предыдущие не пройдены. Пустой стейт с CTA на
+    онбординг показывается, если пользователь ещё не задавал цель подготовки. */
 export function RoadmapClient({ copy }: Readonly<{ copy: RoadmapCopy }>) {
   const [data, setData] = useState<RoadmapResponse | null>(null);
   const [loadState, setLoadState] = useState<LoadState>("loading");
@@ -78,6 +85,7 @@ export function RoadmapClient({ copy }: Readonly<{ copy: RoadmapCopy }>) {
     weeks: RoadmapWeek[];
     targetCompany: string;
   } | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     const stored = readRoadmap();
@@ -125,10 +133,17 @@ export function RoadmapClient({ copy }: Readonly<{ copy: RoadmapCopy }>) {
   const countdown = interviewCountdown(data?.target.interviewDate ?? null);
   const firstActive = weeks.findIndex((week, index) => week.status === "active" && !isWeekLocked(index));
 
-  // Fallback: показываем персональный план, если backend пустой или ошибся
-  const showPersonalFallback =
-    personal !== null &&
-    (loadState === "error" || (loadState === "loaded" && weeks.length === 0));
+  // GET /me/roadmap always returns one week per pattern family (the fixed
+  // global taxonomy) — weeks is never actually empty, even for users who
+  // skipped onboarding. The real "hasn't built a roadmap" signal is whether
+  // onboarding set a target, not whether the week list is non-empty.
+  const isPersonalizedTarget = Boolean(data?.target.company || data?.target.interviewDate);
+
+  // Персональный план из онбординга привязан к реальной дате интервью и
+  // компании, поэтому он в приоритете над бэкендовым roadmap'ом: тот всегда
+  // возвращает все семьи паттернов одним фиксированным списком недель, никак
+  // не учитывая срок до собеседования (см. isPersonalizedTarget выше).
+  const showPersonalFallback = personal !== null;
   const personalWeeks = showPersonalFallback && personal ? personal.weeks : [];
   const personalOverall =
     personalWeeks.length > 0
@@ -137,6 +152,22 @@ export function RoadmapClient({ copy }: Readonly<{ copy: RoadmapCopy }>) {
   const personalFirstActive = personalWeeks.findIndex((w) => w.status === "active");
   const isPersonalLocked = (index: number) =>
     personalWeeks.slice(0, index).some((w) => w.status !== "done");
+
+  const handleDeleteRoadmap = async () => {
+    if (deleting) return;
+    setDeleting(true);
+    try {
+      await deleteRoadmap();
+    } catch {
+      // Сервер мог уже быть недоступен (мы и так в showPersonalFallback) —
+      // локальный план всё равно чистим ниже, чтобы кнопка не залипала.
+    } finally {
+      clearRoadmap();
+      setPersonal(null);
+      setDeleting(false);
+      setReloadVersion((version) => version + 1);
+    }
+  };
 
   const renderWeek = (week: RoadmapWeek, index: number, locked: boolean, activeIndex: number) => {
     const stateName = week.status in statuses ? week.status : "todo";
@@ -212,18 +243,34 @@ export function RoadmapClient({ copy }: Readonly<{ copy: RoadmapCopy }>) {
             <span className="cabinet-next-hint">
               <em>{personalOverall}%</em> {copy.overallLabel}
             </span>
+            <button
+              className="cabinet-next-hint cabinet-next-hint--action"
+              type="button"
+              disabled={deleting}
+              onClick={() => void handleDeleteRoadmap()}
+            >
+              {deleting ? copy.deleteRoadmapPending ?? "удаляем…" : copy.deleteRoadmap ?? "удалить roadmap"}
+            </button>
           </div>
-        ) : loadState === "loaded" ? (
+        ) : loadState === "loaded" && isPersonalizedTarget ? (
           <div className="cabinet-page-head__actions">
             {countdown ? <span className="cabinet-next-hint">{countdown}</span> : null}
             <span className="cabinet-next-hint">
               <em>{overall}%</em> {copy.overallLabel}
             </span>
+            <button
+              className="cabinet-next-hint cabinet-next-hint--action"
+              type="button"
+              disabled={deleting}
+              onClick={() => void handleDeleteRoadmap()}
+            >
+              {deleting ? copy.deleteRoadmapPending ?? "удаляем…" : copy.deleteRoadmap ?? "удалить roadmap"}
+            </button>
           </div>
         ) : null}
       </section>
 
-      {!showPersonalFallback && loadState === "loaded" && weeks.length === 0 && !personal ? (
+      {!showPersonalFallback && loadState === "loaded" && !isPersonalizedTarget && !personal ? (
         <div className="cabinet-banner" role="status">
           <span>{copy.emptyStateDescription ?? copy.empty}</span>
           <Link className="cabinet-ghost-link" href="/onboarding/profile?force=1">
@@ -270,7 +317,7 @@ export function RoadmapClient({ copy }: Readonly<{ copy: RoadmapCopy }>) {
             )}
           </ol>
         </CabinetPanel>
-      ) : loadState === "loaded" ? (
+      ) : loadState === "loaded" && isPersonalizedTarget ? (
         <CabinetPanel
           eyebrow={copy.panelEyebrow}
           title={copy.panelTitle}

@@ -104,6 +104,10 @@ func (h *Handler) GenerateCard(w http.ResponseWriter, r *http.Request) {
 		response.Fail(w, http.StatusNotFound, "NOT_FOUND", "problem not found")
 		return
 	}
+	if errors.Is(err, ErrGenerationBusy) {
+		response.Fail(w, http.StatusServiceUnavailable, "AI_BUSY", "AI generation is busy; retry later")
+		return
+	}
 	if err != nil {
 		slog.Error("ai: GenerateCard failed", slog.Any("err", err), slog.Int64("user_id", userID))
 		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", "could not generate cards")

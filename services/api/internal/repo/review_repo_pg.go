@@ -16,6 +16,7 @@ import (
 
 var (
 	ErrReviewNotFound = errors.New("review not found")
+	ErrReviewConflict = errors.New("review was updated concurrently")
 	ErrInvalidRating  = errors.New("invalid rating: must be hard, normal, or easy")
 	ErrInvalidTarget  = errors.New("review target must have exactly one of problem_id, pattern_id, or card_id")
 )
@@ -72,7 +73,7 @@ func (r *pgReviewRepository) ScheduleByID(ctx context.Context, scheduleID, userI
 	return scheduleFromRow(row), nil
 }
 
-func (r *pgReviewRepository) SaveReview(ctx context.Context, schedule entity.ReviewSchedule, attempt entity.ReviewAttempt) (saved entity.ReviewSchedule, err error) {
+func (r *pgReviewRepository) SaveReview(ctx context.Context, schedule entity.ReviewSchedule, attempt entity.ReviewAttempt, expectedReviewCount int) (saved entity.ReviewSchedule, err error) {
 	kind, err := reviewType(attempt)
 	if err != nil {
 		return entity.ReviewSchedule{}, err
@@ -94,19 +95,23 @@ func (r *pgReviewRepository) SaveReview(ctx context.Context, schedule entity.Rev
 
 	q := r.q.WithTx(tx)
 	updated, err := q.UpdateReviewSchedule(ctx, db.UpdateReviewScheduleParams{
-		ID:             schedule.ID,
-		UserID:         schedule.UserID,
-		NextReviewAt:   toPgTimestamptz(schedule.NextReviewAt),
-		IntervalDays:   schedule.IntervalDays,
-		Stability:      schedule.Stability,
-		Difficulty:     schedule.Difficulty,
-		ReviewCount:    toPgInt4(schedule.ReviewCount),
-		LastRating:     toPgText(schedule.LastRating),
-		State:          int16(schedule.State),
-		Lapses:         int32(schedule.Lapses),
-		LastReviewAt:   toPgNullableTimestamptz(schedule.LastReviewAt),
-		RemainingSteps: int32(schedule.RemainingSteps),
+		ID:                  schedule.ID,
+		UserID:              schedule.UserID,
+		NextReviewAt:        toPgTimestamptz(schedule.NextReviewAt),
+		IntervalDays:        schedule.IntervalDays,
+		Stability:           schedule.Stability,
+		Difficulty:          schedule.Difficulty,
+		ReviewCount:         toPgInt4(schedule.ReviewCount),
+		LastRating:          toPgText(schedule.LastRating),
+		State:               int16(schedule.State),
+		Lapses:              int32(schedule.Lapses),
+		LastReviewAt:        toPgNullableTimestamptz(schedule.LastReviewAt),
+		RemainingSteps:      int32(schedule.RemainingSteps),
+		ExpectedReviewCount: toPgInt4(expectedReviewCount),
 	})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return entity.ReviewSchedule{}, ErrReviewConflict
+	}
 	if err != nil {
 		return entity.ReviewSchedule{}, fmt.Errorf("reviews: update schedule: %w", err)
 	}

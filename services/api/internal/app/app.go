@@ -36,6 +36,7 @@ func Run(ctx context.Context) error {
 	}
 
 	logger := newLogger(cfg.Env)
+	slog.SetDefault(logger)
 	logger.Info("starting api", slog.String("env", cfg.Env))
 
 	authCfg, err := auth.LoadConfig()
@@ -86,10 +87,15 @@ func Run(ctx context.Context) error {
 	handler := server.New(deps)
 
 	srv := &http.Server{
-		Addr:         cfg.Address,
-		Handler:      handler,
-		ReadTimeout:  cfg.Timeout,
-		WriteTimeout: cfg.Timeout,
+		Addr:              cfg.Address,
+		Handler:           handler,
+		ReadHeaderTimeout: cfg.Timeout,
+		ReadTimeout:       cfg.Timeout,
+		// A server-wide WriteTimeout cannot distinguish ordinary JSON from
+		// long-lived SSE responses. Request/provider deadlines remain bounded
+		// at their own layers; leaving this unset prevents valid AI streams
+		// from being cut off after the four-second header/body timeout.
+		WriteTimeout: 0,
 		IdleTimeout:  cfg.IdleTimeout,
 	}
 

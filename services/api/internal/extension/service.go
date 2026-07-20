@@ -11,7 +11,7 @@ import (
 // a nil Provisioner (the default) leaves generation disabled, e.g. when no
 // AI provider key is configured.
 type Provisioner interface {
-	ProvisionAsync(problemID int64, platform, slug string)
+	ProvisionAsync(problemID int64, platform, slug string) bool
 }
 
 // Service turns a validated extension event into stored problem/progress/review
@@ -70,8 +70,8 @@ func (s *Service) Handle(ctx context.Context, userID int64, req EventRequest) (E
 		return EventResult{}, err
 	}
 
-	if norm.solved && s.provisioner != nil {
-		s.provisioner.ProvisionAsync(out.ProblemID, norm.platform, norm.slug)
+	if norm.solved && !out.Duplicate && s.provisioner != nil {
+		_ = s.provisioner.ProvisionAsync(out.ProblemID, norm.platform, norm.slug)
 	}
 
 	return EventResult{

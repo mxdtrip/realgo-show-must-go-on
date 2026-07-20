@@ -94,15 +94,17 @@ test.describe("#118 hotkeys", () => {
 });
 
 test.describe("#119 report a problem", () => {
-  test("dialog opens from topbar, attaches context, ignores hotkeys while typing", async ({
+  test("dialog opens from the user menu, attaches context, ignores hotkeys while typing", async ({
     page,
   }) => {
     await enterCabinet(page);
 
-    const trigger = page.locator(".cabinet-topbar__iconbtn");
+    const userChip = page.locator(".user-chip");
+    const reportItem = page.locator(".user-menu__report");
     const dialog = page.locator(".shell-dialog--report");
     await expect(async () => {
-      await trigger.click();
+      await userChip.click();
+      await reportItem.click({ timeout: 1500 });
       await expect(dialog).toBeVisible({ timeout: 1500 });
     }).toPass({ timeout: 20_000 });
 

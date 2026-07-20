@@ -31,3 +31,12 @@ func TestRegisterRejectsPasswordLongerThanBcryptLimit(t *testing.T) {
 		t.Fatalf("Register error: want %v, got %v", ErrPasswordTooLong, err)
 	}
 }
+
+func TestValidatePasswordCountsCharactersNotUTF8Bytes(t *testing.T) {
+	if err := validatePassword("абвг"); !errors.Is(err, ErrWeakPassword) {
+		t.Fatalf("validatePassword(4 Cyrillic characters) = %v, want %v", err, ErrWeakPassword)
+	}
+	if err := validatePassword("абвгдежз"); err != nil {
+		t.Fatalf("validatePassword(8 Cyrillic characters) = %v, want nil", err)
+	}
+}

@@ -107,8 +107,11 @@ def parse_time(value):
 def upsert_user(cur, user, password_hash):
     cur.execute(
         """
-        INSERT INTO users (email, password_hash, timezone, plan, interview_date, onboarding_completed_at)
-        VALUES (%s, %s, %s, %s, %s, CURRENT_TIMESTAMP)
+        INSERT INTO users (
+            email, password_hash, timezone, plan, interview_date,
+            onboarding_completed_at, is_demo
+        )
+        VALUES (%s, %s, %s, %s, %s, CURRENT_TIMESTAMP, TRUE)
         ON CONFLICT (email) DO UPDATE SET
             password_hash = EXCLUDED.password_hash,
             timezone = EXCLUDED.timezone,
@@ -116,6 +119,7 @@ def upsert_user(cur, user, password_hash):
             interview_date = EXCLUDED.interview_date,
             onboarding_completed_at = COALESCE(users.onboarding_completed_at, CURRENT_TIMESTAMP),
             updated_at = CURRENT_TIMESTAMP
+        WHERE users.is_demo = TRUE
         RETURNING id
         """,
         (
@@ -126,7 +130,12 @@ def upsert_user(cur, user, password_hash):
             parse_time(user["interview_date"]),
         ),
     )
-    return cur.fetchone()[0]
+    row = cur.fetchone()
+    if row is None:
+        raise ValueError(
+            f"refusing to reset non-demo account with reserved email {user['email']!r}"
+        )
+    return row[0]
 
 
 def problem_ids(cur):
@@ -591,7 +600,10 @@ def main():
     if not dsn:
         raise SystemExit("DATABASE_URL is required")
 
-    password = os.environ.get("SEED_USERS_PASSWORD") or DEFAULT_PASSWORD
+    configured_password = os.environ.get("SEED_USERS_PASSWORD")
+    if os.environ.get("APP_ENV") == "production" and not configured_password:
+        raise SystemExit("SEED_USERS_PASSWORD is required when APP_ENV=production")
+    password = configured_password or DEFAULT_PASSWORD
     password_hash = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
 
     import psycopg

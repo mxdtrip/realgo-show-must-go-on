@@ -15,8 +15,9 @@ type ReviewRepository interface {
 	// ScheduleByID возвращает расписание по ID.
 	ScheduleByID(ctx context.Context, scheduleID, userID int64) (entity.ReviewSchedule, error)
 
-	// SaveReview сохраняет результат повторения.
-	SaveReview(ctx context.Context, schedule entity.ReviewSchedule, attempt entity.ReviewAttempt) (entity.ReviewSchedule, error)
+	// SaveReview сохраняет результат повторения, только если расписание не было
+	// изменено после чтения. expectedReviewCount используется как версия строки.
+	SaveReview(ctx context.Context, schedule entity.ReviewSchedule, attempt entity.ReviewAttempt, expectedReviewCount int) (entity.ReviewSchedule, error)
 
 	// Stats возвращает статистику повторений.
 	Stats(ctx context.Context, userID int64) (entity.StatsData, error)

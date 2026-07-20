@@ -65,6 +65,7 @@ cp .env.example .env
 | `NEXT_PUBLIC_API_BASE_URL` | home `.env` | Пусто для same-origin `/api/*`. |
 | `TRUSTED_PROXY_CIDRS` | home `.env` | CIDR trusted proxy, если включаем X-Forwarded-For trust. |
 | `DB_PASSWORD` | home `.env` | Не оставлять dev default на публичном/общем демо. |
+| `REDIS_PASSWORD` | home `.env` | Задать случайный пароль; compose применит его к Redis, API и healthcheck. |
 
 Не коммитить `.env`, токены, приватные ключи расширения и server secrets.
 
@@ -110,7 +111,9 @@ curl -fsS http://localhost:${API_PORT:-8080}/readyz
 ```sh
 curl -fsS https://realgo.dev/healthz
 curl -fsS https://realgo.dev/readyz
-curl -fsS https://realgo.dev/api/v1/extension/status
+# Auth-only проверка extension status (не public healthcheck):
+curl -fsS -H "Authorization: Bearer $ACCESS_TOKEN" \
+  https://realgo.dev/api/v1/me/extension/status
 ```
 
 Expected:
@@ -138,8 +141,18 @@ cd services/api
 task migrate
 task seed-roadmap
 task seed-cards
-task seed-users
 task health
+```
+
+`seed-users` не входит в production smoke: prod overlay помещает его в
+отдельный профиль `prod-demo-users`, потому что job сбрасывает данные demo
+email. Запускать его только для одноразового/диспозабельного демо с явно
+заданным `SEED_USERS_PASSWORD`:
+
+```sh
+SEED_USERS_PASSWORD='<strong-demo-password>' docker compose \
+  -f docker-compose.yml -f docker-compose.prod.yml \
+  --profile prod-demo-users run --rm seed-users
 ```
 
 Затем пройти демо-сценарий из `DEMO.md`: login, extension event, dashboard,
@@ -147,13 +160,20 @@ review attempt, weak patterns.
 
 ## Rollback
 
-Минимальный rollback для демо:
+Rollback приложения выполняется на заранее записанный release SHA, а не на
+текущее состояние `main`:
 
 ```sh
-git switch main
+git fetch --all --tags
+git switch --detach "$RELEASE_SHA"
 docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile prod-demo up -d --build
 curl -fsS http://localhost:${API_PORT:-8080}/readyz
 ```
+
+Этот шаг не откатывает БД. Перед миграциями нужен backup/restore plan; если
+новая миграция несовместима со старым бинарником, сначала восстановить БД из
+проверенного backup либо применить отдельно подготовленную forward-fix
+миграцию, и только затем переключать трафик.
 
 Для VPS edge rollback обычно не нужен: edge stack не содержит app code. Если
 менялись `deploy/vps/*`, вернуть предыдущую версию директории и выполнить

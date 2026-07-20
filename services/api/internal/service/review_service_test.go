@@ -172,6 +172,40 @@ func TestReviewService_RateReview_Success(t *testing.T) {
 	}
 }
 
+func TestReviewService_RateReview_RetriesConcurrentUpdate(t *testing.T) {
+	problemID := int64(1)
+	mockRepo := &mockReviewRepository{
+		schedule: entity.ReviewSchedule{
+			ID:           1,
+			UserID:       1,
+			ProblemID:    &problemID,
+			NextReviewAt: time.Now(),
+			ReviewCount:  2,
+			State:        2,
+		},
+		saveConflicts: 1,
+	}
+	svc := service.NewReviewService(mockRepo, nil)
+
+	data, err := svc.RateReview(context.Background(), 1, 1, "normal", time.Now().UTC())
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if data.ReviewID != 1 {
+		t.Errorf("expected ReviewID 1, got %d", data.ReviewID)
+	}
+	if mockRepo.scheduleCalls != 2 || mockRepo.saveCalls != 2 {
+		t.Fatalf("expected two read/save attempts, got reads=%d saves=%d", mockRepo.scheduleCalls, mockRepo.saveCalls)
+	}
+	if len(mockRepo.expectedReviewCounts) != 2 || mockRepo.expectedReviewCounts[0] != 2 || mockRepo.expectedReviewCounts[1] != 3 {
+		t.Errorf("unexpected optimistic-lock versions: %v", mockRepo.expectedReviewCounts)
+	}
+	if mockRepo.confidenceCalls != 1 {
+		t.Errorf("expected one confidence update after successful save, got %d", mockRepo.confidenceCalls)
+	}
+}
+
 func TestReviewService_GetStats_DelegatesToRepo(t *testing.T) {
 	mockRepo := &mockReviewRepository{
 		stats: entity.StatsData{
@@ -196,13 +230,18 @@ func TestReviewService_GetStats_DelegatesToRepo(t *testing.T) {
 
 // mockReviewRepository реализует repo.ReviewRepository для тестов
 type mockReviewRepository struct {
-	items     []entity.ReviewItem
-	schedule  entity.ReviewSchedule
-	stats     entity.StatsData
-	err       error
-	called    bool
-	gotCursor entity.ReviewQueueCursor
-	gotLimit  int32
+	items                []entity.ReviewItem
+	schedule             entity.ReviewSchedule
+	stats                entity.StatsData
+	err                  error
+	saveConflicts        int
+	saveCalls            int
+	scheduleCalls        int
+	confidenceCalls      int
+	expectedReviewCounts []int
+	called               bool
+	gotCursor            entity.ReviewQueueCursor
+	gotLimit             int32
 }
 
 func (m *mockReviewRepository) QueueReviews(ctx context.Context, userID int64, status string, cursor entity.ReviewQueueCursor, limit int32) ([]entity.ReviewItem, error) {
@@ -217,14 +256,22 @@ func (m *mockReviewRepository) QueueReviews(ctx context.Context, userID int64, s
 
 func (m *mockReviewRepository) ScheduleByID(ctx context.Context, scheduleID, userID int64) (entity.ReviewSchedule, error) {
 	m.called = true
+	m.scheduleCalls++
 	if m.err != nil {
 		return entity.ReviewSchedule{}, m.err
 	}
 	return m.schedule, nil
 }
 
-func (m *mockReviewRepository) SaveReview(ctx context.Context, schedule entity.ReviewSchedule, attempt entity.ReviewAttempt) (entity.ReviewSchedule, error) {
+func (m *mockReviewRepository) SaveReview(ctx context.Context, schedule entity.ReviewSchedule, attempt entity.ReviewAttempt, expectedReviewCount int) (entity.ReviewSchedule, error) {
 	m.called = true
+	m.saveCalls++
+	m.expectedReviewCounts = append(m.expectedReviewCounts, expectedReviewCount)
+	if m.saveConflicts > 0 {
+		m.saveConflicts--
+		m.schedule.ReviewCount++
+		return entity.ReviewSchedule{}, repo.ErrReviewConflict
+	}
 	if m.err != nil {
 		return entity.ReviewSchedule{}, m.err
 	}
@@ -241,6 +288,7 @@ func (m *mockReviewRepository) Stats(ctx context.Context, userID int64) (entity.
 
 func (m *mockReviewRepository) UpdateProgressConfidence(ctx context.Context, userID, problemID int64, rating string) error {
 	m.called = true
+	m.confidenceCalls++
 	return m.err
 }
 

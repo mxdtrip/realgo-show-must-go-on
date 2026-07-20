@@ -301,6 +301,38 @@ func TestCreateMapsMissingTargetToBadRequest(t *testing.T) {
 	}
 }
 
+func TestCreateRejectsBlankOrOversizedContent(t *testing.T) {
+	tests := []string{
+		`{"type":"edge_case","front":"   ","back":"answer"}`,
+		`{"type":"edge_case","front":"question","back":"` + strings.Repeat("x", maxCardBackRunes+1) + `"}`,
+	}
+	for _, body := range tests {
+		h := testHandler(&fakeRepository{}, &fakeRater{})
+		req := authenticatedRequest(http.MethodPost, "/me/cards", strings.NewReader(body), 42)
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+
+		h.Create(w, req)
+		if w.Code != http.StatusBadRequest {
+			t.Errorf("expected 400, got %d: %s", w.Code, w.Body.String())
+		}
+	}
+}
+
+func TestUpdateRejectsNoOpAndBlankContent(t *testing.T) {
+	for _, body := range []string{`{}`, `{"front":""}`} {
+		h := testHandler(&fakeRepository{}, &fakeRater{})
+		req := authenticatedRequest(http.MethodPatch, "/me/cards/7", strings.NewReader(body), 42)
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+
+		routeHandler(h).ServeHTTP(w, req)
+		if w.Code != http.StatusBadRequest {
+			t.Errorf("body %s: expected 400, got %d: %s", body, w.Code, w.Body.String())
+		}
+	}
+}
+
 func TestDeleteMapsMissingCardToNotFound(t *testing.T) {
 	h := testHandler(&fakeRepository{deleteErr: ErrCardNotFound}, &fakeRater{})
 	req := authenticatedRequest(http.MethodDelete, "/me/cards/999", nil, 42)

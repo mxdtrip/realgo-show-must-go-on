@@ -42,6 +42,22 @@ func TestContractCardsVisibility_AIGlobalCardsGatedByProgress(t *testing.T) {
 	// User A solved the problem; user B has no progress on it at all.
 	h.insertProblemProgress(t, tokensA.userID, problemID, "reviewing")
 
+	t.Run("GET /me/problems/{id}/cards", func(t *testing.T) {
+		path := "/api/v1/me/problems/" + strconv.FormatInt(problemID, 10) + "/cards"
+		problemCardsA := requireSuccessEnvelope(t, h.request(t, http.MethodGet, path, tokensA.access, nil), http.StatusOK)
+		problemCardsB := requireSuccessEnvelope(t, h.request(t, http.MethodGet, path, tokensB.access, nil), http.StatusOK)
+
+		cardsA, ok := problemCardsA["cards"].([]any)
+		require.True(t, ok, "expected cards array, got %T", problemCardsA["cards"])
+		cardsB, ok := problemCardsB["cards"].([]any)
+		require.True(t, ok, "expected cards array, got %T", problemCardsB["cards"])
+
+		require.True(t, containsCardID(cardsA, aiCardID), "user A (solved) must see the AI answer")
+		require.True(t, containsCardID(cardsA, seedCardID), "user A must see the seed card")
+		require.False(t, containsCardID(cardsB, aiCardID), "user B (has not solved) must not receive the AI answer")
+		require.True(t, containsCardID(cardsB, seedCardID), "user B must still see curated seed content")
+	})
+
 	t.Run("GET /me/cards", func(t *testing.T) {
 		listA := requireQueueEnvelope(t, h.request(t, http.MethodGet, "/api/v1/me/cards?limit=100", tokensA.access, nil), http.StatusOK)
 		listB := requireQueueEnvelope(t, h.request(t, http.MethodGet, "/api/v1/me/cards?limit=100", tokensB.access, nil), http.StatusOK)

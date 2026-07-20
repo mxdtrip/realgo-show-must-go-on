@@ -20,7 +20,29 @@ SELECT c.id, c.user_id, c.problem_id, c.pattern_id, c.type, c.question, c.answer
 FROM cards c
 LEFT JOIN problems p   ON p.id   = c.problem_id
 LEFT JOIN patterns pat ON pat.id = c.pattern_id
-WHERE c.id = sqlc.arg(card_id)::bigint AND c.user_id = sqlc.arg(user_id)::bigint;
+WHERE c.id = sqlc.arg(card_id)::bigint
+  AND (
+    c.user_id = sqlc.arg(user_id)::bigint
+    OR (
+      c.user_id IS NULL
+      AND (
+        c.created_by_ai IS NOT TRUE
+        OR c.problem_id IS NULL
+        OR EXISTS (
+          SELECT 1
+          FROM user_problem_progress upp
+          WHERE upp.user_id = sqlc.arg(user_id)::bigint
+            AND upp.problem_id = c.problem_id
+            AND upp.status IN ('solved', 'reviewing')
+        )
+      )
+    )
+    OR EXISTS (
+      SELECT 1
+      FROM review_schedules rs
+      WHERE rs.user_id = sqlc.arg(user_id)::bigint AND rs.card_id = c.id
+    )
+  );
 
 -- name: UpdateCard :one
 UPDATE cards
@@ -102,8 +124,9 @@ ORDER BY c.created_at DESC, c.id DESC
 LIMIT sqlc.arg(limit_rows)::integer;
 
 -- name: ListCardsByProblem :many
--- Cards visible to the user for one problem: their own cards plus global
--- seed/AI cards (user_id IS NULL). Used by GET /me/problems/{id}/cards.
+-- Cards visible to the user for one problem. Global AI answers stay hidden
+-- until that user has solved/reviewed the problem, matching the list/session
+-- and direct-rate visibility policy.
 SELECT
     c.id,
     c.type,
@@ -129,7 +152,22 @@ LEFT JOIN LATERAL (
 ) rs ON true
 LEFT JOIN problems p ON p.id = c.problem_id
 WHERE c.problem_id = sqlc.arg(problem_id)::bigint
-  AND (c.user_id = sqlc.arg(user_id)::bigint OR c.user_id IS NULL)
+  AND (
+    c.user_id = sqlc.arg(user_id)::bigint
+    OR (
+      c.user_id IS NULL
+      AND (
+        c.created_by_ai IS NOT TRUE
+        OR EXISTS (
+          SELECT 1
+          FROM user_problem_progress upp
+          WHERE upp.user_id = sqlc.arg(user_id)::bigint
+            AND upp.problem_id = c.problem_id
+            AND upp.status IN ('solved', 'reviewing')
+        )
+      )
+    )
+  )
 ORDER BY c.created_at ASC, c.id ASC;
 
 -- name: ListCardSession :many

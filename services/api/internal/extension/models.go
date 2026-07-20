@@ -135,8 +135,8 @@ func (r EventRequest) normalize(now time.Time) (normalized, error) {
 	if out.url == "" {
 		return normalized{}, fmt.Errorf("%w: problem.url is required", ErrValidation)
 	}
-	if !validHTTPURL(out.url) {
-		return normalized{}, fmt.Errorf("%w: problem.url must be an absolute http or https URL", ErrValidation)
+	if !validProblemURL(out.platform, out.url) {
+		return normalized{}, fmt.Errorf("%w: problem.url must be an HTTPS URL on the selected platform", ErrValidation)
 	}
 	if out.title == "" {
 		out.title = out.slug
@@ -219,7 +219,33 @@ func validRating(rating scheduler.Rating) bool {
 
 func validHTTPURL(value string) bool {
 	parsed, err := url.ParseRequestURI(value)
-	return err == nil && parsed.Host != "" && (parsed.Scheme == "http" || parsed.Scheme == "https")
+	return err == nil && parsed.Host != "" && parsed.User == nil && (parsed.Scheme == "http" || parsed.Scheme == "https")
+}
+
+func validProblemURL(platform, value string) bool {
+	if !validHTTPURL(value) {
+		return false
+	}
+	parsed, _ := url.ParseRequestURI(value)
+	host := strings.ToLower(parsed.Hostname())
+	allowedHost := func(root string) bool {
+		return host == root || strings.HasSuffix(host, "."+root)
+	}
+
+	switch platform {
+	case "leetcode":
+		return parsed.Scheme == "https" && allowedHost("leetcode.com")
+	case "hackerrank":
+		return parsed.Scheme == "https" && allowedHost("hackerrank.com")
+	case "geeksforgeeks":
+		return parsed.Scheme == "https" && allowedHost("geeksforgeeks.org")
+	case "codeforces":
+		return parsed.Scheme == "https" && allowedHost("codeforces.com")
+	default:
+		// Backward-compatible generic/custom events may point to another coding
+		// platform. Known platforms above are deliberately strict.
+		return true
+	}
 }
 
 func fallbackSlug(rawURL, title string) string {

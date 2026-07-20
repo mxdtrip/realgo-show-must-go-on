@@ -26,10 +26,11 @@ test.describe("/reviews — журнал решённых задач", () => {
   test("rows carry status, hints used, self-rating and due marker", async ({ page }) => {
     await openAuthed(page, "/reviews");
 
-    const koko = page.getByRole("link", { name: /Stub Problem: Koko Eating Bananas/ });
+    const journal = page.locator("table.data-table");
+    const koko = journal.getByRole("link", { name: /Stub Problem: Koko Eating Bananas/ });
     await expect(koko).toHaveAttribute("href", "https://example.test/koko");
 
-    const kokoRow = page.getByRole("row", { name: /Koko Eating Bananas/ });
+    const kokoRow = journal.getByRole("row", { name: /Koko Eating Bananas/ });
     // Difficulty renders as bare colored text, not a pill.
     await expect(kokoRow.locator(".difficulty-text--medium")).toHaveText("medium");
     // Hints used comes from the assistant log join.
@@ -45,13 +46,13 @@ test.describe("/reviews — журнал решённых задач", () => {
 
     // Search and status tabs narrow the journal.
     await page.getByRole("searchbox").fill("two sum");
-    await expect(page.getByText("Stub Problem: Two Sum")).toBeVisible();
-    await expect(page.getByText("Stub Problem: Koko Eating Bananas")).toHaveCount(0);
+    await expect(journal.getByText("Stub Problem: Two Sum")).toBeVisible();
+    await expect(journal.getByText("Stub Problem: Koko Eating Bananas")).toHaveCount(0);
 
     await page.getByRole("searchbox").fill("");
     await page.getByRole("button", { name: /освоена/ }).click();
-    await expect(page.getByText("Stub Problem: Two Sum")).toBeVisible();
-    await expect(page.getByText("Stub Problem: Koko Eating Bananas")).toHaveCount(0);
+    await expect(journal.getByText("Stub Problem: Two Sum")).toBeVisible();
+    await expect(journal.getByText("Stub Problem: Koko Eating Bananas")).toHaveCount(0);
   });
 });
 

@@ -206,6 +206,7 @@ export const STORAGE_KEYS = {
   accessToken: "realgo:accessToken",
   refreshToken: "realgo:refreshToken",
   userEmail: "realgo:userEmail",
+  webSessionFingerprint: "realgo:webSessionFingerprint",
 } as const;
 
 /** Prefix for per-task assistant conversation state (suffix = task key). */

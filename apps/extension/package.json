@@ -2,10 +2,13 @@
   "name": "@freeburger/extension",
   "version": "0.1.0",
   "private": true,
-  "description": "realgo browser extension — fixes a coding-problem result after submit and feeds it into the spaced-repetition queue.",
+  "description": "realgo — фиксирует решённую задачу на LeetCode и HackerRank и добавляет её в очередь интервальных повторений.",
   "scripts": {
     "dev": "plasmo dev",
+    "dev:firefox": "plasmo dev --target=firefox-mv3",
     "build": "plasmo build",
+    "build:firefox": "plasmo build --target=firefox-mv3",
+    "build:store": "node scripts/build-store.mjs",
     "package": "plasmo package",
     "package:crx:mac": "npm run build && \"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome\" --pack-extension=build/chrome-mv3-prod --pack-extension-key=${REALGO_EXTENSION_KEY:-$HOME/.realgo/extension/realgo-extension.pem}",
     "preview": "vite --config preview/vite.config.ts",
@@ -31,21 +34,24 @@
   "manifest": {
     "name": "realgo",
     "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArTOGmcuIoJ7wKOG0+lIViCUfyL7e+OBpUNFHqbIeh3lZ/Db6X0GQtbxshjzJHzeLI3EVnxu5ezF4dGnb14HbX+27l/1WGLY1SlEovQOd6jYzDJNXeboICE0DmEgiHlQF3Go7CYazN7bGNB2TA2zBJ/1d/a+NCmRYMDfcV69UhJyGXCsw6vGBLdsCqbHQpWkTpri8KktHCBNSnpBEG1x26lJcdxRpaWHLg+HV/V14z0kAI2pmHWIdpI8UhnKBW5oxn05hk1IMznmZsYdxNeSaKuf3ih8sLXZalajDXkMTq4FSDX7QyqAKSpzQydfbKJq/kO8AtEv6TSPyFuaOHFCdwwIDAQAB",
+    "browser_specific_settings": {
+      "gecko": {
+        "id": "extension@realgo.dev"
+      }
+    },
     "permissions": [
       "storage",
-      "activeTab",
-      "scripting"
-    ],
-    "optional_host_permissions": [
-      "http://*/*",
-      "https://*/*"
+      "activeTab"
     ],
     "host_permissions": [
       "https://www.hackerrank.com/*",
       "https://hackerrank.com/*",
       "https://leetcode.com/*",
       "https://realgo.dev/*",
-      "http://localhost:8080/*"
+      "http://localhost:3000/*",
+      "http://localhost:8080/*",
+      "http://127.0.0.1:3000/*",
+      "http://127.0.0.1:8080/*"
     ]
   }
 }

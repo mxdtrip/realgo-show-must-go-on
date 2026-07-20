@@ -332,7 +332,11 @@ func newCardDetail(id int64, cardType, front, back string, createdByAI bool, cre
 
 func cardDetailFromGetRow(row db.GetCardByIDRow) CardDetail {
 	src := buildSourceFromGetRow(row)
-	return newCardDetail(row.ID, row.Type, row.Question, row.Answer, row.CreatedByAi.Bool, row.CreatedAt, row.Explanation, row.Source, src)
+	detail := newCardDetail(row.ID, row.Type, row.Question, row.Answer, row.CreatedByAi.Bool, row.CreatedAt, row.Explanation, row.Source, src)
+	detail.ProblemTitle = stringPtrFromPg(row.ProblemTitle)
+	detail.ProblemURL = stringPtrFromPg(row.ProblemUrl)
+	detail.PatternName = stringPtrFromPg(row.PatternName)
+	return detail
 }
 
 // buildSourceFromGetRow constructs the Source object from a GetCardByID row.

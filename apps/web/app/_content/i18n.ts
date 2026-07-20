@@ -184,7 +184,7 @@ const ru = {
           {
             question: "ReAlgo сам решает задачи или только помогает повторять?",
             answer:
-              "ReAlgo не подменяет практику. Ты решаешь задачи на LeetCode или NeetCode, отмечаешь уверенность, а сервис возвращает нужные задачи, паттерны и карточки в расписание повторений.",
+              "ReAlgo не подменяет практику. Ты решаешь задачи на LeetCode, GeeksforGeeks, HackerRank или Codeforces, отмечаешь уверенность, а сервис возвращает нужные задачи, паттерны и карточки в расписание повторений.",
           },
           {
             question: "Что именно сохраняет браузерное расширение?",
@@ -210,29 +210,36 @@ const ru = {
         {
           title: "product",
           links: [
-            { href: "#memory", label: "Memory" },
-            { href: "#roadmap", label: "Roadmap" },
-            { href: "#reviews", label: "Reviews" },
-            { href: "#pricing", label: "Pricing" },
-            { href: "#faq", label: "FAQ" },
+            { href: "/#memory", label: "Memory" },
+            { href: "/#roadmap", label: "Roadmap" },
+            { href: "/#reviews", label: "Reviews" },
+            { href: "/#pricing", label: "Pricing" },
+            { href: "/#faq", label: "FAQ" },
           ],
         },
         {
           title: "developers",
           links: [
-            { href: "#", label: "Docs" },
-            { href: "#", label: "API" },
-            { href: "#", label: "Anki export" },
-            { href: "#", label: "Changelog" },
+            { href: "/docs", label: "Docs" },
+            { href: "/anki-export", label: "Anki export" },
+            { href: "/changelog", label: "Changelog" },
           ],
         },
         {
           title: "company",
           links: [
-            { href: "#", label: "About" },
-            { href: "#", label: "Blog" },
-            { href: "#", label: "Privacy" },
-            { href: "#", label: "Terms" },
+            { href: "/about", label: "About" },
+            { href: "https://t.me/realgo_devlog", label: "Blog" },
+            { href: "/pitch-deck.html", label: "Pitch Deck" },
+          ],
+        },
+        {
+          title: "documents",
+          links: [
+            { href: "/privacy", label: "Privacy" },
+            { href: "/terms", label: "Terms" },
+            { href: "/offer", label: "Offer" },
+            { href: "/support", label: "Support" },
           ],
         },
       ],
@@ -282,6 +289,7 @@ const ru = {
         previewWeeksUnit: "недель",
         previewTopicsUnit: "тем",
         previewLoading: "Считаем план по твоим данным…",
+        previewError: "Не удалось загрузить данные для плана. Нажми «Далее», чтобы повторить.",
         noPoolTitle: "Пока не из чего строить план",
         noPoolDescription:
           "Без компании roadmap строить не из чего. Можно вернуться к этому позже — в атласе паттернов или на странице roadmap, когда выберешь компанию.",
@@ -601,7 +609,7 @@ const ru = {
         eyebrow: "/roadmap",
         title: "ReAlgo Core Roadmap",
         description:
-          "Маршрут по паттернам NeetCode 150: каждая неделя закрывает один паттерн, прогресс считается по реально решённым задачам.",
+          "Маршрут по паттернам: каждая неделя закрывает один паттерн, прогресс считается по реально решённым задачам.",
         panelEyebrow: "plan",
         panelTitle: "Preparation track",
         overallLabel: "общий прогресс",
@@ -628,6 +636,8 @@ const ru = {
         emptyStateDescription:
           "Пройди онбординг, чтобы выбрать горизонт подготовки и темы — ReAlgo соберёт персональный план по неделям.",
         emptyStateAction: "построить roadmap",
+        deleteRoadmap: "удалить roadmap",
+        deleteRoadmapPending: "удаляем…",
       },
       patterns: {
         eyebrow: "/patterns",
@@ -705,7 +715,6 @@ const ru = {
           "Показываем распределение привязанных задач по easy/medium/hard. Среднюю сложность паттерна не считаем: она была бы слишком условной.",
         expandAria: "Раскрыть семейство",
         collapseAria: "Свернуть семейство",
-        openPattern: "Открыть страницу паттерна",
         subpatternUnit: ["субпаттерн", "субпаттерна", "субпаттернов"],
         taskUnit: ["задача", "задачи", "задач"],
         solvedLabel: "solved",
@@ -938,6 +947,8 @@ const ru = {
             showAnswer: "Show answer",
             answerPrompt: "Сравни ответ со своей формулировкой",
             ratePrompt: "Насколько легко удалось воспроизвести ответ?",
+            saving: "Сохраняем оценку…",
+            saveError: "Не удалось сохранить оценку. Попробуй ещё раз.",
             keyboardHint: "Space — показать ответ · 1 — Easy · 2 — Normal · 3 — Hard",
             hard: "Hard",
             normal: "Normal",

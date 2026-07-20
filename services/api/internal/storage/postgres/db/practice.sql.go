@@ -96,3 +96,31 @@ func (q *Queries) RemovePracticeSubpattern(ctx context.Context, arg RemovePracti
 	}
 	return result.RowsAffected(), nil
 }
+
+const removeUnreviewedPracticeSchedules = `-- name: RemoveUnreviewedPracticeSchedules :execrows
+DELETE FROM review_schedules rs
+USING cards c, patterns p
+WHERE rs.user_id = $1::bigint
+  AND rs.card_id = c.id
+  AND c.pattern_id = p.id
+  AND p.code = $2::text
+  AND p.kind = 'subpattern'
+  AND COALESCE(rs.review_count, 0) = 0
+  AND rs.last_review_at IS NULL
+`
+
+type RemoveUnreviewedPracticeSchedulesParams struct {
+	UserID int64
+	Code   string
+}
+
+// Eager schedules created by Add are disposable until the user has actually
+// reviewed the card. Remove those untouched rows with the membership; keep
+// reviewed schedules/history intact.
+func (q *Queries) RemoveUnreviewedPracticeSchedules(ctx context.Context, arg RemoveUnreviewedPracticeSchedulesParams) (int64, error) {
+	result, err := q.db.Exec(ctx, removeUnreviewedPracticeSchedules, arg.UserID, arg.Code)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}

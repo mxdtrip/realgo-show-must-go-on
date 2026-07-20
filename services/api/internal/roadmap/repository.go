@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -11,32 +12,28 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/mxdtrip/freeburger/services/api/internal/companies"
+	"github.com/mxdtrip/freeburger/services/api/internal/patterns"
 	"github.com/mxdtrip/freeburger/services/api/internal/storage/postgres/db"
 )
 
 var ErrUserNotFound = errors.New("roadmap: user not found")
 
-type pgRepository struct {
-	q *db.Queries
+// atlasSource is the subset of the patterns package's repository roadmap
+// depends on. Reusing it means roadmap weeks are built from the same live
+// mastery data (user_problem_progress, review_attempts, ...) Pattern Atlas
+// already computes, instead of the old static neetcode_150 seed that never
+// reflected what a user actually solved.
+type atlasSource interface {
+	GetAtlas(ctx context.Context, userID int64, companyCode string) (patterns.AtlasResponse, error)
 }
 
-type roadmapItem struct {
-	Position    int
-	PatternCode string
-	PatternName string
-	ProblemID   int64
-	ExternalID  *string
-	Slug        string
-	Title       string
-	URL         string
-	Difficulty  string
-	Status      string
-	Rating      *string
-	Confidence  *int32
+type pgRepository struct {
+	q     *db.Queries
+	atlas atlasSource
 }
 
 func NewRepository(pool *pgxpool.Pool) *pgRepository {
-	return &pgRepository{q: db.New(pool)}
+	return &pgRepository{q: db.New(pool), atlas: patterns.NewRepository(pool)}
 }
 
 func (r *pgRepository) Get(ctx context.Context, userID int64) (Response, error) {
@@ -45,33 +42,21 @@ func (r *pgRepository) Get(ctx context.Context, userID int64) (Response, error) 
 		return Response{}, err
 	}
 
-	rows, err := r.q.ListUserRoadmapItems(ctx, db.ListUserRoadmapItemsParams{
-		RoadmapCode: neetcode150Code,
-		UserID:      userID,
-	})
+	atlas, err := r.atlas.GetAtlas(ctx, userID, "")
 	if err != nil {
-		return Response{}, fmt.Errorf("roadmap: list items: %w", err)
+		return Response{}, fmt.Errorf("roadmap: get atlas: %w", err)
 	}
 
-	items := make([]roadmapItem, 0, len(rows))
-	for _, row := range rows {
-		items = append(items, roadmapItem{
-			Position:    int(row.Position),
-			PatternCode: row.PatternCode,
-			PatternName: row.PatternName,
-			ProblemID:   row.ProblemID,
-			ExternalID:  textPtr(row.ExternalID),
-			Slug:        row.ExternalSlug,
-			Title:       row.Title,
-			URL:         row.Url,
-			Difficulty:  textOr(row.Difficulty, "unknown"),
-			Status:      statusOrDefault(row.Status),
-			Rating:      textPtr(row.Rating),
-			Confidence:  int32Ptr(row.Confidence),
-		})
-	}
+	return buildResponse(target, atlas), nil
+}
 
-	return buildResponse(target, items), nil
+// Clear resets the onboarding-set target (company, interview date, topics)
+// so the roadmap goes back to the "not personalized" empty state.
+func (r *pgRepository) Clear(ctx context.Context, userID int64) error {
+	if err := r.q.ClearRoadmapTarget(ctx, userID); err != nil {
+		return fmt.Errorf("roadmap: clear target: %w", err)
+	}
+	return nil
 }
 
 func (r *pgRepository) target(ctx context.Context, userID int64) (Target, error) {
@@ -112,65 +97,56 @@ func buildCompany(name string) *Company {
 	return &Company{Code: nil, Name: name}
 }
 
-func buildResponse(target Target, items []roadmapItem) Response {
-	patterns := make([]Pattern, 0)
-	patternByCode := make(map[string]int)
-
-	totalProblems := 0
-	totalSolved := 0
-
-	for _, item := range items {
-		status := statusOrDefault(item.Status)
-		index, ok := patternByCode[item.PatternCode]
-		if !ok {
-			patterns = append(patterns, Pattern{
-				ID:       "pat_" + item.PatternCode,
-				Code:     item.PatternCode,
-				Name:     item.PatternName,
-				Problems: []Problem{},
-			})
-			index = len(patterns) - 1
-			patternByCode[item.PatternCode] = index
-		}
-
-		problem := Problem{
-			ID:         item.ProblemID,
-			ExternalID: item.ExternalID,
-			Slug:       item.Slug,
-			Title:      item.Title,
-			URL:        item.URL,
-			Difficulty: item.Difficulty,
-			Status:     status,
-			Rating:     item.Rating,
-			Confidence: item.Confidence,
-			Position:   item.Position,
-		}
-
-		pattern := &patterns[index]
-		pattern.Problems = append(pattern.Problems, problem)
-		pattern.TotalProblems++
-		totalProblems++
-
-		if solvedStatus(status) {
-			pattern.SolvedProblems++
-			totalSolved++
-		}
-		if inProgressStatus(status) {
-			pattern.InProgressProblems++
-		}
+// buildResponse turns one atlas snapshot into a roadmap: one week per
+// pattern family, in taxonomy position order, with progress rolled up from
+// the family's subpatterns' real solve stats. A week's practice CTA points
+// at that family's weakest subpattern — the one most worth training next.
+func buildResponse(target Target, atlas patterns.AtlasResponse) Response {
+	subpatternByCode := make(map[string]patterns.AtlasSubpattern, len(atlas.Subpatterns))
+	for _, sub := range atlas.Subpatterns {
+		subpatternByCode[sub.Code] = sub
 	}
 
-	weeks := make([]Week, 0, len(patterns))
-	for i := range patterns {
-		patterns[i].Progress = percent(patterns[i].SolvedProblems, patterns[i].TotalProblems)
+	families := append([]patterns.AtlasFamily(nil), atlas.Families...)
+	sort.SliceStable(families, func(i, j int) bool { return families[i].Position < families[j].Position })
+
+	weeks := make([]Week, 0, len(families))
+	totalProblems, totalSolved := 0, 0
+
+	for i, family := range families {
+		familyTotal, familySolved := 0, 0
+		weakestCode := ""
+		weakestPercent := 101
+		for _, code := range family.SubpatternCodes {
+			sub, ok := subpatternByCode[code]
+			if !ok {
+				continue
+			}
+			familyTotal += sub.Stats.ProblemCount
+			familySolved += sub.Stats.SolvedCount
+			if weakestCode == "" || sub.Mastery.Percent < weakestPercent {
+				weakestCode = sub.Code
+				weakestPercent = sub.Mastery.Percent
+			}
+		}
+
+		progress := percent(familySolved, familyTotal)
+		totalProblems += familyTotal
+		totalSolved += familySolved
+
+		topics := []string{}
+		if weakestCode != "" {
+			topics = []string{weakestCode}
+		}
+
 		weeks = append(weeks, Week{
 			ID:       fmt.Sprintf("week_%02d", i+1),
 			Label:    fmt.Sprintf("week %02d", i+1),
-			Title:    patterns[i].Name,
-			Progress: patterns[i].Progress,
-			Focus:    "solve pattern problems and reviews",
-			Status:   roadmapStatus(patterns[i].Progress),
-			Topics:   []string{patterns[i].Code},
+			Title:    family.Name,
+			Progress: progress,
+			Focus:    family.Description,
+			Status:   roadmapStatus(progress),
+			Topics:   topics,
 		})
 	}
 
@@ -178,16 +154,7 @@ func buildResponse(target Target, items []roadmapItem) Response {
 		OverallProgress: percent(totalSolved, totalProblems),
 		Target:          target,
 		Weeks:           weeks,
-		Patterns:        patterns,
 	}
-}
-
-func solvedStatus(status string) bool {
-	return status == "solved" || status == "reviewing"
-}
-
-func inProgressStatus(status string) bool {
-	return status == "in_progress"
 }
 
 func roadmapStatus(progress int) string {
@@ -208,33 +175,12 @@ func percent(done, total int) int {
 	return int(float64(done)/float64(total)*100 + 0.5)
 }
 
-func statusOrDefault(status string) string {
-	if status == "" {
-		return "not_started"
-	}
-	return status
-}
-
-func textOr(value pgtype.Text, fallback string) string {
-	if !value.Valid || value.String == "" {
-		return fallback
-	}
-	return value.String
-}
-
 func textPtr(value pgtype.Text) *string {
 	if !value.Valid || value.String == "" {
 		return nil
 	}
 	text := value.String
 	return &text
-}
-
-func int32Ptr(value pgtype.Int4) *int32 {
-	if !value.Valid {
-		return nil
-	}
-	return &value.Int32
 }
 
 func datePtr(value pgtype.Timestamptz) *string {

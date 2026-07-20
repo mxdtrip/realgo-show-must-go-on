@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/go-chi/chi/v5"
 
@@ -23,6 +24,9 @@ const (
 	defaultListLimit    = 50
 	defaultSessionLimit = 20
 	maxLimit            = 100
+	maxCardFrontRunes   = 500
+	maxCardBackRunes    = 4000
+	maxCardNoteRunes    = 2000
 )
 
 var (
@@ -187,9 +191,13 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "type must be pattern_recognition, algorithm_mechanics, or edge_case")
 		return
 	}
-	if req.Front == "" || req.Back == "" {
+	if strings.TrimSpace(req.Front) == "" || strings.TrimSpace(req.Back) == "" {
 		slog.Warn("cards: Create failed", slog.Int64("user_id", userID))
 		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "front and back are required")
+		return
+	}
+	if msg := validateCardLengths(req.Front, req.Back, req.Explanation, req.SourceText); msg != "" {
+		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", msg)
 		return
 	}
 	if req.ProblemID != nil && req.PatternID != nil {
@@ -265,6 +273,25 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	if req.Type != nil && !validCardType(*req.Type) {
 		slog.Warn("cards: Update failed", slog.String("type", *req.Type), slog.Int64("user_id", userID), slog.Int64("card_id", cardID))
 		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "type must be pattern_recognition, algorithm_mechanics, or edge_case")
+		return
+	}
+	if req.Type == nil && req.Front == nil && req.Back == nil && req.Explanation == nil && req.SourceText == nil {
+		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "at least one field is required")
+		return
+	}
+	if (req.Front != nil && strings.TrimSpace(*req.Front) == "") || (req.Back != nil && strings.TrimSpace(*req.Back) == "") {
+		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", "front and back cannot be empty")
+		return
+	}
+	front, back := "", ""
+	if req.Front != nil {
+		front = *req.Front
+	}
+	if req.Back != nil {
+		back = *req.Back
+	}
+	if msg := validateCardLengths(front, back, req.Explanation, req.SourceText); msg != "" {
+		response.Fail(w, http.StatusBadRequest, "VALIDATION_ERROR", msg)
 		return
 	}
 
@@ -391,6 +418,22 @@ func validScope(value string) bool {
 	default:
 		return false
 	}
+}
+
+func validateCardLengths(front, back string, explanation, source *string) string {
+	if utf8.RuneCountInString(front) > maxCardFrontRunes {
+		return "front must be at most 500 characters"
+	}
+	if utf8.RuneCountInString(back) > maxCardBackRunes {
+		return "back must be at most 4000 characters"
+	}
+	if explanation != nil && utf8.RuneCountInString(*explanation) > maxCardNoteRunes {
+		return "explanation must be at most 2000 characters"
+	}
+	if source != nil && utf8.RuneCountInString(*source) > maxCardNoteRunes {
+		return "sourceText must be at most 2000 characters"
+	}
+	return ""
 }
 
 type cursorPayload struct {

@@ -55,8 +55,8 @@ export async function deleteAccount(password: string): Promise<void> {
 /**
  * POST /me/password — change the current user's password.
  *
- * The backend endpoint is not implemented yet; callers should treat a 404/405
- * response as "feature coming soon" rather than a hard error.
+ * Older rolling-deploy backends may still answer 404/405; the settings UI
+ * keeps its compatibility message for that case.
  */
 export async function changePassword(
   currentPassword: string,
@@ -74,8 +74,8 @@ export async function changePassword(
 /**
  * POST /me/sessions/revoke — revoke all other sessions for the current user.
  *
- * The backend endpoint is not implemented yet; on 404/405 we fall back to
- * clearing the local session so the user is at least logged out of this device.
+ * On an older rolling-deploy backend, 404/405 falls back to clearing the local
+ * session so the user is at least logged out of this device.
  * Returns true if the server confirmed revocation, false if it was a local
  * fallback (endpoint unavailable).
  */

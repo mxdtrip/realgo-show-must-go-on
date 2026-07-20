@@ -7,7 +7,8 @@ import { CabinetPanel } from "../_components";
 import { CabinetIcon } from "../_icons";
 import { getDictionary } from "../../_content/i18n";
 import { getDueSummary, type DueSummary } from "../../_api/cards";
-import { cardRecords } from "./_mock";
+
+type SummaryState = "loading" | "loaded" | "error";
 
 export default function CardsPage() {
   const copy = getDictionary().cabinet;
@@ -15,22 +16,31 @@ export default function CardsPage() {
   const overview = page.overview;
 
   // Live numbers from GET /me/cards/due-summary (un-capped, unlike the
-  // review-session endpoint); null keeps the mock demo values
-  // (unauthenticated visitors, stopped backend).
+  // review-session endpoint). An outage is explicit: never present demo
+  // records as if they belonged to the signed-in user.
   const [live, setLive] = useState<DueSummary | null>(null);
+  const [summaryState, setSummaryState] = useState<SummaryState>("loading");
+  const [reloadVersion, setReloadVersion] = useState(0);
 
   useEffect(() => {
     const controller = new AbortController();
+    setSummaryState("loading");
     getDueSummary(controller.signal)
-      .then(setLive)
+      .then((summary) => {
+        setLive(summary);
+        setSummaryState("loaded");
+      })
       .catch(() => {
-        // Demo fallback: keep the mock counts.
+        if (!controller.signal.aborted) {
+          setLive(null);
+          setSummaryState("error");
+        }
       });
     return () => controller.abort();
-  }, []);
+  }, [reloadVersion]);
 
-  const dueCount = live?.totalDue ?? cardRecords.length;
-  const estimatedTime = live ? `~${live.estimatedMinutes} ${overview.minuteUnit}` : overview.estimatedTime;
+  const dueCount = live ? String(live.totalDue) : "—";
+  const estimatedTime = live ? `~${live.estimatedMinutes} ${overview.minuteUnit}` : "—";
 
   const mix = overview.types.map(([key, label]) => {
     if (live) {
@@ -41,11 +51,10 @@ export default function CardsPage() {
       const sources = hidden > 0 ? [...shown, `+${hidden}`].join(", ") : shown.join(", ");
       return { label, count, sources };
     }
-    const items = cardRecords.filter((card) => card.type === key);
     return {
       label,
-      count: items.length,
-      sources: items.map((card) => card.source.label.split(" · ")[0]).join(", "),
+      count: "—",
+      sources: summaryState === "loading" ? page.session.loading : "",
     };
   });
 
@@ -69,6 +78,15 @@ export default function CardsPage() {
           </span>
         </div>
       </section>
+
+      {summaryState === "error" ? (
+        <div className="cards-summary-error" role="alert">
+          <span>{page.session.sessionError}</span>
+          <button type="button" onClick={() => setReloadVersion((version) => version + 1)}>
+            {page.session.retry}
+          </button>
+        </div>
+      ) : null}
 
       <CabinetPanel eyebrow={page.panelEyebrow} title={page.panelTitle}>
         <div className="cards-launcher">

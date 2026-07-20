@@ -163,12 +163,18 @@ export function PatternAtlasClient({ copy }: Readonly<{ copy: AtlasCopy }>) {
     // Companies имеет смысл только относительно компании: без неё режим
     // заблокирован, поэтому сохранённый выбор восстанавливаем условно.
     setView(storedCompany && readStored(VIEW_KEY) === "companies" ? "companies" : "tree");
+    let restored = new Set<string>();
     try {
       const raw = readStored(EXPANDED_KEY);
-      if (raw) setExpanded(new Set(JSON.parse(raw) as string[]));
+      if (raw) restored = new Set(JSON.parse(raw) as string[]);
     } catch {
       /* повреждённое состояние — начинаем со свёрнутого дерева */
     }
+    // Редирект со снятой family-страницы (#166) просит раскрыть конкретную
+    // группу — /patterns?family={code}.
+    const targetFamily = new URLSearchParams(window.location.search).get("family");
+    if (targetFamily) restored.add(targetFamily);
+    if (restored.size > 0) setExpanded(restored);
     setHydrated(true);
   }, []);
 
@@ -192,6 +198,15 @@ export function PatternAtlasClient({ copy }: Readonly<{ copy: AtlasCopy }>) {
       .then((data) => {
         setAtlas(data);
         setLoadState("loaded");
+        const targetFamily = new URLSearchParams(window.location.search).get("family");
+        if (targetFamily) {
+          // Строка рендерится в этом же тике — ждём кадр перед скроллом.
+          requestAnimationFrame(() => {
+            document
+              .getElementById(`atlas-family-row-${targetFamily}`)
+              ?.scrollIntoView({ block: "center", behavior: "smooth" });
+          });
+        }
       })
       .catch((e: unknown) => {
         if (controller.signal.aborted) return;
@@ -532,7 +547,7 @@ function TreeView({
               const subpatternsId = `atlas-subpatterns-${family.code}`;
               return (
                 <div className="atlas-family-group" role="rowgroup" key={family.code}>
-                  <div className="atlas-family" role="row">
+                  <div className="atlas-family" role="row" id={`atlas-family-row-${family.code}`}>
                     <span className="atlas-table__cell atlas-table__cell--name" role="cell">
                       <button
                         type="button"
@@ -543,14 +558,8 @@ function TreeView({
                         onClick={() => onToggle(family.code)}
                       >
                         <i className={isOpen ? "atlas-caret is-open" : "atlas-caret"} aria-hidden="true" />
+                        <span className="atlas-family__name">{family.name}</span>
                       </button>
-                      <Link
-                        href={`/patterns/${family.code}`}
-                        className="atlas-family__name"
-                        title={copy.openPattern}
-                      >
-                        <span>{family.name}</span>
-                      </Link>
                     </span>
                     <span className="atlas-table__cell atlas-family__difficulty" role="cell" title={difficulty.title}>
                       {difficulty.known ? (
@@ -601,27 +610,31 @@ function SubpatternRow({ sub, copy }: Readonly<{ sub: AtlasSubpattern; copy: Atl
   const difficulty = difficultyBreakdown(stats.difficulty_counts);
   return (
     <li className="atlas-sub">
+      {/* .atlas-sub__link is a fixed 6-column grid — every column below is a
+          direct child that always renders (empty when there's nothing to
+          show), so the same field lines up in the same column on every row
+          instead of shifting left when an earlier field is skipped. */}
       <Link href={`/patterns/${sub.code}`} className="atlas-sub__link">
-        <i className={`atlas-dot atlas-dot--${mastery.status}`} aria-hidden="true" />
-        <span className="atlas-sub__name">{sub.name}</span>
-        <span className="atlas-sub__state">
+        <span className="atlas-sub__label">
+          <i className={`atlas-dot atlas-dot--${mastery.status}`} aria-hidden="true" />
+          <span className="atlas-sub__name">{sub.name}</span>
+        </span>
+        <span className="atlas-sub__mastery">
           <span className={`atlas-status atlas-status--${mastery.status}`}>
             {copy.masteryStatuses[mastery.status]}
           </span>
           {started ? <span className="atlas-percent">{mastery.percent}%</span> : null}
-          {difficulty.length > 0 ? (
-            <span className="atlas-sub__difficulty">
-              <DifficultyBadges levels={difficulty} />
-            </span>
-          ) : null}
-          {stats.problem_count > 0 ? (
-            <span className="atlas-solved">
-              {stats.solved_count}/{stats.problem_count}
-            </span>
-          ) : null}
-          {stats.due_count > 0 ? (
-            <em className="atlas-due">{stats.due_count} {copy.dueLabel}</em>
-          ) : null}
+        </span>
+        <span className="atlas-sub__difficulty">
+          {difficulty.length > 0 ? <DifficultyBadges levels={difficulty} /> : null}
+        </span>
+        <span className="atlas-solved">
+          {stats.problem_count > 0 ? `${stats.solved_count}/${stats.problem_count}` : ""}
+        </span>
+        <em className="atlas-due">
+          {stats.due_count > 0 ? `${stats.due_count} ${copy.dueLabel}` : ""}
+        </em>
+        <span className="atlas-sub__relevance-slot">
           {sub.relevance ? <RelevanceBadge level={sub.relevance.relevance} copy={copy} /> : null}
         </span>
       </Link>

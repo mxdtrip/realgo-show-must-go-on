@@ -1,17 +1,9 @@
 import { useEffect, useState } from "react";
 
-import { checkApiStatus } from "./lib/api";
 import { AuthError, getCurrentUserEmail, login, logout } from "./lib/auth";
-import {
-  getApiBaseUrl,
-  getWebBaseUrl,
-  setApiBaseUrl,
-  setWebBaseUrl,
-} from "./lib/storage";
+import { getApiBaseUrl, getWebBaseUrl, setWebBaseUrl } from "./lib/storage";
 import { BrandMark } from "./popup/PopupApp";
 import { POPUP_CSS } from "./popup/popup.styles";
-
-type ConnStatus = "idle" | "checking" | "online" | "offline";
 
 /**
  * Options page — account connection.
@@ -20,11 +12,15 @@ type ConnStatus = "idle" | "checking" | "online" | "offline";
  * (POST /api/v1/auth/login) and keeps the issued tokens in chrome.storage. The
  * access token is refreshed automatically on demand (see lib/api.ts).
  *
+ * The public release only ever talks to https://realgo.dev — there is no
+ * optional_host_permissions in the store manifest to point the extension at
+ * a different backend, so the API origin is shown read-only here rather
+ * than as an editable field that would need broad host permissions to work.
+ *
  * Visual system shared with the popup (see popup.styles.ts).
  */
 function Options() {
   const [baseUrl, setBaseUrl] = useState("");
-  const [baseSaved, setBaseSaved] = useState(false);
 
   const [webUrl, setWebUrl] = useState("");
   const [webSaved, setWebSaved] = useState(false);
@@ -34,7 +30,6 @@ function Options() {
   const [account, setAccount] = useState<string | null | undefined>(undefined);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [conn, setConn] = useState<ConnStatus>("idle");
 
   useEffect(() => {
     getApiBaseUrl().then(setBaseUrl);
@@ -42,29 +37,15 @@ function Options() {
     getCurrentUserEmail().then((e) => setAccount(e ?? null));
   }, []);
 
-  async function handleSaveBaseUrl() {
+  async function handleSaveWebUrl() {
     setError("");
     try {
-      await ensureApiHostPermission(baseUrl);
-      await setApiBaseUrl(baseUrl);
-      setBaseSaved(true);
-      setTimeout(() => setBaseSaved(false), 2000);
+      await setWebBaseUrl(webUrl);
+      setWebSaved(true);
+      setTimeout(() => setWebSaved(false), 2000);
     } catch (err) {
-      setError(err instanceof AuthError ? err.message : "Не удалось сохранить API URL.");
+      setError(err instanceof Error ? err.message : "Не удалось сохранить Web URL.");
     }
-  }
-
-  async function handleSaveWebUrl() {
-    await setWebBaseUrl(webUrl);
-    setWebSaved(true);
-    setTimeout(() => setWebSaved(false), 2000);
-  }
-
-  async function handleCheckConnection() {
-    await setApiBaseUrl(baseUrl); // probe the value currently in the field
-    setConn("checking");
-    const ok = await checkApiStatus();
-    setConn(ok ? "online" : "offline");
   }
 
   async function handleLogin(e: React.FormEvent) {
@@ -73,8 +54,6 @@ function Options() {
     setBusy(true);
     setError("");
     try {
-      await ensureApiHostPermission(baseUrl);
-      await setApiBaseUrl(baseUrl); // make sure login hits the configured API
       const user = await login(email, password);
       setAccount(user.email);
       setPassword("");
@@ -88,7 +67,7 @@ function Options() {
   async function handleLogout() {
     setBusy(true);
     await logout();
-    setAccount(null);
+    setAccount((await getCurrentUserEmail()) ?? null);
     setBusy(false);
   }
 
@@ -108,45 +87,10 @@ function Options() {
       <div className="realgo-body">
         <div className="realgo-field">
           <label className="realgo-field__label" htmlFor="realgo-base-url">
-            API base URL
+            API
           </label>
-          <div className="realgo-row">
-            <input
-              id="realgo-base-url"
-              className="realgo-input"
-              value={baseUrl}
-              placeholder="https://realgo.dev"
-              onChange={(e) => {
-                setBaseUrl(e.target.value);
-                setConn("idle");
-              }}
-            />
-            <button
-              type="button"
-              className="realgo-btn realgo-btn--ghost"
-              onClick={handleSaveBaseUrl}
-            >
-              {baseSaved ? "✓" : "OK"}
-            </button>
-            <button
-              type="button"
-              className="realgo-btn realgo-btn--ghost"
-              disabled={conn === "checking"}
-              onClick={handleCheckConnection}
-            >
-              {conn === "checking" ? "…" : "Проверить"}
-            </button>
-          </div>
-          {conn === "online" && (
-            <p className="realgo-account__note" style={{ color: "var(--success-fg)" }}>
-              Бэкенд на связи
-            </p>
-          )}
-          {conn === "offline" && (
-            <p className="realgo-account__note" style={{ color: "var(--danger-fg)" }}>
-              Бэкенд недоступен по этому адресу
-            </p>
-          )}
+          <input id="realgo-base-url" className="realgo-input" value={baseUrl} disabled readOnly />
+          <p className="realgo-account__note">Расширение работает только с сервером realgo.dev.</p>
         </div>
 
         <div className="realgo-field">
@@ -173,6 +117,12 @@ function Options() {
             Куда ведёт «К повторению» — раздел карточек кабинета.
           </p>
         </div>
+
+        {error && (
+          <div className="realgo-error" role="alert">
+            <span className="realgo-error__text">{error}</span>
+          </div>
+        )}
 
         <hr className="realgo-divider" />
 
@@ -213,11 +163,6 @@ function Options() {
               placeholder="пароль"
               onChange={(e) => setPassword(e.target.value)}
             />
-            {error && (
-              <div className="realgo-error" role="alert">
-                <span className="realgo-error__text">{error}</span>
-              </div>
-            )}
             <button
               className="realgo-btn realgo-btn--primary realgo-btn--block"
               type="submit"
@@ -230,31 +175,6 @@ function Options() {
       </div>
     </div>
   );
-}
-
-function apiOriginPattern(baseUrl: string): string {
-  const parsed = new URL(baseUrl);
-  return `${parsed.protocol}//${parsed.host}/*`;
-}
-
-async function ensureApiHostPermission(baseUrl: string): Promise<void> {
-  let origin: string;
-  try {
-    origin = apiOriginPattern(baseUrl);
-  } catch {
-    throw new AuthError("API base URL должен быть валидным URL.", 0, "invalid_api_url");
-  }
-
-  if (typeof chrome === "undefined" || !chrome.permissions?.contains || !chrome.permissions?.request) return;
-
-  const permissions = { origins: [origin] };
-  const alreadyGranted = await chrome.permissions.contains(permissions);
-  if (alreadyGranted) return;
-
-  const granted = await chrome.permissions.request(permissions);
-  if (!granted) {
-    throw new AuthError("Chrome не выдал доступ к API origin.", 0, "api_origin_denied");
-  }
 }
 
 export default Options;

@@ -11,8 +11,24 @@ WHERE email = $1;
 SELECT * FROM users
 WHERE id = $1;
 
+-- name: LockUserForDeletion :one
+-- Blocks new child-row FK references while account erasure removes payloads.
+SELECT id FROM users
+WHERE id = $1
+FOR UPDATE;
+
 -- name: DeleteUserByID :exec
-DELETE FROM users
+DELETE FROM users WHERE users.id = $1;
+
+-- name: DeleteExtensionEventsByUserID :exec
+DELETE FROM extension_events WHERE user_id = sqlc.arg(user_id)::bigint;
+
+-- name: DeleteAIRequestLogsByUserID :exec
+DELETE FROM ai_request_logs WHERE user_id = sqlc.arg(user_id)::bigint;
+
+-- name: UpdateUserPassword :execrows
+UPDATE users
+SET password_hash = $2, updated_at = NOW()
 WHERE id = $1;
 
 -- name: UpdateUserProfile :one

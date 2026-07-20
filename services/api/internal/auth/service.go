@@ -3,10 +3,12 @@ package auth
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/mail"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -18,6 +20,11 @@ import (
 
 const minPasswordLen = 8
 const maxPasswordBytes = 72
+
+// A valid pre-computed bcrypt hash keeps the unknown-account login path close
+// in cost to the wrong-password path. Its plaintext is irrelevant and is never
+// used by the application.
+const dummyPasswordHash = "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy"
 
 // Service implements registration, authentication and the token lifecycle.
 type Service struct {
@@ -43,11 +50,8 @@ func (s *Service) Register(ctx context.Context, email, password string) (db.User
 	if err != nil {
 		return db.User{}, TokenPair{}, err
 	}
-	if len(password) < minPasswordLen {
-		return db.User{}, TokenPair{}, ErrWeakPassword
-	}
-	if len(password) > maxPasswordBytes {
-		return db.User{}, TokenPair{}, ErrPasswordTooLong
+	if err := validatePassword(password); err != nil {
+		return db.User{}, TokenPair{}, err
 	}
 
 	hash, err := hashPassword(password)
@@ -92,6 +96,7 @@ func (s *Service) Login(ctx context.Context, email, password string) (db.User, T
 	user, err := s.queries.GetUserByEmail(ctx, normalized)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
+			_ = checkPassword(dummyPasswordHash, password)
 			return db.User{}, TokenPair{}, ErrInvalidCredentials
 		}
 		return db.User{}, TokenPair{}, err
@@ -109,9 +114,27 @@ func (s *Service) Login(ctx context.Context, email, password string) (db.User, T
 
 // Refresh rotates a refresh token and issues a fresh token pair.
 func (s *Service) Refresh(ctx context.Context, refreshToken string) (TokenPair, error) {
-	userID, newRefreshToken, err := s.rotateRefreshToken(ctx, refreshToken)
+	// Redis can outlive a user row (for example after an account deletion on an
+	// older deployment). Never consume and renew such a zombie session.
+	userID, err := s.refreshTokenUserID(ctx, refreshToken)
 	if err != nil {
 		return TokenPair{}, err
+	}
+	if _, err := s.queries.GetUserByID(ctx, userID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			_ = s.revokeRefreshToken(ctx, refreshToken)
+			return TokenPair{}, ErrInvalidToken
+		}
+		return TokenPair{}, err
+	}
+
+	rotatedUserID, newRefreshToken, err := s.rotateRefreshToken(ctx, refreshToken)
+	if err != nil {
+		return TokenPair{}, err
+	}
+	if rotatedUserID != userID {
+		_ = s.revokeRefreshToken(ctx, newRefreshToken)
+		return TokenPair{}, ErrInvalidToken
 	}
 	access, err := s.issueAccessToken(userID, s.now())
 	if err != nil {
@@ -123,6 +146,55 @@ func (s *Service) Refresh(ctx context.Context, refreshToken string) (TokenPair, 
 // Logout revokes a refresh token.
 func (s *Service) Logout(ctx context.Context, refreshToken string) error {
 	return s.revokeRefreshToken(ctx, refreshToken)
+}
+
+// NewSession issues an independent token pair for an already authenticated
+// user. Browser surfaces use it to avoid sharing one rotating refresh token.
+func (s *Service) NewSession(ctx context.Context, userID int64) (TokenPair, error) {
+	if _, err := s.queries.GetUserByID(ctx, userID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return TokenPair{}, ErrInvalidToken
+		}
+		return TokenPair{}, err
+	}
+	return s.issueTokens(ctx, userID, s.now())
+}
+
+// ChangePassword verifies the current password and stores a freshly hashed new
+// password. Revoking sessions remains a separate explicit operation so adding
+// this endpoint does not unexpectedly sign other clients out.
+func (s *Service) ChangePassword(ctx context.Context, userID int64, currentPassword, newPassword string) error {
+	user, err := s.queries.GetUserByID(ctx, userID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrInvalidToken
+		}
+		return err
+	}
+	if !checkPassword(user.PasswordHash, currentPassword) {
+		return ErrInvalidCredentials
+	}
+	if err := validatePassword(newPassword); err != nil {
+		return err
+	}
+	hash, err := hashPassword(newPassword)
+	if err != nil {
+		return err
+	}
+	rows, err := s.queries.UpdateUserPassword(ctx, db.UpdateUserPasswordParams{ID: userID, PasswordHash: hash})
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return ErrInvalidToken
+	}
+	return nil
+}
+
+// RevokeAllSessions invalidates all refresh sessions for userID, including
+// legacy sessions created before the per-user Redis index existed.
+func (s *Service) RevokeAllSessions(ctx context.Context, userID int64) error {
+	return s.revokeAllRefreshTokens(ctx, userID)
 }
 
 // UserByID loads the user behind an authenticated request.
@@ -216,10 +288,9 @@ func (s *Service) UpdateNotificationSettings(ctx context.Context, userID int64, 
 	return user, err
 }
 
-// DeleteAccount permanently removes the user and all cascading data after
-// verifying the account password. The caller's refresh token, when supplied, is
-// revoked immediately; any other sessions expire with their refresh TTL because
-// the account row (and its data) is gone.
+// DeleteAccount permanently removes the user and all cascading/user-originated
+// activity after verifying the account password. Every refresh session is
+// revoked before the account row is removed.
 func (s *Service) DeleteAccount(ctx context.Context, userID int64, password, refreshToken string) error {
 	user, err := s.queries.GetUserByID(ctx, userID)
 	if err != nil {
@@ -231,19 +302,66 @@ func (s *Service) DeleteAccount(ctx context.Context, userID int64, password, ref
 	if !checkPassword(user.PasswordHash, password) {
 		return ErrInvalidCredentials
 	}
-	if err := s.queries.DeleteUserByID(ctx, userID); err != nil {
+	if err := s.revokeAllRefreshTokens(ctx, userID); err != nil {
 		return err
 	}
-	if refreshToken != "" {
-		// Best-effort: the account is already gone, so a revoke failure is not fatal.
-		if revokeErr := s.revokeRefreshToken(ctx, refreshToken); revokeErr != nil {
-			slog.Error("auth: delete account revoke refresh token failed",
-				slog.String("layer", "service"),
-				slog.String("module", "auth"),
-				slog.Any("err", revokeErr),
-				slog.Int64("user_id", userID),
-			)
+	if err := s.deleteAccountData(ctx, userID); err != nil {
+		return err
+	}
+	// Retained in the method/wire contract for older clients; all tokens were
+	// already revoked via the user index and legacy scan above.
+	_ = refreshToken
+	return nil
+}
+
+// deleteAccountData erases payload-bearing child rows before the user row in
+// one transaction. Separate statements are intentional: data-modifying CTEs
+// execute in an unspecified order, which can race the children's ON DELETE
+// SET NULL actions and leave the payload rows behind.
+func (s *Service) deleteAccountData(ctx context.Context, userID int64) (err error) {
+	tx, err := s.queries.BeginTx(ctx)
+	if err != nil {
+		return fmt.Errorf("begin account deletion: %w", err)
+	}
+	committed := false
+	defer func() {
+		if committed {
+			return
 		}
+		if rollbackErr := tx.Rollback(ctx); rollbackErr != nil && !errors.Is(rollbackErr, pgx.ErrTxClosed) {
+			err = errors.Join(err, fmt.Errorf("rollback account deletion: %w", rollbackErr))
+		}
+	}()
+
+	q := s.queries.WithTx(tx)
+	if _, err := q.LockUserForDeletion(ctx, userID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrInvalidToken
+		}
+		return fmt.Errorf("lock user for deletion: %w", err)
+	}
+	if err := q.DeleteExtensionEventsByUserID(ctx, userID); err != nil {
+		return fmt.Errorf("delete extension events: %w", err)
+	}
+	if err := q.DeleteAIRequestLogsByUserID(ctx, userID); err != nil {
+		return fmt.Errorf("delete AI request logs: %w", err)
+	}
+	if err := q.DeleteUserByID(ctx, userID); err != nil {
+		return fmt.Errorf("delete user: %w", err)
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("commit account deletion: %w", err)
+	}
+	committed = true
+	return nil
+}
+
+func validatePassword(password string) error {
+	if utf8.RuneCountInString(password) < minPasswordLen {
+		return ErrWeakPassword
+	}
+	if len(password) > maxPasswordBytes {
+		return ErrPasswordTooLong
 	}
 	return nil
 }

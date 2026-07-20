@@ -1,6 +1,7 @@
 "use client";
 
 import { getAtlas } from "../_api/atlas";
+import { ApiError } from "../_api/types";
 
 // Горизонт больше не выбирается вручную — он считается из даты интервью
 // (шаг "date" идёт прямо перед "roadmap"), поэтому отдельного шага/пресетов
@@ -38,6 +39,8 @@ export type RoadmapSource = "company" | "none";
 export type RoadmapConfig = {
   weeksCount: number;
   targetCompany: string;
+  /** Stable Atlas/company code; optional for previously stored configs. */
+  targetCompanyCode?: string;
 };
 
 export type RoadmapResult = {
@@ -48,6 +51,7 @@ export type RoadmapResult = {
 export type StoredRoadmap = {
   weeksCount: number;
   targetCompany: string;
+  targetCompanyCode?: string;
   source: RoadmapSource;
   weeks: readonly RoadmapWeek[];
   generatedAt: string;
@@ -62,8 +66,17 @@ function relevancePriority(level: string | undefined): number {
 
 // Пул под конкретную компанию: реальные релевантные субпаттерны из атласа,
 // самые приоритетные и самые слабые — впереди (их берём на первые недели).
-async function poolFromCompany(company: string, signal?: AbortSignal): Promise<RoadmapSubpattern[]> {
-  const atlas = await getAtlas(company, signal);
+async function poolFromCompany(companyCode: string, signal?: AbortSignal): Promise<RoadmapSubpattern[]> {
+  let atlas;
+  try {
+    atlas = await getAtlas(companyCode, signal);
+  } catch (error) {
+    // The autocomplete catalog is broader than the Atlas evidence dataset.
+    // A known company without evidence is a valid empty plan, not a broken
+    // onboarding flow. Network/server failures still propagate.
+    if (error instanceof ApiError && error.status === 404) return [];
+    throw error;
+  }
   return (atlas.subpatterns ?? [])
     .filter((sub) => sub.relevance && ["high", "medium", "low"].includes(sub.relevance.relevance))
     .sort((a, b) => {
@@ -108,12 +121,13 @@ function buildWeekFocus(items: readonly RoadmapSubpattern[], company: string): s
 export async function generateRoadmap(config: RoadmapConfig, signal?: AbortSignal): Promise<RoadmapResult> {
   const weeksCount = Math.max(1, config.weeksCount);
   const company = config.targetCompany.trim();
+  const companyCode = config.targetCompanyCode?.trim() || company;
 
   let source: RoadmapSource = "none";
   let pool: RoadmapSubpattern[] = [];
 
-  if (company) {
-    pool = await poolFromCompany(company, signal);
+  if (companyCode) {
+    pool = await poolFromCompany(companyCode, signal);
     if (pool.length > 0) source = "company";
   }
 
@@ -136,6 +150,7 @@ export function saveRoadmap(config: RoadmapConfig, result: RoadmapResult): void 
   const stored: StoredRoadmap = {
     weeksCount: config.weeksCount,
     targetCompany: config.targetCompany,
+    targetCompanyCode: config.targetCompanyCode,
     source: result.source,
     weeks: result.weeks,
     generatedAt: new Date().toISOString(),
@@ -152,4 +167,9 @@ export function readRoadmap(): StoredRoadmap | null {
   } catch {
     return null;
   }
+}
+
+export function clearRoadmap(): void {
+  if (typeof window === "undefined") return;
+  window.localStorage.removeItem(roadmapStorageKey);
 }

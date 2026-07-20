@@ -10,6 +10,14 @@ export const accessTokenStorageKey = "realgo:auth:access:v1";
 export const refreshTokenStorageKey = "realgo:auth:refresh:v1";
 export const authChangedEvent = "realgo:auth-changed";
 
+const accountScopedStorageKeys = [
+  "realgo:card-review-session:v1",
+  "realgo:personal-roadmap:v1",
+  "realgo:profile-settings:v1",
+  "realgo:onboarding-profile:v1",
+  "realgo:notification-settings:v1",
+] as const;
+
 export function getAccessToken(): string | null {
   if (typeof window === "undefined") return null;
   return window.localStorage.getItem(accessTokenStorageKey);
@@ -37,5 +45,8 @@ export function clearTokens() {
   if (typeof window === "undefined") return;
   window.localStorage.removeItem(accessTokenStorageKey);
   window.localStorage.removeItem(refreshTokenStorageKey);
+  for (const key of accountScopedStorageKeys) {
+    window.localStorage.removeItem(key);
+  }
   window.dispatchEvent(new Event(authChangedEvent));
 }

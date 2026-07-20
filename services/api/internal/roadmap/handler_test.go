@@ -29,7 +29,6 @@ func TestGet_ResponseShape(t *testing.T) {
 		OverallProgress: 50,
 		Target:          Target{Company: &Company{Code: &code, Name: "Google"}},
 		Weeks:           []Week{{ID: "week_01", Status: "active"}},
-		Patterns:        []Pattern{{Code: "arrays_hashing", Problems: []Problem{{ID: 1, Status: "reviewing"}}}},
 	}})
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/me/roadmap", nil)
 	req = req.WithContext(auth.ContextWithUserID(req.Context(), 10))
@@ -46,7 +45,7 @@ func TestGet_ResponseShape(t *testing.T) {
 	if err := json.Unmarshal(w.Body.Bytes(), &body); err != nil {
 		t.Fatalf("invalid json: %v", err)
 	}
-	if body.Data.OverallProgress != 50 || len(body.Data.Patterns) != 1 {
+	if body.Data.OverallProgress != 50 || len(body.Data.Weeks) != 1 {
 		t.Fatalf("unexpected data: %+v", body.Data)
 	}
 	if body.Data.Target.Company == nil || body.Data.Target.Company.Name != "Google" {
@@ -124,8 +123,9 @@ func TestGet_UserNotFound(t *testing.T) {
 }
 
 type fakeRepository struct {
-	data Response
-	err  error
+	data     Response
+	err      error
+	clearErr error
 }
 
 func (f fakeRepository) Get(context.Context, int64) (Response, error) {
@@ -135,10 +135,11 @@ func (f fakeRepository) Get(context.Context, int64) (Response, error) {
 	if f.data.Weeks == nil {
 		f.data.Weeks = []Week{}
 	}
-	if f.data.Patterns == nil {
-		f.data.Patterns = []Pattern{}
-	}
 	return f.data, nil
+}
+
+func (f fakeRepository) Clear(context.Context, int64) error {
+	return f.clearErr
 }
 
 func TestGet_InternalError(t *testing.T) {
@@ -148,6 +149,47 @@ func TestGet_InternalError(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	h.Get(w, req)
+
+	if w.Code != http.StatusInternalServerError {
+		t.Fatalf("status = %d, want %d", w.Code, http.StatusInternalServerError)
+	}
+}
+
+func TestDelete_Unauthenticated(t *testing.T) {
+	h := NewHandler(fakeRepository{})
+	req := httptest.NewRequest(http.MethodDelete, "/api/v1/me/roadmap", nil)
+	w := httptest.NewRecorder()
+
+	h.Delete(w, req)
+
+	if w.Code != http.StatusUnauthorized {
+		t.Fatalf("status = %d, want %d", w.Code, http.StatusUnauthorized)
+	}
+}
+
+func TestDelete_Success(t *testing.T) {
+	h := NewHandler(fakeRepository{})
+	req := httptest.NewRequest(http.MethodDelete, "/api/v1/me/roadmap", nil)
+	req = req.WithContext(auth.ContextWithUserID(req.Context(), 10))
+	w := httptest.NewRecorder()
+
+	h.Delete(w, req)
+
+	if w.Code != http.StatusNoContent {
+		t.Fatalf("status = %d, want %d", w.Code, http.StatusNoContent)
+	}
+	if w.Body.Len() != 0 {
+		t.Fatalf("body = %q, want empty", w.Body.String())
+	}
+}
+
+func TestDelete_InternalError(t *testing.T) {
+	h := NewHandler(fakeRepository{clearErr: errors.New("boom")})
+	req := httptest.NewRequest(http.MethodDelete, "/api/v1/me/roadmap", nil)
+	req = req.WithContext(auth.ContextWithUserID(req.Context(), 10))
+	w := httptest.NewRecorder()
+
+	h.Delete(w, req)
 
 	if w.Code != http.StatusInternalServerError {
 		t.Fatalf("status = %d, want %d", w.Code, http.StatusInternalServerError)

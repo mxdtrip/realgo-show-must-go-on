@@ -26,7 +26,8 @@ const (
 
 type assistantRepository interface {
 	AssistantProblemContext(ctx context.Context, platform, slug string) (AssistantHintInput, error)
-	LogAssistantHintRequest(ctx context.Context, userID int64, problemID *int64, model, status string) error
+	ReserveAssistantHintRequest(ctx context.Context, userID int64, problemID *int64, provider, model, promptVersion string) (int64, error)
+	FinishAssistantHintRequest(ctx context.Context, requestID int64, status string) error
 }
 
 type AssistantHandler struct {
@@ -75,15 +76,21 @@ func (h *AssistantHandler) Hint(w http.ResponseWriter, r *http.Request) {
 	input = mergeAssistantContext(input, dbContext)
 	input.PromptVersion = AssistantHintPromptVersionV1
 	hintProblemID := assistantProblemID(input)
+	requestID, err := h.reserveRequest(r.Context(), userID, hintProblemID)
+	if err != nil {
+		slog.Error("ai: assistant reservation failed", slog.Any("err", err), slog.Int64("user_id", userID))
+		response.Fail(w, http.StatusServiceUnavailable, "AI_METERING_UNAVAILABLE", "AI assistant is temporarily unavailable")
+		return
+	}
 
 	if r.URL.Query().Get("stream") == "1" {
-		h.streamHint(w, r, input, userID, hintProblemID)
+		h.streamHint(w, r, input, userID, requestID)
 		return
 	}
 
 	out, err := h.provider.GenerateHint(r.Context(), input)
 	if err != nil {
-		_ = h.repo.LogAssistantHintRequest(context.WithoutCancel(r.Context()), userID, hintProblemID, h.provider.ModelName(), "failed")
+		_ = h.finishRequest(context.WithoutCancel(r.Context()), requestID, "failed")
 		if errors.Is(err, ErrQuotaExceeded) {
 			response.Fail(w, http.StatusTooManyRequests, "AI_QUOTA_EXCEEDED", "AI assistant quota is exhausted")
 			return
@@ -93,7 +100,7 @@ func (h *AssistantHandler) Hint(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.repo.LogAssistantHintRequest(context.WithoutCancel(r.Context()), userID, hintProblemID, h.provider.ModelName(), "success"); err != nil {
+	if err := h.finishRequest(context.WithoutCancel(r.Context()), requestID, "success"); err != nil {
 		slog.Warn("ai: assistant log failed", slog.Any("err", err), slog.Int64("user_id", userID))
 	}
 	response.JSON(w, http.StatusOK, out)
@@ -103,9 +110,10 @@ func (h *AssistantHandler) Hint(w http.ResponseWriter, r *http.Request) {
 // text as the model generates it instead of making the client wait for the
 // full JSON response. Terminates with a "done" event carrying the full
 // AssistantHintResponse, or an "error" event on failure.
-func (h *AssistantHandler) streamHint(w http.ResponseWriter, r *http.Request, input AssistantHintInput, userID int64, hintProblemID *int64) {
+func (h *AssistantHandler) streamHint(w http.ResponseWriter, r *http.Request, input AssistantHintInput, userID, requestID int64) {
 	flusher, ok := w.(http.Flusher)
 	if !ok {
+		_ = h.finishRequest(context.WithoutCancel(r.Context()), requestID, "failed")
 		response.Fail(w, http.StatusInternalServerError, "INTERNAL_ERROR", "streaming unsupported")
 		return
 	}
@@ -127,7 +135,7 @@ func (h *AssistantHandler) streamHint(w http.ResponseWriter, r *http.Request, in
 		writeEvent("delta", map[string]string{"text": delta})
 	})
 	if err != nil {
-		_ = h.repo.LogAssistantHintRequest(context.WithoutCancel(r.Context()), userID, hintProblemID, h.provider.ModelName(), "failed")
+		_ = h.finishRequest(context.WithoutCancel(r.Context()), requestID, "failed")
 		logAssistantProviderError(err, userID)
 		code := "AI_PROVIDER_ERROR"
 		if errors.Is(err, ErrQuotaExceeded) {
@@ -137,10 +145,25 @@ func (h *AssistantHandler) streamHint(w http.ResponseWriter, r *http.Request, in
 		return
 	}
 
-	if err := h.repo.LogAssistantHintRequest(context.WithoutCancel(r.Context()), userID, hintProblemID, h.provider.ModelName(), "success"); err != nil {
+	if err := h.finishRequest(context.WithoutCancel(r.Context()), requestID, "success"); err != nil {
 		slog.Warn("ai: assistant log failed", slog.Any("err", err), slog.Int64("user_id", userID))
 	}
 	writeEvent("done", out)
+}
+
+func (h *AssistantHandler) reserveRequest(ctx context.Context, userID int64, problemID *int64) (int64, error) {
+	return h.repo.ReserveAssistantHintRequest(
+		ctx,
+		userID,
+		problemID,
+		h.provider.ProviderName(),
+		h.provider.ModelName(),
+		AssistantHintPromptVersionV1,
+	)
+}
+
+func (h *AssistantHandler) finishRequest(ctx context.Context, requestID int64, status string) error {
+	return h.repo.FinishAssistantHintRequest(ctx, requestID, status)
 }
 
 // logAssistantProviderError logs the upstream failure with the HTTP status
@@ -151,7 +174,7 @@ func (h *AssistantHandler) streamHint(w http.ResponseWriter, r *http.Request, in
 func logAssistantProviderError(err error, userID int64) {
 	var apiErr *APIError
 	if errors.As(err, &apiErr) {
-		slog.Error("ai: assistant hint failed: gemini api error",
+		slog.Error("ai: assistant hint failed: provider api error",
 			slog.Int("status_code", apiErr.StatusCode),
 			slog.String("body", apiErr.Body),
 			slog.Int64("user_id", userID),

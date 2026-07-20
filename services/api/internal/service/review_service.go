@@ -20,6 +20,8 @@ var (
 	ErrInvalidRating  = errors.New("invalid rating: must be hard, normal, or easy")
 )
 
+const maxReviewSaveAttempts = 3
+
 // ReviewService — бизнес-логика для повторений.
 // Обёрнут в data согласно контракту
 type ReviewService interface {
@@ -100,25 +102,33 @@ func (s *reviewService) RateReview(ctx context.Context, reviewID, userID int64, 
 		return response.RateReviewData{}, fmt.Errorf("reviews: RateReview: %w", err)
 	}
 
-	schedule, err := s.repo.ScheduleByID(ctx, reviewID, userID)
-	if err != nil {
-		if errors.Is(err, repo.ErrReviewNotFound) {
-			return response.RateReviewData{}, ErrReviewNotFound
+	var schedule, next entity.ReviewSchedule
+	for attemptNumber := 0; attemptNumber < maxReviewSaveAttempts; attemptNumber++ {
+		schedule, err = s.repo.ScheduleByID(ctx, reviewID, userID)
+		if err != nil {
+			if errors.Is(err, repo.ErrReviewNotFound) {
+				return response.RateReviewData{}, ErrReviewNotFound
+			}
+			return response.RateReviewData{}, fmt.Errorf("reviews: RateReview: %w", err)
 		}
-		return response.RateReviewData{}, fmt.Errorf("reviews: RateReview: %w", err)
+
+		info := s.fsrs.Next(scheduleToCard(schedule), reviewedAt, fsrsRating)
+		next = applyCard(schedule, info.Card, rating, reviewedAt)
+		next, err = s.repo.SaveReview(ctx, next, entity.ReviewAttempt{
+			UserID:      schedule.UserID,
+			ProblemID:   schedule.ProblemID,
+			PatternID:   schedule.PatternID,
+			CardID:      schedule.CardID,
+			Rating:      rating,
+			DurationSec: 0, // TODO: получать из запроса
+		}, schedule.ReviewCount)
+		if err == nil {
+			break
+		}
+		if !errors.Is(err, repo.ErrReviewConflict) {
+			return response.RateReviewData{}, fmt.Errorf("reviews: RateReview: %w", err)
+		}
 	}
-
-	info := s.fsrs.Next(scheduleToCard(schedule), reviewedAt, fsrsRating)
-
-	next := applyCard(schedule, info.Card, rating, reviewedAt)
-	next, err = s.repo.SaveReview(ctx, next, entity.ReviewAttempt{
-		UserID:      schedule.UserID,
-		ProblemID:   schedule.ProblemID,
-		PatternID:   schedule.PatternID,
-		CardID:      schedule.CardID,
-		Rating:      rating,
-		DurationSec: 0, // TODO: получать из запроса
-	})
 	if err != nil {
 		return response.RateReviewData{}, fmt.Errorf("reviews: RateReview: %w", err)
 	}
