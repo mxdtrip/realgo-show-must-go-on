@@ -268,9 +268,33 @@ export function SortingMemoryHero() {
   // Keep the auth popup mounted through its exit animation: `authOpen` is the
   // intent, `authRender` keeps the layer in the DOM until the close animation ends.
   const [authRender, setAuthRender] = useState(false);
+  const authPanelRef = useRef<HTMLElement | null>(null);
   useEffect(() => {
     if (authOpen) setAuthRender(true);
   }, [authOpen]);
+
+  // Same convention as the cabinet's .shell-dialog modals (see
+  // PatternAtlasClient's company picker): move focus into the dialog on
+  // open instead of leaving it on the trigger, and close on Escape. Without
+  // this, Tab from the trigger walked straight into the hero page behind
+  // the overlay (e.g. the code editor textarea) instead of the form.
+  // Depends on `authRender`, not just `authOpen`: the panel only actually
+  // mounts (and the ref attaches) once the effect above flips authRender to
+  // true on the render *after* authOpen does — focusing on authOpen alone
+  // would run while authPanelRef.current is still null.
+  useEffect(() => {
+    if (!authOpen || !authRender) return;
+    authPanelRef.current?.focus();
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setAuthOpen(false);
+      }
+    }
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [authOpen, authRender]);
   const [authEmail, setAuthEmail] = useState("");
   const [authPassword, setAuthPassword] = useState("");
   const [authError, setAuthError] = useState("");
@@ -744,6 +768,10 @@ export function SortingMemoryHero() {
           <section
             aria-label={authMode === "login" ? copy.auth.loginAria : copy.auth.signupAria}
             className="auth-panel"
+            role="dialog"
+            aria-modal="true"
+            ref={authPanelRef}
+            tabIndex={-1}
             onMouseDown={(event) => event.stopPropagation()}
           >
             <div className="auth-tabs">
