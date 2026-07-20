@@ -406,10 +406,10 @@ h3 {
   left: var(--pad);
   z-index: 3;
   width: min(380px, 36vw);
-  /* Tall, bounded editing area: plenty of room for more lines, and the textarea
-     scrolls (in sync with the highlight layer) instead of clipping the top when
-     it overflows. */
-  height: clamp(240px, 50vh, 480px);
+  /* Bounded editing area sized close to the default snippet: the textarea
+     scrolls (in sync with the highlight layer) instead of clipping the top
+     when it overflows, so it doesn't need extra idle height to "make room". */
+  height: clamp(190px, 27vh, 300px);
 }
 
 /* shared text metrics so the highlight layer lines up with the textarea */
@@ -7572,9 +7572,17 @@ a.roadmap-step__practice-card:hover {
    report-a-problem (#119), welcome tour (#122)
    ============================================================ */
 
-/* --- #117: страничный вход; template.tsx ремоунтится на каждой навигации --- */
+/* --- #117: страничный вход; template.tsx ремоунтится на каждой навигации ---
+   No `forwards`/`both` fill mode: an element with a fill-forward animation
+   effect on `transform` stays a CSS containing block for `position: fixed`
+   descendants forever, even once the animation settles on `transform: none`
+   — that hijacked every fixed-position modal/overlay rendered under a
+   cabinet page into centering on this element's box instead of the
+   viewport. The unanimated end state here already equals the "to" keyframe
+   (opacity 1, no transform), so dropping the fill mode doesn't change how
+   the transition looks. */
 .cabinet-page-in {
-  animation: cabinet-page-in 0.18s ease-out both;
+  animation: cabinet-page-in 0.18s ease-out;
 }
 
 @keyframes cabinet-page-in {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 /**
  * Landing "reviews" section demo card — same 3D flip mechanic as the real
@@ -15,12 +15,6 @@ export function FlipReviewCard({
   flipAria,
 }: Readonly<{ type: string; front: string; back: string; flipAria: { showAnswer: string; showQuestion: string } }>) {
   const [flipped, setFlipped] = useState(false);
-
-  useEffect(() => {
-    if (!flipped) return;
-    const timer = setTimeout(() => setFlipped(false), 3000);
-    return () => clearTimeout(timer);
-  }, [flipped]);
 
   return (
     <div className="review-flip">
