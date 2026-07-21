@@ -1,5 +1,17 @@
+import type { Metadata } from "next";
+
 import { getDictionary } from "../../../../_content/i18n";
+import { titleFromPatternCode } from "../../../../_ui/utils";
 import { PatternSessionClient } from "./_components/PatternSessionClient";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ code: string }>;
+}): Promise<Metadata> {
+  const { code } = await params;
+  return { title: `${titleFromPatternCode(code)} — сессия` };
+}
 
 export default async function PatternSessionPage({
   params,

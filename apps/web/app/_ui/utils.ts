@@ -14,3 +14,13 @@ export function cssLength(value: CSSLength | undefined) {
   if (typeof value === "number") return `${value}px`;
   return value;
 }
+
+/** "arrays_hashing" -> "Arrays Hashing". Used for <title> on pattern routes,
+    where the real display name only exists behind a live Atlas fetch. */
+export function titleFromPatternCode(code: string): string {
+  return code
+    .split(/[_-]/)
+    .filter(Boolean)
+    .map((word) => word[0].toUpperCase() + word.slice(1))
+    .join(" ");
+}

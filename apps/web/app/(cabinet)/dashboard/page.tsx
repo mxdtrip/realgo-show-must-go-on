@@ -1,5 +1,9 @@
+import type { Metadata } from "next";
+
 import { getDictionary } from "../../_content/i18n";
 import { DashboardClient } from "./_components/DashboardClient";
+
+export const metadata: Metadata = { title: "Дашборд" };
 
 export default function DashboardPage() {
   const copy = getDictionary().cabinet;
