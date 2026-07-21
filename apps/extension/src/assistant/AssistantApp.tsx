@@ -439,6 +439,10 @@ function platformTagClass(tag: string, platform: string): string {
       return "realgo-agent-tag--leetcode";
     case "hackerrank":
       return "realgo-agent-tag--hackerrank";
+    case "geeksforgeeks":
+      return "realgo-agent-tag--geeksforgeeks";
+    case "codeforces":
+      return "realgo-agent-tag--codeforces";
     default:
       return "";
   }

@@ -6,7 +6,7 @@
 import { apiFetchEnvelope } from "./client";
 
 export type ProblemStatus = "saved" | "reviewing" | "mastered" | "archived";
-export type ProblemPlatform = "leetcode" | "neetcode" | "codeforces" | "custom";
+export type ProblemPlatform = "leetcode" | "geeksforgeeks" | "hackerrank" | "codeforces" | "custom";
 
 export type ProblemPattern = {
   /** Pattern code (e.g. "sliding_window") — doubles as the Atlas node id. */

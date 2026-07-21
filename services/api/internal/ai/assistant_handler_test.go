@@ -144,6 +144,54 @@ func TestAssistantHandler_Hint(t *testing.T) {
 	}
 }
 
+func TestAssistantHandler_Hint_AcceptsAllCatalogPlatforms(t *testing.T) {
+	for _, platform := range []string{"leetcode", "geeksforgeeks", "hackerrank", "codeforces"} {
+		t.Run(platform, func(t *testing.T) {
+			repo := &fakeAssistantRepo{}
+			provider := &fakeHintProvider{}
+			handler := NewAssistantHandler(repo, provider)
+			raw, _ := json.Marshal(map[string]any{
+				"platform": platform, "taskTitle": "Some Task", "taskUrl": "https://example.com/task",
+				"platformTaskSlug": "some-task", "message": "help", "hintLevel": 1,
+			})
+			req := httptest.NewRequest(http.MethodPost, "/api/v1/assistant/hint", bytes.NewReader(raw))
+			req = req.WithContext(auth.ContextWithUserID(req.Context(), 42))
+			rec := httptest.NewRecorder()
+
+			handler.Hint(rec, req)
+
+			if rec.Code != http.StatusOK {
+				t.Fatalf("status = %d, body = %s", rec.Code, rec.Body.String())
+			}
+			if provider.input.Platform != platform {
+				t.Fatalf("provider input platform = %q, want %q", provider.input.Platform, platform)
+			}
+		})
+	}
+}
+
+func TestAssistantHandler_Hint_RejectsUnknownPlatform(t *testing.T) {
+	repo := &fakeAssistantRepo{}
+	provider := &fakeHintProvider{}
+	handler := NewAssistantHandler(repo, provider)
+	raw, _ := json.Marshal(map[string]any{
+		"platform": "neetcode", "taskTitle": "Some Task", "taskUrl": "https://example.com/task",
+		"platformTaskSlug": "some-task", "message": "help", "hintLevel": 1,
+	})
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/assistant/hint", bytes.NewReader(raw))
+	req = req.WithContext(auth.ContextWithUserID(req.Context(), 42))
+	rec := httptest.NewRecorder()
+
+	handler.Hint(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d, want 400, body = %s", rec.Code, rec.Body.String())
+	}
+	if provider.calls != 0 {
+		t.Fatalf("provider calls = %d, want 0", provider.calls)
+	}
+}
+
 func TestAssistantHandler_Hint_Stream(t *testing.T) {
 	repo := &fakeAssistantRepo{ctxInput: AssistantHintInput{
 		Platform: "leetcode", Slug: "two-sum", ProblemKnown: true,

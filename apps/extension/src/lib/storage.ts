@@ -1,3 +1,4 @@
+import type { TaskInfo } from "../platforms/types";
 import {
   ASSISTANT_STATE_KEY_PREFIX,
   DEFAULT_API_BASE_URL,
@@ -211,4 +212,42 @@ export function setAssistantState(
   state: AssistantPersistedState
 ): Promise<void> {
   return set(ASSISTANT_STATE_KEY_PREFIX + taskKey, state);
+}
+
+/** A pending submit is abandoned (tab closed, no result page ever loaded)
+    rather than resumed after this long. */
+const CROSS_PAGE_INTENT_TTL_MS = 3 * 60 * 1000;
+
+type CrossPageIntentMap = Record<string, { taskInfo: TaskInfo; startedAt: number }>;
+
+async function readCrossPageIntents(): Promise<CrossPageIntentMap> {
+  const stored = await get<CrossPageIntentMap>(STORAGE_KEYS.crossPageSubmitIntent);
+  return stored ?? {};
+}
+
+/**
+ * Persists a click-time task snapshot for a platform whose submit flow
+ * navigates away before a verdict appears (see PlatformAdapter.crossPage).
+ * Keyed by platform rather than a single slot so an unrelated cross-page
+ * platform added later can't clobber this one's pending entry.
+ */
+export async function setCrossPageSubmitIntent(platform: string, taskInfo: TaskInfo): Promise<void> {
+  const all = await readCrossPageIntents();
+  all[platform] = { taskInfo, startedAt: Date.now() };
+  await set(STORAGE_KEYS.crossPageSubmitIntent, all);
+}
+
+/** The pending snapshot for a platform, or undefined if there is none or it
+    has expired (stale entries are left for the next write to prune). */
+export async function getCrossPageSubmitIntent(platform: string): Promise<TaskInfo | undefined> {
+  const entry = (await readCrossPageIntents())[platform];
+  if (!entry) return undefined;
+  if (Date.now() - entry.startedAt > CROSS_PAGE_INTENT_TTL_MS) return undefined;
+  return entry.taskInfo;
+}
+
+export async function clearCrossPageSubmitIntent(platform: string): Promise<void> {
+  const all = await readCrossPageIntents();
+  delete all[platform];
+  await set(STORAGE_KEYS.crossPageSubmitIntent, all);
 }

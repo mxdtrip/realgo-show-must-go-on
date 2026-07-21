@@ -6,7 +6,7 @@
  * wired up, so the Go API client and the web app can share the same contract.
  */
 
-export type Platform = "leetcode" | "hackerrank" | "unknown";
+export type Platform = "leetcode" | "hackerrank" | "geeksforgeeks" | "codeforces" | "unknown";
 
 export type SubmitResult =
   | "accepted"
@@ -223,6 +223,11 @@ export const STORAGE_KEYS = {
   refreshToken: "realgo:refreshToken",
   userEmail: "realgo:userEmail",
   webSessionFingerprint: "realgo:webSessionFingerprint",
+  // Keyed by platform (see lib/storage.ts cross-page intent helpers). Only
+  // platforms whose submit flow navigates away from the problem page before a
+  // verdict appears (Codeforces: problem page → separate submit form → status
+  // page) need this; same-page platforms never touch it.
+  crossPageSubmitIntent: "realgo:crossPageSubmitIntent",
 } as const;
 
 /** Prefix for per-task assistant conversation state (suffix = task key). */

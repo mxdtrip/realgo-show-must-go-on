@@ -45,10 +45,13 @@ const LIVE_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 const platformNames: Record<string, string> = {
   leetcode: "LeetCode",
+  geeksforgeeks: "GeeksforGeeks",
   hackerrank: "HackerRank",
-  neetcode: "NeetCode",
   codeforces: "Codeforces",
   generic: "Generic",
+  // Legacy source value from the pre-fork extension MVP (see project memory);
+  // kept so old event rows still render with correct casing.
+  neetcode: "NeetCode",
 };
 
 function platformName(source: string): string {

@@ -2,7 +2,7 @@
   "name": "@freeburger/extension",
   "version": "0.1.0",
   "private": true,
-  "description": "realgo — фиксирует решённую задачу на LeetCode и HackerRank и добавляет её в очередь интервальных повторений.",
+  "description": "realgo — фиксирует решённую задачу на LeetCode, GeeksforGeeks, HackerRank или Codeforces и добавляет её в очередь интервальных повторений.",
   "scripts": {
     "dev": "plasmo dev",
     "dev:firefox": "plasmo dev --target=firefox-mv3",
@@ -47,6 +47,9 @@
       "https://www.hackerrank.com/*",
       "https://hackerrank.com/*",
       "https://leetcode.com/*",
+      "https://www.geeksforgeeks.org/*",
+      "https://geeksforgeeks.org/*",
+      "https://codeforces.com/*",
       "https://realgo.dev/*",
       "http://localhost:3000/*",
       "http://localhost:8080/*",
