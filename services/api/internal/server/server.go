@@ -173,6 +173,8 @@ func New(deps Deps) http.Handler {
 
 		// S4: personalized roadmap progress and authenticated company suggestions.
 		r.With(requireAuth(deps.Auth)).Get("/me/roadmap", roadmapHandler.Get)
+		r.With(requireAuth(deps.Auth)).Post("/me/roadmap/preview", roadmapHandler.Preview)
+		r.With(requireAuth(deps.Auth)).Put("/me/roadmap", roadmapHandler.Put)
 		r.With(requireAuth(deps.Auth)).Delete("/me/roadmap", roadmapHandler.Delete)
 		r.With(requireAuth(deps.Auth)).Get("/companies/search", companiesHandler.Search)
 

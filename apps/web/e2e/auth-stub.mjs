@@ -467,7 +467,17 @@ const DASHBOARD = {
 
 const ROADMAP = {
   overallProgress: 34,
-  target: { company: null, interviewDate: null },
+  target: { company: { code: "cmp_google", name: "Google" }, interviewDate: "2026-09-01", topics: ["arrays_hashing", "two_pointers"] },
+  priorityMode: "balanced",
+  availableModes: ["balanced", "easy_first", "company_frequency", "knowledge_gaps"],
+  algorithmVersion: 1,
+  source: "company",
+  horizonWeeks: 2,
+  weeklyCapacity: 3,
+  selectedCount: 2,
+  reserveCount: 1,
+  configured: true,
+  generatedAt: NOW_ISO,
   weeks: [
     {
       id: "week_01",
@@ -477,6 +487,7 @@ const ROADMAP = {
       focus: "solve pattern problems and reviews",
       status: "done",
       topics: ["arrays_hashing"],
+      items: [{ code: "arrays_hashing", name: "Arrays & Hashing", relevantProblemCount: 12, difficultyCounts: { easy: 4, medium: 8 }, masteryPercent: 100 }],
     },
     {
       id: "week_02",
@@ -486,6 +497,7 @@ const ROADMAP = {
       focus: "solve pattern problems and reviews",
       status: "active",
       topics: ["two_pointers"],
+      items: [{ code: "two_pointers", name: "Two Pointers", relevantProblemCount: 8, difficultyCounts: { easy: 2, medium: 6 }, masteryPercent: 40 }],
     },
   ],
   patterns: [],
@@ -517,7 +529,7 @@ const server = createServer((req, res) => {
   // content-type, so the browser sends a preflight. No credentials are used
   // (Bearer header, not cookies), so a wildcard origin is safe and simplest.
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Authorization, Content-Type");
 
   const path = new URL(req.url, `http://127.0.0.1:${PORT}`).pathname;
@@ -601,6 +613,26 @@ const server = createServer((req, res) => {
       const bearer = (req.headers.authorization ?? "").replace(/^Bearer\s+/i, "");
       if (kindOf(bearer) !== "LIVE") return fail(res, 401, "unauthorized", "stub: session invalid");
       return ok(res, ROADMAP);
+    }
+
+    if (req.method === "POST" && path === `${PREFIX}/me/roadmap/preview`) {
+      const bearer = (req.headers.authorization ?? "").replace(/^Bearer\s+/i, "");
+      if (kindOf(bearer) !== "LIVE") return fail(res, 401, "unauthorized", "stub: session invalid");
+      return ok(res, { ...ROADMAP, priorityMode: body.priorityMode ?? "balanced", configured: false });
+    }
+
+    if (req.method === "PUT" && path === `${PREFIX}/me/roadmap`) {
+      const bearer = (req.headers.authorization ?? "").replace(/^Bearer\s+/i, "");
+      if (kindOf(bearer) !== "LIVE") return fail(res, 401, "unauthorized", "stub: session invalid");
+      return ok(res, { ...ROADMAP, priorityMode: body.priorityMode ?? "balanced", configured: true });
+    }
+
+    if (req.method === "DELETE" && path === `${PREFIX}/me/roadmap`) {
+      const bearer = (req.headers.authorization ?? "").replace(/^Bearer\s+/i, "");
+      if (kindOf(bearer) !== "LIVE") return fail(res, 401, "unauthorized", "stub: session invalid");
+      res.writeHead(204);
+      res.end();
+      return;
     }
 
     if (req.method === "GET" && path === `${PREFIX}/me/extension/status`) {

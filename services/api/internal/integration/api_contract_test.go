@@ -452,6 +452,57 @@ func TestContractRoadmapTargetEmptyForFreshUser(t *testing.T) {
 	require.Empty(t, topics, "target.topics must be empty for a fresh user")
 }
 
+func TestContractRoadmapPreviewCommitAndRebuild(t *testing.T) {
+	h := newContractHarness(t)
+	email := uniqueEmail("roadmap-priority")
+	t.Cleanup(func() { h.cleanupUser(email) })
+	tokens := h.register(t, email, "Password123!")
+	t.Cleanup(func() { h.deleteRefreshTokens(tokens.refresh) })
+
+	interviewDate := time.Now().UTC().AddDate(0, 0, 28).Format(time.DateOnly)
+	config := map[string]any{
+		"companyCode":      "",
+		"companyName":      "",
+		"interviewDate":    interviewDate,
+		"priorityMode":     "easy_first",
+		"preserveProgress": false,
+	}
+	preview := h.request(t, http.MethodPost, "/api/v1/me/roadmap/preview", tokens.access, config)
+	previewData := requireSuccessEnvelope(t, preview, http.StatusOK)
+	require.Equal(t, false, previewData["configured"])
+	require.Equal(t, "easy_first", previewData["priorityMode"])
+	require.Equal(t, "core", previewData["source"])
+	require.NotEmpty(t, previewData["weeks"])
+	require.Greater(t, int(previewData["selectedCount"].(float64)), 0)
+
+	saved := h.request(t, http.MethodPut, "/api/v1/me/roadmap", tokens.access, config)
+	savedData := requireSuccessEnvelope(t, saved, http.StatusOK)
+	require.Equal(t, true, savedData["configured"])
+	require.Equal(t, "easy_first", savedData["priorityMode"])
+
+	loaded := h.request(t, http.MethodGet, "/api/v1/me/roadmap", tokens.access, nil)
+	loadedData := requireSuccessEnvelope(t, loaded, http.StatusOK)
+	require.Equal(t, true, loadedData["configured"])
+	require.Equal(t, "easy_first", loadedData["priorityMode"])
+	require.Equal(t, savedData["selectedCount"], loadedData["selectedCount"])
+	target := objectField(t, loadedData, "target")
+	require.NotEmpty(t, target["topics"])
+
+	config["priorityMode"] = "balanced"
+	config["preserveProgress"] = true
+	rebuilt := h.request(t, http.MethodPut, "/api/v1/me/roadmap", tokens.access, config)
+	rebuiltData := requireSuccessEnvelope(t, rebuilt, http.StatusOK)
+	require.Equal(t, "balanced", rebuiltData["priorityMode"])
+	require.Equal(t, savedData["selectedCount"], rebuiltData["selectedCount"])
+
+	deleted := h.request(t, http.MethodDelete, "/api/v1/me/roadmap", tokens.access, nil)
+	require.Equal(t, http.StatusNoContent, deleted.status)
+	afterDelete := h.request(t, http.MethodGet, "/api/v1/me/roadmap", tokens.access, nil)
+	afterDeleteData := requireSuccessEnvelope(t, afterDelete, http.StatusOK)
+	require.Equal(t, false, afterDeleteData["configured"])
+	require.Nil(t, objectField(t, afterDeleteData, "target")["company"])
+}
+
 func newContractHarness(t *testing.T) *contractHarness {
 	t.Helper()
 

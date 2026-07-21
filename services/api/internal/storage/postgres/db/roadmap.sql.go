@@ -22,6 +22,24 @@ func (q *Queries) ClearRoadmapTarget(ctx context.Context, id int64) error {
 	return err
 }
 
+const deleteUserRoadmapConfig = `-- name: DeleteUserRoadmapConfig :exec
+DELETE FROM user_roadmap_configs WHERE user_id = $1
+`
+
+func (q *Queries) DeleteUserRoadmapConfig(ctx context.Context, userID int64) error {
+	_, err := q.db.Exec(ctx, deleteUserRoadmapConfig, userID)
+	return err
+}
+
+const deleteUserRoadmapPlanItems = `-- name: DeleteUserRoadmapPlanItems :exec
+DELETE FROM user_roadmap_plan_items WHERE user_id = $1
+`
+
+func (q *Queries) DeleteUserRoadmapPlanItems(ctx context.Context, userID int64) error {
+	_, err := q.db.Exec(ctx, deleteUserRoadmapPlanItems, userID)
+	return err
+}
+
 const getRoadmapUserTarget = `-- name: GetRoadmapUserTarget :one
 SELECT target_company, interview_date, target_topics
 FROM users
@@ -39,6 +57,68 @@ func (q *Queries) GetRoadmapUserTarget(ctx context.Context, id int64) (GetRoadma
 	var i GetRoadmapUserTargetRow
 	err := row.Scan(&i.TargetCompany, &i.InterviewDate, &i.TargetTopics)
 	return i, err
+}
+
+const getUserRoadmapConfig = `-- name: GetUserRoadmapConfig :one
+SELECT user_id, company_code, priority_mode, horizon_weeks, weekly_capacity,
+       algorithm_version, source, generated_at
+FROM user_roadmap_configs
+WHERE user_id = $1
+`
+
+type GetUserRoadmapConfigRow struct {
+	UserID           int64
+	CompanyCode      pgtype.Text
+	PriorityMode     string
+	HorizonWeeks     int32
+	WeeklyCapacity   int32
+	AlgorithmVersion int32
+	Source           string
+	GeneratedAt      pgtype.Timestamptz
+}
+
+func (q *Queries) GetUserRoadmapConfig(ctx context.Context, userID int64) (GetUserRoadmapConfigRow, error) {
+	row := q.db.QueryRow(ctx, getUserRoadmapConfig, userID)
+	var i GetUserRoadmapConfigRow
+	err := row.Scan(
+		&i.UserID,
+		&i.CompanyCode,
+		&i.PriorityMode,
+		&i.HorizonWeeks,
+		&i.WeeklyCapacity,
+		&i.AlgorithmVersion,
+		&i.Source,
+		&i.GeneratedAt,
+	)
+	return i, err
+}
+
+const insertUserRoadmapPlanItem = `-- name: InsertUserRoadmapPlanItem :exec
+INSERT INTO user_roadmap_plan_items (
+    user_id, subpattern_id, week_index, position, selected
+)
+SELECT $1, p.id, $2, $3, $4
+FROM patterns p
+WHERE p.code = $5 AND p.kind = 'subpattern'
+`
+
+type InsertUserRoadmapPlanItemParams struct {
+	UserID         int64
+	WeekIndex      int32
+	Position       int32
+	Selected       bool
+	SubpatternCode string
+}
+
+func (q *Queries) InsertUserRoadmapPlanItem(ctx context.Context, arg InsertUserRoadmapPlanItemParams) error {
+	_, err := q.db.Exec(ctx, insertUserRoadmapPlanItem,
+		arg.UserID,
+		arg.WeekIndex,
+		arg.Position,
+		arg.Selected,
+		arg.SubpatternCode,
+	)
+	return err
 }
 
 const listUserRoadmapItems = `-- name: ListUserRoadmapItems :many
@@ -115,4 +195,118 @@ func (q *Queries) ListUserRoadmapItems(ctx context.Context, arg ListUserRoadmapI
 		return nil, err
 	}
 	return items, nil
+}
+
+const listUserRoadmapPlanItems = `-- name: ListUserRoadmapPlanItems :many
+SELECT p.code, p.name, p.position AS taxonomy_position,
+       i.week_index, i.position, i.selected
+FROM user_roadmap_plan_items i
+JOIN patterns p ON p.id = i.subpattern_id
+WHERE i.user_id = $1
+ORDER BY i.position
+`
+
+type ListUserRoadmapPlanItemsRow struct {
+	Code             string
+	Name             string
+	TaxonomyPosition pgtype.Int4
+	WeekIndex        int32
+	Position         int32
+	Selected         bool
+}
+
+func (q *Queries) ListUserRoadmapPlanItems(ctx context.Context, userID int64) ([]ListUserRoadmapPlanItemsRow, error) {
+	rows, err := q.db.Query(ctx, listUserRoadmapPlanItems, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListUserRoadmapPlanItemsRow
+	for rows.Next() {
+		var i ListUserRoadmapPlanItemsRow
+		if err := rows.Scan(
+			&i.Code,
+			&i.Name,
+			&i.TaxonomyPosition,
+			&i.WeekIndex,
+			&i.Position,
+			&i.Selected,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const setRoadmapTarget = `-- name: SetRoadmapTarget :exec
+UPDATE users
+SET target_company = NULLIF($1::text, ''),
+    interview_date = $2::timestamptz,
+    target_topics = $3::text[],
+    updated_at = NOW()
+WHERE id = $4
+`
+
+type SetRoadmapTargetParams struct {
+	TargetCompany string
+	InterviewDate pgtype.Timestamptz
+	TargetTopics  []string
+	UserID        int64
+}
+
+func (q *Queries) SetRoadmapTarget(ctx context.Context, arg SetRoadmapTargetParams) error {
+	_, err := q.db.Exec(ctx, setRoadmapTarget,
+		arg.TargetCompany,
+		arg.InterviewDate,
+		arg.TargetTopics,
+		arg.UserID,
+	)
+	return err
+}
+
+const upsertUserRoadmapConfig = `-- name: UpsertUserRoadmapConfig :exec
+INSERT INTO user_roadmap_configs (
+    user_id, company_code, priority_mode, horizon_weeks, weekly_capacity,
+    algorithm_version, source, generated_at, updated_at
+) VALUES (
+    $1, $2, $3,
+    $4, $5,
+    $6, $7, NOW(), NOW()
+)
+ON CONFLICT (user_id) DO UPDATE SET
+    company_code = EXCLUDED.company_code,
+    priority_mode = EXCLUDED.priority_mode,
+    horizon_weeks = EXCLUDED.horizon_weeks,
+    weekly_capacity = EXCLUDED.weekly_capacity,
+    algorithm_version = EXCLUDED.algorithm_version,
+    source = EXCLUDED.source,
+    generated_at = NOW(),
+    updated_at = NOW()
+`
+
+type UpsertUserRoadmapConfigParams struct {
+	UserID           int64
+	CompanyCode      pgtype.Text
+	PriorityMode     string
+	HorizonWeeks     int32
+	WeeklyCapacity   int32
+	AlgorithmVersion int32
+	Source           string
+}
+
+func (q *Queries) UpsertUserRoadmapConfig(ctx context.Context, arg UpsertUserRoadmapConfigParams) error {
+	_, err := q.db.Exec(ctx, upsertUserRoadmapConfig,
+		arg.UserID,
+		arg.CompanyCode,
+		arg.PriorityMode,
+		arg.HorizonWeeks,
+		arg.WeeklyCapacity,
+		arg.AlgorithmVersion,
+		arg.Source,
+	)
+	return err
 }
