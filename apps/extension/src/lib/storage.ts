@@ -99,15 +99,25 @@ export async function setTokens(tokens: TokenPair): Promise<void> {
 }
 
 /**
- * Clears the account session and all account-scoped cached data. API/Web URL
- * preferences are intentionally retained because they belong to the extension
- * installation rather than to a particular user.
+ * Clears the account session and (by default) all account-scoped cached
+ * data. API/Web URL preferences are intentionally retained because they
+ * belong to the extension installation rather than to a particular user.
+ *
+ * `keepAssistantState` exists for the passive/silent session-loss path
+ * (an access-token refresh discovered the session is gone, e.g. from a
+ * background cards poll) — the user didn't choose to end anything and is
+ * almost certainly about to log back into the same account, so wiping every
+ * open task's AI conversation history/hint progress out from under them is
+ * pure loss with no privacy benefit. An explicit logout, or the web app
+ * handing off to a different account, still wants the full wipe (leaving
+ * another account's assistant history behind on a shared device would be
+ * the actual privacy problem there) and must not pass this.
  */
-export async function clearTokens(): Promise<void> {
+export async function clearTokens(options?: { keepAssistantState?: boolean }): Promise<void> {
   const all = await chrome.storage.local.get(null);
-  const accountKeys = Object.keys(all).filter((key) =>
-    key.startsWith(ASSISTANT_STATE_KEY_PREFIX)
-  );
+  const accountKeys = options?.keepAssistantState
+    ? []
+    : Object.keys(all).filter((key) => key.startsWith(ASSISTANT_STATE_KEY_PREFIX));
   await chrome.storage.local.remove([
     STORAGE_KEYS.accessToken,
     STORAGE_KEYS.refreshToken,
