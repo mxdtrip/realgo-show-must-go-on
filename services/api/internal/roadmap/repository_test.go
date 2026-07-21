@@ -200,3 +200,119 @@ func TestBuildResponse_FamilyWithNoKnownSubpatternsHasNoTopics(t *testing.T) {
 		t.Fatalf("topics = %v, want empty slice", resp.Weeks[0].Topics)
 	}
 }
+
+func relevantProblem(id int64, code, difficulty string) patterns.AtlasRelevantProblem {
+	return patterns.AtlasRelevantProblem{
+		PracticeProblem: patterns.PracticeProblem{ID: id, Difficulty: difficulty},
+		SubpatternCode:  code,
+	}
+}
+
+func TestGeneratePlan_CompanyFrequencyUsesUniqueRelevantProblemCount(t *testing.T) {
+	rel := func(level string, evidence int) *patterns.CompanyRelevance {
+		return &patterns.CompanyRelevance{Relevance: level, Confidence: "high", EvidenceCount: evidence}
+	}
+	atlas := patterns.AtlasResponse{
+		Company: &patterns.AtlasCompanyOverlay{
+			Code: "cmp_google",
+			RelevantProblems: []patterns.AtlasRelevantProblem{
+				relevantProblem(1, "many", "medium"),
+				relevantProblem(2, "many", "medium"),
+				relevantProblem(2, "many", "medium"), // duplicate must not count twice
+				relevantProblem(3, "few", "easy"),
+			},
+		},
+		Subpatterns: []patterns.AtlasSubpattern{
+			{Code: "few", Name: "Few", Position: 1, Relevance: rel("low", 20)},
+			{Code: "many", Name: "Many", Position: 2, Relevance: rel("medium", 2)},
+		},
+	}
+
+	items := generatePlan(atlas, SourceCompany, PriorityCompanyFrequency, 1, 3, nil, false)
+
+	if len(items) != 2 || items[0].Code != "many" || items[0].RelevantProblemCount != 2 {
+		t.Fatalf("items = %+v, want many first with two unique tasks", items)
+	}
+}
+
+func TestGeneratePlan_EasyFirstUsesCompanySpecificDifficulty(t *testing.T) {
+	rel := &patterns.CompanyRelevance{Relevance: "high", Confidence: "high"}
+	atlas := patterns.AtlasResponse{
+		Company: &patterns.AtlasCompanyOverlay{RelevantProblems: []patterns.AtlasRelevantProblem{
+			relevantProblem(1, "hard", "hard"),
+			relevantProblem(2, "easy", "easy"),
+			relevantProblem(3, "medium", "medium"),
+		}},
+		Subpatterns: []patterns.AtlasSubpattern{
+			{Code: "hard", Name: "Hard", Position: 1, Relevance: rel},
+			{Code: "easy", Name: "Easy", Position: 2, Relevance: rel},
+			{Code: "medium", Name: "Medium", Position: 3, Relevance: rel},
+		},
+	}
+
+	items := generatePlan(atlas, SourceCompany, PriorityEasyFirst, 1, 3, nil, false)
+
+	got := []string{items[0].Code, items[1].Code, items[2].Code}
+	want := []string{"easy", "medium", "hard"}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("order = %v, want %v", got, want)
+		}
+	}
+}
+
+func TestGeneratePlan_CapsMainPlanAndKeepsReserve(t *testing.T) {
+	atlas := patterns.AtlasResponse{Subpatterns: []patterns.AtlasSubpattern{
+		{Code: "a", Name: "A", Position: 1},
+		{Code: "b", Name: "B", Position: 2},
+		{Code: "c", Name: "C", Position: 3},
+		{Code: "d", Name: "D", Position: 4},
+	}}
+
+	items := generatePlan(atlas, SourceCore, PriorityBalanced, 1, 3, nil, false)
+	selected, reserve := 0, 0
+	for _, item := range items {
+		if item.Selected {
+			selected++
+		} else {
+			reserve++
+		}
+	}
+	if selected != 3 || reserve != 1 {
+		t.Fatalf("selected=%d reserve=%d, want 3/1", selected, reserve)
+	}
+}
+
+func TestGeneratePlan_PreservesCompletedAndActiveWeeks(t *testing.T) {
+	atlas := patterns.AtlasResponse{Subpatterns: []patterns.AtlasSubpattern{
+		{Code: "done", Name: "Done", Position: 1, Mastery: patterns.Mastery{Percent: 100}},
+		{Code: "active", Name: "Active", Position: 2, Mastery: patterns.Mastery{Percent: 40}},
+		{Code: "future", Name: "Future", Position: 3},
+	}}
+	existing := []planItem{
+		{Item: Item{Code: "done", MasteryPercent: 100}, WeekIndex: 1, Position: 1, Selected: true},
+		{Item: Item{Code: "active", MasteryPercent: 40}, WeekIndex: 2, Position: 2, Selected: true},
+		{Item: Item{Code: "future"}, WeekIndex: 3, Position: 3, Selected: true},
+	}
+
+	items := generatePlan(atlas, SourceCore, PriorityEasyFirst, 4, 3, existing, true)
+	byCode := map[string]planItem{}
+	for _, item := range items {
+		byCode[item.Code] = item
+	}
+	if byCode["done"].WeekIndex != 1 || byCode["active"].WeekIndex != 2 {
+		t.Fatalf("frozen weeks changed: %+v", byCode)
+	}
+	if byCode["future"].WeekIndex <= 2 {
+		t.Fatalf("future item was not rebuilt after active week: %+v", byCode["future"])
+	}
+}
+
+func TestEffectiveMode_HidesUnavailableSignals(t *testing.T) {
+	if got := effectiveMode(PriorityCompanyFrequency, SourceCore, false); got != PriorityBalanced {
+		t.Fatalf("company frequency without company = %q, want balanced", got)
+	}
+	if got := effectiveMode(PriorityKnowledgeGaps, SourceCompany, false); got != PriorityBalanced {
+		t.Fatalf("knowledge gaps without history = %q, want balanced", got)
+	}
+}

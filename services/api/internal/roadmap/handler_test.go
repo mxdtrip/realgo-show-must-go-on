@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/mxdtrip/freeburger/services/api/internal/auth"
@@ -142,6 +143,20 @@ func (f fakeRepository) Clear(context.Context, int64) error {
 	return f.clearErr
 }
 
+func (f fakeRepository) Preview(context.Context, int64, ConfigRequest) (Response, error) {
+	if f.err != nil {
+		return Response{}, f.err
+	}
+	return f.data, nil
+}
+
+func (f fakeRepository) Save(context.Context, int64, ConfigRequest) (Response, error) {
+	if f.err != nil {
+		return Response{}, f.err
+	}
+	return f.data, nil
+}
+
 func TestGet_InternalError(t *testing.T) {
 	h := NewHandler(fakeRepository{err: errors.New("boom")})
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/me/roadmap", nil)
@@ -193,5 +208,33 @@ func TestDelete_InternalError(t *testing.T) {
 
 	if w.Code != http.StatusInternalServerError {
 		t.Fatalf("status = %d, want %d", w.Code, http.StatusInternalServerError)
+	}
+}
+
+func TestPreview_RejectsUnknownMode(t *testing.T) {
+	h := NewHandler(fakeRepository{})
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/me/roadmap/preview", strings.NewReader(`{"priorityMode":"random"}`))
+	req.Header.Set("Content-Type", "application/json")
+	req = req.WithContext(auth.ContextWithUserID(req.Context(), 10))
+	w := httptest.NewRecorder()
+
+	h.Preview(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d, want %d", w.Code, http.StatusBadRequest)
+	}
+}
+
+func TestPut_Success(t *testing.T) {
+	h := NewHandler(fakeRepository{data: Response{PriorityMode: PriorityEasyFirst, Weeks: []Week{}}})
+	req := httptest.NewRequest(http.MethodPut, "/api/v1/me/roadmap", strings.NewReader(`{"companyCode":"cmp_google","companyName":"Google","interviewDate":"2026-08-12","priorityMode":"easy_first"}`))
+	req.Header.Set("Content-Type", "application/json")
+	req = req.WithContext(auth.ContextWithUserID(req.Context(), 10))
+	w := httptest.NewRecorder()
+
+	h.Put(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d: %s", w.Code, http.StatusOK, w.Body.String())
 	}
 }

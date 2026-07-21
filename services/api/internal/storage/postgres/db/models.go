@@ -271,3 +271,23 @@ type UserProblemProgress struct {
 	Confidence     pgtype.Int4
 	Note           pgtype.Text
 }
+
+type UserRoadmapConfig struct {
+	UserID           int64
+	CompanyCode      pgtype.Text
+	PriorityMode     string
+	HorizonWeeks     int32
+	WeeklyCapacity   int32
+	AlgorithmVersion int32
+	Source           string
+	GeneratedAt      pgtype.Timestamptz
+	UpdatedAt        pgtype.Timestamptz
+}
+
+type UserRoadmapPlanItem struct {
+	UserID       int64
+	SubpatternID int64
+	WeekIndex    int32
+	Position     int32
+	Selected     bool
+}

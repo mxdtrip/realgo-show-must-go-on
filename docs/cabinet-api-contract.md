@@ -85,6 +85,8 @@
 | Quiz | `POST /me/quiz/generate` | AI-генерация вопроса квиза |
 | Assistant | `POST /assistant/hint` | Подсказка ассистента по задаче (3 уровня: nudge/approach/reveal) |
 | Roadmap | `GET /me/roadmap` | План подготовки |
+| Roadmap | `POST /me/roadmap/preview` | Предпросмотр приоритизации без сохранения |
+| Roadmap | `PUT /me/roadmap` | Сохранить/перестроить персональный план |
 | Roadmap | `GET /roadmaps/neetcode_150` | Справочник NeetCode 150 (публичный, без auth) |
 | Extension | `POST /extension/events` | События из расширения |
 | Extension | `GET /me/extension/status` | Статус синхронизации |
@@ -763,6 +765,39 @@ priority: low | medium | high
 
 ## Roadmap
 
+### `POST /me/roadmap/preview` / `PUT /me/roadmap`
+
+Обе ручки принимают одинаковую конфигурацию. `preview` только рассчитывает
+план, `PUT` атомарно сохраняет конфигурацию, порядок подпаттернов и target
+пользователя. При `preserveProgress: true` завершённые недели и первая
+незавершённая (текущая) неделя остаются на месте; перестраивается только
+будущее.
+
+```json
+{
+  "companyCode": "cmp_google",
+  "companyName": "Google",
+  "interviewDate": "2026-09-01",
+  "priorityMode": "balanced",
+  "preserveProgress": false
+}
+```
+
+`priorityMode`:
+
+```text
+balanced | easy_first | company_frequency | knowledge_gaps
+```
+
+- `balanced` — частота компании, пробел пользователя и плавность сложности;
+- `easy_first` — средняя сложность релевантных задач от easy к hard;
+- `company_frequency` — число уникальных company-relevant задач по убыванию;
+- `knowledge_gaps` — минимальная mastery первой (доступен после появления истории).
+
+Если у выбранной компании нет evidence overlay, сервер строит `core`-план и
+не предлагает `company_frequency`. Основной план содержит не более трёх новых
+подпаттернов в неделю; остальные кандидаты возвращаются как `reserveCount`.
+
 ### `GET /me/roadmap`
 
 Response:
@@ -779,6 +814,15 @@ Response:
       "interviewDate": "2026-07-21",
       "topics": ["arrays", "two_pointers"]
     },
+    "priorityMode": "balanced",
+    "availableModes": ["balanced", "easy_first", "company_frequency"],
+    "algorithmVersion": 1,
+    "source": "company",
+    "horizonWeeks": 6,
+    "weeklyCapacity": 3,
+    "selectedCount": 18,
+    "reserveCount": 7,
+    "configured": true,
     "weeks": [
       {
         "id": "week_01",
@@ -787,7 +831,16 @@ Response:
         "progress": 82,
         "focus": "собрать базу и закрыть быстрые повторения",
         "status": "done",
-        "topics": ["arrays", "hashing", "two_pointers"]
+        "topics": ["arrays", "hashing", "two_pointers"],
+        "items": [
+          {
+            "code": "arrays",
+            "name": "Array Traversal",
+            "relevantProblemCount": 12,
+            "difficultyCounts": {"easy": 4, "medium": 8},
+            "masteryPercent": 82
+          }
+        ]
       }
     ]
   }
@@ -1021,7 +1074,7 @@ Display labels можно отдавать с backend или хранить на
 
 ## Что можно отложить дальше
 
-- Полная персонализация roadmap под конкретную компанию (сейчас roadmap строится по NeetCode 150, компания только экспонируется).
+- Настраиваемая недельная нагрузка roadmap (сейчас безопасный дефолт — три новых подпаттерна в неделю).
 - Серверные push notifications (сейчас — только локальные browser notifications).
 - Экспорт в Anki.
 - Billing/Pro.

@@ -7,15 +7,15 @@ import { useRouter } from "next/navigation";
 import { updateProfile } from "../../../_api/account";
 import { useAuth } from "../../../_api/AuthProvider";
 import { searchCompanies, type Company } from "../../../_api/companies";
+import {
+  previewRoadmap,
+  saveRoadmap,
+  type RoadmapPriorityMode,
+  type RoadmapResponse,
+} from "../../../_api/roadmap";
 import { ApiError } from "../../../_api/types";
 import { getDictionary, onboardingApiCopy } from "../../../_content/i18n";
 import { platformOptions, type PlatformId } from "../../../_profile/platforms";
-import {
-  generateRoadmap,
-  saveRoadmap,
-  weeksUntil,
-  type RoadmapResult,
-} from "../../../_profile/roadmapGenerator";
 
 const fallbackCompanies: readonly Company[] = [
   { id: "cmp_amazon", name: "Amazon", source: "fallback" },
@@ -58,24 +58,6 @@ function fullDateLabel(iso: string, locale = "ru-RU") {
   const date = new Date(`${iso}T00:00:00`);
   if (Number.isNaN(date.getTime())) return iso;
   return new Intl.DateTimeFormat(locale, { day: "numeric", month: "long", year: "numeric" }).format(date);
-}
-
-function splitCompanies(value: string) {
-  return value
-    .split(",")
-    .map((item) => item.trim())
-    .filter(Boolean);
-}
-
-function activeCompanyQuery(value: string) {
-  const parts = value.split(",");
-  return parts.at(-1)?.trim() ?? "";
-}
-
-function replaceActiveCompany(value: string, suggestion: string) {
-  const parts = value.split(",");
-  parts[parts.length - 1] = ` ${suggestion}`;
-  return parts.map((part) => part.trim()).filter(Boolean).join(", ");
 }
 
 // Вертикальное «колесо»: активно значение, остановившееся по центру.
@@ -281,6 +263,7 @@ export default function OnboardingProfilePage() {
   const [companyCodesByName, setCompanyCodesByName] = useState<Record<string, string>>(fallbackCompanyCodes);
   const [companyInput, setCompanyInput] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
+  const [priorityMode, setPriorityMode] = useState<RoadmapPriorityMode>("balanced");
   const [step, setStep] = useState<OnboardingStep>("platform");
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
@@ -298,12 +281,11 @@ export default function OnboardingProfilePage() {
   }, [router, status, user?.onboarding_completed]);
 
   const currentStepIndex = Math.max(0, steps.indexOf(step));
-  const selectedCompanies = useMemo(() => splitCompanies(companyInput), [companyInput]);
-  const targetCompany = selectedCompanies[0] ?? "";
+  const targetCompany = companyInput.trim();
   const targetCompanyCode = companyCodesByName[targetCompany.toLowerCase()] ?? "";
   const currentStepHasValue =
     (step === "platform" && selectedPlatform.length > 0) ||
-    (step === "company" && selectedCompanies.length > 0) ||
+    (step === "company" && targetCompany.length > 0) ||
     (step === "date" && selectedDate.length > 0) ||
     step === "roadmap";
 
@@ -369,17 +351,16 @@ export default function OnboardingProfilePage() {
   );
 
   const suggestions = useMemo(() => {
-    const query = activeCompanyQuery(companyInput).toLowerCase();
-    const used = new Set(selectedCompanies.map((item) => item.toLowerCase()));
+    const query = companyInput.trim().toLowerCase();
     if (query.length < 2) return [];
     return companySuggestions
-      .filter((item) => item.name.toLowerCase().includes(query) && !used.has(item.name.toLowerCase()))
+      .filter((item) => item.name.toLowerCase().includes(query) && item.name.toLowerCase() !== query)
       .slice(0, 6);
-  }, [companySuggestions, companyInput, selectedCompanies]);
+  }, [companySuggestions, companyInput]);
 
   // Debounced company autocomplete from the backend API.
   useEffect(() => {
-    const query = activeCompanyQuery(companyInput);
+    const query = companyInput.trim();
     if (query.trim().length < 2) {
       setCompanySuggestions([...fallbackCompanies]);
       return;
@@ -407,15 +388,13 @@ export default function OnboardingProfilePage() {
     };
   }, [companyInput]);
 
-  const [roadmapResult, setRoadmapResult] = useState<RoadmapResult>({ source: "none", weeks: [] });
+  const [roadmapResult, setRoadmapResult] = useState<RoadmapResponse | null>(null);
   const [roadmapLoadState, setRoadmapLoadState] = useState<"idle" | "loading" | "loaded" | "error">(
     "idle",
   );
-  const previewWeeks = roadmapResult.weeks;
-  const previewTopicsCount = previewWeeks.reduce((sum, week) => sum + week.items.length, 0);
-  // Горизонт больше не выбирается вручную — считаем недели прямо из даты
-  // интервью, которую пользователь уже указал на предыдущем шаге.
-  const weeksCount = weeksUntil(selectedDate || null);
+  const previewWeeks = roadmapResult?.weeks ?? [];
+  const previewTopicsCount = roadmapResult?.selectedCount ?? 0;
+  const weeksCount = roadmapResult?.horizonWeeks ?? 4;
 
   // Роадмап тянет реальные релевантные компании субпаттерны из атласа,
   // поэтому пересчитываем при входе на шаг и при смене входных данных.
@@ -423,9 +402,19 @@ export default function OnboardingProfilePage() {
     if (step !== "roadmap") return;
     const controller = new AbortController();
     setRoadmapLoadState("loading");
-    generateRoadmap({ weeksCount, targetCompany, targetCompanyCode }, controller.signal)
+    previewRoadmap(
+      {
+        companyCode: targetCompanyCode,
+        companyName: targetCompany,
+        interviewDate: selectedDate || null,
+        priorityMode,
+        preserveProgress: false,
+      },
+      controller.signal,
+    )
       .then((result) => {
         setRoadmapResult(result);
+        setPriorityMode(result.priorityMode);
         setRoadmapLoadState("loaded");
       })
       .catch((e: unknown) => {
@@ -433,7 +422,7 @@ export default function OnboardingProfilePage() {
         setRoadmapLoadState("error");
       });
     return () => controller.abort();
-  }, [step, targetCompany, targetCompanyCode, weeksCount]);
+  }, [priorityMode, selectedDate, step, targetCompany, targetCompanyCode]);
 
   const saveProfile = useCallback(async () => {
     setSaving(true);
@@ -441,15 +430,17 @@ export default function OnboardingProfilePage() {
     try {
       const timezone =
         Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
-      const roadmapConfig = { weeksCount, targetCompany, targetCompanyCode };
-      const result = roadmapLoadState === "loaded"
-        ? roadmapResult
-        : await generateRoadmap(roadmapConfig);
+      const result = await saveRoadmap({
+        companyCode: targetCompanyCode,
+        companyName: targetCompany,
+        interviewDate: selectedDate || null,
+        priorityMode,
+        preserveProgress: false,
+      });
 
       // Persist every client-side prerequisite before committing
       // onboarding_completed on the server. A failed roadmap request can now
       // be retried without the auth guard skipping this page on reload.
-      saveRoadmap(roadmapConfig, result);
       window.localStorage.setItem(
         onboardingStorageKey,
         JSON.stringify({
@@ -457,6 +448,7 @@ export default function OnboardingProfilePage() {
           interviewDate: selectedDate || null,
           targetCompany: targetCompany || null,
           targetCompanyCode: targetCompanyCode || null,
+          priorityMode,
           savedAt: new Date().toISOString(),
         }),
       );
@@ -475,7 +467,7 @@ export default function OnboardingProfilePage() {
     } finally {
       setSaving(false);
     }
-  }, [roadmapLoadState, roadmapResult, selectedDate, selectedPlatform, targetCompany, targetCompanyCode, weeksCount]);
+  }, [priorityMode, selectedDate, selectedPlatform, targetCompany, targetCompanyCode]);
 
   const goNext = useCallback(() => {
     if (step === "platform") {
@@ -555,7 +547,7 @@ export default function OnboardingProfilePage() {
               </div>
               <div>
                 <dt>{summary.companies}</dt>
-                <dd>{selectedCompanies.length > 0 ? selectedCompanies.join(", ") : summary.empty}</dd>
+                <dd>{targetCompany || summary.empty}</dd>
               </div>
               <div>
                 <dt>{summary.date}</dt>
@@ -569,6 +561,10 @@ export default function OnboardingProfilePage() {
                     : summary.empty}
                 </dd>
               </div>
+              <div>
+                <dt>{summary.priority}</dt>
+                <dd>{copy.roadmap.modes[priorityMode].title}</dd>
+              </div>
             </dl>
             <button className="onboarding-primary" type="button" onClick={() => router.push("/dashboard")}>
               {copy.welcome.action}
@@ -580,6 +576,9 @@ export default function OnboardingProfilePage() {
   }
 
   const stepTag = `${String(currentStepIndex + 1).padStart(2, "0")} / ${step}`;
+  const visiblePriorityModes =
+    roadmapResult?.availableModes ??
+    (["balanced", "easy_first", ...(targetCompany ? ["company_frequency"] : [])] as RoadmapPriorityMode[]);
 
   return (
     <main className="onboarding-page">
@@ -648,24 +647,18 @@ export default function OnboardingProfilePage() {
                   <option key={item.id} value={item.name} />
                 ))}
               </datalist>
-              {selectedCompanies.length > 0 ? (
+              {targetCompany ? (
                 <div className="selected-companies" aria-label={copy.company.selectedLabel}>
-                  {selectedCompanies.map((item) => (
-                    <button
-                      key={item}
-                      type="button"
-                      onClick={() => setCompanyInput(selectedCompanies.filter((company) => company !== item).join(", "))}
-                    >
-                      {item}
-                      <span>×</span>
-                    </button>
-                  ))}
+                  <button type="button" onClick={() => setCompanyInput("")}>
+                    {targetCompany}
+                    <span>×</span>
+                  </button>
                 </div>
               ) : null}
               {suggestions.length > 0 ? (
                 <div className="company-suggestions" aria-label={copy.company.suggestionsLabel}>
                   {suggestions.map((item) => (
-                    <button key={item.id} type="button" onClick={() => setCompanyInput(replaceActiveCompany(companyInput, item.name))}>
+                    <button key={item.id} type="button" onClick={() => setCompanyInput(item.name)}>
                       {item.name}
                     </button>
                   ))}
@@ -699,6 +692,27 @@ export default function OnboardingProfilePage() {
 
           {step === "roadmap" ? (
             <div className="onboarding-main">
+              <section className="onboarding-priority" aria-label={copy.roadmap.priorityLabel}>
+                <div className="onboarding-priority__head">
+                  <strong>{copy.roadmap.priorityLabel}</strong>
+                  <span>{copy.roadmap.priorityChangeLater}</span>
+                </div>
+                <div className="onboarding-priority__options">
+                  {visiblePriorityModes.map((mode) => (
+                    <button
+                      aria-pressed={priorityMode === mode}
+                      className={priorityMode === mode ? "selected" : ""}
+                      key={mode}
+                      type="button"
+                      onClick={() => setPriorityMode(mode)}
+                    >
+                      <strong>{copy.roadmap.modes[mode].title}</strong>
+                      {mode === "balanced" ? <em>{copy.roadmap.recommended}</em> : null}
+                    </button>
+                  ))}
+                </div>
+                <p>{copy.roadmap.modes[priorityMode].description}</p>
+              </section>
               <p className="onboarding-wheels-result">
                 {copy.roadmap.horizonLabel}: <em>{weeksCount} {copy.roadmap.previewWeeksUnit}</em>
               </p>
@@ -706,7 +720,7 @@ export default function OnboardingProfilePage() {
                 <p className="onboarding-hint">{copy.roadmap.previewLoading}</p>
               ) : roadmapLoadState === "error" ? (
                 <p className="onboarding-save-error" role="alert">{copy.roadmap.previewError}</p>
-              ) : roadmapResult.source === "none" ? (
+              ) : !roadmapResult || roadmapResult.selectedCount === 0 ? (
                 <div className="onboarding-roadmap-empty">
                   <strong>{copy.roadmap.noPoolTitle}</strong>
                   <p>{copy.roadmap.noPoolDescription}</p>
@@ -720,6 +734,11 @@ export default function OnboardingProfilePage() {
                     <span className="onboarding-roadmap-preview__count">
                       <em>{previewTopicsCount}</em> {copy.roadmap.previewTopicsUnit}
                     </span>
+                    {roadmapResult.reserveCount > 0 ? (
+                      <span className="onboarding-roadmap-preview__count">
+                        <em>{roadmapResult.reserveCount}</em> {copy.roadmap.previewReserveUnit}
+                      </span>
+                    ) : null}
                   </div>
                   <ol className="onboarding-roadmap-preview__list">
                     {previewWeeks.slice(0, 8).map((week, index) => (
