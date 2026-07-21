@@ -5813,7 +5813,14 @@ a.roadmap-step__practice-card:hover {
 }
 
 @media (max-width: 920px) {
-  .code-sheet {
+  /* The whole editor, not just .code-sheet: hiding only the textarea left
+     .code-lines (its syntax-highlight backdrop, a sibling — not a child of
+     .code-sheet) still rendered, an empty box that could still flash the
+     active-line highlight from the bubble-sort animation with no visible
+     code text to go with it. Nothing here is usable without the textarea
+     anyway (typing is how it's driven), so there's nothing left worth
+     showing once it's gone. */
+  .code-editor {
     display: none;
   }
 

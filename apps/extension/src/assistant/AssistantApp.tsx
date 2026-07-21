@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { getAssistantState, setAssistantState } from "../lib/storage";
-import type {
-  AssistantHintPayload,
-  AssistantHintResult,
-  AssistantMessage,
-  AssistantPattern,
-  AssistantTask,
+import {
+  ASSISTANT_STATE_KEY_PREFIX,
+  type AssistantHintPayload,
+  type AssistantHintResult,
+  type AssistantMessage,
+  type AssistantPattern,
+  type AssistantPersistedState,
+  type AssistantTask,
 } from "../lib/types";
 import { ASSISTANT_CSS } from "./assistant.styles";
 
@@ -23,7 +25,8 @@ interface AssistantAppProps {
   task: AssistantTask;
   onAsk: (
     payload: AssistantHintPayload,
-    onDelta: (text: string) => void
+    onDelta: (text: string) => void,
+    signal?: AbortSignal
   ) => Promise<AssistantHintResult>;
   variant?: "dock" | "panel";
   onClose?: () => void;
@@ -48,6 +51,14 @@ export function AssistantApp({ task, onAsk, variant = "dock", onClose }: Assista
   // loaded — otherwise the initial empty state would clobber it on mount.
   const [hydrated, setHydrated] = useState(false);
   const bottomRef = useRef<HTMLDivElement | null>(null);
+  // Aborts an in-flight ask() when this component unmounts (SPA navigation
+  // to a new task tears down the whole dock/panel, see contents/realgo.ts
+  // removeAssistant) — otherwise the background keeps streaming a reply
+  // nobody's left to see.
+  const abortRef = useRef<AbortController | null>(null);
+  useEffect(() => {
+    return () => abortRef.current?.abort();
+  }, []);
 
   const taskKey = `${task.platform}:${task.platformTaskSlug}:${task.taskUrl}`;
   const lastMessage = messages[messages.length - 1];
@@ -123,6 +134,36 @@ export function AssistantApp({ task, onAsk, variant = "dock", onClose }: Assista
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hydrated, status, messages, hintsUsed, patternUsed, cooldownEndAt]);
 
+  // The in-page dock and the toolbar popup are two independent mounts of
+  // this component for the same task, each with its own local state — with
+  // no cross-instance sync, both let the user ask a hint at "the same time"
+  // (hintsUsed/cooldown are enforced client-side per mount), doubling the
+  // LLM calls MAX_HINTS is meant to cap. chrome.storage.onChanged fires in
+  // every extension context on any chrome.storage.local write, including
+  // ones made elsewhere — used here to pull in whatever the other mount
+  // just persisted instead of only ever reading storage once on mount.
+  useEffect(() => {
+    if (typeof chrome === "undefined" || !chrome.storage?.onChanged) return;
+    const key = ASSISTANT_STATE_KEY_PREFIX + taskKey;
+    function onStorageChanged(
+      changes: Record<string, chrome.storage.StorageChange>,
+      areaName: string
+    ) {
+      if (areaName !== "local" || !(key in changes)) return;
+      const next = changes[key].newValue as AssistantPersistedState | undefined;
+      if (!next) return;
+      setMessages(next.messages);
+      setHintLevel(next.hintLevel);
+      setHintsUsed(next.hintsUsed);
+      setCooldownEndAt(next.cooldownEndAt);
+      setPatterns(next.patterns);
+      setProblemKnown(next.problemKnown);
+      setPatternUsed(next.patternUsed);
+    }
+    chrome.storage.onChanged.addListener(onStorageChanged);
+    return () => chrome.storage.onChanged.removeListener(onStorageChanged);
+  }, [taskKey]);
+
   // Ticks `now` while a cooldown is running so the recharge bar/countdown
   // stay live; stops itself once the cooldown has actually elapsed.
   useEffect(() => {
@@ -157,10 +198,14 @@ export function AssistantApp({ task, onAsk, variant = "dock", onClose }: Assista
     // always the last item until `ask` replaces or drops it below.
     setMessages((items) => [...items, { role: "assistant", content: "" }]);
 
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     try {
       const result = await onAsk(
         { ...task, message: trimmed, hintLevel, history },
-        (delta) => appendToLastAssistantMessage(delta)
+        (delta) => appendToLastAssistantMessage(delta),
+        controller.signal
       );
       setMessages((items) => replaceLastMessage(items, formatHint(result)));
       setHintLevel((level) => Math.min(level + 1, MAX_HINTS));
@@ -170,10 +215,14 @@ export function AssistantApp({ task, onAsk, variant = "dock", onClose }: Assista
       setHintsUsed(usedAfterThis);
       setCooldownEndAt(usedAfterThis < MAX_HINTS ? Date.now() + HINT_COOLDOWN_MS : null);
     } catch (e) {
+      // Aborted because the component unmounted mid-request — nothing left
+      // to show an error to, and touching state here is pointless.
+      if (controller.signal.aborted) return;
       setMessages((items) => items.slice(0, -1));
       setError(e instanceof Error ? e.message : "AI-помощник сейчас недоступен.");
     } finally {
-      setStatus("idle");
+      if (abortRef.current === controller) abortRef.current = null;
+      if (!controller.signal.aborted) setStatus("idle");
     }
   }
 

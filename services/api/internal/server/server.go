@@ -135,7 +135,12 @@ func New(deps Deps) http.Handler {
 			r.With(authRateLimit).Post("/login", ah.login)
 			r.With(authRateLimit).Post("/refresh", ah.refresh)
 			r.With(requireAuth(deps.Auth), authRateLimit).Post("/device-session", ah.deviceSession)
-			r.Post("/logout", ah.logout)
+			// No requireAuth here by design: logout must still work with an
+			// already-expired access token (that's the common case — it's
+			// authenticated via the refresh_token in the body instead). But
+			// unlike its /auth siblings it had no rate limit at all, despite
+			// hitting Redis/Postgres on every call same as they do.
+			r.With(authRateLimit).Post("/logout", ah.logout)
 		})
 		r.With(requireAuth(deps.Auth)).Get("/me", ah.me)
 		r.With(requireAuth(deps.Auth)).Patch("/me/profile", ah.patchProfile)

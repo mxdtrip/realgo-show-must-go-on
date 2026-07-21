@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+
 import { CabinetPanel } from "../_components";
 import { getDictionary } from "../../_content/i18n";
 import { accountSecurityCopy } from "../../_content/i18n";
@@ -6,6 +8,8 @@ import { NotificationSettingsPanel } from "./_components/NotificationSettingsPan
 import { PrivacyActions } from "./_components/PrivacyActions";
 import { ProfileSettingsPanel } from "./_components/ProfileSettingsPanel";
 import { SecurityPanel } from "./_components/SecurityPanel";
+
+export const metadata: Metadata = { title: "Настройки" };
 
 export default function SettingsPage() {
   const page = getDictionary().cabinet.pages.settings;

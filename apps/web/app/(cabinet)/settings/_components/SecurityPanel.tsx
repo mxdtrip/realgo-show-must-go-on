@@ -75,13 +75,20 @@ export function SecurityPanel() {
       } else {
         toast.info(copy.revokeFallback);
       }
-      await logout();
-      window.location.assign("/login");
     } catch (e) {
       toast.error(e instanceof ApiError ? e.message : copy.revokeFailed);
-    } finally {
       setRevoking(false);
+      return;
     }
+    // Sessions are already revoked server-side past this point — a failure
+    // here is just the local logout/redirect not completing, not a failed
+    // revoke, so it must not surface the same "revoke failed" message.
+    try {
+      await logout();
+    } catch {
+      /* best-effort local cleanup; the server-side revoke already succeeded */
+    }
+    window.location.assign("/login");
   };
 
   if (unavailable) {

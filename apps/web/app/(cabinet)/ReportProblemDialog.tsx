@@ -72,7 +72,11 @@ export function ReportProblemLauncher({
   }, [open]);
 
   function close() {
-    // Текст намеренно сохраняем: случайный Escape не должен стирать описание.
+    // Текст намеренно сохраняем при закрытии в фазе edit: случайный Escape
+    // не должен стирать описание в процессе написания. Но после handoff
+    // (юзер уже нажал «отправить», mailto открылся) черновик своё
+    // отслужил — иначе он молча всплывёт в следующем, не связанном отчёте.
+    if (phase === "handoff") setText("");
     setOpen(false);
     setPhase("edit");
     setCopyState("idle");

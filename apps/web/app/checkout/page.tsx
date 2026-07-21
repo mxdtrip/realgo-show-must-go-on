@@ -1,8 +1,11 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { getDictionary } from "../_content/i18n";
 import { CheckoutAction } from "./CheckoutAction";
+
+export const metadata: Metadata = { title: "Оформление подписки" };
 
 /**
  * Минимальный платёжный экран. Открывается из карточек тарифов на лендинге

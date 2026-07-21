@@ -1,5 +1,9 @@
+import type { Metadata } from "next";
+
 import { getDictionary } from "../../../_content/i18n";
 import { CardSessionClient } from "./_components/CardSessionClient";
+
+export const metadata: Metadata = { title: "Сессия повторения" };
 
 export default async function CardSessionPage({
   searchParams,

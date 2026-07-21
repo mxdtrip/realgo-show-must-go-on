@@ -123,15 +123,18 @@ async function doRefreshAccessToken(): Promise<string> {
   try {
     data = await postJson(`${baseUrl}${AUTH_BASE}/refresh`, { refresh_token: refresh });
   } catch (e) {
+    // Discovered passively (e.g. from a background cards poll) — the user
+    // didn't choose to log out, so their open tasks' assistant conversations
+    // are kept; they'll most likely just log back into the same account.
     if (e instanceof AuthError && e.status === 401 && (await getRefreshToken()) === refresh) {
-      await clearTokens();
+      await clearTokens({ keepAssistantState: true });
     }
     throw e;
   }
 
   const tokens = data?.tokens as TokenPair | undefined;
   if (!tokens?.access_token) {
-    if ((await getRefreshToken()) === refresh) await clearTokens();
+    if ((await getRefreshToken()) === refresh) await clearTokens({ keepAssistantState: true });
     throw new AuthError("Сессия истекла. Войдите снова.", 401, "refresh_failed");
   }
   if ((await getRefreshToken()) !== refresh) {
