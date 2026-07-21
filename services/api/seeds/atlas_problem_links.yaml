@@ -8,13 +8,11 @@ title: Realgo Atlas Problem Links
 links:
   # Hashing / Frequency
   - problem_slug: valid-anagram
-    subpatterns: [{ code: frequency_map_counting, tier: foundational }]
+    subpatterns: [{ code: frequency_counting, tier: foundational }]
   - problem_slug: group-anagrams
-    subpatterns: [{ code: frequency_map_counting, tier: core }]
+    subpatterns: [{ code: grouping_canonical_signature, tier: core }]
   - problem_slug: top-k-frequent-elements
-    subpatterns:
-      - { code: frequency_map_counting, tier: core }
-      - { code: top_k_bounded_heap, tier: core }
+    subpatterns: [{ code: top_k_bounded_heap, tier: core }]
   - problem_slug: contains-duplicate
     subpatterns: [{ code: membership_deduplication, tier: foundational }]
   - problem_slug: valid-sudoku
@@ -24,21 +22,19 @@ links:
   - problem_slug: two-sum
     subpatterns: [{ code: complement_lookup, tier: foundational }]
   - problem_slug: detect-squares
-    subpatterns: [{ code: frequency_map_counting, tier: advanced }]
+    subpatterns: [{ code: frequency_counting, tier: advanced }]
 
   # Two Pointers
   - problem_slug: valid-palindrome
-    subpatterns: [{ code: opposite_direction_pointers, tier: foundational }]
+    subpatterns: [{ code: converging_validation_palindrome, tier: foundational }]
   - problem_slug: two-sum-ii-input-array-is-sorted
-    subpatterns: [{ code: opposite_direction_pointers, tier: core }]
+    subpatterns: [{ code: sorted_pair_triplet_search, tier: core }]
   - problem_slug: 3sum
-    subpatterns: [{ code: opposite_direction_pointers, tier: core }]
+    subpatterns: [{ code: sorted_pair_triplet_search, tier: core }]
   - problem_slug: container-with-most-water
-    subpatterns: [{ code: opposite_direction_pointers, tier: core }]
+    subpatterns: [{ code: sorted_pair_triplet_search, tier: core }]
   - problem_slug: trapping-rain-water
-    subpatterns:
-      - { code: opposite_direction_pointers, tier: advanced }
-      - { code: monotonic_stack, tier: advanced }
+    subpatterns: [{ code: monotonic_stack, tier: advanced }]
   - problem_slug: best-time-to-buy-and-sell-stock
     subpatterns:
       - { code: same_direction_read_write, tier: foundational }
@@ -116,9 +112,7 @@ links:
   - problem_slug: largest-rectangle-in-histogram
     subpatterns: [{ code: monotonic_stack, tier: advanced }]
   - problem_slug: car-fleet
-    subpatterns:
-      - { code: sort_then_greedy, tier: advanced }
-      - { code: monotonic_stack, tier: advanced }
+    subpatterns: [{ code: monotonic_stack, tier: advanced }]
 
   # Heap / Priority Queue
   - problem_slug: kth-largest-element-in-a-stream
@@ -167,23 +161,23 @@ links:
 
   # Tree Traversal & Structure
   - problem_slug: invert-binary-tree
-    subpatterns: [{ code: dfs_path_subtree_aggregation, tier: foundational }]
+    subpatterns: [{ code: postorder_subtree_aggregation, tier: foundational }]
   - problem_slug: maximum-depth-of-binary-tree
-    subpatterns: [{ code: dfs_path_subtree_aggregation, tier: foundational }]
+    subpatterns: [{ code: postorder_subtree_aggregation, tier: foundational }]
   - problem_slug: same-tree
-    subpatterns: [{ code: dfs_path_subtree_aggregation, tier: foundational }]
+    subpatterns: [{ code: postorder_subtree_aggregation, tier: foundational }]
   - problem_slug: diameter-of-binary-tree
-    subpatterns: [{ code: dfs_path_subtree_aggregation, tier: core }]
+    subpatterns: [{ code: postorder_subtree_aggregation, tier: core }]
   - problem_slug: balanced-binary-tree
-    subpatterns: [{ code: dfs_path_subtree_aggregation, tier: core }]
+    subpatterns: [{ code: postorder_subtree_aggregation, tier: core }]
   - problem_slug: subtree-of-another-tree
-    subpatterns: [{ code: dfs_path_subtree_aggregation, tier: core }]
+    subpatterns: [{ code: postorder_subtree_aggregation, tier: core }]
   - problem_slug: count-good-nodes-in-binary-tree
-    subpatterns: [{ code: dfs_path_subtree_aggregation, tier: core }]
+    subpatterns: [{ code: root_to_leaf_path_state, tier: core }]
   - problem_slug: binary-tree-maximum-path-sum
-    subpatterns: [{ code: dfs_path_subtree_aggregation, tier: advanced }]
+    subpatterns: [{ code: postorder_subtree_aggregation, tier: advanced }]
   - problem_slug: serialize-and-deserialize-binary-tree
-    subpatterns: [{ code: dfs_path_subtree_aggregation, tier: advanced }]
+    subpatterns: [{ code: tree_construction_serialization, tier: advanced }]
   - problem_slug: binary-tree-level-order-traversal
     subpatterns: [{ code: bfs_level_order, tier: foundational }]
   - problem_slug: binary-tree-right-side-view
@@ -285,9 +279,7 @@ links:
 
   # Greedy
   - problem_slug: maximum-subarray
-    subpatterns:
-      - { code: local_choice_invariant, tier: core }
-      - { code: dp_1d_linear, tier: core }
+    subpatterns: [{ code: local_choice_invariant, tier: core }]
   - problem_slug: jump-game
     subpatterns: [{ code: local_choice_invariant, tier: core }]
   - problem_slug: jump-game-ii
@@ -302,28 +294,26 @@ links:
     subpatterns: [{ code: local_choice_invariant, tier: advanced }]
   - problem_slug: hand-of-straights
     subpatterns:
-      - { code: sort_then_greedy, tier: core }
-      - { code: frequency_map_counting, tier: core }
+      - { code: resource_assignment, tier: core }
+      - { code: frequency_counting, tier: core }
 
   # Dynamic Programming
   - problem_slug: climbing-stairs
-    subpatterns: [{ code: dp_1d_linear, tier: foundational }]
+    subpatterns: [{ code: dp_counting_ways, tier: foundational }]
   - problem_slug: min-cost-climbing-stairs
-    subpatterns: [{ code: dp_1d_linear, tier: foundational }]
+    subpatterns: [{ code: dp_take_skip, tier: foundational }]
   - problem_slug: house-robber
-    subpatterns: [{ code: dp_1d_linear, tier: core }]
+    subpatterns: [{ code: dp_take_skip, tier: core }]
   - problem_slug: house-robber-ii
-    subpatterns: [{ code: dp_1d_linear, tier: core }]
+    subpatterns: [{ code: dp_take_skip, tier: core }]
   - problem_slug: decode-ways
-    subpatterns: [{ code: dp_1d_linear, tier: core }]
+    subpatterns: [{ code: dp_counting_ways, tier: core }]
   - problem_slug: maximum-product-subarray
-    subpatterns: [{ code: dp_1d_linear, tier: advanced }]
+    subpatterns: [{ code: dp_take_skip, tier: advanced }]
   - problem_slug: word-break
-    subpatterns: [{ code: dp_1d_linear, tier: core }]
+    subpatterns: [{ code: dp_prefix_partition, tier: core }]
   - problem_slug: counting-bits
-    subpatterns:
-      - { code: bit_tricks_submask, tier: core }
-      - { code: dp_1d_linear, tier: core }
+    subpatterns: [{ code: bit_tricks_submask, tier: core }]
   - problem_slug: unique-paths
     subpatterns: [{ code: dp_2d_grid, tier: foundational }]
   - problem_slug: interleaving-string
