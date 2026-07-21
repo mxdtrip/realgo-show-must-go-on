@@ -103,25 +103,45 @@ function onDocumentClick(event: MouseEvent) {
   if (!target) return;
   const adapter = detectAdapter(location.href);
   if (!adapter) return;
-  if (!isSubmitClick(target, adapter)) return;
+  const submitButton = adapter.findSubmitButton();
+  if (!isSubmitClick(target, submitButton)) return;
   // Snapshot the task while still on the problem page: after a submit the SPA
   // can swap to the submission-history URL, where extraction would fail.
   const clickInfo = adapter.extractTaskInfo();
 
   if (adapter.crossPage) {
-    // The click is about to navigate away from this page entirely (e.g.
-    // Codeforces' Submit link opens a separate form) — a MutationObserver set
-    // up here would never fire. Persist the snapshot instead; the page this
-    // navigation lands on resumes watching via resumeCrossPageWatch().
-    if (clickInfo) void setCrossPageSubmitIntent(adapter.platform, clickInfo);
+    handleCrossPageSubmitClick(event, adapter, submitButton, clickInfo);
     return;
   }
 
   watchForResult(adapter, clickInfo);
 }
 
-function isSubmitClick(target: HTMLElement, adapter: PlatformAdapter): boolean {
-  const submitButton = adapter.findSubmitButton();
+/**
+ * A cross-page submit control is a plain navigation (e.g. Codeforces' Submit
+ * is an `<a>`), which the browser starts as soon as this handler returns —
+ * but persisting the snapshot is an async chrome.storage write. Without
+ * intervention the navigation can win the race and unload the page before the
+ * write flushes, silently losing the snapshot. preventDefault() buys the time
+ * to write first, then the navigation is replayed manually.
+ */
+function handleCrossPageSubmitClick(
+  event: MouseEvent,
+  adapter: PlatformAdapter,
+  submitButton: HTMLElement | null,
+  clickInfo: TaskInfo | null
+) {
+  const href = submitButton instanceof HTMLAnchorElement ? submitButton.href : null;
+  // Not a real link (or no task to snapshot): nothing to persist, let the
+  // click behave exactly as the host page intended.
+  if (!href || !clickInfo) return;
+  event.preventDefault();
+  void setCrossPageSubmitIntent(adapter.platform, clickInfo).then(() => {
+    window.location.assign(href);
+  });
+}
+
+function isSubmitClick(target: HTMLElement, submitButton: HTMLElement | null): boolean {
   if (submitButton && (submitButton === target || submitButton.contains(target))) {
     return true;
   }
