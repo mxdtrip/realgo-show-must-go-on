@@ -1,0 +1,165 @@
+# Realgo Codeforces corpus: primary problem -> subpattern map, WITH tier.
+# Source: ChatGPT deep-research pass, every entry verified against the official
+# Codeforces API (problemset.problems) on 2026-07-21 — 83/83
+# title+rating matches, 0 fabricated tags (see project notes).
+# Unlike atlas_gfg_problems.yaml / atlas_corpus_problems.yaml, tier here is set
+# explicitly (not NULL) — the source data already tiers each problem by rating
+# band (foundational 800-1200 / core 1300-1700 / advanced 1800+), so these rows
+# are curated from the start and protected from being overwritten the same way
+# atlas_problem_links.yaml entries are (see seed_codeforces_corpus.py).
+code: realgo_codeforces_corpus
+title: Realgo Codeforces Corpus
+platform: codeforces
+snapshot: "2026-07-21"
+subpatterns:
+  - code: strongly_connected_components
+    problems:
+      - { external_slug: "427C", title: "Checkposts", url: "https://codeforces.com/problemset/problem/427/C", difficulty: medium, tier: core, rating: 1700 }
+      - { external_slug: "999E", title: "Reachability from the Capital", url: "https://codeforces.com/problemset/problem/999/E", difficulty: hard, tier: advanced, rating: 2000 }
+      - { external_slug: "894E", title: "Ralph and Mushrooms", url: "https://codeforces.com/problemset/problem/894/E", difficulty: hard, tier: advanced, rating: 2100 }
+      - { external_slug: "949C", title: "Data Center Maintenance", url: "https://codeforces.com/problemset/problem/949/C", difficulty: hard, tier: advanced, rating: 1900 }
+
+  - code: bipartite_coloring
+    problems:
+      - { external_slug: "862B", title: "Mahmoud and Ehab and the bipartiteness", url: "https://codeforces.com/problemset/problem/862/B", difficulty: medium, tier: core, rating: 1300 }
+      - { external_slug: "687A", title: "NP-Hard Problem", url: "https://codeforces.com/problemset/problem/687/A", difficulty: medium, tier: core, rating: 1500 }
+      - { external_slug: "1093D", title: "Beautiful Graph", url: "https://codeforces.com/problemset/problem/1093/D", difficulty: medium, tier: core, rating: 1700 }
+      - { external_slug: "1354E", title: "Graph Coloring", url: "https://codeforces.com/problemset/problem/1354/E", difficulty: hard, tier: advanced, rating: 2100 }
+
+  - code: dp_prefix_partition
+    problems:
+      - { external_slug: "189A", title: "Cut Ribbon", url: "https://codeforces.com/problemset/problem/189/A", difficulty: medium, tier: core, rating: 1300 }
+      - { external_slug: "225C", title: "Barcode", url: "https://codeforces.com/problemset/problem/225/C", difficulty: medium, tier: core, rating: 1700 }
+      - { external_slug: "607A", title: "Chain Reaction", url: "https://codeforces.com/problemset/problem/607/A", difficulty: medium, tier: core, rating: 1600 }
+      - { external_slug: "1000D", title: "Yet Another Problem On a Subsequence", url: "https://codeforces.com/problemset/problem/1000/D", difficulty: hard, tier: advanced, rating: 1900 }
+
+  - code: palindrome_expansion_manacher
+    # coverage: 17E и 1827C требуют палиндромных радиусов непосредственно; 7D и 1326D2 допускают также hashing, но Manacher остаётся каноническим линейным способом получить нужные радиусы.
+    problems:
+      - { external_slug: "7D", title: "Palindrome Degree", url: "https://codeforces.com/problemset/problem/7/D", difficulty: hard, tier: advanced, rating: 2200 }
+      - { external_slug: "17E", title: "Palisection", url: "https://codeforces.com/problemset/problem/17/E", difficulty: hard, tier: advanced, rating: 2900 }
+      - { external_slug: "1326D2", title: "Prefix-Suffix Palindrome (Hard version)", url: "https://codeforces.com/problemset/problem/1326/D2", difficulty: hard, tier: advanced, rating: 1800 }
+      - { external_slug: "1827C", title: "Palindrome Partition", url: "https://codeforces.com/problemset/problem/1827/C", difficulty: hard, tier: advanced, rating: 2600 }
+
+  - code: suffix_structures
+    problems:
+      - { external_slug: "128B", title: "String", url: "https://codeforces.com/problemset/problem/128/B", difficulty: hard, tier: advanced, rating: 2100 }
+      - { external_slug: "235C", title: "Cyclical Quest", url: "https://codeforces.com/problemset/problem/235/C", difficulty: hard, tier: advanced, rating: 2700 }
+      - { external_slug: "873F", title: "Forbidden Indices", url: "https://codeforces.com/problemset/problem/873/F", difficulty: hard, tier: advanced, rating: 2400 }
+      - { external_slug: "1073G", title: "Yet Another LCP Problem", url: "https://codeforces.com/problemset/problem/1073/G", difficulty: hard, tier: advanced, rating: 2600 }
+
+  - code: low_link_bridges_articulation
+    problems:
+      - { external_slug: "118E", title: "Bertown roads", url: "https://codeforces.com/problemset/problem/118/E", difficulty: hard, tier: advanced, rating: 2000 }
+      - { external_slug: "1000E", title: "We Need More Bosses", url: "https://codeforces.com/problemset/problem/1000/E", difficulty: hard, tier: advanced, rating: 2100 }
+      - { external_slug: "1986F", title: "Non-academic Problem", url: "https://codeforces.com/problemset/problem/1986/F", difficulty: hard, tier: advanced, rating: 1900 }
+      - { external_slug: "732F", title: "Tourist Reform", url: "https://codeforces.com/problemset/problem/732/F", difficulty: hard, tier: advanced, rating: 2300 }
+
+  - code: coordinate_compression_offline
+    problems:
+      - { external_slug: "652D", title: "Nested Segments", url: "https://codeforces.com/problemset/problem/652/D", difficulty: hard, tier: advanced, rating: 1800 }
+      - { external_slug: "1042D", title: "Petya and Array", url: "https://codeforces.com/problemset/problem/1042/D", difficulty: hard, tier: advanced, rating: 1800 }
+      - { external_slug: "61E", title: "Enemy is weak", url: "https://codeforces.com/problemset/problem/61/E", difficulty: hard, tier: advanced, rating: 1900 }
+      - { external_slug: "1311F", title: "Moving Points", url: "https://codeforces.com/problemset/problem/1311/F", difficulty: hard, tier: advanced, rating: 1900 }
+
+  - code: converging_validation_palindrome
+    problems:
+      - { external_slug: "1794A", title: "Prefix and Suffix Array", url: "https://codeforces.com/problemset/problem/1794/A", difficulty: easy, tier: foundational, rating: 800 }
+      - { external_slug: "1789B", title: "Serval and Inversion Magic", url: "https://codeforces.com/problemset/problem/1789/B", difficulty: easy, tier: foundational, rating: 800 }
+      - { external_slug: "1682A", title: "Palindromic Indices", url: "https://codeforces.com/problemset/problem/1682/A", difficulty: easy, tier: foundational, rating: 800 }
+      - { external_slug: "1326D1", title: "Prefix-Suffix Palindrome (Easy version)", url: "https://codeforces.com/problemset/problem/1326/D1", difficulty: medium, tier: core, rating: 1500 }
+
+  - code: postorder_subtree_aggregation
+    problems:
+      - { external_slug: "1336A", title: "Linova and Kingdom", url: "https://codeforces.com/problemset/problem/1336/A", difficulty: medium, tier: core, rating: 1600 }
+      - { external_slug: "274B", title: "Zero Tree", url: "https://codeforces.com/problemset/problem/274/B", difficulty: hard, tier: advanced, rating: 1800 }
+      - { external_slug: "1092F", title: "Tree with Maximum Cost", url: "https://codeforces.com/problemset/problem/1092/F", difficulty: hard, tier: advanced, rating: 1900 }
+      - { external_slug: "161D", title: "Distance in Tree", url: "https://codeforces.com/problemset/problem/161/D", difficulty: hard, tier: advanced, rating: 1800 }
+
+  - code: sorted_pair_triplet_search
+    problems:
+      - { external_slug: "1399C", title: "Boats Competition", url: "https://codeforces.com/problemset/problem/1399/C", difficulty: easy, tier: foundational, rating: 1200 }
+      - { external_slug: "1538C", title: "Number of Pairs", url: "https://codeforces.com/problemset/problem/1538/C", difficulty: medium, tier: core, rating: 1300 }
+      - { external_slug: "1324D", title: "Pair of Topics", url: "https://codeforces.com/problemset/problem/1324/D", difficulty: medium, tier: core, rating: 1400 }
+      - { external_slug: "1156C", title: "Match Points", url: "https://codeforces.com/problemset/problem/1156/C", difficulty: hard, tier: advanced, rating: 2000 }
+
+  - code: resource_assignment
+    problems:
+      - { external_slug: "1611B", title: "Team Composition: Programmers and Mathematicians", url: "https://codeforces.com/problemset/problem/1611/B", difficulty: easy, tier: foundational, rating: 800 }
+      - { external_slug: "489B", title: "BerSU Ball", url: "https://codeforces.com/problemset/problem/489/B", difficulty: easy, tier: foundational, rating: 1200 }
+      - { external_slug: "853A", title: "Planning", url: "https://codeforces.com/problemset/problem/853/A", difficulty: medium, tier: core, rating: 1500 }
+      - { external_slug: "1257D", title: "Yet Another Monster Killing Problem", url: "https://codeforces.com/problemset/problem/1257/D", difficulty: medium, tier: core, rating: 1700 }
+
+  - code: root_to_leaf_path_state
+    problems:
+      - { external_slug: "522A", title: "Reposts", url: "https://codeforces.com/problemset/problem/522/A", difficulty: easy, tier: foundational, rating: 1200 }
+      - { external_slug: "580C", title: "Kefa and Park", url: "https://codeforces.com/problemset/problem/580/C", difficulty: medium, tier: core, rating: 1500 }
+      - { external_slug: "1076E", title: "Vasya and a Tree", url: "https://codeforces.com/problemset/problem/1076/E", difficulty: hard, tier: advanced, rating: 1900 }
+      - { external_slug: "739B", title: "Alyona and a tree", url: "https://codeforces.com/problemset/problem/739/B", difficulty: hard, tier: advanced, rating: 1900 }
+
+  - code: probability_expected_value
+    problems:
+      - { external_slug: "839C", title: "Journey", url: "https://codeforces.com/problemset/problem/839/C", difficulty: medium, tier: core, rating: 1500 }
+      - { external_slug: "148D", title: "Bag of mice", url: "https://codeforces.com/problemset/problem/148/D", difficulty: hard, tier: advanced, rating: 1800 }
+      - { external_slug: "1543C", title: "Need for Pink Slips", url: "https://codeforces.com/problemset/problem/1543/C", difficulty: hard, tier: advanced, rating: 1900 }
+      - { external_slug: "1265E", title: "Beautiful Mirrors", url: "https://codeforces.com/problemset/problem/1265/E", difficulty: hard, tier: advanced, rating: 2100 }
+
+  - code: dp_take_skip
+    problems:
+      - { external_slug: "455A", title: "Boredom", url: "https://codeforces.com/problemset/problem/455/A", difficulty: medium, tier: core, rating: 1500 }
+      - { external_slug: "1195C", title: "Basketball Exercise", url: "https://codeforces.com/problemset/problem/1195/C", difficulty: medium, tier: core, rating: 1400 }
+      - { external_slug: "545C", title: "Woodcutters", url: "https://codeforces.com/problemset/problem/545/C", difficulty: medium, tier: core, rating: 1500 }
+      - { external_slug: "1526C1", title: "Potions (Easy Version)", url: "https://codeforces.com/problemset/problem/1526/C1", difficulty: medium, tier: core, rating: 1500 }
+
+  - code: greedy_pairing_matching
+    problems:
+      - { external_slug: "1370B", title: "GCD Compression", url: "https://codeforces.com/problemset/problem/1370/B", difficulty: easy, tier: foundational, rating: 1100 }
+      - { external_slug: "1237C1", title: "Balanced Removals (Easier)", url: "https://codeforces.com/problemset/problem/1237/C1", difficulty: medium, tier: core, rating: 1700 }
+      - { external_slug: "1474C", title: "Array Destruction", url: "https://codeforces.com/problemset/problem/1474/C", difficulty: medium, tier: core, rating: 1700 }
+      - { external_slug: "1237C2", title: "Balanced Removals (Harder)", url: "https://codeforces.com/problemset/problem/1237/C2", difficulty: hard, tier: advanced, rating: 1900 }
+
+  - code: dp_digit_positional
+    # coverage: У Codeforces полноценный Digit DP почти не представлен на foundational/core: все четыре устойчивых примера имеют rating 1900+.
+    problems:
+      - { external_slug: "1036C", title: "Classy Numbers", url: "https://codeforces.com/problemset/problem/1036/C", difficulty: hard, tier: advanced, rating: 1900 }
+      - { external_slug: "628D", title: "Magic Numbers", url: "https://codeforces.com/problemset/problem/628/D", difficulty: hard, tier: advanced, rating: 2200 }
+      - { external_slug: "55D", title: "Beautiful numbers", url: "https://codeforces.com/problemset/problem/55/D", difficulty: hard, tier: advanced, rating: 2500 }
+      - { external_slug: "1073E", title: "Segment Sum", url: "https://codeforces.com/problemset/problem/1073/E", difficulty: hard, tier: advanced, rating: 2300 }
+
+  - code: grouping_canonical_signature
+    problems:
+      - { external_slug: "166A", title: "Rank List", url: "https://codeforces.com/problemset/problem/166/A", difficulty: easy, tier: foundational, rating: 1100 }
+      - { external_slug: "1520D", title: "Same Differences", url: "https://codeforces.com/problemset/problem/1520/D", difficulty: easy, tier: foundational, rating: 1200 }
+      - { external_slug: "1097C", title: "Yuhao and a Parenthesis", url: "https://codeforces.com/problemset/problem/1097/C", difficulty: medium, tier: core, rating: 1400 }
+      - { external_slug: "1163C2", title: "Power Transmission (Hard Edition)", url: "https://codeforces.com/problemset/problem/1163/C2", difficulty: hard, tier: advanced, rating: 1900 }
+
+  - code: modular_arithmetic_fast_pow
+    # coverage: В 300C быстрое возведение используется как часть модульной комбинаторики; в 1106F техника обобщена до бинарного возведения матрицы.
+    problems:
+      - { external_slug: "584B", title: "Kolya and Tanya", url: "https://codeforces.com/problemset/problem/584/B", difficulty: medium, tier: core, rating: 1500 }
+      - { external_slug: "1236B", title: "Alice and the List of Presents", url: "https://codeforces.com/problemset/problem/1236/B", difficulty: medium, tier: core, rating: 1500 }
+      - { external_slug: "300C", title: "Beautiful Numbers", url: "https://codeforces.com/problemset/problem/300/C", difficulty: hard, tier: advanced, rating: 1800 }
+      - { external_slug: "1106F", title: "Lunar New Year and a Recursive Sequence", url: "https://codeforces.com/problemset/problem/1106/F", difficulty: hard, tier: advanced, rating: 2400 }
+
+  - code: binary_lifting_jump_pointers
+    # coverage: Канонические задачи на binary lifting в Codeforces в основном имеют rating 2000+.
+    problems:
+      - { external_slug: "1304E", title: "1-Trees and Queries", url: "https://codeforces.com/problemset/problem/1304/E", difficulty: hard, tier: advanced, rating: 2000 }
+      - { external_slug: "519E", title: "A and B and Lecture Rooms", url: "https://codeforces.com/problemset/problem/519/E", difficulty: hard, tier: advanced, rating: 2100 }
+      - { external_slug: "208E", title: "Blood Cousins", url: "https://codeforces.com/problemset/problem/208/E", difficulty: hard, tier: advanced, rating: 2100 }
+      - { external_slug: "609E", title: "Minimum spanning tree for each edge", url: "https://codeforces.com/problemset/problem/609/E", difficulty: hard, tier: advanced, rating: 2100 }
+
+  - code: cache_eviction_design
+    # coverage: partial — Найдено только три достаточно прямых и содержательно разных примера. Версии 802A1 и 802A2 моделируют одну и ту же политику Belady, поэтому A1 не добавлена как искусственный дубль.
+    problems:
+      - { external_slug: "1234B2", title: "Social Network (hard version)", url: "https://codeforces.com/problemset/problem/1234/B2", difficulty: medium, tier: core, rating: 1300 }
+      - { external_slug: "802A2", title: "Heidi and Library (medium)", url: "https://codeforces.com/problemset/problem/802/A2", difficulty: hard, tier: advanced, rating: 1800 }
+      - { external_slug: "802A3", title: "Heidi and Library (hard)", url: "https://codeforces.com/problemset/problem/802/A3", difficulty: hard, tier: advanced, rating: 2600 }
+
+  - code: eulerian_path_circuit
+    problems:
+      - { external_slug: "29C", title: "Mail Stamps", url: "https://codeforces.com/problemset/problem/29/C", difficulty: medium, tier: core, rating: 1700 }
+      - { external_slug: "723E", title: "One-Way Reform", url: "https://codeforces.com/problemset/problem/723/E", difficulty: hard, tier: advanced, rating: 2200 }
+      - { external_slug: "1152E", title: "Neko and Flashback", url: "https://codeforces.com/problemset/problem/1152/E", difficulty: hard, tier: advanced, rating: 2400 }
+      - { external_slug: "508D", title: "Tanya and Password", url: "https://codeforces.com/problemset/problem/508/D", difficulty: hard, tier: advanced, rating: 2500 }
+

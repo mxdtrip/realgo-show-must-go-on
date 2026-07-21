@@ -1,0 +1,162 @@
+# Realgo GeeksforGeeks corpus: primary problem -> subpattern map.
+# Source: ChatGPT deep-research pass over geeksforgeeks.org/problems (verified 2026-07-21),
+# every slug/title spot-checked against the live page before merge (see project notes).
+# Primary rule: every problem belongs to exactly one subpattern here;
+# curated tiered links in atlas_problem_links.yaml stay authoritative and
+# are never overwritten by this corpus (see seed_gfg_corpus.py).
+code: realgo_gfg_corpus
+title: Realgo GeeksforGeeks Corpus
+platform: geeksforgeeks
+snapshot: "2026-07-21"
+subpatterns:
+  - code: strongly_connected_components
+    # coverage: thin — Нашёл две самостоятельные открытые Practice-задачи: отдельные реализации Kosaraju и Tarjan.
+    problems:
+      - { slug: "strongly-connected-components-kosarajus-algo", title: "Count Strongly Connected", url: "https://www.geeksforgeeks.org/problems/strongly-connected-components-kosarajus-algo/1", difficulty: medium }
+      - { slug: "strongly-connected-component-tarjanss-algo-1587115621", title: "Strongly connected component (Tarjans's Algo)", url: "https://www.geeksforgeeks.org/problems/strongly-connected-component-tarjanss-algo-1587115621/1", difficulty: hard }
+
+  - code: bipartite_coloring
+    # coverage: very_thin — Нашёл только одну самостоятельную Practice-задачу на чистую двухцветную раскраску; matching-задачи намеренно не подмешивал.
+    problems:
+      - { slug: "bipartite-graph", title: "Bipartite Graph", url: "https://www.geeksforgeeks.org/problems/bipartite-graph/1", difficulty: medium }
+
+  - code: dp_prefix_partition
+    problems:
+      - { slug: "word-break1352", title: "Word Break", url: "https://www.geeksforgeeks.org/problems/word-break1352/1", difficulty: medium }
+      - { slug: "word-break-part-23249", title: "Word Break - 2", url: "https://www.geeksforgeeks.org/problems/word-break-part-23249/1", difficulty: hard }
+      - { slug: "word-break-trie--141631", title: "Word Break (Trie)", url: "https://www.geeksforgeeks.org/problems/word-break-trie--141631/1", difficulty: hard }
+      - { slug: "palindromic-patitioning4845", title: "Palindromic Partitioning", url: "https://www.geeksforgeeks.org/problems/palindromic-patitioning4845/1", difficulty: hard }
+      - { slug: "word-wrap1646", title: "Word Wrap", url: "https://www.geeksforgeeks.org/problems/word-wrap1646/1", difficulty: hard }
+      - { slug: "count-digit-groupings-of-a-number1520", title: "Count digit groupings of a number", url: "https://www.geeksforgeeks.org/problems/count-digit-groupings-of-a-number1520/1", difficulty: medium }
+
+  - code: palindrome_expansion_manacher
+    problems:
+      - { slug: "count-palindrome-sub-strings-of-a-string0652", title: "Palindrome SubStrings", url: "https://www.geeksforgeeks.org/problems/count-palindrome-sub-strings-of-a-string0652/1", difficulty: hard }
+      - { slug: "number-of-palindromic-substrings", title: "Number of Palindromic Substrings", url: "https://www.geeksforgeeks.org/problems/number-of-palindromic-substrings/0", difficulty: medium }
+      - { slug: "longest-palindrome-in-a-string3411", title: "Longest Palindrome in a String", url: "https://www.geeksforgeeks.org/problems/longest-palindrome-in-a-string3411/1", difficulty: medium }
+      - { slug: "longest-palindromic-substring-in-linear-time", title: "Longest Palindromic Substring in Linear Time", url: "https://www.geeksforgeeks.org/problems/longest-palindromic-substring-in-linear-time/1", difficulty: hard }
+      - { slug: "distinct-palindromic-substrings5141", title: "Distinct palindromic substrings", url: "https://www.geeksforgeeks.org/problems/distinct-palindromic-substrings5141/1", difficulty: hard }
+      - { slug: "maximum-non-overlapping-odd-palindrome-sum", title: "Maximum Non-Overlapping Odd Palindrome Sum", url: "https://www.geeksforgeeks.org/problems/maximum-non-overlapping-odd-palindrome-sum/1", difficulty: hard }
+
+  - code: suffix_structures
+    # coverage: very_thin — Нашёл одну открытую Practice-задачу, где suffix trie/array является естественной основной техникой; статьи без Practice-страницы не включал.
+    problems:
+      - { slug: "count-of-distinct-substrings", title: "Count of distinct substrings", url: "https://www.geeksforgeeks.org/problems/count-of-distinct-substrings/1", difficulty: medium }
+
+  - code: low_link_bridges_articulation
+    problems:
+      - { slug: "bridge-edge-in-graph", title: "Bridge edge in a graph", url: "https://www.geeksforgeeks.org/problems/bridge-edge-in-graph/1", difficulty: medium }
+      - { slug: "critical-connections", title: "Find all Critical Connections in the Graph", url: "https://www.geeksforgeeks.org/problems/critical-connections/1", difficulty: hard }
+      - { slug: "articulation-point2616", title: "Articulation Point - II", url: "https://www.geeksforgeeks.org/problems/articulation-point2616/1", difficulty: hard }
+      - { slug: "articulation-point-1", title: "Articulation Point - I", url: "https://www.geeksforgeeks.org/problems/articulation-point-1/0", difficulty: hard }
+      - { slug: "biconnected-graph2528", title: "Biconnected Graph", url: "https://www.geeksforgeeks.org/problems/biconnected-graph2528/1", difficulty: medium }
+
+  - code: coordinate_compression_offline
+    # coverage: very_thin — В открытом Practice нашлась одна строгая offline-range задача; статьи про Mo и coordinate compression без отдельной Practice-страницы не включены.
+    problems:
+      - { slug: "interesting-queries4742", title: "Interesting Queries", url: "https://www.geeksforgeeks.org/problems/interesting-queries4742/1", difficulty: hard }
+
+  - code: converging_validation_palindrome
+    problems:
+      - { slug: "palindrome-string0817", title: "Palindrome String", url: "https://www.geeksforgeeks.org/problems/palindrome-string0817/1", difficulty: easy }
+      - { slug: "string-palindromic-ignoring-spaces4723", title: "Palindrome Sentence", url: "https://www.geeksforgeeks.org/problems/string-palindromic-ignoring-spaces4723/1", difficulty: easy }
+      - { slug: "check-palindrome--141628", title: "Check Palindrome", url: "https://www.geeksforgeeks.org/problems/check-palindrome--141628/1", difficulty: easy }
+      - { slug: "the-palindrome-pattern3900", title: "The Palindrome Pattern", url: "https://www.geeksforgeeks.org/problems/the-palindrome-pattern3900/1", difficulty: easy }
+      - { slug: "palindrome-numbers0942", title: "Palindrome Binary", url: "https://www.geeksforgeeks.org/problems/palindrome-numbers0942/1", difficulty: easy }
+
+  - code: postorder_subtree_aggregation
+    problems:
+      - { slug: "check-for-balanced-tree", title: "Balanced Tree Check", url: "https://www.geeksforgeeks.org/problems/check-for-balanced-tree/0", difficulty: easy }
+      - { slug: "maximum-path-sum-from-any-node", title: "Maximum path sum", url: "https://www.geeksforgeeks.org/problems/maximum-path-sum-from-any-node/1", difficulty: medium }
+      - { slug: "largest-bst", title: "Largest BST", url: "https://www.geeksforgeeks.org/problems/largest-bst/1", difficulty: medium }
+      - { slug: "largest-subtree-sum-in-a-tree", title: "Largest subtree sum in a tree", url: "https://www.geeksforgeeks.org/problems/largest-subtree-sum-in-a-tree/1", difficulty: medium }
+      - { slug: "sum-tree", title: "Sum Tree", url: "https://www.geeksforgeeks.org/problems/sum-tree/1", difficulty: medium }
+      - { slug: "maximum-path-sum", title: "Max Path Sum 2 Special Nodes", url: "https://www.geeksforgeeks.org/problems/maximum-path-sum/1", difficulty: hard }
+
+  - code: sorted_pair_triplet_search
+    problems:
+      - { slug: "pair-with-given-sum-in-a-sorted-array4940", title: "Pair with given sum in a sorted array", url: "https://www.geeksforgeeks.org/problems/pair-with-given-sum-in-a-sorted-array4940/1", difficulty: easy }
+      - { slug: "find-the-closest-pair-from-two-arrays4215", title: "Find the closest pair from two arrays", url: "https://www.geeksforgeeks.org/problems/find-the-closest-pair-from-two-arrays4215/1", difficulty: easy }
+      - { slug: "count-all-triplets-with-given-sum-in-sorted-array", title: "Count all triplets with given sum in sorted array", url: "https://www.geeksforgeeks.org/problems/count-all-triplets-with-given-sum-in-sorted-array/1", difficulty: medium }
+      - { slug: "three-sum-closest", title: "Closest Three Sum", url: "https://www.geeksforgeeks.org/problems/three-sum-closest/1", difficulty: medium }
+      - { slug: "pair-in-array-whose-sum-is-closest-to-x1124", title: "Sum Pair closest to target", url: "https://www.geeksforgeeks.org/problems/pair-in-array-whose-sum-is-closest-to-x1124/1", difficulty: easy }
+      - { slug: "triplet-family", title: "Triplet Family", url: "https://www.geeksforgeeks.org/problems/triplet-family/1", difficulty: easy }
+
+  - code: resource_assignment
+    # coverage: thin — Оставлены только задачи с явными требованиями и ограниченными ресурсами; scheduling и graph matching не подмешивались.
+    problems:
+      - { slug: "assign-cookies", title: "Assign Cookies", url: "https://www.geeksforgeeks.org/problems/assign-cookies/0", difficulty: easy }
+      - { slug: "maximum-tip-calculator2631", title: "Maximum Tip Calculator", url: "https://www.geeksforgeeks.org/problems/maximum-tip-calculator2631/1", difficulty: medium }
+
+  - code: root_to_leaf_path_state
+    problems:
+      - { slug: "root-to-leaf-path-sum", title: "Root to leaf path sum", url: "https://www.geeksforgeeks.org/problems/root-to-leaf-path-sum/1", difficulty: easy }
+      - { slug: "root-to-leaf-paths", title: "Root to Leaf Paths", url: "https://www.geeksforgeeks.org/problems/root-to-leaf-paths/1", difficulty: medium }
+      - { slug: "root-to-leaf-paths-sum", title: "Root to leaf paths sum", url: "https://www.geeksforgeeks.org/problems/root-to-leaf-paths-sum/1", difficulty: medium }
+      - { slug: "sum-of-the-longest-bloodline-of-a-tree", title: "Sum of nodes on the longest path", url: "https://www.geeksforgeeks.org/problems/sum-of-the-longest-bloodline-of-a-tree/1", difficulty: medium }
+      - { slug: "number-of-root-to-leaf-paths", title: "Number of root to leaf paths", url: "https://www.geeksforgeeks.org/problems/number-of-root-to-leaf-paths/1", difficulty: medium }
+
+  - code: probability_expected_value
+    # coverage: thin — В Practice мало строгих probability/expectation задач; добавлены одна вероятностная DP и две задачи на математическую game reasoning из той же объединённой карточки.
+    problems:
+      - { slug: "probability-of-knight5529", title: "Probability of Knight", url: "https://www.geeksforgeeks.org/problems/probability-of-knight5529/1", difficulty: medium }
+      - { slug: "coins-and-game4529", title: "Coins and Game", url: "https://www.geeksforgeeks.org/problems/coins-and-game4529/1", difficulty: medium }
+      - { slug: "-matchsticks-game4906", title: "Matchsticks game", url: "https://www.geeksforgeeks.org/problems/-matchsticks-game4906/1", difficulty: medium }
+
+  - code: dp_take_skip
+    problems:
+      - { slug: "stickler-theif-1587115621", title: "Stickler Thief", url: "https://www.geeksforgeeks.org/problems/stickler-theif-1587115621/1", difficulty: medium }
+      - { slug: "max-sum-without-adjacents2430", title: "Max Sum without Adjacents", url: "https://www.geeksforgeeks.org/problems/max-sum-without-adjacents2430/1", difficulty: medium }
+      - { slug: "maximum-money2855", title: "House Robber", url: "https://www.geeksforgeeks.org/problems/maximum-money2855/1", difficulty: easy }
+      - { slug: "max-sum-without-adjacents-2", title: "Max Sum without Adjacents 2", url: "https://www.geeksforgeeks.org/problems/max-sum-without-adjacents-2/1", difficulty: medium }
+      - { slug: "maximum-sum-of-non-adjacent-nodes", title: "Maximum Non-Adjacent Nodes Sum", url: "https://www.geeksforgeeks.org/problems/maximum-sum-of-non-adjacent-nodes/1", difficulty: medium }
+      - { slug: "weighted-job-scheduling", title: "Weighted Job Scheduling", url: "https://www.geeksforgeeks.org/problems/weighted-job-scheduling/1", difficulty: medium }
+
+  - code: greedy_pairing_matching
+    # coverage: thin — Нашёл три Practice-задачи, где порядок пар даёт безопасное глобальное сопоставление; DP-паросочетания и graph matching исключены.
+    problems:
+      - { slug: "assign-mice-holes3053", title: "Assign Mice Holes", url: "https://www.geeksforgeeks.org/problems/assign-mice-holes3053/1", difficulty: easy }
+      - { slug: "minimum-sum-of-absolute-differences-of-pairs", title: "Minimum Sum of Absolute Differences of Pairs", url: "https://www.geeksforgeeks.org/problems/minimum-sum-of-absolute-differences-of-pairs/1", difficulty: easy }
+      - { slug: "minimize-the-sum-of-product1525", title: "Minimize the sum of product", url: "https://www.geeksforgeeks.org/problems/minimize-the-sum-of-product1525/1", difficulty: easy }
+
+  - code: grouping_canonical_signature
+    # coverage: thin — Нашёл две чистые задачи на группировку по каноническому ключу; проверки равенства двух строк и Account Merge исключены.
+    problems:
+      - { slug: "print-anagrams-together", title: "Print Anagrams Together", url: "https://www.geeksforgeeks.org/problems/print-anagrams-together/1", difficulty: medium }
+      - { slug: "group-shifted-string", title: "Group Shifted String", url: "https://www.geeksforgeeks.org/problems/group-shifted-string/1", difficulty: medium }
+
+  - code: modular_arithmetic_fast_pow
+    problems:
+      - { slug: "modular-exponentiation-for-large-numbers5537", title: "Modular Exponentiation", url: "https://www.geeksforgeeks.org/problems/modular-exponentiation-for-large-numbers5537/1", difficulty: medium }
+      - { slug: "modular-multiplicative-inverse-1587115620", title: "Modular Inverse", url: "https://www.geeksforgeeks.org/problems/modular-multiplicative-inverse-1587115620/1", difficulty: easy }
+      - { slug: "inverse-division", title: "Inverse Division", url: "https://www.geeksforgeeks.org/problems/inverse-division/1", difficulty: medium }
+      - { slug: "matrix-exponentiation2711", title: "Matrix Exponentiation", url: "https://www.geeksforgeeks.org/problems/matrix-exponentiation2711/1", difficulty: medium }
+      - { slug: "abset-25327", title: "Exponentiation (Set 2)", url: "https://www.geeksforgeeks.org/problems/abset-25327/1", difficulty: easy }
+      - { slug: "power-of-numbers-1587115620", title: "Power Of Numbers", url: "https://www.geeksforgeeks.org/problems/power-of-numbers-1587115620/1", difficulty: medium }
+
+  - code: binary_lifting_jump_pointers
+    # coverage: very_thin — Нашёл одну Practice-формулировку на k-th ancestor. GFG допускает более простой DFS, поэтому для карточки её следует решать намеренно через таблицу 2^j предков.
+    problems:
+      - { slug: "kth-ancestor-in-a-tree", title: "Kth Ancestor in a Tree", url: "https://www.geeksforgeeks.org/problems/kth-ancestor-in-a-tree/1", difficulty: medium }
+
+  - code: cache_eviction_design
+    # coverage: thin — Три открытые Practice-задачи покрывают LRU, LFU и отдельную симуляцию LRU page faults.
+    problems:
+      - { slug: "lru-cache", title: "LRU Cache", url: "https://www.geeksforgeeks.org/problems/lru-cache/0", difficulty: hard }
+      - { slug: "lfu-cache-1665050355", title: "LFU cache", url: "https://www.geeksforgeeks.org/problems/lfu-cache-1665050355/1", difficulty: hard }
+      - { slug: "page-faults-in-lru5603", title: "Page Faults in LRU", url: "https://www.geeksforgeeks.org/problems/page-faults-in-lru5603/1", difficulty: easy }
+
+  - code: sign_marking_index_encoding
+    problems:
+      - { slug: "smallest-positive-missing-number-1587115621", title: "Smallest Positive Missing", url: "https://www.geeksforgeeks.org/problems/smallest-positive-missing-number-1587115621/1", difficulty: medium }
+      - { slug: "find-missing-and-repeating2512", title: "Missing And Repeating", url: "https://www.geeksforgeeks.org/problems/find-missing-and-repeating2512/0", difficulty: easy }
+      - { slug: "frequency-of-array-elements-1587115620", title: "Frequencies in a Limited Array", url: "https://www.geeksforgeeks.org/problems/frequency-of-array-elements-1587115620/0", difficulty: easy }
+      - { slug: "find-duplicates-in-an-array", title: "Array Duplicates", url: "https://www.geeksforgeeks.org/problems/find-duplicates-in-an-array/1", difficulty: easy }
+
+  - code: eulerian_path_circuit
+    problems:
+      - { slug: "euler-circuit-and-path", title: "Euler circuit and Path", url: "https://www.geeksforgeeks.org/problems/euler-circuit-and-path/1", difficulty: medium }
+      - { slug: "euler-circuit-in-a-directed-graph", title: "Euler Circuit in an Undirected Graph", url: "https://www.geeksforgeeks.org/problems/euler-circuit-in-a-directed-graph/1", difficulty: medium }
+      - { slug: "circle-of-strings4530", title: "Circle of strings", url: "https://www.geeksforgeeks.org/problems/circle-of-strings4530/1", difficulty: hard }
+      - { slug: "find-the-string", title: "Find the String", url: "https://www.geeksforgeeks.org/problems/find-the-string/1", difficulty: hard }
+

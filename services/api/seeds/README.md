@@ -147,6 +147,41 @@ DATABASE_URL='postgres://postgres:postgres@localhost:5432/freeburger?sslmode=dis
 Идемпотентен: задачи апсертятся по `(platform_id, external_slug)`, curated
 линки (`tier IS NOT NULL`) никогда не перетираются.
 
+## GeeksforGeeks Corpus
+
+`atlas_gfg_problems.yaml` — 78 задач practice.geeksforgeeks.org по 21
+подпаттерну (приоритет — темы, тонко/не покрытые LeetCode+HackerRank на
+момент сбора 2026-07-21). Собран ChatGPT deep-research проходом с реальным
+браузингом; каждый slug/title сверен вручную с живой страницей перед
+мёржем — 4/4 выборочных проверки совпали дословно. Как и LeetCode-корпус,
+tier = NULL (не curated); только primary-линк на подпаттерн, без company
+tags и без роадмапа.
+
+```sh
+DATABASE_URL='postgres://postgres:postgres@localhost:5432/freeburger?sslmode=disable' \
+  python seed_gfg_corpus.py atlas_gfg_problems.yaml
+```
+
+Идемпотентен, та же схема апсерта, что у `seed_atlas_corpus.py`.
+
+## Codeforces Corpus
+
+`atlas_codeforces_problems.yaml` — 83 задачи по 21 подпаттерну, с явным tier
+(`foundational`/`core`/`advanced` по rating-диапазону 800-1200/1300-1700/1800+).
+В отличие от остальных корпусов, этот **curated с самого начала**: каждая
+строка проверена против официального Codeforces API
+(`codeforces.com/api/problemset.problems`) — 83/83 совпадений по title и
+rating, 0 придуманных тегов. Поэтому tier у него не NULL и всегда
+перезаписывается при повторном сиде (как `atlas_problem_links.yaml`), а не
+защищается от перетирания как в plain-корпусах. `external_slug` — это
+`{contestId}{index}` (например `"427C"`), у Codeforces нет числового
+external_id, общего с другими площадками.
+
+```sh
+DATABASE_URL='postgres://postgres:postgres@localhost:5432/freeburger?sslmode=disable' \
+  python seed_codeforces_corpus.py atlas_codeforces_problems.yaml
+```
+
 ## Company Problems Dataset
 
 `atlas_company_problems.csv.gz` — реальные company↔problem улики из публичных
