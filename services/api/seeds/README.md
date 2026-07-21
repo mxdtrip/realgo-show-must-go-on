@@ -201,6 +201,38 @@ relevance подпаттернов для Company Overlay из линков prob
 вытесняются dataset'ом, manual/community не трогаются. Запускать ПОСЛЕ
 seed_atlas.py и seed_atlas_corpus.py (нужны линки задач на подпаттерны).
 
+## GFG Company Problems Dataset
+
+`atlas_gfg_company_problems.csv.gz` — company↔problem улики с публичного GFG
+company-tags API (158 компаний / 1183 уникальных задачи / 3567 пар,
+собрано 2026-07-21, полный отчёт и SHA-256 в архиве коллектора). В отличие
+от LeetCode-датасета evidence_count всегда 1 (один источник — сам GFG),
+`difficulty` пустая у 186 строк (GFG-значение `Basic` вне словаря
+easy/medium/hard). `problem_url` в CSV уже полный (не собирается из slug,
+как для LeetCode).
+
+Company-коды в CSV НЕ доверяются напрямую: `seed_gfg_company_problems.py`
+пересчитывает `cmp_<key>` из display-имени той же нормализацией, что и
+`build_company_problems.py` (LeetCode), — иначе Amazon/Adobe/… с GFG легли
+бы отдельной строкой в `companies` и раздвоили evidence вместо слияния с
+LeetCode-версией той же компании. 59 из 158 компаний пересекаются с
+LeetCode-датасетом по этому ключу.
+
+```sh
+DATABASE_URL='postgres://postgres:postgres@localhost:5432/freeburger?sslmode=disable' \
+  python seed_gfg_company_problems.py atlas_gfg_company_problems.csv.gz
+```
+
+Идемпотентен, та же схема ребилда, что у `seed_company_problems.py` — но
+`DELETE FROM company_problems` в обоих скриптах скоупится по platform_id
+(добавлено заодно в `seed_company_problems.py`), поэтому два сидера можно
+гонять в любом порядке, не затирая evidence друг друга. Ребилд
+`subpattern_companies`, наоборот, намеренно НЕ скоупится по платформе —
+relevance подпаттерна для компании складывается из dataset-evidence со всех
+платформ сразу. Запускать ПОСЛЕ seed_atlas.py/seed_atlas_corpus.py (нужны
+линки задач на подпаттерны); порядок относительно `seed_company_problems.py`
+не важен по тем же причинам.
+
 ## realgo Demo Cards
 
 `realgo_demo_cards.yaml` - демо-набор Anki-style карточек для задач и
