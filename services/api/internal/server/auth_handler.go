@@ -314,9 +314,9 @@ var validGrades = map[string]bool{
 }
 
 // validPlatforms mirrors the CHECK constraint on users.platform (migration
-// 000016) and the placeholder list the web onboarding/settings selector
-// offers: LeetCode is fully wired, GeeksforGeeks integration is in progress,
-// HackerRank/Codeforces are reserved for later.
+// 000016) and the catalog the web onboarding/settings selector offers
+// (apps/web/app/_profile/platforms.ts) — all 4 have a submit-detection
+// adapter in the extension (apps/extension/src/platforms).
 var validPlatforms = map[string]bool{
 	"leetcode": true, "geeksforgeeks": true, "hackerrank": true, "codeforces": true,
 }

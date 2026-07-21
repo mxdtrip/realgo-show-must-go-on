@@ -59,23 +59,45 @@ export interface PlatformAdapter {
    * after a submit; returns "unknown" until a verdict is recognised.
    */
   detectSubmitResult(): SubmitResult;
+
+  /**
+   * Present only for platforms whose submit control navigates to a different
+   * page before a verdict appears (Codeforces: the problem page's Submit link
+   * opens a separate submit form, and the verdict then appears on a
+   * submissions/status page) — same-page platforms (LeetCode, HackerRank,
+   * GeeksforGeeks) omit this and are watched in place instead. When present,
+   * the content script persists the click-time task snapshot across the
+   * navigation and resumes watching once `isResultPage` matches.
+   */
+  crossPage?: {
+    /** True on a page where a previously persisted submit intent for this
+        platform should resume being watched for a verdict. */
+    isResultPage(url: string): boolean;
+  };
 }
 
 /**
  * Maps free verdict text found in the DOM to a normalized SubmitResult.
- * Covers both LeetCode-style wording ("Accepted", "Wrong Answer") and
- * HackerRank's own phrasing ("All test cases passed", "Terminated due to
- * timeout", "Compilation error") — the two never overlap, so one classifier
- * safely serves every adapter.
+ * Covers LeetCode ("Accepted", "Wrong Answer"), HackerRank ("All test cases
+ * passed", "Terminated due to timeout", "Compilation error"), GeeksforGeeks
+ * ("Correct Answer") and Codeforces ("Accepted", "Wrong answer on test N",
+ * "Memory limit exceeded on test N", "Idleness limit exceeded") wording — none
+ * of these phrasings overlap, so one classifier safely serves every adapter.
  */
 export function classifyVerdict(text: string): SubmitResult {
   const t = text.toLowerCase();
   if (t.includes("all test cases passed")) return "accepted";
+  if (t.includes("correct answer")) return "accepted";
   if (/\baccepted\b/.test(t) && !/\bacceptance\b/.test(t)) return "accepted";
   if (t.includes("wrong answer")) return "wrong_answer";
   if (t.includes("compilation error") || t.includes("compile error")) return "runtime_error";
   if (t.includes("runtime error")) return "runtime_error";
+  // Memory limit exceeded has no dedicated bucket; grouped with the other
+  // "submission failed for a resource reason, not a wrong answer" verdicts.
+  if (t.includes("memory limit")) return "runtime_error";
   if (t.includes("terminated due to timeout") || t.includes("time limit")) return "time_limit";
+  // Codeforces-specific: judge gave up waiting on an interactive/IO problem.
+  if (t.includes("idleness limit")) return "time_limit";
   return "unknown";
 }
 

@@ -244,6 +244,16 @@ export const ASSISTANT_CSS = `
   color: #38bdb2;
   background: rgba(56, 189, 178, 0.12);
 }
+.realgo-agent-tag--geeksforgeeks {
+  border-color: rgba(47, 141, 70, 0.4);
+  color: #2f8d46;
+  background: rgba(47, 141, 70, 0.12);
+}
+.realgo-agent-tag--codeforces {
+  border-color: rgba(49, 140, 231, 0.4);
+  color: #318ce7;
+  background: rgba(49, 140, 231, 0.12);
+}
 
 .realgo-agent-messages {
   flex: 1;

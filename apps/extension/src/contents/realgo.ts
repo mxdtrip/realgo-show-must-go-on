@@ -16,8 +16,13 @@ import type {
 import { AssistantApp } from "../assistant/AssistantApp";
 import { streamAssistantHintViaBackground } from "../lib/assistantClient";
 import { fetchCardsViaBackground } from "../lib/cardsClient";
-import { getReviewUrl } from "../lib/storage";
-import { detectAdapter, type PlatformAdapter, type TaskInfo } from "../platforms";
+import {
+  clearCrossPageSubmitIntent,
+  getCrossPageSubmitIntent,
+  getReviewUrl,
+  setCrossPageSubmitIntent,
+} from "../lib/storage";
+import { adapters, detectAdapter, type PlatformAdapter, type TaskInfo } from "../platforms";
 import { looksLikeSubmitLabel } from "../platforms/types";
 import { PopupApp } from "../popup/PopupApp";
 
@@ -26,6 +31,9 @@ export const config: PlasmoCSConfig = {
     "https://www.hackerrank.com/*",
     "https://hackerrank.com/*",
     "https://leetcode.com/*",
+    "https://www.geeksforgeeks.org/*",
+    "https://geeksforgeeks.org/*",
+    "https://codeforces.com/*",
   ],
   run_at: "document_idle",
 };
@@ -38,6 +46,10 @@ export const config: PlasmoCSConfig = {
  */
 const RESULT_POLL_MS = 500;
 const RESULT_TIMEOUT_MS = 20_000;
+// Cross-page judging (Codeforces) resumes on a freshly loaded status page, so
+// there's no click-to-submit latency to subtract, but the judge itself can
+// legitimately take longer than any same-page platform's in-browser run.
+const CROSS_PAGE_RESULT_TIMEOUT_MS = 90_000;
 const ASSISTANT_REFRESH_MS = 1_000;
 
 function init() {
@@ -54,6 +66,26 @@ function init() {
   document.addEventListener("visibilitychange", () => {
     if (!document.hidden) refreshAssistant();
   });
+  void resumeCrossPageWatch();
+}
+
+/**
+ * Landing on a page after a cross-page submit navigated away from the
+ * problem (see PlatformAdapter.crossPage): if a pending snapshot for a
+ * matching platform is still fresh, pick up watching for a verdict here
+ * instead of waiting for a click that will never come on this page.
+ */
+async function resumeCrossPageWatch(): Promise<void> {
+  const adapter = adapters.find((a) => a.crossPage?.isResultPage(location.href));
+  if (!adapter) return;
+  const pending = await getCrossPageSubmitIntent(adapter.platform);
+  await clearCrossPageSubmitIntent(adapter.platform);
+  if (!pending) return;
+  // The verdict may already be sitting in the DOM before any mutation is
+  // observed (judging can finish before this page finishes loading), and
+  // cross-page judging can legitimately run longer than the same-page
+  // timeout — poll immediately and allow more time.
+  watchForResult(adapter, pending, { timeoutMs: CROSS_PAGE_RESULT_TIMEOUT_MS, pollImmediately: true });
 }
 
 function onRuntimeMessage(
@@ -71,14 +103,45 @@ function onDocumentClick(event: MouseEvent) {
   if (!target) return;
   const adapter = detectAdapter(location.href);
   if (!adapter) return;
-  if (!isSubmitClick(target, adapter)) return;
+  const submitButton = adapter.findSubmitButton();
+  if (!isSubmitClick(target, submitButton)) return;
   // Snapshot the task while still on the problem page: after a submit the SPA
   // can swap to the submission-history URL, where extraction would fail.
-  watchForResult(adapter, adapter.extractTaskInfo());
+  const clickInfo = adapter.extractTaskInfo();
+
+  if (adapter.crossPage) {
+    handleCrossPageSubmitClick(event, adapter, submitButton, clickInfo);
+    return;
+  }
+
+  watchForResult(adapter, clickInfo);
 }
 
-function isSubmitClick(target: HTMLElement, adapter: PlatformAdapter): boolean {
-  const submitButton = adapter.findSubmitButton();
+/**
+ * A cross-page submit control is a plain navigation (e.g. Codeforces' Submit
+ * is an `<a>`), which the browser starts as soon as this handler returns —
+ * but persisting the snapshot is an async chrome.storage write. Without
+ * intervention the navigation can win the race and unload the page before the
+ * write flushes, silently losing the snapshot. preventDefault() buys the time
+ * to write first, then the navigation is replayed manually.
+ */
+function handleCrossPageSubmitClick(
+  event: MouseEvent,
+  adapter: PlatformAdapter,
+  submitButton: HTMLElement | null,
+  clickInfo: TaskInfo | null
+) {
+  const href = submitButton instanceof HTMLAnchorElement ? submitButton.href : null;
+  // Not a real link (or no task to snapshot): nothing to persist, let the
+  // click behave exactly as the host page intended.
+  if (!href || !clickInfo) return;
+  event.preventDefault();
+  void setCrossPageSubmitIntent(adapter.platform, clickInfo).then(() => {
+    window.location.assign(href);
+  });
+}
+
+function isSubmitClick(target: HTMLElement, submitButton: HTMLElement | null): boolean {
   if (submitButton && (submitButton === target || submitButton.contains(target))) {
     return true;
   }
@@ -94,12 +157,20 @@ function isSubmitClick(target: HTMLElement, adapter: PlatformAdapter): boolean {
 
 let watching = false;
 
-function watchForResult(adapter: PlatformAdapter, clickInfo: TaskInfo | null) {
+function watchForResult(
+  adapter: PlatformAdapter,
+  clickInfo: TaskInfo | null,
+  options: { timeoutMs?: number; pollImmediately?: boolean } = {}
+) {
   if (watching) return;
   watching = true;
 
+  const timeoutMs = options.timeoutMs ?? RESULT_TIMEOUT_MS;
   const startedAt = Date.now();
-  let sawMutation = false;
+  // pollImmediately: a resumed cross-page watch may land on a page whose
+  // verdict is already settled (judging finished before this page loaded), so
+  // it can't rely on a future mutation to trigger the first real read.
+  let sawMutation = options.pollImmediately ?? false;
   // A single reading isn't trusted on its own: right after a click, the
   // *previous* submission's verdict panel (e.g. an old "Accepted") can
   // still be sitting in the DOM for a moment before the site clears it for
@@ -118,7 +189,7 @@ function watchForResult(adapter: PlatformAdapter, clickInfo: TaskInfo | null) {
 
   const check = () => {
     if (!sawMutation) {
-      if (Date.now() - startedAt > RESULT_TIMEOUT_MS) finish("unknown");
+      if (Date.now() - startedAt > timeoutMs) finish("unknown");
       return;
     }
     if (Date.now() - startedAt < 800) return;
@@ -128,7 +199,7 @@ function watchForResult(adapter: PlatformAdapter, clickInfo: TaskInfo | null) {
       return;
     }
     lastSeen = result;
-    if (Date.now() - startedAt > RESULT_TIMEOUT_MS) finish(result);
+    if (Date.now() - startedAt > timeoutMs) finish(result);
   };
 
   const observer = new MutationObserver(() => {
@@ -391,7 +462,12 @@ function assistantTaskFrom(adapter: PlatformAdapter, info: TaskInfo): AssistantT
 }
 
 function isAssistantPlatform(platform: PlatformAdapter["platform"]): platform is AssistantTask["platform"] {
-  return platform === "leetcode" || platform === "hackerrank";
+  return (
+    platform === "leetcode" ||
+    platform === "hackerrank" ||
+    platform === "geeksforgeeks" ||
+    platform === "codeforces"
+  );
 }
 
 init();

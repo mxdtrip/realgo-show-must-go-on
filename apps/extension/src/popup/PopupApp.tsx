@@ -141,8 +141,8 @@ export function PopupApp({
             <IconExternal />
           </div>
           <p className="realgo-state__text">
-            Откройте задачу на HackerRank и отправьте решение — realgo подхватит её
-            автоматически.
+            Откройте задачу на LeetCode, GeeksforGeeks, HackerRank или Codeforces и
+            отправьте решение — realgo подхватит её автоматически.
           </p>
           <button type="button" className="realgo-link" onClick={handleReport}>
             Сообщить об ошибке
@@ -515,6 +515,10 @@ function platformTagClass(platform: string): string {
       return "realgo-tag--leetcode";
     case "hackerrank":
       return "realgo-tag--hackerrank";
+    case "geeksforgeeks":
+      return "realgo-tag--geeksforgeeks";
+    case "codeforces":
+      return "realgo-tag--codeforces";
     default:
       return "";
   }

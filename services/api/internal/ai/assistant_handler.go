@@ -24,6 +24,18 @@ const (
 	maxAssistantDescriptionChars = 6000
 )
 
+// validAssistantPlatforms mirrors the 4 catalog platforms the extension ships
+// adapters for (apps/extension/src/platforms). The hint prompt is built
+// entirely from page-scraped title/description/tags plus an optional
+// pattern-context DB lookup (AssistantProblemContext), neither of which is
+// platform-specific, so there is no reason to gate this narrower than that.
+var validAssistantPlatforms = map[string]bool{
+	"leetcode":      true,
+	"geeksforgeeks": true,
+	"hackerrank":    true,
+	"codeforces":    true,
+}
+
 type assistantRepository interface {
 	AssistantProblemContext(ctx context.Context, platform, slug string) (AssistantHintInput, error)
 	ReserveAssistantHintRequest(ctx context.Context, userID int64, problemID *int64, provider, model, promptVersion string) (int64, error)
@@ -186,8 +198,8 @@ func logAssistantProviderError(err error, userID int64) {
 
 func normalizeAssistantRequest(req AssistantHintRequest) (AssistantHintInput, error) {
 	platform := strings.ToLower(strings.TrimSpace(req.Platform))
-	if platform != "leetcode" && platform != "hackerrank" {
-		return AssistantHintInput{}, errors.New("platform must be leetcode or hackerrank")
+	if !validAssistantPlatforms[platform] {
+		return AssistantHintInput{}, errors.New("platform must be leetcode, geeksforgeeks, hackerrank or codeforces")
 	}
 	slug := strings.TrimSpace(req.PlatformTaskSlug)
 	if slug == "" {
