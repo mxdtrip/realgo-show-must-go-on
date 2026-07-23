@@ -18,6 +18,11 @@ What it does, in one transaction:
     On (subpattern, company) collisions the dataset row replaces a demo row
     (real evidence beats fixtures) but never a manual/community one.
 
+On company_problems specifically, this cross-validated dataset layer also
+replaces 'community_dataset' rows (see seed_community_company_problems.py) —
+that layer is single-source and unverified, so real multi-source evidence
+always wins when a company graduates into this dataset.
+
 Idempotent: re-running with the same CSV converges to the same state.
 
 Usage:
@@ -128,7 +133,7 @@ def seed(cur, rows):
             evidence_count = EXCLUDED.evidence_count,
             last_seen_at = EXCLUDED.last_seen_at,
             source_type = 'dataset'
-        WHERE company_problems.source_type = 'demo'
+        WHERE company_problems.source_type IN ('demo', 'community_dataset')
     """, (platform_id,))
     links = cur.rowcount
 

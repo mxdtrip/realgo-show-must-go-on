@@ -23,6 +23,11 @@ derived from ALL platforms' dataset evidence combined, since "is this
 subpattern relevant at company X" doesn't depend on which judge the
 evidence came from.
 
+Also replaces 'community_dataset' rows (see
+seed_community_company_problems.py) on collision — that layer is
+single-source and unverified, so real evidence from this scrape wins when a
+company graduates into it.
+
 Idempotent: re-running with the same CSV converges to the same state.
 
 Usage:
@@ -153,7 +158,7 @@ def seed(cur, rows):
             evidence_count = EXCLUDED.evidence_count,
             last_seen_at = EXCLUDED.last_seen_at,
             source_type = 'dataset'
-        WHERE company_problems.source_type = 'demo'
+        WHERE company_problems.source_type IN ('demo', 'community_dataset')
     """, (platform_id,))
     links = cur.rowcount
 
